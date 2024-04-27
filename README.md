@@ -1,16 +1,20 @@
-# hikka-script
+# Hikka Features
 
 This is a userscript initiated from [@violentmonkey/generator-userscript](https://github.com/violentmonkey/generator-userscript).
 
+All userscripts located in `src/main-script/scripts`
+
+And main script is `src/main-script/app.tsx`
+
 ## Development
 
-``` sh
+```sh
 # Compile and watch
-$ npm run dev
+$ pnpm dev
 
 # Build script
-$ npm run build
+$ pnpm build
 
 # Lint
-$ npm run lint
+$ pnpm lint
 ```

@@ -3,7 +3,6 @@
 // @namespace   Violentmonkey Scripts
 // @description process.env.DESCRIPTION
 // @match       https://hikka.io/*
-// @grant       GM_addStyle
 // @version     process.env.VERSION
 // @author      process.env.AUTHOR
 // @require     https://cdn.jsdelivr.net/npm/@violentmonkey/dom

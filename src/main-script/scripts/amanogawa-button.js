@@ -67,14 +67,6 @@ export default async function amanogawaButton(anime_data) {
     return;
   }
 
-  const info_block = document.querySelector(
-    'body main > .grid > .flex:nth-child(2) > .grid > div:nth-child(3) > .flex > .flex:nth-child(2)',
-  );
-  info_block.insertAdjacentHTML(
-    'beforeend',
-    `<button id="amanogawa-button">На сайті Amanogawa</button>`,
-  );
-
   const amanogawa_button = document.getElementById('amanogawa-button');
   amanogawa_button.addEventListener('click', async () => {
     window.open(`https://amanogawa.space/anime/${anime.id}`, '_blank');

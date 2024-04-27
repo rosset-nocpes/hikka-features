@@ -14,22 +14,13 @@ export default async function hikkaWatari(anime_data) {
     return;
   }
 
-  // Додаємо кнопку завантаження плеєра
-  const info_block = document.querySelector(
-    'body main > .grid > .flex:nth-child(2) > .grid > div:nth-child(3) > .flex > .flex:nth-child(2)',
-  );
-  info_block.insertAdjacentHTML(
-    'beforeend',
-    `<button id="player-button">Завантажити відео</button>`,
-  );
-
   // Чекаємо коли на неї натиснуть
   const player_button = document.getElementById('player-button');
   player_button.addEventListener(
     'click',
     async () => {
       // Прибираємо кнопку плеєра
-      player_button.remove();
+      player_button.disabled = true;
 
       // Повідомляємо користувача про початок завантаження відео
       // Щоб перемістити плеєр на низ сторінки треба замінити afterbegin на beforeend
@@ -117,6 +108,15 @@ export default async function hikkaWatari(anime_data) {
       // Та додамо туди розмітку
       player.innerHTML = `
         <style>
+          @keyframes slideInFromUp {
+            0% {
+              height: 0px;
+            }
+            100% {
+              height: 332px;
+            }
+          }
+          
           select {
             padding: 5px;
             border: 1px solid black;
@@ -173,7 +173,7 @@ export default async function hikkaWatari(anime_data) {
               (options_team_id_2) => `
             <template class="player-block" x-if="team_id === '${options_team_id_2}'">
             <div style="width: 100%; height: 332px; position: relative;">
-              <iframe x-bind:src="iframe" loading="lazy" style="border: medium; border-radius: 4px; position: absolute; top: 0px; left: 0px; height: 100%; width: 100%;" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen=""></iframe>
+              <iframe x-bind:src="iframe" loading="lazy" style="border: medium; border-radius: 4px; position: absolute; top: 0px; left: 0px; height: 100%; width: 100%; animation: 0.5s cubic-bezier(.77,0,.18,1) 0s 1 slideInFromUp;" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen=""></iframe>
             </div>
           </template>
           `,
