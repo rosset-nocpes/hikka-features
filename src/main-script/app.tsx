@@ -1,49 +1,22 @@
 import { onNavigate } from '@violentmonkey/url';
+import globalCss from './style.css';
+import styles, { stylesheet } from './style.module.css';
+import { render } from 'solid-js/web';
 import * as scripts from './scripts/index.js';
 
-onNavigate(async () => {
-  const split_path = document.location.pathname.split('/');
-
-  const path = split_path[1];
-
-  // for anime page scripts
-  if (split_path.length == 3 && path == 'anime') {
-    const anime_slug = split_path[2];
-
-    const anime_data = await (
-      await fetch(`https://api.hikka.io/anime/${anime_slug}`)
-    ).json();
-
-    const buttons_block = document.querySelector(
-      'body main > .grid > .flex:nth-child(2) > .grid > div:nth-child(3) > .flex',
-    );
-
-    buttons_block.insertAdjacentHTML(
-      'beforeend',
-      `<div id="buttons-block" style="display: flex;justify-content: center;align-items: center;margin-top: -20px;">
-      <style>
-        #buttons-block {
-          button {
-            background: #27272a;
-            height: 48px;
-            width: 100%;
-            justify-content: center;
-            display: flex;
-            align-items: center;
-            transition: 0.1s;
-          }
-          button:hover {
-            background: #18181a;
-          }
-          button[disabled] {
-            background: #18181a;
-          }
-        }
-      </style>
-      <button id="player-button" style="margin-right: 3px;border-radius: 10px 2px 2px 10px;">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="30px" height="30px">
-          <path d="M5.25 3A3.25 3.25 0 0 0 2 6.25v11.5A3.25 3.25 0 0 0 5.25 21h13.5A3.25 3.25 0 0 0 22 17.75V6.25A3.25 3.25 0 0 0 18.75 3zM9 9.25a1 1 0 0 1 1.482-.876l5 2.75a1 1 0 0 1 0 1.753l-5 2.75A1 1 0 0 1 9 14.75z" fill="gray"></path>
-        </svg>
+function Main() {
+  return (
+    <div
+      id="buttons-block"
+      style="display: flex;justify-content: center;align-items: center;margin-top: -20px;"
+    >
+      <style>{[globalCss, stylesheet].join('\n')}</style>
+      <button
+        id="player-button"
+        onClick={scripts.hikkaWatari}
+        style="margin-right: 3px;border-radius: 10px 2px 2px 10px;"
+      >
+        <div class={styles.player_button} style="color: gray;"></div>
       </button>
       <button
         id="amanogawa-button"
@@ -91,93 +64,66 @@ onNavigate(async () => {
         </svg>
       </button>
       <button style="border-radius: 2px 2px 2px 2px;margin-right: 3px;">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="30px"
-        height="30px"
-        viewBox="0 0 24 24"
+        <div class={styles.unknown} style="color: gray;"></div>
+      </button>
+      <button style="border-radius: 2px 2px 2px 2px;margin-right: 3px;">
+        <div class={styles.unknown} style="color: gray;"></div>
+      </button>
+      <button
+        id="settings"
+        onClick={settingsMenu}
+        style="border-radius: 2px 10px 10px 2px;"
       >
-        <path
-          fill="none"
-          stroke="gray"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="1.5"
-          d="M12 8v4m0 4.01l.01-.011M9 3H4v3m0 5v2m16-2v2M15 3h5v3M9 21H4v-3m11 3h5v-3"
-        ></path>
-      </svg>
-    </button>
-    <button style="border-radius: 2px 2px 2px 2px;margin-right: 3px;">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="30px"
-        height="30px"
-        viewBox="0 0 24 24"
+        <div class={styles.settings} style="color: gray;"></div>
+      </button>
+    </div>
+  );
+}
+
+function settingsMenu() {
+  settings.disabled = true;
+
+  const settings_menu = document.querySelector(
+    'body main > .grid > .flex:nth-child(2) > .grid > div:nth-child(3) > .flex',
+  );
+
+  render(
+    () => (
+      <div
+        id="settings-menu"
+        style="background: #0e0c10;border-width: 1px;border-radius: 10px;padding: 10px;"
       >
-        <path
-          fill="none"
-          stroke="gray"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="1.5"
-          d="M12 8v4m0 4.01l.01-.011M9 3H4v3m0 5v2m16-2v2M15 3h5v3M9 21H4v-3m11 3h5v-3"
-        ></path>
-      </svg>
-    </button>
-    <button id="settings" style="border-radius: 2px 10px 10px 2px;">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="30px"
-        height="30px"
-        viewBox="0 0 24 24"
-      >
-        <path
-          d="M3.34 17a10.017 10.017 0 0 1-.979-2.326a3 3 0 0 0 .003-5.347a9.99 9.99 0 0 1 2.5-4.337a3 3 0 0 0 4.632-2.674a9.99 9.99 0 0 1 5.007.003a3 3 0 0 0 4.632 2.671a10.056 10.056 0 0 1 2.503 4.336a3 3 0 0 0-.002 5.347a9.99 9.99 0 0 1-2.501 4.337a3 3 0 0 0-4.632 2.674a9.99 9.99 0 0 1-5.007-.002a3 3 0 0 0-4.631-2.672A10.018 10.018 0 0 1 3.339 17m5.66.196a4.992 4.992 0 0 1 2.25 2.77c.499.047 1 .048 1.499.002a4.993 4.993 0 0 1 2.25-2.772a4.993 4.993 0 0 1 3.526-.564c.29-.408.54-.843.748-1.298A4.993 4.993 0 0 1 18 12c0-1.26.47-2.437 1.273-3.334a8.152 8.152 0 0 0-.75-1.298A4.993 4.993 0 0 1 15 6.804a4.993 4.993 0 0 1-2.25-2.77c-.5-.047-1-.048-1.5-.001A4.993 4.993 0 0 1 9 6.804a4.993 4.993 0 0 1-3.526.564c-.29.408-.54.843-.747 1.298A4.993 4.993 0 0 1 6 12c0 1.26-.471 2.437-1.273 3.334a8.16 8.16 0 0 0 .75 1.298A4.993 4.993 0 0 1 9 17.196M12 15a3 3 0 1 1 0-6a3 3 0 0 1 0 6m0-2a1 1 0 1 0 0-2a1 1 0 0 0 0 2"
-          fill="gray"
-          style=""
-        ></path>
-      </svg>
-    </button></div>`,
+        <style>{globalCss}</style>
+        <h1>*Settings to script*</h1>
+      </div>
+    ),
+    settings_menu,
+  );
+}
+
+onNavigate(async () => {
+  const split_path = document.location.pathname.split('/');
+
+  const path = split_path[1];
+
+  // for anime page scripts
+  if (split_path.length == 3 && path == 'anime') {
+    // const anime_slug = split_path[2];
+
+    // const anime_data = await (
+    //   await fetch(`https://api.hikka.io/anime/${anime_slug}`)
+    // ).json();
+
+    const buttons_block = document.querySelector(
+      'body main > .grid > .flex:nth-child(2) > .grid > div:nth-child(3) > .flex',
     );
+
+    render(Main, buttons_block);
 
     // call functions under this comment
     // scripts.aniBackground(anime_data);
-    scripts.aniButtons(anime_data);
-    scripts.hikkaWatari(anime_data);
-    scripts.amanogawaButton(anime_data);
-
-    const settings = document.getElementById('settings');
-
-    settings.addEventListener('click', async () => {
-      settings.disabled = true;
-
-      const settings_menu = document.getElementById('buttons-block');
-
-      settings_menu.insertAdjacentHTML(
-        'afterend',
-        `<div id="settings-menu" style="background: #0e0c10;border-width: 1px;border-radius: 10px;padding: 10px;">
-          <style>
-            @keyframes slideInFromUp {
-              0% {
-                height: 0px;
-              }
-              100% {
-                height: 100px;
-              }
-            }
-
-            #settings-menu {
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              overflow: hidden;
-              height: 100px;
-              animation: 0.5s cubic-bezier(.77,0,.18,1) 0s 1 slideInFromUp;
-            }
-          </style>
-          <h1>*Settings to script*</h1>
-        </div>`,
-      );
-    });
+    //scripts.aniButtons(anime_data);
+    //
+    //scripts.amanogawaButton(anime_data);
   }
 });

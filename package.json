@@ -19,23 +19,27 @@
     "build": "cross-env NODE_ENV=production run-s ci clean build:js"
   },
   "dependencies": {
-    "@babel/runtime": "^7.24.1",
-    "@violentmonkey/dom": "^2.1.6",
+    "@babel/runtime": "^7.24.4",
+    "@violentmonkey/dom": "^2.1.7",
     "@violentmonkey/url": "^0.1.0",
-    "alpinejs": "^3.13.10"
+    "solid-js": "^1.8.17"
   },
   "devDependencies": {
     "@babel/plugin-transform-react-jsx": "^7.23.4",
     "@gera2ld/plaid": "~2.7.0",
     "@gera2ld/plaid-rollup": "~2.7.0",
+    "@iconify-json/tabler": "^1.1.110",
+    "@unocss/postcss": "^0.58.9",
     "@violentmonkey/types": "^0.1.7",
+    "babel-preset-solid": "^1.8.17",
     "cross-env": "^7.0.3",
     "del-cli": "^5.1.0",
     "eslint-config-prettier": "^9.1.0",
     "husky": "^9.0.11",
     "lint-staged": "^15.2.2",
     "prettier": "^3.2.5",
-    "rollup-plugin-userscript": "^0.3.2"
+    "rollup-plugin-userscript": "^0.3.2",
+    "unocss": "^0.59.4"
   },
   "lint-staged": {
     "src/**": [

@@ -5,10 +5,10 @@
 // @match       https://hikka.io/*
 // @version     process.env.VERSION
 // @author      process.env.AUTHOR
+// @grant       GM_addStyle
 // @require     https://cdn.jsdelivr.net/npm/@violentmonkey/dom
-// @require     https://cdn.jsdelivr.net/npm/@violentmonkey/ui
 // @require     https://cdn.jsdelivr.net/npm/@violentmonkey/url
-// @require     https://unpkg.com/alpinejs
+// @require     https://cdn.jsdelivr.net/npm/@violentmonkey/dom@2/dist/solid.min.js
 // ==/UserScript==
 
 /**
