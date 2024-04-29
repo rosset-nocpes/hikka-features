@@ -1,11 +1,14 @@
 # Hikka Features
 
+> [!IMPORTANT]  
+> Code needs to be refactored!
+
 ## Rewrite progress
 
 - [ ] Hikka x Watari
 - [x] Amanogawa Button
 - [x] AniButtons
-- [ ] AniBackground
+- [x] AniBackground
 
 This is a userscript initiated from [@violentmonkey/generator-userscript](https://github.com/violentmonkey/generator-userscript).
 

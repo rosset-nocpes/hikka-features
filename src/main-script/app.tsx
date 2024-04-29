@@ -3,6 +3,7 @@ import globalCss from './style.css';
 import styles, { stylesheet } from './style.module.css';
 import { render } from 'solid-js/web';
 import * as scripts from './scripts/index.js';
+import { findMostSimilarEnJpName } from './scripts/index.js';
 
 function Main(anime_data) {
   return (
@@ -13,7 +14,7 @@ function Main(anime_data) {
       <style>{[globalCss, stylesheet].join('\n')}</style>
       <button
         id="player-button"
-        onClick={scripts.hikkaWatari}
+        onClick={() => scripts.hikkaWatari(anime_data)}
         style="margin-right: 3px;border-radius: 10px 2px 2px 10px;"
       >
         <div class={styles.player_button} style="color: gray;"></div>
@@ -40,10 +41,16 @@ function Main(anime_data) {
           ></path>
         </svg>
       </button>
-      <button style="border-radius: 2px 2px 2px 2px;margin-right: 3px;">
+      <button
+        disabled={true}
+        style="border-radius: 2px 2px 2px 2px;margin-right: 3px;"
+      >
         <div class={styles.unknown} style="color: gray;"></div>
       </button>
-      <button style="border-radius: 2px 2px 2px 2px;margin-right: 3px;">
+      <button
+        disabled={true}
+        style="border-radius: 2px 2px 2px 2px;margin-right: 3px;"
+      >
         <div class={styles.unknown} style="color: gray;"></div>
       </button>
       <button
@@ -60,9 +67,7 @@ function Main(anime_data) {
 function settingsMenu() {
   settings.disabled = true;
 
-  const settings_menu = document.querySelector(
-    'body main > .grid > .flex:nth-child(2) > .grid > div:nth-child(3) > .flex',
-  );
+  const settings_menu = document.querySelector('.order-1 > div:nth-child(1)');
 
   render(
     () => (
@@ -70,7 +75,6 @@ function settingsMenu() {
         id="settings-menu"
         style="background: #0e0c10;border-width: 1px;border-radius: 10px;padding: 10px;"
       >
-        <style>{globalCss}</style>
         <h1>*Settings to script*</h1>
       </div>
     ),
@@ -98,8 +102,29 @@ onNavigate(async () => {
     // to use buttons, check the Main function
     render(() => Main(anime_data), info_block);
 
-    // call functions under this comment
-    // scripts.aniBackground(anime_data);
+    // hikka x watari
+    const watari_external = anime_data.external.find((obj) =>
+      obj.url.includes('watari-anime.com'),
+    );
+
+    if (watari_external == undefined) {
+      document.getElementById('player-button').disabled = true;
+    }
+
+    // amanogawaButton
+    const title_ja = anime_data['title_ja'];
+    const url_cors_proxy_amanogawa =
+      'https://corsproxy.io/?' +
+      encodeURIComponent(
+        `https://amanogawa.space/api/search?s="${encodeURIComponent(title_ja)}"`,
+      );
+    const amanogawa_data = await (await fetch(url_cors_proxy_amanogawa)).json();
+
+    const anime = findMostSimilarEnJpName(title_ja, amanogawa_data, 0.8);
+
+    if (anime == null) {
+      document.getElementById('amanogawa-button').disabled = true;
+    }
 
     // aniButtons
     info_block.children[1].insertAdjacentHTML(
@@ -111,5 +136,19 @@ onNavigate(async () => {
       () => scripts.aniButtons(anime_data),
       info_block.children[1].children[0],
     );
+
+    // aniBackground
+    const background = document.querySelector('body main > .grid');
+    background.insertAdjacentHTML(
+      'afterbegin',
+      '<div class="absolute left-0 top-0 -z-20 h-80 w-full overflow-hidden opacity-40"></div>',
+    );
+
+    const title = anime_data.title_ja;
+    const kitsuData = await (
+      await fetch(`https://kitsu.io/api/edge/anime?filter[text]=${title}`)
+    ).json();
+
+    render(() => scripts.aniBackground(kitsuData), background.firstChild);
   }
 });

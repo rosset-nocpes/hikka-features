@@ -41,7 +41,7 @@ export default function aniButtons(anime_data) {
 
   searchUrls.forEach((element) => {
     ani_buttons.push(
-      <a style="display: flex;" href={element.url}>
+      <a style="display: flex;" href={element.url} target="_blank">
         <img
           style="width:16px;height:16px;margin-right:2px;"
           src={`https://www.google.com/s2/favicons?domain=${element.host}`}

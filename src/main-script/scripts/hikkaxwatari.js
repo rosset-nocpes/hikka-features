@@ -1,25 +1,29 @@
 import globalCss from '../style.css';
-import { render } from 'solid-js/web';
 /* eslint-disable no-undef */
 // @name        Hikka x Watari
 // @version     1.0.4
 // @author      ~rosset-nocpes
 // @description Додає відео з Ватарі на сторінку аніме Хікки
 
-export default async function hikkaWatari() {
+export default async function hikkaWatari(anime_data) {
+  const watari_external = anime_data.external.find((obj) =>
+    obj.url.includes('watari-anime.com'),
+  );
+
+  // Якщо його немає - зупиняємось
+  if (watari_external == undefined) {
+    return;
+  }
+
   const player_button = document.getElementById('player-button');
 
   // Прибираємо кнопку плеєра
   player_button.disabled = true;
 
-  // Повідомляємо користувача про початок завантаження відео
-  const start_node = document.querySelector(
-    'body main > .grid > .flex:nth-child(2) > .grid > .relative',
-  );
-
-  render(
-    () => <div id="player">Завантажуємо відео з Ватарі...</div>,
-    start_node,
+  const start_node = document.querySelector('.order-2');
+  start_node.insertAdjacentHTML(
+    'afterbegin',
+    '<div id="player">Завантажуємо відео з Ватарі...</div>',
   );
 
   // Отримуємо ідентифікатор контенту з Watari
@@ -93,59 +97,41 @@ export default async function hikkaWatari() {
   // Дістаємо блок плеєра, який був створений вище
   const player = document.querySelector('#player');
 
-  // Та додамо туди розмітку
-  render(
-    () => (
-      <>
-        <style>{globalCss}</style>
+  player.innerHTML = `
+        <style>${globalCss}</style>
         <div x-data="{ team_id: '${team_ids[0]}', iframe: '${team_episodes[team_ids[0]][0].iframe}' }">
           <div class="team-selects">
             <select class="team-select" x-model="team_id">
-              $
-              {team_ids
-                .map(
-                  (options_team_id) =>
-                    `<option value="${options_team_id}">${team_info[options_team_id].name}</option>`,
-                )
-                .join('')}
+              ${team_ids.map((options_team_id) => `<option value="${options_team_id}">${team_info[options_team_id].name}</option>`).join('')}
             </select>
-            $
-            {team_ids
+            ${team_ids
               .map(
                 (options_team_id_2) => `
-            <select class="team-select" x-model="iframe" x-show="team_id === '${options_team_id_2}'">
-              ${team_episodes[options_team_id_2].map(
-                (options_team_episode) => `
-                <option value="${options_team_episode.iframe}">Епізод #${options_team_episode.index} ${options_team_episode.title != null ? ' - ' + options_team_episode.title : ''}</option>
-              `,
-              )}
-            </select>
-          `,
+              <select class="team-select" x-model="iframe" x-show="team_id === '${options_team_id_2}'">
+                ${team_episodes[options_team_id_2].map(
+                  (options_team_episode) => `
+                  <option value="${options_team_episode.iframe}">Епізод #${options_team_episode.index} ${options_team_episode.title != null ? ' - ' + options_team_episode.title : ''}</option>
+                `,
+                )}
+              </select>
+            `,
               )
               .join('')}
           </div>
-          $
-          {team_ids
+          ${team_ids
             .map(
               (options_team_id_2) => `
-          <template class="player-block" x-if="team_id === '${options_team_id_2}'">
-          <div style="width: 100%; height: 332px; position: relative;">
-            <iframe x-bind:src="iframe" loading="lazy" style="border: medium; border-radius: 4px; position: absolute; top: 0px; left: 0px; height: 100%; width: 100%; animation: 0.5s cubic-bezier(.77,0,.18,1) 0s 1 slideInFromUp;" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen=""></iframe>
-          </div>
-        </template>
-        `,
+            <template class="player-block" x-if="team_id === '${options_team_id_2}'">
+            <div style="width: 100%; height: 332px; position: relative;">
+              <iframe x-bind:src="iframe" loading="lazy" style="border: medium; border-radius: 4px; position: absolute; top: 0px; left: 0px; height: 100%; width: 100%; animation: 0.5s cubic-bezier(.77,0,.18,1) 0s 1 slideInFromUp;" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen=""></iframe>
+            </div>
+          </template>
+          `,
             )
             .join('')}
-          <a
-            href="https://watari-anime.com/watch?wid=${watari_id}"
-            class="watari-link"
-            target="_blank"
-          >
-            <img src="https://rosset-nocpes.github.io/ua-badges/src/watari-dark.svg" />
+          <a href="https://watari-anime.com/watch?wid=${watari_id}" class="watari-link" target="_blank">
+            <img src="https://rosset-nocpes.github.io/ua-badges/src/watari-dark.svg">
           </a>
         </div>
-      </>
-    ),
-    player,
-  );
+      `;
 }
