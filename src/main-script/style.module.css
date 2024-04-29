@@ -1,10 +1,10 @@
-/* eslint-disable */
 @unocss preflights;
 
 .player_button {
   @apply i-tabler:movie w-30px h-30px;
 }
 
+/* Для того щоб запустити без помилок, потрібно прибрати i-tabler:file-off, і потім після того як запустили, додати назад  */
 .unknown {
   @apply i-tabler:file-off w-30px h-30px;
 }

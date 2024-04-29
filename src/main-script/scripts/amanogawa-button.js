@@ -67,8 +67,5 @@ export default async function amanogawaButton(anime_data) {
     return;
   }
 
-  const amanogawa_button = document.getElementById('amanogawa-button');
-  amanogawa_button.addEventListener('click', async () => {
-    window.open(`https://amanogawa.space/anime/${anime.id}`, '_blank');
-  });
+  window.open(`https://amanogawa.space/anime/${anime.id}`, '_blank');
 }

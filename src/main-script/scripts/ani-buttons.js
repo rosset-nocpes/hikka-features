@@ -4,7 +4,7 @@
 // @author      ~rosset-nocpes
 // @description In future will be based on https://greasyfork.org/en/scripts/398046-anime-website-custom-buttons-plus
 
-export default async function aniButtons(anime_data) {
+export default function aniButtons(anime_data) {
   const title = anime_data.title_ja;
 
   const hosts = {
@@ -37,21 +37,18 @@ export default async function aniButtons(anime_data) {
     { host: hosts.wiki, url: urls.wiki },
   ];
 
-  const info_block = document.querySelector(
-    'body main > .grid > .flex:nth-child(2) > .grid > div:nth-child(3) > .flex > .flex:nth-child(2)',
-  );
-
-  info_block.insertAdjacentHTML(
-    'afterbegin',
-    "<div id='ani-buttons' style='display: flex; justify-content: center;'></div>",
-  );
-
-  const ani_buttons = document.querySelector('#ani-buttons');
+  let ani_buttons = [];
 
   searchUrls.forEach((element) => {
-    ani_buttons.insertAdjacentHTML(
-      'beforeend',
-      `<a style="display: flex;" href="${element.url}" ><img style="width:16px;height:16px;margin-right:2px;" src="https://www.google.com/s2/favicons?domain=${element.host}"></a>`,
+    ani_buttons.push(
+      <a style="display: flex;" href={element.url}>
+        <img
+          style="width:16px;height:16px;margin-right:2px;"
+          src={`https://www.google.com/s2/favicons?domain=${element.host}`}
+        />
+      </a>,
     );
   });
+
+  return ani_buttons;
 }

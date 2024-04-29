@@ -26,6 +26,7 @@ export default defineConfig(
       ),
     ],
     external: defineExternal([
+      '@violentmonkey/url',
       '@violentmonkey/dom',
       'solid-js',
       'solid-js/web',

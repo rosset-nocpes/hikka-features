@@ -1,5 +1,12 @@
 # Hikka Features
 
+## Rewrite progress
+
+- [ ] Hikka x Watari
+- [x] Amanogawa Button
+- [x] AniButtons
+- [ ] AniBackground
+
 This is a userscript initiated from [@violentmonkey/generator-userscript](https://github.com/violentmonkey/generator-userscript).
 
 All userscripts located in `src/main-script/scripts`
