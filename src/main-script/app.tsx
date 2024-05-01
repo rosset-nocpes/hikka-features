@@ -1,6 +1,6 @@
 import { onNavigate } from '@violentmonkey/url';
 import globalCss from './style.css';
-import styles, { stylesheet } from './style.module.css';
+import { stylesheet } from './style.module.css';
 import { render } from 'solid-js/web';
 import * as scripts from './scripts/index.js';
 import { createSignal } from 'solid-js';
@@ -33,7 +33,8 @@ function Main(anime_data) {
         disabled={watariState}
         style="margin-right: 3px;border-radius: 10px 2px 2px 10px;"
       >
-        <div class={styles.player_button} style="color: gray;"></div>
+        {/* <div class={styles.player_button} style="color: gray;"></div> */}
+        <span class="tabler--movie"></span>
       </button>
       <button
         id="amanogawa-button"
@@ -65,7 +66,8 @@ function Main(anime_data) {
         }}
         style="border-radius: 2px 10px 10px 2px;"
       >
-        <div class={styles.settings} style="color: gray;"></div>
+        {/* <div class={styles.settings} style="color: gray;"></div> */}
+        <span class="tabler--settings"></span>
       </button>
     </div>
   );
