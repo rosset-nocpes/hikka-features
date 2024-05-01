@@ -3,9 +3,23 @@ import globalCss from './style.css';
 import styles, { stylesheet } from './style.module.css';
 import { render } from 'solid-js/web';
 import * as scripts from './scripts/index.js';
-import { findMostSimilarEnJpName } from './scripts/index.js';
+import { createSignal } from 'solid-js';
+import { Transition } from 'solid-transition-group';
+
+const [showSettings, toggleShowSettings] = createSignal(false);
+const [showAniBackground, toggleAniBackground] = createSignal(true);
+
+const aniBackState = GM_getValue('aniBackState');
+
+!aniBackState ? GM_setValue('aniBackState', false) : '';
 
 function Main(anime_data) {
+  let watariState = scripts.checkWatari(anime_data);
+  const amanogawaState = false;
+
+  // TODO: dynamic check for availability on Amanogawa
+  // const amanogawaState = scripts.checkAmanogawa(anime_data);
+
   return (
     <div
       id="buttons-block"
@@ -15,6 +29,8 @@ function Main(anime_data) {
       <button
         id="player-button"
         onClick={() => scripts.hikkaWatari(anime_data)}
+        onLoad={() => (watariState = scripts.checkWatari(anime_data))}
+        disabled={watariState}
         style="margin-right: 3px;border-radius: 10px 2px 2px 10px;"
       >
         <div class={styles.player_button} style="color: gray;"></div>
@@ -22,6 +38,7 @@ function Main(anime_data) {
       <button
         id="amanogawa-button"
         onClick={() => scripts.amanogawaButton(anime_data)}
+        disabled={amanogawaState}
         style="border-radius: 2px 2px 2px 2px;margin-right: 3px;"
       >
         <svg
@@ -42,20 +59,10 @@ function Main(anime_data) {
         </svg>
       </button>
       <button
-        disabled={true}
-        style="border-radius: 2px 2px 2px 2px;margin-right: 3px;"
-      >
-        <div class={styles.unknown} style="color: gray;"></div>
-      </button>
-      <button
-        disabled={true}
-        style="border-radius: 2px 2px 2px 2px;margin-right: 3px;"
-      >
-        <div class={styles.unknown} style="color: gray;"></div>
-      </button>
-      <button
         id="settings"
-        onClick={settingsMenu}
+        onClick={() => {
+          toggleShowSettings(!showSettings());
+        }}
         style="border-radius: 2px 10px 10px 2px;"
       >
         <div class={styles.settings} style="color: gray;"></div>
@@ -65,18 +72,33 @@ function Main(anime_data) {
 }
 
 function settingsMenu() {
-  settings.disabled = true;
-
   const settings_menu = document.querySelector('.order-1 > div:nth-child(1)');
 
   render(
     () => (
-      <div
-        id="settings-menu"
-        style="background: #0e0c10;border-width: 1px;border-radius: 10px;padding: 10px;"
-      >
-        <h1>*Settings to script*</h1>
-      </div>
+      <Transition name="slide-fade">
+        {showSettings() && (
+          <div
+            id="settings-menu"
+            style="background: #0e0c10;border-width: 1px;border-radius: 10px;padding: 10px;"
+          >
+            <label id="optionSetting">
+              <input
+                id="aniBToggle"
+                type="checkbox"
+                checked={aniBackState}
+                onClick={() => {
+                  GM_getValue('aniBackState') == false
+                    ? GM_setValue('aniBackState', true)
+                    : GM_setValue('aniBackState', false);
+                  toggleAniBackground(!showAniBackground());
+                }}
+              />
+              AniBackground (Experimantal)
+            </label>
+          </div>
+        )}
+      </Transition>
     ),
     settings_menu,
   );
@@ -100,31 +122,9 @@ onNavigate(async () => {
     );
 
     // to use buttons, check the Main function
+    toggleShowSettings(false);
     render(() => Main(anime_data), info_block);
-
-    // hikka x watari
-    const watari_external = anime_data.external.find((obj) =>
-      obj.url.includes('watari-anime.com'),
-    );
-
-    if (watari_external == undefined) {
-      document.getElementById('player-button').disabled = true;
-    }
-
-    // amanogawaButton
-    const title_ja = anime_data['title_ja'];
-    const url_cors_proxy_amanogawa =
-      'https://corsproxy.io/?' +
-      encodeURIComponent(
-        `https://amanogawa.space/api/search?s="${encodeURIComponent(title_ja)}"`,
-      );
-    const amanogawa_data = await (await fetch(url_cors_proxy_amanogawa)).json();
-
-    const anime = findMostSimilarEnJpName(title_ja, amanogawa_data, 0.8);
-
-    if (anime == null) {
-      document.getElementById('amanogawa-button').disabled = true;
-    }
+    settingsMenu();
 
     // aniButtons
     info_block.children[1].insertAdjacentHTML(
@@ -138,17 +138,23 @@ onNavigate(async () => {
     );
 
     // aniBackground
-    const background = document.querySelector('body main > .grid');
-    background.insertAdjacentHTML(
-      'afterbegin',
-      '<div class="absolute left-0 top-0 -z-20 h-80 w-full overflow-hidden opacity-40"></div>',
-    );
+    // TODO: make dynamic toggle
+    const visibility = GM_getValue('aniBackState') ? 'initial' : 'none';
 
     const title = anime_data.title_ja;
     const kitsuData = await (
       await fetch(`https://kitsu.io/api/edge/anime?filter[text]=${title}`)
     ).json();
 
-    render(() => scripts.aniBackground(kitsuData), background.firstChild);
+    const background = document.querySelector('body main > .grid');
+    background.insertAdjacentHTML(
+      'afterbegin',
+      `<div style="display: ${visibility};" class="absolute left-0 top-0 -z-20 h-80 w-full overflow-hidden opacity-40"></div>`,
+    );
+
+    render(
+      () => scripts.aniBackground(kitsuData, showAniBackground),
+      background.firstChild,
+    );
   }
 });

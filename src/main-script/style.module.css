@@ -4,9 +4,16 @@
   @apply i-tabler:movie w-30px h-30px;
 }
 
-/* Для того щоб запустити без помилок, потрібно прибрати i-tabler:file-off, і потім після того як запустили, додати назад  */
+.divider-of-rules {
+  @apply opacity-0;
+}
+
 .unknown {
   @apply i-tabler:file-off w-30px h-30px;
+}
+
+.divider-of-rules2 {
+  @apply opacity-0;
 }
 
 .settings {

@@ -19,10 +19,11 @@
     "build": "cross-env NODE_ENV=production run-s ci clean build:js"
   },
   "dependencies": {
-    "@babel/runtime": "^7.24.4",
+    "@babel/runtime": "^7.24.5",
     "@violentmonkey/dom": "^2.1.7",
     "@violentmonkey/url": "^0.1.0",
-    "solid-js": "^1.8.17"
+    "solid-js": "^1.8.17",
+    "solid-transition-group": "^0.2.3"
   },
   "devDependencies": {
     "@babel/plugin-transform-react-jsx": "^7.23.4",
@@ -39,7 +40,7 @@
     "lint-staged": "^15.2.2",
     "prettier": "^3.2.5",
     "rollup-plugin-userscript": "^0.3.2",
-    "unocss": "^0.59.4"
+    "unocss": "^0.58.9"
   },
   "lint-staged": {
     "src/**": [

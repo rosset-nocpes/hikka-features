@@ -4,6 +4,24 @@
 // @author      Lorg0n
 // @description original: https://gist.github.com/rosset-nocpes/f251942d47662b725329772533769399/raw/
 
+export async function checkAmanogawa(anime_data) {
+  const title_ja = anime_data['title_ja'];
+  const url_cors_proxy_amanogawa =
+    'https://corsproxy.io/?' +
+    encodeURIComponent(
+      `https://amanogawa.space/api/search?s="${encodeURIComponent(title_ja)}"`,
+    );
+  const amanogawa_data = await (await fetch(url_cors_proxy_amanogawa)).json();
+
+  const anime = findMostSimilarEnJpName(title_ja, amanogawa_data, 0.8);
+
+  if (anime == null) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 export function findMostSimilarEnJpName(input, array, similarityThreshold) {
   function levenshteinDistance(a, b) {
     const matrix = [];
@@ -64,6 +82,7 @@ export default async function amanogawaButton(anime_data) {
   const anime = findMostSimilarEnJpName(title_ja, amanogawa_data, threshold);
 
   if (anime == null) {
+    document.getElementById('amanogawa-button').disabled = true;
     return;
   }
 

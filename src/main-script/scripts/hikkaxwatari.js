@@ -5,6 +5,16 @@ import globalCss from '../style.css';
 // @author      ~rosset-nocpes
 // @description Додає відео з Ватарі на сторінку аніме Хікки
 
+export function checkWatari(anime_data) {
+  const watari_external = anime_data.external.find((obj) =>
+    obj.url.includes('watari-anime.com'),
+  );
+
+  if (watari_external == undefined) {
+    return true;
+  }
+}
+
 export default async function hikkaWatari(anime_data) {
   const watari_external = anime_data.external.find((obj) =>
     obj.url.includes('watari-anime.com'),
