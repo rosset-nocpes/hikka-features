@@ -1,0 +1,21 @@
+@unocss preflights;
+
+.player_button {
+  @apply i-tabler:movie w-30px h-30px;
+}
+
+.divider-of-rules {
+  @apply opacity-0;
+}
+
+.unknown {
+  @apply i-tabler:file-off w-30px h-30px;
+}
+
+.divider-of-rules2 {
+  @apply opacity-0;
+}
+
+.settings {
+  @apply i-tabler:settings w-30px h-30px;
+}
