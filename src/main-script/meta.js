@@ -5,6 +5,7 @@
 // @match       https://hikka.io/*
 // @version     process.env.VERSION
 // @author      process.env.AUTHOR
+// @downloadURL https://rosset-nocpes.github.io/hikka-features/hikka-features.user.js
 // @grant       GM_addStyle
 // @require     https://cdn.jsdelivr.net/npm/@violentmonkey/dom
 // @require     https://cdn.jsdelivr.net/npm/@violentmonkey/url
