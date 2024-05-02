@@ -22,7 +22,8 @@ export default defineConfig(
         meta
           .replace('process.env.AUTHOR', pkg.author)
           .replace('process.env.VERSION', pkg.version)
-          .replace('process.env.DESCRIPTION', pkg.description),
+          .replace('process.env.DESCRIPTION', pkg.description)
+          .replace('process.env.ICON', pkg.icon),
       ),
     ],
     external: defineExternal([
