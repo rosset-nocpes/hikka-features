@@ -3,7 +3,7 @@
   "version": "1.0.1",
   "description": "Універсальний плагін для Hikka",
   "author": "~rosset-nocpes",
-  "icon": "https://rosset-nocpes.github.io/hikka-features/hikka-features-logo.png",
+  "icon": "https://raw.githubusercontent.com/rosset-nocpes/hikka-features/master/hikka-features-icon.png",
   "license": "MIT",
   "private": true,
   "engines": {
