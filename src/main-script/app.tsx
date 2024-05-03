@@ -136,7 +136,7 @@ onNavigate(async () => {
 
     render(
       () => scripts.aniButtons(anime_data),
-      info_block.children[1].children[0],
+      info_block.children[1].firstChild,
     );
 
     // aniBackground
@@ -158,5 +158,24 @@ onNavigate(async () => {
       () => scripts.aniBackground(kitsuData, showAniBackground),
       background.firstChild,
     );
+  } else if (split_path.length == 3 && path == 'edit') {
+    const edit_set = document.location.search.split(/&|=/);
+
+    if (edit_set[3] == 'anime') {
+      const anime_slug = edit_set[1];
+
+      const anime_data = await (
+        await fetch(`https://api.hikka.io/anime/${anime_slug}`)
+      ).json();
+
+      const info_block = document.querySelector('div.rounded-md:nth-child(2)');
+
+      info_block.insertAdjacentHTML(
+        'afterbegin',
+        '<div id="ani-buttons" style="display: flex; justify-content: center;"></div>',
+      );
+
+      render(() => scripts.aniButtons(anime_data), info_block.firstChild);
+    }
   }
 });
