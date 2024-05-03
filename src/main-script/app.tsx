@@ -136,7 +136,7 @@ onNavigate(async () => {
 
     render(
       () => scripts.aniButtons(anime_data),
-      info_block.children[1].children[0],
+      info_block.children[1].firstChild,
     );
 
     // aniBackground
@@ -157,6 +157,45 @@ onNavigate(async () => {
     render(
       () => scripts.aniBackground(kitsuData, showAniBackground),
       background.firstChild,
+    );
+  } else if (split_path.length == 3 && path == 'edit') {
+    const creatingEdit = typeof split_path[2] !== 'number';
+
+    const edit_set = creatingEdit
+      ? new URLSearchParams(document.location.search)
+      : null;
+
+    const edit_info = creatingEdit
+      ? null
+      : await (
+          await fetch(`https://api.hikka.io/edit/${split_path[2]}`)
+        ).json();
+
+    const content_type = creatingEdit
+      ? edit_set.get('content_type')
+      : edit_info.content.data_type;
+
+    // new edit page
+    const slug = creatingEdit ? edit_set.get('slug') : edit_info.content.slug;
+
+    const data = await (
+      await fetch(
+        `https://api.hikka.io/${content_type === 'character' ? 'characters' : content_type === 'person' ? 'people' : content_type}/${slug}`,
+      )
+    ).json();
+
+    const info_block = creatingEdit
+      ? document.querySelector('div.rounded-md:nth-child(2)')
+      : document.querySelector('div.rounded-md');
+
+    info_block.insertAdjacentHTML(
+      'afterbegin',
+      '<div id="ani-buttons" style="display: flex; justify-content: center;"></div>',
+    );
+
+    render(
+      () => scripts.aniButtons(data),
+      document.getElementById('ani-buttons'),
     );
   }
 });
