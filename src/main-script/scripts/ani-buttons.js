@@ -4,8 +4,16 @@
 // @author      ~rosset-nocpes
 // @description In future will be based on https://greasyfork.org/en/scripts/398046-anime-website-custom-buttons-plus
 
-export default function aniButtons(anime_data) {
-  const title = anime_data.title_ja;
+export default function aniButtons(data) {
+  const content_type =
+    data.data_type === 'person'
+      ? 'people'
+      : data.data_type === 'character'
+        ? 'characters'
+        : data.data_type;
+
+  const isAnime = content_type === 'anime';
+  const title = isAnime ? data.title_ja : data.name_en;
 
   const hosts = {
     mal: 'myanimelist.net',
@@ -16,17 +24,32 @@ export default function aniButtons(anime_data) {
   };
 
   const getUrl = (website) =>
-    anime_data.external.find((obj) => obj.url?.includes(hosts[website])).url;
+    isAnime
+      ? data.external.find((obj) => obj.url?.includes(hosts[website])).url
+      : null;
 
   const urls = {
-    mal: `https://myanimelist.net/anime.php?q=${title}`,
-    al: `https://anilist.co/search/anime?search=${title}&sort=SEARCH_MATCH`,
+    mal: `https://myanimelist.net/${content_type === 'characters' ? 'character' : content_type}.php?q=${title}`,
+    al: `https://anilist.co/search/${content_type === 'people' ? 'staff' : content_type}?search=${title}&sort=SEARCH_MATCH`,
     ad:
       getUrl('ad') ??
-      `https://anidb.net/anime/?adb.search=${title}&do.search=1`,
+      `https://anidb.net/${
+        content_type === 'characters'
+          ? 'character'
+          : content_type === 'people'
+            ? 'creator'
+            : content_type
+      }/?adb.search=${
+        content_type === 'people'
+          ? `${title.split(' ')[1]} ${title.split(' ')[0]}`
+          : title
+      }&do.search=1`,
     ann: getUrl('ann') ?? `https://www.animenewsnetwork.com/search?q=${title}`,
     wiki:
-      getUrl('wiki') ?? `https://en.wikipedia.org/w/index.php?search=${title}`,
+      content_type !== 'characters'
+        ? getUrl('wiki') ??
+          `https://en.wikipedia.org/w/index.php?search=${title}`
+        : null,
   };
 
   const searchUrls = [
@@ -40,6 +63,9 @@ export default function aniButtons(anime_data) {
   let ani_buttons = [];
 
   searchUrls.forEach((element) => {
+    if (element.url == null) {
+      return;
+    }
     ani_buttons.push(
       <a style="display: flex;" href={element.url} target="_blank">
         <img

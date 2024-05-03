@@ -159,23 +159,43 @@ onNavigate(async () => {
       background.firstChild,
     );
   } else if (split_path.length == 3 && path == 'edit') {
-    const edit_set = document.location.search.split(/&|=/);
+    const creatingEdit = typeof split_path[2] !== 'number';
 
-    if (edit_set[3] == 'anime') {
-      const anime_slug = edit_set[1];
+    const edit_set = creatingEdit
+      ? new URLSearchParams(document.location.search)
+      : null;
 
-      const anime_data = await (
-        await fetch(`https://api.hikka.io/anime/${anime_slug}`)
-      ).json();
+    const edit_info = creatingEdit
+      ? null
+      : await (
+          await fetch(`https://api.hikka.io/edit/${split_path[2]}`)
+        ).json();
 
-      const info_block = document.querySelector('div.rounded-md:nth-child(2)');
+    const content_type = creatingEdit
+      ? edit_set.get('content_type')
+      : edit_info.content.data_type;
 
-      info_block.insertAdjacentHTML(
-        'afterbegin',
-        '<div id="ani-buttons" style="display: flex; justify-content: center;"></div>',
-      );
+    // new edit page
+    const slug = creatingEdit ? edit_set.get('slug') : edit_info.content.slug;
 
-      render(() => scripts.aniButtons(anime_data), info_block.firstChild);
-    }
+    const data = await (
+      await fetch(
+        `https://api.hikka.io/${content_type === 'character' ? 'characters' : content_type === 'person' ? 'people' : content_type}/${slug}`,
+      )
+    ).json();
+
+    const info_block = creatingEdit
+      ? document.querySelector('div.rounded-md:nth-child(2)')
+      : document.querySelector('div.rounded-md');
+
+    info_block.insertAdjacentHTML(
+      'afterbegin',
+      '<div id="ani-buttons" style="display: flex; justify-content: center;"></div>',
+    );
+
+    render(
+      () => scripts.aniButtons(data),
+      document.getElementById('ani-buttons'),
+    );
   }
 });
