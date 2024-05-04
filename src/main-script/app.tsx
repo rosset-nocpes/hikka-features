@@ -159,7 +159,7 @@ onNavigate(async () => {
       background.firstChild,
     );
   } else if (split_path.length == 3 && path == 'edit') {
-    const creatingEdit = typeof split_path[2] !== 'number';
+    const creatingEdit = isNaN(parseInt(split_path[2]));
 
     const edit_set = creatingEdit
       ? new URLSearchParams(document.location.search)
@@ -186,7 +186,9 @@ onNavigate(async () => {
 
     const info_block = creatingEdit
       ? document.querySelector('div.rounded-md:nth-child(2)')
-      : document.querySelector('div.rounded-md');
+      : document.querySelector(
+          'div.gap-12:nth-child(1) > div:nth-child(2) > div:nth-child(2) > div:nth-child(2)',
+        );
 
     info_block.insertAdjacentHTML(
       'afterbegin',
