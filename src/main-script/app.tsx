@@ -4,14 +4,50 @@ import { stylesheet } from './style.module.css';
 import { render } from 'solid-js/web';
 import * as scripts from './scripts/index.js';
 import { createSignal } from 'solid-js';
-import { Transition } from 'solid-transition-group';
+import { Popover } from 'solid-simple-popover';
+import { autoPlacement } from '@floating-ui/dom';
 
 const [showSettings, toggleShowSettings] = createSignal(false);
 const [showAniBackground, toggleAniBackground] = createSignal(true);
+let settingsLoaded = false;
 
 const aniBackState = GM_getValue('aniBackState');
 
 !aniBackState ? GM_setValue('aniBackState', false) : '';
+
+function settingsMenu() {
+  return (
+    <div
+      id="settings-menu"
+      style="background: #0e0c10;border-width: 1px;border-radius: 10px;padding: 1rem;z-index: 11; height: 50%"
+    >
+      <div
+        class="flex items-center justify-center gap-2 border-b"
+        style="padding-bottom: 1rem"
+      >
+        <h3 class="scroll-m-20 font-display text-xl font-bold tracking-normal">
+          HFeatures Settings
+        </h3>
+      </div>
+      <div style="padding-block: 1rem;">
+        <label id="optionSetting">
+          <input
+            id="aniBToggle"
+            type="checkbox"
+            checked={aniBackState}
+            onClick={() => {
+              GM_getValue('aniBackState') == false
+                ? GM_setValue('aniBackState', true)
+                : GM_setValue('aniBackState', false);
+              toggleAniBackground(!showAniBackground());
+            }}
+          />
+          AniBackground (Experimantal)
+        </label>
+      </div>
+    </div>
+  );
+}
 
 function Main(anime_data) {
   let watariState = scripts.checkWatari(anime_data);
@@ -25,7 +61,6 @@ function Main(anime_data) {
       id="buttons-block"
       style="display: flex;justify-content: center;align-items: center;margin-top: -20px;"
     >
-      <style>{[globalCss, stylesheet].join('\n')}</style>
       <button
         id="player-button"
         onClick={() => scripts.hikkaWatari(anime_data)}
@@ -73,43 +108,51 @@ function Main(anime_data) {
   );
 }
 
-function settingsMenu() {
-  const settings_menu = document.querySelector('.order-1 > div:nth-child(1)');
+function settings() {
+  const navButtons = document.querySelector(
+    '.min-h-16 > div:nth-child(2) > div:nth-child(2) > button',
+  );
+
+  navButtons.insertAdjacentHTML('afterend', '<div id="settingsButton"></div>');
 
   render(
     () => (
-      <Transition name="slide-fade">
-        {showSettings() && (
-          <div
-            id="settings-menu"
-            style="background: #0e0c10;border-width: 1px;border-radius: 10px;padding: 10px;"
+      <Popover
+        trigger={
+          <button
+            class="inline-flex gap-2 items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-50 border border-secondary/60 bg-secondary/30 hover:bg-secondary/60 hover:text-secondary-foreground h-10 w-10 relative"
+            onClick={() => {
+              toggleShowSettings(!showSettings());
+            }}
           >
-            <label id="optionSetting">
-              <input
-                id="aniBToggle"
-                type="checkbox"
-                checked={aniBackState}
-                onClick={() => {
-                  GM_getValue('aniBackState') == false
-                    ? GM_setValue('aniBackState', true)
-                    : GM_setValue('aniBackState', false);
-                  toggleAniBackground(!showAniBackground());
-                }}
-              />
-              AniBackground (Experimantal)
-            </label>
-          </div>
-        )}
-      </Transition>
+            <span class="tabler--settings"></span>
+          </button>
+        }
+        autoUpdate
+        content={settingsMenu()}
+        computePositionOptions={{
+          middleware: [autoPlacement({ alignment: 'end' })],
+        }}
+      />
     ),
-    settings_menu,
+    document.getElementById('settingsButton'),
   );
 }
+
+document.body.insertAdjacentHTML(
+  'afterbegin',
+  `<style>${[globalCss, stylesheet].join('\n')}</style>`,
+);
 
 onNavigate(async () => {
   const split_path = document.location.pathname.split('/');
 
   const path = split_path[1];
+
+  if (settingsLoaded != true) {
+    settings();
+    settingsLoaded = true;
+  }
 
   // for anime page scripts
   if (split_path.length == 3 && path == 'anime') {
@@ -126,7 +169,6 @@ onNavigate(async () => {
     // to use buttons, check the Main function
     toggleShowSettings(false);
     render(() => Main(anime_data), info_block);
-    settingsMenu();
 
     // aniButtons
     info_block.children[1].insertAdjacentHTML(

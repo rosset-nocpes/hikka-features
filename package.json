@@ -21,9 +21,11 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.24.5",
+    "@floating-ui/dom": "^1.6.5",
     "@violentmonkey/dom": "^2.1.7",
     "@violentmonkey/url": "^0.1.0",
     "solid-js": "^1.8.17",
+    "solid-simple-popover": "^1.10.0",
     "solid-transition-group": "^0.2.3"
   },
   "devDependencies": {
