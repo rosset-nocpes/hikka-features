@@ -16,6 +16,15 @@
   }
 }
 
+@keyframes slideInFromRight {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
 #buttons-block {
   button {
     background: #27272a;
@@ -34,11 +43,14 @@
   }
 }
 
-#settings-menu {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden;
+[id^='popover-cl'] {
+  transform: translateX(0);
+  background: #0e0c10;
+  border-width: 1px;
+  border-radius: 10px;
+  height: 495px;
+  animation: 0.5s cubic-bezier(0.77, 0, 0.18, 1) 0s 1 slideInFromRight;
+  animation-direction: alternate;
 }
 
 #cover {

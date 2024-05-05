@@ -17,19 +17,16 @@ const aniBackState = GM_getValue('aniBackState');
 
 function settingsMenu() {
   return (
-    <div
-      id="settings-menu"
-      style="background: #0e0c10;border-width: 1px;border-radius: 10px;padding: 1rem;z-index: 11; height: 50%"
-    >
+    <div id="settings-menu">
       <div
         class="flex items-center justify-center gap-2 border-b"
-        style="padding-bottom: 1rem"
+        style="padding: 1rem"
       >
         <h3 class="scroll-m-20 font-display text-xl font-bold tracking-normal">
           HFeatures Settings
         </h3>
       </div>
-      <div style="padding-block: 1rem;">
+      <div style="padding: 1rem; height: 81.8%; border-bottom-width: 1px;">
         <label id="optionSetting">
           <input
             id="aniBToggle"
@@ -44,6 +41,9 @@ function settingsMenu() {
           />
           AniBackground (Experimantal)
         </label>
+      </div>
+      <div class="flex items-center justify-center" style="padding-top: .25rem">
+        <h1 style="color: gray;">Made with ❤️ by ~rosset-nocpes</h1>
       </div>
     </div>
   );
@@ -131,7 +131,12 @@ function settings() {
         autoUpdate
         content={settingsMenu()}
         computePositionOptions={{
-          middleware: [autoPlacement({ alignment: 'end' })],
+          middleware: [
+            autoPlacement({
+              autoAlignment: false,
+              allowedPlacements: ['right-start', 'left'],
+            }),
+          ],
         }}
       />
     ),
