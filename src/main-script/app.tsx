@@ -186,9 +186,7 @@ onNavigate(async () => {
 
     const info_block = creatingEdit
       ? document.querySelector('div.rounded-md:nth-child(2)')
-      : document.querySelector(
-          'div.gap-12:nth-child(1) > div:nth-child(2) > div:nth-child(2) > div:nth-child(2)',
-        );
+      : document.querySelector('div.flex.flex-col.gap-4.rounded-md');
 
     info_block.insertAdjacentHTML(
       'afterbegin',
