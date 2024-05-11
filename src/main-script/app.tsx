@@ -157,12 +157,13 @@ onNavigate(async () => {
     );
 
     if (!creatingEdit && content_type === 'character') {
+      const [uCharDisabled, toggleUCharDisabled] = createSignal(true);
       render(
         () => (
           <button
-            aria-description="hello"
             id="u-char-button"
             class="features-button"
+            disabled={uCharDisabled()}
             onClick={() => window.open(url, '_self')}
           >
             <span class="tabler--circle-arrow-right-filled"></span>
@@ -171,6 +172,7 @@ onNavigate(async () => {
         document.querySelector('#breadcrumbs'),
       );
       const url = await scripts.UCharButton(slug);
+      url ? toggleUCharDisabled(!uCharDisabled()) : null;
     }
   }
 });
