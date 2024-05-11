@@ -1,7 +1,5 @@
 /* eslint-disable no-undef */
 export default async function UCharButton(slug) {
-  // TODO: insert buttons on page
-
   const char_data = await (
     await fetch(`https://api.hikka.io/characters/${slug}/anime`)
   ).json();

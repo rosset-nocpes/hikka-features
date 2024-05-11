@@ -8,6 +8,7 @@ import { Transition } from 'solid-transition-group';
 
 const [showSettings, toggleShowSettings] = createSignal(false);
 const [showAniBackground, toggleAniBackground] = createSignal(true);
+let url, previousCreatingEdit;
 
 const aniBackState = GM_getValue('aniBackState');
 
@@ -171,8 +172,15 @@ onNavigate(async () => {
         ),
         document.querySelector('#breadcrumbs'),
       );
-      const url = await scripts.UCharButton(slug);
+
+      !previousCreatingEdit ? (url = await scripts.UCharButton(slug)) : null;
       url ? toggleUCharDisabled(!uCharDisabled()) : null;
+    } else if (creatingEdit && content_type === 'character') {
+      url = await scripts.UCharButton(slug);
     }
+
+    previousCreatingEdit = creatingEdit;
+  } else if (split_path.length == 3 && path !== 'edit') {
+    previousCreatingEdit = false;
   }
 });
