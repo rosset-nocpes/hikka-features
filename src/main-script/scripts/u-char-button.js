@@ -1,20 +1,25 @@
 /* eslint-disable no-undef */
-export default async function UCharButton(slug) {
-  const char_data = await (
-    await fetch(`https://api.hikka.io/characters/${slug}/anime`)
-  ).json();
+export default async function UCharButton(slug, previousAnimeSlug) {
+  console.log(previousAnimeSlug);
+
+  const char_data =
+    previousAnimeSlug == undefined
+      ? await (
+          await fetch(`https://api.hikka.io/characters/${slug}/anime`)
+        ).json()
+      : null;
 
   // TODO: somehow make to know exactly what anime is this
   const anime_data = await (
     await fetch(
-      `https://api.hikka.io/anime/${char_data.list[0].anime.slug}/characters?page=1&size=100`,
+      `https://api.hikka.io/anime/${previousAnimeSlug !== undefined ? previousAnimeSlug : char_data.list[0].anime.slug}/characters?page=1&size=100`,
     )
   ).json();
 
   for (let i = 1; i <= anime_data.pagination.total; i++) {
     const char_page = await (
       await fetch(
-        `https://api.hikka.io/anime/${char_data.list[0].anime.slug}/characters?page=${i}&size=100`,
+        `https://api.hikka.io/anime/${previousAnimeSlug !== undefined ? previousAnimeSlug : char_data.list[0].anime.slug}/characters?page=${i}&size=100`,
       )
     ).json();
 

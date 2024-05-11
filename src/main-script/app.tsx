@@ -8,7 +8,7 @@ import { Transition } from 'solid-transition-group';
 
 const [showSettings, toggleShowSettings] = createSignal(false);
 const [showAniBackground, toggleAniBackground] = createSignal(true);
-let url, previousCreatingEdit;
+let url, previousCreatingEdit, previousAnimeSlug;
 
 const aniBackState = GM_getValue('aniBackState');
 
@@ -63,6 +63,7 @@ onNavigate(async () => {
   // for anime page scripts
   if (split_path.length == 3 && path == 'anime') {
     const anime_slug = split_path[2];
+    previousAnimeSlug = anime_slug;
 
     const anime_data = await (
       await fetch(`https://api.hikka.io/anime/${anime_slug}`)
@@ -173,14 +174,23 @@ onNavigate(async () => {
         document.querySelector('#breadcrumbs'),
       );
 
-      !previousCreatingEdit ? (url = await scripts.UCharButton(slug)) : null;
+      !previousCreatingEdit
+        ? (url = await scripts.UCharButton(slug, previousAnimeSlug))
+        : null;
       url ? toggleUCharDisabled(!uCharDisabled()) : null;
     } else if (creatingEdit && content_type === 'character') {
-      url = await scripts.UCharButton(slug);
+      url = await scripts.UCharButton(slug, previousAnimeSlug);
     }
 
+    console.log(previousAnimeSlug);
+
     previousCreatingEdit = creatingEdit;
-  } else if (split_path.length == 3 && path !== 'edit') {
+  } else if (
+    split_path.length == 3 &&
+    path !== 'edit' &&
+    path !== 'characters'
+  ) {
     previousCreatingEdit = false;
+    previousAnimeSlug = undefined;
   }
 });
