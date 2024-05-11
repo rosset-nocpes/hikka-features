@@ -17,9 +17,9 @@ export default function Main(
       id="buttons-block"
       style="display: flex;justify-content: center;align-items: center;margin-top: -20px;"
     >
-      <style>{[globalCss, stylesheet].join('\n')}</style>
       <button
         id="player-button"
+        class="features-button"
         onClick={() => scripts.hikkaWatari(anime_data)}
         onLoad={() => (watariState = scripts.checkWatari(anime_data))}
         disabled={watariState}
@@ -30,6 +30,7 @@ export default function Main(
       </button>
       <button
         id="amanogawa-button"
+        class="features-button"
         onClick={() => scripts.amanogawaButton(anime_data)}
         disabled={amanogawaState}
         style="border-radius: 2px 2px 2px 2px;margin-right: 3px;"
@@ -53,6 +54,7 @@ export default function Main(
       </button>
       <button
         id="settings"
+        class="features-button"
         onClick={() => {
           toggleShowSettings(!showSettings());
         }}

@@ -8,6 +8,7 @@ import { Transition } from 'solid-transition-group';
 
 const [showSettings, toggleShowSettings] = createSignal(false);
 const [showAniBackground, toggleAniBackground] = createSignal(true);
+let url, previousCreatingEdit, previousAnimeSlug;
 
 const aniBackState = GM_getValue('aniBackState');
 
@@ -46,14 +47,23 @@ function settingsMenu() {
   );
 }
 
-onNavigate(async () => {
-  const split_path = document.location.pathname.split('/');
+document.body.insertAdjacentHTML(
+  'afterbegin',
+  `<style>${[globalCss, stylesheet].join('\n')}</style>`,
+);
 
+onNavigate(async () => {
+  // remove other scripts on change of page
+  const u_char_button = document.getElementById('u-char-button');
+  u_char_button ? u_char_button.remove() : null;
+
+  const split_path = document.location.pathname.split('/');
   const path = split_path[1];
 
   // for anime page scripts
   if (split_path.length == 3 && path == 'anime') {
     const anime_slug = split_path[2];
+    previousAnimeSlug = anime_slug;
 
     const anime_data = await (
       await fetch(`https://api.hikka.io/anime/${anime_slug}`)
@@ -125,9 +135,9 @@ onNavigate(async () => {
       ? edit_set.get('content_type')
       : edit_info.content.data_type;
 
-    // ani-buttons on edit page
     const slug = creatingEdit ? edit_set.get('slug') : edit_info.content.slug;
 
+    // ani-buttons on edit page
     const data = await (
       await fetch(
         `https://api.hikka.io/${content_type === 'character' ? 'characters' : content_type === 'person' ? 'people' : content_type}/${slug}`,
@@ -147,5 +157,40 @@ onNavigate(async () => {
       () => scripts.aniButtons(data),
       document.getElementById('ani-buttons'),
     );
+
+    if (!creatingEdit && content_type === 'character') {
+      const [uCharDisabled, toggleUCharDisabled] = createSignal(true);
+      render(
+        () => (
+          <button
+            id="u-char-button"
+            class="features-button"
+            disabled={uCharDisabled()}
+            onClick={() => window.open(url, '_self')}
+          >
+            <span class="tabler--circle-arrow-right-filled"></span>
+          </button>
+        ),
+        document.querySelector('#breadcrumbs'),
+      );
+
+      !previousCreatingEdit
+        ? (url = await scripts.UCharButton(slug, previousAnimeSlug))
+        : null;
+      url ? toggleUCharDisabled(!uCharDisabled()) : null;
+    } else if (creatingEdit && content_type === 'character') {
+      url = await scripts.UCharButton(slug, previousAnimeSlug);
+    }
+
+    console.log(previousAnimeSlug);
+
+    previousCreatingEdit = creatingEdit;
+  } else if (
+    split_path.length == 3 &&
+    path !== 'edit' &&
+    path !== 'characters'
+  ) {
+    previousCreatingEdit = false;
+    previousAnimeSlug = undefined;
   }
 });
