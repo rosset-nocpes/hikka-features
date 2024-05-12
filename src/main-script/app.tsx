@@ -54,8 +54,8 @@ document.body.insertAdjacentHTML(
 
 onNavigate(async () => {
   // remove other scripts on change of page
-  const u_char_button = document.getElementById('u-char-button');
-  u_char_button ? u_char_button.remove() : null;
+  const u_char_button = document.querySelectorAll('.hikka-features');
+  u_char_button ? u_char_button.forEach((e) => e.remove()) : null;
 
   const split_path = document.location.pathname.split('/');
   const path = split_path[1];
@@ -92,7 +92,7 @@ onNavigate(async () => {
     // aniButtons
     info_block.children[1].insertAdjacentHTML(
       'afterbegin',
-      '<div id="ani-buttons" style="display: flex; justify-content: center;"></div>',
+      '<div id="ani-buttons" class="hikka-features" style="display: flex; justify-content: center;"></div>',
     );
 
     render(
@@ -150,7 +150,7 @@ onNavigate(async () => {
 
     info_block.insertAdjacentHTML(
       'afterbegin',
-      '<div id="ani-buttons" style="display: flex; justify-content: center;"></div>',
+      '<div id="ani-buttons" class="hikka-features" style="display: flex; justify-content: center;"></div>',
     );
 
     render(
@@ -164,7 +164,7 @@ onNavigate(async () => {
         () => (
           <button
             id="u-char-button"
-            class="features-button"
+            class="features-button hikka-features"
             disabled={uCharDisabled()}
             onClick={() => window.open(url, '_self')}
           >

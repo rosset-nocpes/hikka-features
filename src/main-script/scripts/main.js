@@ -22,6 +22,7 @@ export default function Main(
   return (
     <div
       id="buttons-block"
+      class="hikka-features"
       style="display: flex;justify-content: center;align-items: center;margin-top: -20px;"
     >
       <button
