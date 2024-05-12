@@ -15,11 +15,7 @@ export async function checkAmanogawa(anime_data) {
 
   const anime = findMostSimilarEnJpName(title_ja, amanogawa_data, 0.8);
 
-  if (anime == null) {
-    return true;
-  } else {
-    return false;
-  }
+  return anime != null;
 }
 
 export function findMostSimilarEnJpName(input, array, similarityThreshold) {

@@ -1,3 +1,5 @@
+import { createSignal } from 'solid-js';
+
 export default function Main(
   anime_data,
   scripts,
@@ -6,11 +8,16 @@ export default function Main(
   showSettings,
   toggleShowSettings,
 ) {
-  let watariState = scripts.checkWatari(anime_data);
-  const amanogawaState = false;
+  const [watariDisabled, toggleWatariDisabled] = createSignal(true);
+  const [amanogawaDisabled, toggleAmanogawaDisabled] = createSignal(true);
 
-  // TODO: dynamic check for availability on Amanogawa
-  // const amanogawaState = scripts.checkAmanogawa(anime_data);
+  scripts.checkWatari(anime_data)
+    ? toggleWatariDisabled(!watariDisabled())
+    : null;
+
+  scripts
+    .checkAmanogawa(anime_data)
+    .then((x) => (x ? toggleAmanogawaDisabled(!amanogawaDisabled()) : null));
 
   return (
     <div
@@ -21,8 +28,7 @@ export default function Main(
         id="player-button"
         class="features-button"
         onClick={() => scripts.hikkaWatari(anime_data)}
-        onLoad={() => (watariState = scripts.checkWatari(anime_data))}
-        disabled={watariState}
+        disabled={watariDisabled()}
         style="margin-right: 3px;border-radius: 10px 2px 2px 10px;"
       >
         {/* <div class={styles.player_button} style="color: gray;"></div> */}
@@ -32,7 +38,7 @@ export default function Main(
         id="amanogawa-button"
         class="features-button"
         onClick={() => scripts.amanogawaButton(anime_data)}
-        disabled={amanogawaState}
+        disabled={amanogawaDisabled()}
         style="border-radius: 2px 2px 2px 2px;margin-right: 3px;"
       >
         <svg

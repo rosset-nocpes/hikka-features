@@ -10,9 +10,7 @@ export function checkWatari(anime_data) {
     obj.url.includes('watari-anime.com'),
   );
 
-  if (watari_external == undefined) {
-    return true;
-  }
+  return watari_external != undefined;
 }
 
 export default async function hikkaWatari(anime_data) {
