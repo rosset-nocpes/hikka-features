@@ -1,7 +1,5 @@
 /* eslint-disable no-undef */
 export default async function UCharButton(slug, previousAnimeSlug) {
-  console.log(previousAnimeSlug);
-
   const char_data =
     previousAnimeSlug == undefined
       ? await (

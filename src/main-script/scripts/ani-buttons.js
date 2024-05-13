@@ -23,9 +23,11 @@ export default function aniButtons(data) {
     wiki: 'en.wikipedia.org',
   };
 
+  console.log(data);
+
   const getUrl = (website) =>
     isAnime
-      ? data.external.find((obj) => obj.url?.includes(hosts[website])).url
+      ? data.external.find((obj) => obj.url?.includes(hosts[website]))?.url
       : null;
 
   const urls = {
