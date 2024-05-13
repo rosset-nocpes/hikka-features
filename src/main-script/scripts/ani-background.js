@@ -6,7 +6,7 @@ import { Transition } from 'solid-transition-group';
 // @description Adds background
 
 export default function aniBackground(kitsuData, showAniBackground) {
-  const cover = kitsuData.data[0].attributes.coverImage.small;
+  const cover = kitsuData.data[0].attributes.coverImage?.small;
 
   document
     .getElementsByTagName('head')[0]

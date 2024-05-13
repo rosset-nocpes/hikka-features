@@ -7,12 +7,12 @@ import { createSignal } from 'solid-js';
 import { Transition } from 'solid-transition-group';
 
 const [showSettings, toggleShowSettings] = createSignal(false);
-const [showAniBackground, toggleAniBackground] = createSignal(true);
+const [showAniBackground, toggleAniBackground] = createSignal(
+  GM_getValue('aniBackState'),
+);
 let url, previousCreatingEdit, previousAnimeSlug;
 
-const aniBackState = GM_getValue('aniBackState');
-
-!aniBackState ? GM_setValue('aniBackState', false) : '';
+!showAniBackground() ? GM_setValue('aniBackState', false) : '';
 
 function settingsMenu() {
   const settings_menu = document.querySelector('.order-1 > div:nth-child(1)');
@@ -29,9 +29,9 @@ function settingsMenu() {
               <input
                 id="aniBToggle"
                 type="checkbox"
-                checked={aniBackState}
+                checked={showAniBackground()}
                 onClick={() => {
-                  GM_getValue('aniBackState') == false
+                  !GM_getValue('aniBackState')
                     ? GM_setValue('aniBackState', true)
                     : GM_setValue('aniBackState', false);
                   toggleAniBackground(!showAniBackground());
@@ -101,21 +101,19 @@ onNavigate(async () => {
     );
 
     // aniBackground
-    const visibility = GM_getValue('aniBackState') ? 'initial' : 'none';
-
     const title = anime_data.title_ja;
     const kitsuData = await (
       await fetch(`https://kitsu.io/api/edge/anime?filter[text]=${title}`)
     ).json();
 
     const background = document.querySelector('body main > .grid');
-    background.insertAdjacentHTML(
-      'afterbegin',
-      `<div style="display: ${visibility};" class="absolute left-0 top-0 -z-20 h-80 w-full overflow-hidden opacity-40"></div>`,
-    );
 
     render(
-      () => scripts.aniBackground(kitsuData, showAniBackground),
+      () => (
+        <div class="absolute left-0 top-0 -z-20 h-80 w-full overflow-hidden opacity-40">
+          {scripts.aniBackground(kitsuData, showAniBackground)}
+        </div>
+      ),
       background.firstChild,
     );
   } else if (split_path.length == 3 && path == 'edit') {
