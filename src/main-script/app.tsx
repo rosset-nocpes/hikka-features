@@ -182,8 +182,6 @@ onNavigate(async () => {
       url = await scripts.UCharButton(slug, previousAnimeSlug);
     }
 
-    console.log(previousAnimeSlug);
-
     previousCreatingEdit = creatingEdit;
   } else if (
     split_path.length == 3 &&
