@@ -10,8 +10,13 @@ const [showSettings, toggleShowSettings] = createSignal(false);
 const [showAniBackground, toggleAniBackground] = createSignal(
   GM_getValue('aniBackState'),
 );
-let url, previousCreatingEdit, previousAnimeSlug;
+let url;
+const previousCreatingEdit = GM_getValue('previousCreatingEdit');
 
+!previousCreatingEdit ? GM_setValue('previousCreatingEdit', false) : '';
+GM_getValue('previousAnimeSlug') == ''
+  ? GM_setValue('previousAnimeSlug', '')
+  : '';
 !showAniBackground() ? GM_setValue('aniBackState', false) : '';
 
 function settingsMenu() {
@@ -54,16 +59,18 @@ document.body.insertAdjacentHTML(
 
 onNavigate(async () => {
   // remove other scripts on change of page
-  const u_char_button = document.querySelectorAll('.hikka-features');
-  u_char_button ? u_char_button.forEach((e) => e.remove()) : null;
+  const features = document.querySelectorAll('.hikka-features');
+  features ? features.forEach((e) => e.remove()) : null;
 
   const split_path = document.location.pathname.split('/');
   const path = split_path[1];
+  const isHomepage = document.location.pathname == '/';
+
+  path == 'anime' ? GM_setValue('previousAnimeSlug', split_path[2]) : null;
 
   // for anime page scripts
   if (split_path.length == 3 && path == 'anime') {
     const anime_slug = split_path[2];
-    previousAnimeSlug = anime_slug;
 
     const anime_data = await (
       await fetch(`https://api.hikka.io/anime/${anime_slug}`)
@@ -156,7 +163,10 @@ onNavigate(async () => {
       document.getElementById('ani-buttons'),
     );
 
-    if (!creatingEdit && content_type === 'character') {
+    if (
+      (!creatingEdit && content_type === 'character') ||
+      (!creatingEdit && content_type === 'person')
+    ) {
       const [uCharDisabled, toggleUCharDisabled] = createSignal(true);
       render(
         () => (
@@ -173,20 +183,34 @@ onNavigate(async () => {
       );
 
       !previousCreatingEdit
-        ? (url = await scripts.UCharButton(slug, previousAnimeSlug))
+        ? (url = await scripts.UCharButton(
+            slug,
+            content_type,
+            GM_getValue('previousAnimeSlug'),
+          ))
         : null;
       url ? toggleUCharDisabled(!uCharDisabled()) : null;
-    } else if (creatingEdit && content_type === 'character') {
-      url = await scripts.UCharButton(slug, previousAnimeSlug);
+    } else if (
+      (creatingEdit && content_type === 'character') ||
+      (creatingEdit && content_type === 'person')
+    ) {
+      url = await scripts.UCharButton(
+        slug,
+        content_type,
+        GM_getValue('previousAnimeSlug'),
+      );
     }
 
-    previousCreatingEdit = creatingEdit;
+    GM_setValue('previousCreatingEdit', creatingEdit);
   } else if (
-    split_path.length == 3 &&
-    path !== 'edit' &&
-    path !== 'characters'
+    (split_path.length == 3 &&
+      path !== 'edit' &&
+      path !== 'characters' &&
+      path !== 'people' &&
+      !previousCreatingEdit) ||
+    isHomepage
   ) {
-    previousCreatingEdit = false;
-    previousAnimeSlug = undefined;
+    GM_setValue('previousCreatingEdit', false);
+    GM_setValue('previousAnimeSlug', '');
   }
 });

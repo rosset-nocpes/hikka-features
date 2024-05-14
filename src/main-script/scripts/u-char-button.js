@@ -1,30 +1,38 @@
 /* eslint-disable no-undef */
-export default async function UCharButton(slug, previousAnimeSlug) {
-  const char_data =
-    previousAnimeSlug == undefined
+export default async function UCharButton(
+  slug,
+  content_type,
+  previousAnimeSlug,
+) {
+  const isPerson = content_type == 'person';
+
+  const data =
+    previousAnimeSlug == ''
       ? await (
-          await fetch(`https://api.hikka.io/characters/${slug}/anime`)
+          await fetch(
+            `https://api.hikka.io/${content_type != 'person' ? 'characters' : 'people'}/${slug}/anime`,
+          )
         ).json()
       : null;
 
   // TODO: somehow make to know exactly what anime is this
   const anime_data = await (
     await fetch(
-      `https://api.hikka.io/anime/${previousAnimeSlug !== undefined ? previousAnimeSlug : char_data.list[0].anime.slug}/characters?page=1&size=100`,
+      `https://api.hikka.io/anime/${previousAnimeSlug != '' ? previousAnimeSlug : data.list[0].anime.slug}/${!isPerson ? 'characters' : 'staff'}?page=1&size=100`,
     )
   ).json();
 
   for (let i = 1; i <= anime_data.pagination.total; i++) {
-    const char_page = await (
+    const page = await (
       await fetch(
-        `https://api.hikka.io/anime/${previousAnimeSlug !== undefined ? previousAnimeSlug : char_data.list[0].anime.slug}/characters?page=${i}&size=100`,
+        `https://api.hikka.io/anime/${previousAnimeSlug != '' ? previousAnimeSlug : data.list[0].anime.slug}/${!isPerson ? 'characters' : 'staff'}?page=${i}&size=100`,
       )
     ).json();
 
-    for (let i = 0; i < char_page.list.length; i++) {
-      const element = char_page.list[i];
+    for (let i = 0; i < page.list.length; i++) {
+      const element = page.list[i];
 
-      const character = element.character;
+      const content = !isPerson ? element.character : element.person;
 
       const pendings = await (
         await fetch(`https://api.hikka.io/edit/list?page=1&size=1`, {
@@ -35,19 +43,19 @@ export default async function UCharButton(slug, previousAnimeSlug) {
           },
           body: JSON.stringify({
             sort: ['edit_id:desc', 'created:desc'],
-            content_type: 'character',
+            content_type: !isPerson ? 'character' : 'person',
             status: 'pending',
-            slug: character.slug,
+            slug: content.slug,
           }),
         })
       ).json();
 
       if (
-        character.slug !== slug &&
-        character.name_ua == null &&
+        content.slug != slug &&
+        content.name_ua == null &&
         pendings.pagination.total == 0
       ) {
-        const url = `https://hikka.io/edit/new?content_type=character&slug=${character.slug}`;
+        const url = `https://hikka.io/edit/new?content_type=${!isPerson ? 'characters' : 'person'}&slug=${content.slug}`;
         return url;
       }
     }
