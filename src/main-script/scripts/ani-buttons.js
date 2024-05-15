@@ -5,12 +5,16 @@
 // @description In future will be based on https://greasyfork.org/en/scripts/398046-anime-website-custom-buttons-plus
 
 export default function aniButtons(data) {
-  const content_type =
-    data.data_type === 'person'
-      ? 'people'
-      : data.data_type === 'character'
-        ? 'characters'
-        : data.data_type;
+  const content_type = data.data_type;
+
+  const contentTypeMap = {
+    characters: {
+      mal: 'character',
+      al: 'character',
+      ad: 'character',
+    },
+    person: { mal: 'people', al: 'staff', ad: 'creator' },
+  };
 
   const isAnime = content_type === 'anime';
   const title = isAnime ? data.title_ja : data.name_en;
@@ -22,6 +26,7 @@ export default function aniButtons(data) {
     ann: 'animenewsnetwork.com',
     wiki: 'en.wikipedia.org',
   };
+  console.log(content_type);
 
   const getUrl = (website) =>
     isAnime
@@ -29,24 +34,18 @@ export default function aniButtons(data) {
       : null;
 
   const urls = {
-    mal: `https://myanimelist.net/${content_type === 'characters' ? 'character' : content_type}.php?q=${title}`,
-    al: `https://anilist.co/search/${content_type === 'people' ? 'staff' : content_type}?search=${title}&sort=SEARCH_MATCH`,
+    mal: `https://myanimelist.net/${contentTypeMap[content_type]?.mal || content_type}.php?q=${title}`,
+    al: `https://anilist.co/search/${contentTypeMap[content_type]?.al || content_type}?search=${title}&sort=SEARCH_MATCH`,
     ad:
       getUrl('ad') ??
-      `https://anidb.net/${
-        content_type === 'characters'
-          ? 'character'
-          : content_type === 'people'
-            ? 'creator'
-            : content_type
-      }/?adb.search=${
-        content_type === 'people'
+      `https://anidb.net/${contentTypeMap[content_type]?.ad || content_type}/?adb.search=${
+        ['person', 'character'].includes(content_type)
           ? `${title.split(' ')[1]} ${title.split(' ')[0]}`
           : title
       }&do.search=1`,
     ann: getUrl('ann') ?? `https://www.animenewsnetwork.com/search?q=${title}`,
     wiki:
-      content_type !== 'characters'
+      content_type !== 'character'
         ? getUrl('wiki') ??
           `https://en.wikipedia.org/w/index.php?search=${title}`
         : null,

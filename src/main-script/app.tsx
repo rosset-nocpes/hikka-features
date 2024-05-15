@@ -126,7 +126,7 @@ onNavigate(async () => {
           {scripts.aniBackground(kitsuData, showAniBackground)}
         </div>
       ),
-      background.firstChild,
+      background,
     );
   } else if (split_path.length == 3 && path == 'edit') {
     const creatingEdit = isNaN(parseInt(split_path[2]));

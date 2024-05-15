@@ -30,8 +30,8 @@
     "@babel/plugin-transform-react-jsx": "^7.23.4",
     "@gera2ld/plaid": "~2.7.0",
     "@gera2ld/plaid-rollup": "~2.7.0",
-    "@iconify-json/tabler": "^1.1.110",
-    "@unocss/postcss": "^0.58.9",
+    "@iconify-json/tabler": "^1.1.111",
+    "@unocss/postcss": "^0.60.2",
     "@violentmonkey/types": "^0.1.7",
     "babel-preset-solid": "^1.8.17",
     "cross-env": "^7.0.3",
@@ -41,7 +41,7 @@
     "lint-staged": "^15.2.2",
     "prettier": "^3.2.5",
     "rollup-plugin-userscript": "^0.3.2",
-    "unocss": "^0.58.9"
+    "unocss": "^0.60.2"
   },
   "lint-staged": {
     "src/**": [
