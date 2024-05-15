@@ -1,24 +1,37 @@
 /* eslint-disable no-undef */
 // @name        Amanogawa Button
-// @version     1.0
+// @version     1.1
 // @author      Lorg0n
 // @description original: https://gist.github.com/rosset-nocpes/f251942d47662b725329772533769399/raw/
 
 export async function checkAmanogawa(anime_data) {
   const title_ja = anime_data['title_ja'];
+  const title_year = anime_data['year'];
+
   const url_cors_proxy_amanogawa =
     'https://corsproxy.io/?' +
     encodeURIComponent(
       `https://amanogawa.space/api/search?s="${encodeURIComponent(title_ja)}"`,
     );
+
   const amanogawa_data = await (await fetch(url_cors_proxy_amanogawa)).json();
 
-  const anime = findMostSimilarEnJpName(title_ja, amanogawa_data, 0.8);
+  const anime = findMostSimilarEnJpName(
+    title_ja,
+    title_year,
+    amanogawa_data,
+    0.8,
+  );
 
   return anime != null;
 }
 
-export function findMostSimilarEnJpName(input, array, similarityThreshold) {
+export function findMostSimilarEnJpName(
+  input,
+  inputYear,
+  array,
+  similarityThreshold,
+) {
   function levenshteinDistance(a, b) {
     const matrix = [];
     for (let i = 0; i <= b.length; i++) {
@@ -53,7 +66,8 @@ export function findMostSimilarEnJpName(input, array, similarityThreshold) {
 
     if (
       enJpNameSimilarity > highestSimilarity &&
-      enJpNameSimilarity >= similarityThreshold
+      enJpNameSimilarity >= similarityThreshold &&
+      obj.year
     ) {
       highestSimilarity = enJpNameSimilarity;
       mostSimilarObject = obj;
@@ -67,6 +81,7 @@ export default async function amanogawaButton(anime_data) {
   const threshold = 0.8; // Значення -> [0; 1]. Це рівень перевірки схожості назви аніме, тому що пошук на amanogawa працює дуже дивно й іноді видає аніме, які взагалі не потрібні були.
 
   const title_ja = anime_data['title_ja'];
+  const title_year = anime_data['year'];
 
   const url_cors_proxy_amanogawa =
     'https://corsproxy.io/?' +
@@ -75,7 +90,12 @@ export default async function amanogawaButton(anime_data) {
     );
   const amanogawa_data = await (await fetch(url_cors_proxy_amanogawa)).json();
 
-  const anime = findMostSimilarEnJpName(title_ja, amanogawa_data, threshold);
+  const anime = findMostSimilarEnJpName(
+    title_ja,
+    title_year,
+    amanogawa_data,
+    threshold,
+  );
 
   if (anime == null) {
     document.getElementById('amanogawa-button').disabled = true;
