@@ -11,12 +11,17 @@ const [showAniBackground, toggleAniBackground] = createSignal(
   GM_getValue('aniBackState'),
 );
 let url;
-const previousCreatingEdit = GM_getValue('previousCreatingEdit');
+const [getPreviousCreatingEdit, setPreviousCreatingEdit] = [
+  () => GM_getValue('previousCreatingEdit'),
+  (input) => GM_setValue('previousCreatingEdit', input),
+];
+const [getPreviousAnimeSlug, setPreviousAnimeSlug] = [
+  () => GM_getValue('previousAnimeSlug'),
+  (input) => GM_setValue('previousAnimeSlug', input),
+];
 
-!previousCreatingEdit ? GM_setValue('previousCreatingEdit', false) : '';
-GM_getValue('previousAnimeSlug') == ''
-  ? GM_setValue('previousAnimeSlug', '')
-  : '';
+!getPreviousCreatingEdit() ? setPreviousCreatingEdit(false) : '';
+getPreviousAnimeSlug() == '' ? setPreviousAnimeSlug('') : '';
 !showAniBackground() ? GM_setValue('aniBackState', false) : '';
 
 function settingsMenu() {
@@ -66,7 +71,7 @@ onNavigate(async () => {
   const path = split_path[1];
   const isHomepage = document.location.pathname == '/';
 
-  path == 'anime' ? GM_setValue('previousAnimeSlug', split_path[2]) : null;
+  path == 'anime' ? setPreviousAnimeSlug(split_path[2]) : null;
 
   // for anime page scripts
   if (split_path.length == 3 && path == 'anime') {
@@ -164,8 +169,9 @@ onNavigate(async () => {
     );
 
     if (
-      (!creatingEdit && content_type === 'character') ||
-      (!creatingEdit && content_type === 'person')
+      !creatingEdit &&
+      getPreviousCreatingEdit() &&
+      (content_type === 'character' || content_type === 'person')
     ) {
       const [uCharDisabled, toggleUCharDisabled] = createSignal(true);
       render(
@@ -182,35 +188,36 @@ onNavigate(async () => {
         document.querySelector('#breadcrumbs'),
       );
 
-      !previousCreatingEdit
+      !getPreviousCreatingEdit()
         ? (url = await scripts.UCharButton(
             slug,
             content_type,
-            GM_getValue('previousAnimeSlug'),
+            getPreviousAnimeSlug(),
           ))
         : null;
       url ? toggleUCharDisabled(!uCharDisabled()) : null;
     } else if (
-      (creatingEdit && content_type === 'character') ||
-      (creatingEdit && content_type === 'person')
+      creatingEdit &&
+      (content_type === 'character' || content_type === 'person')
     ) {
       url = await scripts.UCharButton(
         slug,
         content_type,
-        GM_getValue('previousAnimeSlug'),
+        getPreviousAnimeSlug(),
       );
     }
 
-    GM_setValue('previousCreatingEdit', creatingEdit);
+    setPreviousCreatingEdit(creatingEdit);
   } else if (
     (split_path.length == 3 &&
       path !== 'edit' &&
       path !== 'characters' &&
       path !== 'people' &&
-      !previousCreatingEdit) ||
+      !getPreviousCreatingEdit()) ||
+    (split_path.length == 2 && path === 'edit') ||
     isHomepage
   ) {
-    GM_setValue('previousCreatingEdit', false);
-    GM_setValue('previousAnimeSlug', '');
+    setPreviousCreatingEdit(false);
+    setPreviousAnimeSlug('');
   }
 });
