@@ -8,10 +8,8 @@ export default function aniButtons(data) {
   const content_type = data.data_type;
 
   const contentTypeMap = {
-    characters: {
-      mal: 'character',
-      al: 'character',
-      ad: 'character',
+    character: {
+      al: 'characters',
     },
     person: { mal: 'people', al: 'staff', ad: 'creator' },
   };
