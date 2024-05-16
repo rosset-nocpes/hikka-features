@@ -24,7 +24,6 @@ export default function aniButtons(data) {
     ann: 'animenewsnetwork.com',
     wiki: 'en.wikipedia.org',
   };
-  console.log(content_type);
 
   const getUrl = (website) =>
     isAnime
