@@ -55,7 +55,7 @@ export default async function UCharButton(
         content.name_ua == null &&
         pendings.pagination.total == 0
       ) {
-        const url = `https://hikka.io/edit/new?content_type=${!isPerson ? 'characters' : 'person'}&slug=${content.slug}`;
+        const url = `https://hikka.io/edit/new?content_type=${!isPerson ? 'character' : 'person'}&slug=${content.slug}`;
         return url;
       }
     }
