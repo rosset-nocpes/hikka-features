@@ -20,6 +20,16 @@ const [getPreviousAnimeSlug, setPreviousAnimeSlug] = [
   (input) => GM_setValue('previousAnimeSlug', input),
 ];
 
+// Only for edit page!
+const isModerator = () =>
+  document.evaluate(
+    '/html/body/main/div/div[1]/div/div[1]/div[2]',
+    document,
+    null,
+    XPathResult.BOOLEAN_TYPE,
+    null,
+  ).booleanValue;
+
 !getPreviousCreatingEdit() ? setPreviousCreatingEdit(false) : '';
 getPreviousAnimeSlug() == '' ? setPreviousAnimeSlug('') : '';
 !showAniBackground() ? GM_setValue('aniBackState', false) : '';
@@ -131,21 +141,20 @@ onNavigate(async () => {
   } else if (split_path.length == 3 && path == 'edit') {
     const creatingEdit = isNaN(parseInt(split_path[2]));
 
-    const edit_set = creatingEdit
-      ? new URLSearchParams(document.location.search)
-      : null;
-
     const edit_info = creatingEdit
-      ? null
+      ? new URLSearchParams(document.location.search)
       : await (
           await fetch(`https://api.hikka.io/edit/${split_path[2]}`)
         ).json();
 
+    const getEditInfo = async () =>
+      await (await fetch(`https://api.hikka.io/edit/${split_path[2]}`)).json();
+
     const content_type = creatingEdit
-      ? edit_set.get('content_type')
+      ? edit_info.get('content_type')
       : edit_info.content.data_type;
 
-    const slug = creatingEdit ? edit_set.get('slug') : edit_info.content.slug;
+    const slug = creatingEdit ? edit_info.get('slug') : edit_info.content.slug;
 
     // ani-buttons on edit page
     const data = await (
@@ -168,6 +177,34 @@ onNavigate(async () => {
       document.getElementById('ani-buttons'),
     );
 
+    // next-edit-button
+    if (
+      !creatingEdit &&
+      (await getEditInfo()).status !== 'accepted' &&
+      !getPreviousCreatingEdit() &&
+      isModerator()
+    ) {
+      const [getNextEditButton, toggleNextEditButton] = createSignal(true);
+      render(
+        () => (
+          <button
+            id="next-edit-button"
+            class="features-button hikka-features"
+            disabled={getNextEditButton()}
+            onClick={() => window.open(url, '_self')}
+          >
+            <span class="tabler--circle-arrow-right-filled"></span>
+          </button>
+        ),
+        document.querySelector('#breadcrumbs'),
+      );
+
+      const url = await scripts.NextEditURL(edit_info.edit_id);
+
+      url ? toggleNextEditButton(!getNextEditButton()) : null;
+    }
+
+    // u-char-button
     if (
       !creatingEdit &&
       getPreviousCreatingEdit() &&
@@ -189,7 +226,7 @@ onNavigate(async () => {
       );
 
       !getPreviousCreatingEdit()
-        ? (url = await scripts.UCharButton(
+        ? (url = await scripts.UCharURL(
             slug,
             content_type,
             getPreviousAnimeSlug(),
@@ -200,11 +237,7 @@ onNavigate(async () => {
       creatingEdit &&
       (content_type === 'character' || content_type === 'person')
     ) {
-      url = await scripts.UCharButton(
-        slug,
-        content_type,
-        getPreviousAnimeSlug(),
-      );
+      url = await scripts.UCharURL(slug, content_type, getPreviousAnimeSlug());
     }
 
     setPreviousCreatingEdit(creatingEdit);

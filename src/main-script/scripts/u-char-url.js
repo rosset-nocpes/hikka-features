@@ -1,9 +1,5 @@
 /* eslint-disable no-undef */
-export default async function UCharButton(
-  slug,
-  content_type,
-  previousAnimeSlug,
-) {
+export default async function UCharURL(slug, content_type, previousAnimeSlug) {
   const isPerson = content_type == 'person';
 
   const data =
