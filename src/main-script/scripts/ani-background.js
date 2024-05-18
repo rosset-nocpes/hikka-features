@@ -1,4 +1,5 @@
 import { Transition } from 'solid-transition-group';
+import { createSignal, onMount } from 'solid-js';
 /* eslint-disable no-undef */
 // @name        AniBackground
 // @version     1.0.0
@@ -8,16 +9,18 @@ import { Transition } from 'solid-transition-group';
 export default function aniBackground(kitsuData, showAniBackground) {
   const cover = kitsuData.data[0].attributes.coverImage?.small;
 
-  document
-    .getElementsByTagName('head')[0]
-    .insertAdjacentHTML(
-      'beforeend',
-      `<link rel="preload" as="image" href="${cover}" fetchpriority="high">`,
-    );
+  const [isLoaded, setIsLoaded] = createSignal(false);
+
+  onMount(() => {
+    const img = new Image();
+    img.src = cover;
+
+    img.onload = () => setIsLoaded(true);
+  });
 
   return (
     <Transition name="slide">
-      {showAniBackground() && (
+      {showAniBackground() && isLoaded() && (
         <img
           id="cover"
           alt="cover"
