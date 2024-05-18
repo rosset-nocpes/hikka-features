@@ -36,7 +36,8 @@ export default function aniButtons(data) {
     ad:
       getUrl('ad') ??
       `https://anidb.net/${contentTypeMap[content_type]?.ad || content_type}/?adb.search=${
-        ['person', 'character'].includes(content_type)
+        ['person', 'character'].includes(content_type) &&
+        title.split(' ').length == 2
           ? `${title.split(' ')[1]} ${title.split(' ')[0]}`
           : title
       }&do.search=1`,
