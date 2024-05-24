@@ -10,16 +10,21 @@ const [showSettings, toggleShowSettings] = createSignal(false);
 const [showAniBackground, toggleAniBackground] = createSignal(
   GM_getValue('aniBackState'),
 );
+
 let url;
+
 const [getPreviousCreatingEdit, setPreviousCreatingEdit] = [
   () => GM_getValue('previousCreatingEdit'),
   (input) => GM_setValue('previousCreatingEdit', input),
 ];
+
 const [getPreviousAnimeSlug, setPreviousAnimeSlug] = [
   () => GM_getValue('previousAnimeSlug'),
   (input) => GM_setValue('previousAnimeSlug', input),
 ];
 
+const setNextEditURLReverse = (input) =>
+  GM_setValue('NextEditURLReverse', input);
 // Only for edit page!
 const isModerator = () =>
   document.evaluate(
@@ -191,7 +196,9 @@ onNavigate(async () => {
             id="next-edit-button"
             class="features-button hikka-features"
             disabled={getNextEditButton()}
-            onClick={() => window.open(url, '_self')}
+            onClick={() => {
+              window.open(url, '_self');
+            }}
           >
             <span class="tabler--circle-arrow-right-filled"></span>
           </button>
@@ -252,5 +259,6 @@ onNavigate(async () => {
   ) {
     setPreviousCreatingEdit(false);
     setPreviousAnimeSlug('');
+    setNextEditURLReverse(false);
   }
 });
