@@ -1,4 +1,4 @@
-export { default as hikkaWatari, checkWatari } from './hikkaxwatari.js';
+export { default as Player, getWatchData } from './moon-player.js';
 export {
   default as amanogawaButton,
   findMostSimilarEnJpName,

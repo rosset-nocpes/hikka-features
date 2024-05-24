@@ -90,7 +90,7 @@ select {
 }
 .player-block {
   margin-top: 1rem;
-  margin-bottom: 1rem;
+  /* margin-bottom: 1rem; */
   display: block;
 }
 a.watari-link {

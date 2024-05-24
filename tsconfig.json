@@ -8,6 +8,8 @@
     "jsx": "preserve",
     "jsxImportSource": "solid-js",
     "skipLibCheck": true,
+    "allowJs": true,
+    "checkJs": true,
     "lib": [
       "DOM",
       "ES6",

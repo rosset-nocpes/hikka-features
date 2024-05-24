@@ -12,8 +12,6 @@
 // @require     https://cdn.jsdelivr.net/npm/@violentmonkey/dom
 // @require     https://cdn.jsdelivr.net/npm/@violentmonkey/url
 // @require     https://cdn.jsdelivr.net/npm/@violentmonkey/dom@2/dist/solid.min.js
-// @require https://unpkg.com/alpinejs
-// Alpine is temporary (until hikkaxwatari will be rewrited)
 // ==/UserScript==
 
 /**

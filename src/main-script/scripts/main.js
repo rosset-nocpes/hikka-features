@@ -8,12 +8,16 @@ export default function Main(
   showSettings,
   toggleShowSettings,
 ) {
-  const [watariDisabled, toggleWatariDisabled] = createSignal(true);
+  const [playerDisabled, togglePlayerDisabled] = createSignal(true);
   const [amanogawaDisabled, toggleAmanogawaDisabled] = createSignal(true);
 
-  scripts.checkWatari(anime_data)
-    ? toggleWatariDisabled(!watariDisabled())
-    : null;
+  let data;
+  scripts
+    .getWatchData(anime_data.slug)
+    .then((x) => (data = x))
+    .then((data) =>
+      data !== null ? togglePlayerDisabled(!playerDisabled()) : null,
+    );
 
   scripts
     .checkAmanogawa(anime_data)
@@ -28,8 +32,8 @@ export default function Main(
       <button
         id="player-button"
         class="features-button"
-        onClick={() => scripts.hikkaWatari(anime_data)}
-        disabled={watariDisabled()}
+        onClick={() => scripts.Player(data)}
+        disabled={playerDisabled()}
         style="margin-right: 3px;border-radius: 10px 2px 2px 10px;"
       >
         {/* <div class={styles.player_button} style="color: white;"></div> */}
