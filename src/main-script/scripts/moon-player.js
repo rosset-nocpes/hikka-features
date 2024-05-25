@@ -84,7 +84,7 @@ export default function Player(data) {
           style="width: 100%; height: 332px; position: relative;"
         >
           <iframe
-            src={`${teamEpisode()}?player=hikka.io`}
+            src={`${teamEpisode()}?site=hikka.io`}
             loading="lazy"
             style="border: medium; border-radius: 4px; position: absolute; top: 0px; left: 0px; height: 100%; width: 100%; animation: 0.5s cubic-bezier(.77,0,.18,1) 0s 1 slideInFromUp;"
             allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
