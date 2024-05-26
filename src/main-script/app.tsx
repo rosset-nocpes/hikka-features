@@ -130,7 +130,9 @@ onNavigate(async () => {
     // aniBackground
     const title = anime_data.title_ja;
     const kitsuData = await (
-      await fetch(`https://kitsu.io/api/edge/anime?filter[text]=${title}`)
+      await fetch(
+        `https://kitsu.io/api/edge/anime?filter[text]=${title}&filter[year]=${anime_data.year}`,
+      )
     ).json();
 
     const background = document.querySelector('body main > .grid');
