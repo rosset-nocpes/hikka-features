@@ -1,5 +1,7 @@
 /* eslint-disable no-undef */
 export default async function NextEditURL(edit_id: any) {
+  const params = new URLSearchParams(document.location.search);
+
   const pending_edits = await (
     await fetch("https://api.hikka.io/edit/list?page=1&size=100", {
       method: "POST",
@@ -9,7 +11,7 @@ export default async function NextEditURL(edit_id: any) {
       },
       body: JSON.stringify({
         sort: [
-          (await NextEditURLReverse.getValue())
+          JSON.parse(params.get("reverse")!) || params.get("reverse") !== null
             ? "created:asc"
             : "created:desc",
         ],
@@ -31,7 +33,8 @@ export default async function NextEditURL(edit_id: any) {
             },
             body: JSON.stringify({
               sort: [
-                (await NextEditURLReverse.getValue())
+                JSON.parse(params.get("reverse")!) ||
+                params.get("reverse") !== null
                   ? "created:asc"
                   : "created:desc",
               ],
@@ -43,15 +46,25 @@ export default async function NextEditURL(edit_id: any) {
       )["list"];
 
       for (const [j, elem] of list.entries()) {
-        console.log(j + 1 > list.length - 1);
         if (j + 1 > list.length - 1) {
-          await NextEditURLReverse.setValue(
-            !(await NextEditURLReverse.getValue())
+          params.get("reverse") === null
+            ? params.set("reverse", "true")
+            : params.delete("reverse");
+          history.replaceState(
+            null,
+            null!,
+            document.location.href.split("?")[0] +
+              (params.get("reverse") !== null ? "?" : "") +
+              params.toString()
           );
           return NextEditURL(edit_id);
         }
         if (elem["edit_id"] == edit_id) {
-          return `https://hikka.io/edit/${list[j + 1]["edit_id"]}`;
+          return `https://hikka.io/edit/${
+            list[j + 1]["edit_id"] +
+            (params.get("reverse") !== null ? "?" : "") +
+            params.toString()
+          }`;
         }
       }
     }
