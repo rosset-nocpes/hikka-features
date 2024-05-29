@@ -15,7 +15,7 @@ export default defineConfig({
       "https://*.hikka.io/*",
       "https://hikka-features.pp.ua/*",
       "https://corsproxy.io/*",
-      "https://kitsu.io/api/edge/*",
+      "https://graphql.anilist.co/*",
     ],
   }),
 });

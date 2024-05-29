@@ -51,7 +51,6 @@ export default defineContentScript({
         const features = document.querySelectorAll(".hikka-features");
         features ? features.forEach((e) => e.remove()) : null;
 
-        console.log("loaded");
         const split_path = document.location.pathname.split("/");
         const path = split_path[1];
         const isHomepage = document.location.pathname == "/";
@@ -71,7 +70,7 @@ export default defineContentScript({
           ).json();
 
           // Watch button
-          watchButton(anime_data);
+          watchButton(anime_slug);
 
           // aniButtons
           info_block.children[1].insertAdjacentHTML(
@@ -85,21 +84,8 @@ export default defineContentScript({
           );
 
           // aniBackground
-          const title = anime_data.title_ja;
-          const kitsuData = await (
-            await fetch(`https://kitsu.io/api/edge/anime?filter[text]=${title}`)
-          ).json();
-
-          const background = document.querySelector("body main > .grid")!;
-
-          render(
-            () => (
-              <div class="absolute left-0 top-0 -z-20 h-80 w-full overflow-hidden opacity-40">
-                {aniBackground(kitsuData, showAniBackground)}
-              </div>
-            ),
-            background
-          );
+          const mal_id = anime_data.mal_id;
+          aniBackground(mal_id, showAniBackground);
         } else if (split_path.length == 3 && path == "edit") {
           const creatingEdit = isNaN(parseInt(split_path[2]));
 

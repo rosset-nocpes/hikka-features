@@ -2,11 +2,14 @@ import { createSignal } from "solid-js";
 import Player, { getWatchData } from "./moon-player";
 import { render } from "solid-js/web";
 
-export default async function watchButton(anime_data, watchButtonLocation?) {
+export default async function watchButton(
+  anime_slug: string,
+  watchButtonLocation?
+) {
   const [playerDisabled, togglePlayerDisabled] = createSignal(true);
 
   let data: any;
-  getWatchData(anime_data.slug)
+  getWatchData(anime_slug)
     .then((x: any) => (data = x))
     .then((data: any) =>
       data !== null ? togglePlayerDisabled(!playerDisabled()) : null
