@@ -13,40 +13,13 @@ export default async function aniBackground(
   showAniBackground: () => any
 ) {
   const anilist_url = "https://graphql.anilist.co";
-  const id_query = `
+  const banner_query = `
     query media($mal_id: Int, $type: MediaType) {
         Media(idMal: $mal_id, type: $type) {
-            id
+          bannerImage
         }
     }
     `;
-
-  const banner_query = `
-    query media($id: Int, $type: MediaType) {
-        Media(id: $id, type: $type) {
-          bannerImage
-        }
-    }      
-    `;
-
-  const id_data = await (
-    await fetch(anilist_url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({
-        query: id_query,
-        variables: {
-          mal_id: mal_id,
-          type: "ANIME",
-        },
-      }),
-    })
-  ).json();
-
-  const anilist_id = id_data["data"]["Media"]["id"];
 
   const background_data = await (
     await fetch(anilist_url, {
@@ -58,7 +31,7 @@ export default async function aniBackground(
       body: JSON.stringify({
         query: banner_query,
         variables: {
-          id: anilist_id,
+          mal_id: mal_id,
           type: "ANIME",
         },
       }),
