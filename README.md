@@ -1,30 +1,26 @@
 # Hikka Features
 
-> [!IMPORTANT]  
-> Code needs to be refactored!
+Plugin uses:
 
-## Rewrite progress
-
-- [ ] Hikka x Watari
-- [x] Amanogawa Button
-- [x] AniButtons
-- [x] AniBackground
-
-This is a userscript initiated from [@violentmonkey/generator-userscript](https://github.com/violentmonkey/generator-userscript).
-
-All userscripts located in `src/main-script/scripts`
-
-And main script is `src/main-script/app.tsx`
+- [WXT](https://wxt.dev)
+- [SolidJS](https://docs.solidjs.com/)
+- [UnoCSS](https://unocss.dev/)
 
 ## Development
 
 ```sh
-# Compile and watch
+# Run plugin on Chrome
 $ pnpm dev
+# or
+$ pnpm dev:firefox
 
 # Build script
 $ pnpm build
+# or
+$ pnpm build:firefox
 
-# Lint
-$ pnpm lint
+# Zip
+$ pnpm zip
+# or
+$ pnpm zip:firefox
 ```

@@ -1,52 +1,29 @@
 {
   "name": "hikka-features",
-  "version": "1.1.4",
-  "description": "Універсальний плагін для Hikka",
-  "author": "~rosset-nocpes",
-  "icon": "https://raw.githubusercontent.com/rosset-nocpes/hikka-features/master/hikka-features-icon.png",
-  "license": "MIT",
+  "description": "Універсальне розширення для hikka.io",
   "private": true,
-  "engines": {
-    "node": ">=18"
-  },
+  "version": "2.0.0",
+  "type": "module",
   "scripts": {
-    "prepare": "husky",
-    "dev": "rollup -wc",
-    "clean": "del-cli dist",
-    "lint": "eslint --ext .ts,.tsx . && prettier --ignore-path .eslintignore --check .",
-    "lint:fix": "eslint --ext .ts,.tsx --fix . && prettier --ignore-path .eslintignore --write .",
-    "ci": "run-s lint",
-    "build:js": "rollup -c",
-    "build": "cross-env NODE_ENV=production run-s ci clean build:js"
+    "dev": "wxt",
+    "dev:firefox": "wxt -b firefox",
+    "build": "wxt build",
+    "build:firefox": "wxt build -b firefox",
+    "zip": "wxt zip",
+    "zip:firefox": "wxt zip -b firefox",
+    "compile": "tsc --noEmit",
+    "postinstall": "wxt prepare"
   },
   "dependencies": {
-    "@babel/runtime": "^7.24.5",
-    "@violentmonkey/dom": "^2.1.7",
-    "@violentmonkey/url": "^0.1.0",
-    "solid-js": "^1.8.17",
+    "solid-js": "^1.8.7",
     "solid-transition-group": "^0.2.3"
   },
   "devDependencies": {
-    "@babel/plugin-transform-react-jsx": "^7.23.4",
-    "@gera2ld/plaid": "~2.7.0",
-    "@gera2ld/plaid-rollup": "~2.7.0",
-    "@iconify-json/tabler": "^1.1.111",
-    "@unocss/postcss": "^0.60.2",
-    "@violentmonkey/types": "^0.1.7",
-    "babel-preset-solid": "^1.8.17",
-    "cross-env": "^7.0.3",
-    "del-cli": "^5.1.0",
-    "eslint-config-prettier": "^9.1.0",
-    "husky": "^9.0.11",
-    "lint-staged": "^15.2.2",
-    "prettier": "^3.2.5",
-    "rollup-plugin-userscript": "^0.3.2",
-    "unocss": "^0.60.2"
-  },
-  "lint-staged": {
-    "src/**": [
-      "eslint --fix",
-      "prettier --write"
-    ]
+    "@iconify-json/tabler": "^1.1.113",
+    "@violentmonkey/url": "^0.1.0",
+    "typescript": "^5.3.3",
+    "unocss": "^0.60.3",
+    "vite-plugin-solid": "^2.10.2",
+    "wxt": "^0.18.0"
   }
 }
