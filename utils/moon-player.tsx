@@ -4,22 +4,22 @@
 // @author      ~rosset-nocpes
 // @description Додає відео з MoonAnime на сторінку аніме Хікки
 
-import { createSignal, For } from 'solid-js';
-import { render } from 'solid-js/web';
+import { createSignal, For } from "solid-js";
+import { render } from "solid-js/web";
 
-export async function getWatchData(anime_slug) {
+export async function getWatchData(anime_slug: string) {
   const moon_data = await (
     await fetch(`https://hikka-features.pp.ua/watch/${anime_slug}`)
   ).json();
 
-  if (Object.keys(moon_data)[0] === 'error') {
+  if (Object.keys(moon_data)[0] === "error") {
     return null;
   }
 
-  const data = {};
+  const data: any = {};
 
-  moon_data.episodes.forEach((episode) => {
-    episode.videos.forEach((video) => {
+  moon_data.episodes.forEach((episode: { videos: any[]; episode: any }) => {
+    episode.videos.forEach((video: { studio: any; video_url: any }) => {
       const studio = video.studio;
       if (!data[studio]) {
         data[studio] = [];
@@ -34,20 +34,20 @@ export async function getWatchData(anime_slug) {
   return data;
 }
 
-export default function Player(data) {
+export default function Player(data: { [x: string]: any }) {
   const [teamName, setTeamName] = createSignal(Object.keys(data)[0]);
   const [teamEpisode, setTeamEpisode] = createSignal(
-    data[teamName()][0].video_url,
+    data[teamName()][0].video_url
   );
 
-  const player_button = document.getElementById('player-button');
+  const player_button = document.getElementById("player-button")!;
 
   // disabling player-button
   player_button.disabled = true;
 
-  const start_node = document.querySelector('.order-2');
-  start_node.insertAdjacentHTML('afterbegin', '<div id="player"></div>');
-  const player = document.querySelector('#player');
+  const start_node = document.querySelector(".order-2")!;
+  start_node.insertAdjacentHTML("afterbegin", '<div id="player"></div>');
+  const player = document.querySelector("#player")!;
 
   render(
     () => (
@@ -93,6 +93,6 @@ export default function Player(data) {
         </div>
       </>
     ),
-    player,
+    player
   );
 }

@@ -1,12 +1,16 @@
-import { Transition } from 'solid-transition-group';
-import { createSignal, onMount } from 'solid-js';
+import { createSignal, onMount } from "solid-js";
+import { Transition } from "solid-transition-group";
+
 /* eslint-disable no-undef */
 // @name        AniBackground
 // @version     1.0.0
 // @author      ~rosset-nocpes
 // @description Adds background
 
-export default function aniBackground(kitsuData, showAniBackground) {
+export default function aniBackground(
+  kitsuData: any,
+  showAniBackground: () => any
+) {
   const cover = kitsuData.data[0].attributes.coverImage?.small;
 
   const [isLoaded, setIsLoaded] = createSignal(false);
