@@ -4,7 +4,7 @@ import "./style.css";
 import aniButtons from "@/utils/ani-buttons";
 import aniBackground from "@/utils/ani-background";
 import NextEditURL from "@/utils/next-edit-url";
-import UCharURL from "@/utils/u-char-url";
+// import UCharURL from "@/utils/u-char-url";
 import watchButton from "@/utils/watchButton";
 
 export default defineContentScript({

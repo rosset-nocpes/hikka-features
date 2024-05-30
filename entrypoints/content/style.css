@@ -128,3 +128,13 @@ a.watari-link:hover {
   height: 38px;
   width: 38px;
 }
+
+.team-selects {
+  select {
+    border-radius: 0.5rem;
+    padding: 0.25rem;
+  }
+  option {
+    background-color: #27272a;
+  }
+}
