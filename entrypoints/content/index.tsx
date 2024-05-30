@@ -15,10 +15,20 @@ export default defineContentScript({
     );
 
     let url: string;
+    const params = new URLSearchParams(document.location.search);
 
     const [getPreviousCreatingEdit, setPreviousCreatingEdit] = [
-      () => storage.getItem("local:previousCreatingEdit"),
-      (input: boolean) => storage.setItem("local:previousCreatingEdit", input),
+      () => params.get("previousCreatingEdit") !== null,
+      (input: boolean) => {
+        input && !getPreviousCreatingEdit()
+          ? (params.set("previousCreatingEdit", "true"),
+            history.replaceState(
+              null,
+              null!,
+              document.location.href.split("?")[0] + "?" + params.toString()
+            ))
+          : null;
+      },
     ];
 
     const [getPreviousAnimeSlug, setPreviousAnimeSlug] = [
@@ -36,9 +46,7 @@ export default defineContentScript({
         null
       ).booleanValue;
 
-    !getPreviousCreatingEdit() ? setPreviousCreatingEdit(false) : "";
     (await getPreviousAnimeSlug()) == "" ? setPreviousAnimeSlug("") : "";
-    !showAniBackground() ? storage.setItem("local:aniBackState", false) : "";
 
     browser.runtime.onMessage.addListener(async function (request) {
       if (request.type === "page-rendered") {
@@ -136,7 +144,7 @@ export default defineContentScript({
           if (
             !creatingEdit &&
             (await getEditInfo()).status === "pending" &&
-            !(await getPreviousCreatingEdit()) &&
+            !getPreviousCreatingEdit() &&
             isModerator()
           ) {
             const [getNextEditButton, toggleNextEditButton] =
@@ -164,57 +172,57 @@ export default defineContentScript({
           }
 
           // u-char-button
-          if (
-            !creatingEdit &&
-            (await getPreviousCreatingEdit()) &&
-            (content_type === "character" || content_type === "person")
-          ) {
-            const [uCharDisabled, toggleUCharDisabled] = createSignal(true);
-            render(
-              () => (
-                <button
-                  id="u-char-button"
-                  class="features-button hikka-features"
-                  disabled={uCharDisabled()}
-                  onClick={() => window.open(url, "_self")}
-                >
-                  <span class="tabler--circle-arrow-right-filled"></span>
-                </button>
-              ),
-              document.querySelector("#breadcrumbs")!
-            );
+          //   if (
+          //     !creatingEdit &&
+          //     getPreviousCreatingEdit() &&
+          //     (content_type === "character" || content_type === "person")
+          //   ) {
+          //     const [uCharDisabled, toggleUCharDisabled] = createSignal(true);
+          //     render(
+          //       () => (
+          //         <button
+          //           id="u-char-button"
+          //           class="features-button hikka-features"
+          //           disabled={uCharDisabled()}
+          //           onClick={() => window.open(url, "_self")}
+          //         >
+          //           <span class="tabler--circle-arrow-right-filled"></span>
+          //         </button>
+          //       ),
+          //       document.querySelector("#breadcrumbs")!
+          //     );
 
-            !(await getPreviousCreatingEdit())
-              ? (url = await UCharURL(
-                  slug,
-                  content_type,
-                  await getPreviousAnimeSlug()
-                ))
-              : null;
-            url ? toggleUCharDisabled(!uCharDisabled()) : null;
-          } else if (
-            creatingEdit &&
-            (content_type === "character" || content_type === "person")
-          ) {
-            url = await UCharURL(
-              slug,
-              content_type,
-              await getPreviousAnimeSlug()
-            );
-          }
+          //     !getPreviousCreatingEdit()
+          //       ? (url = await UCharURL(
+          //           slug,
+          //           content_type,
+          //           await getPreviousAnimeSlug()
+          //         ))
+          //       : null;
+          //     url ? toggleUCharDisabled(!uCharDisabled()) : null;
+          //   } else if (
+          //     creatingEdit &&
+          //     (content_type === "character" || content_type === "person")
+          //   ) {
+          //     url = await UCharURL(
+          //       slug,
+          //       content_type,
+          //       await getPreviousAnimeSlug()
+          //     );
+          //   }
 
-          await setPreviousCreatingEdit(creatingEdit);
-        } else if (
-          (split_path.length == 3 &&
-            path !== "edit" &&
-            path !== "characters" &&
-            path !== "people" &&
-            !getPreviousCreatingEdit()) ||
-          (split_path.length == 2 && path === "edit") ||
-          isHomepage
-        ) {
-          setPreviousCreatingEdit(false);
-          setPreviousAnimeSlug("");
+          setPreviousCreatingEdit(creatingEdit);
+          // } else if (
+          //   (split_path.length == 3 &&
+          //     path !== "edit" &&
+          //     path !== "characters" &&
+          //     path !== "people" &&
+          //     !getPreviousCreatingEdit()) ||
+          //   (split_path.length == 2 && path === "edit") ||
+          //   isHomepage
+          // ) {
+          //   setPreviousAnimeSlug("");
+          // }
         }
       }
     });
