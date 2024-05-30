@@ -29,7 +29,7 @@ export default async function getAmanogawaURL(anime_data: any) {
     return null;
   }
 
-  return `https://amanogawa.space/anime/${anime}`;
+  return `https://amanogawa.space/anime/${anime.id}`;
 }
 
 export function findMostSimilarEnJpName(
@@ -81,8 +81,4 @@ export function findMostSimilarEnJpName(
   });
 
   return mostSimilarObject;
-}
-
-export function amanogawaURL(anime_id) {
-  return;
 }
