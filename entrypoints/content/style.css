@@ -138,3 +138,42 @@ a.watari-link:hover {
     background-color: #27272a;
   }
 }
+
+.ani-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  h3 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  a {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.25rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    font-weight: 500;
+    line-height: 1.25;
+    border-radius: 0.25rem;
+    transition: 0.1s;
+  }
+
+  a:hover {
+    background-color: #27272a;
+  }
+
+  a.link-disabled {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  div {
+    display: grid;
+    grid-gap: 0.5rem;
+    grid-template-columns: repeat(2, auto);
+  }
+}
