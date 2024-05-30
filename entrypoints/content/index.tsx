@@ -78,15 +78,7 @@ export default defineContentScript({
           watchButton(anime_slug);
 
           // aniButtons
-          info_block.children[1].insertAdjacentHTML(
-            "afterbegin",
-            '<div id="ani-buttons" class="hikka-features" style="display: flex; justify-content: center;"></div>'
-          );
-
-          render(
-            () => aniButtons(anime_data),
-            info_block.children[1].firstChild!
-          );
+          aniButtons(anime_data, info_block);
 
           // aniBackground
           const mal_id = anime_data.mal_id;
