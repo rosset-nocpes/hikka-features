@@ -10,11 +10,7 @@ export default async function NextEditURL(edit_id: any) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        sort: [
-          JSON.parse(params.get("reverse")!) || params.get("reverse") !== null
-            ? "created:asc"
-            : "created:desc",
-        ],
+        sort: [params.get("reverse") !== null ? "created:asc" : "created:desc"],
         status: "pending",
         slug: "",
       }),
@@ -33,10 +29,7 @@ export default async function NextEditURL(edit_id: any) {
             },
             body: JSON.stringify({
               sort: [
-                JSON.parse(params.get("reverse")!) ||
-                params.get("reverse") !== null
-                  ? "created:asc"
-                  : "created:desc",
+                params.get("reverse") !== null ? "created:asc" : "created:desc",
               ],
               status: "pending",
               slug: "",
