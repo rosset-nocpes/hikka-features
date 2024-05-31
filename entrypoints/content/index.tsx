@@ -21,7 +21,7 @@ export default defineContentScript({
       () => params.get("previousCreatingEdit") !== null,
       (input: boolean) => {
         input && !getPreviousCreatingEdit()
-          ? (params.set("previousCreatingEdit", "true"),
+          ? (params.append("previousCreatingEdit", "true"),
             history.replaceState(
               null,
               null!,
@@ -119,18 +119,10 @@ export default defineContentScript({
           ).json();
 
           const info_block = document.querySelector(
-            "div.flex.flex-col.gap-4.rounded-md"
+            `div.gap-12:nth-child(2) > div:nth-child(${creatingEdit ? 1 : 2})`
           )!;
 
-          info_block.insertAdjacentHTML(
-            "afterbegin",
-            '<div id="ani-buttons" class="hikka-features" style="display: flex; justify-content: center;"></div>'
-          );
-
-          render(
-            () => aniButtons(data),
-            document.getElementById("ani-buttons")!
-          );
+          aniButtons(data, info_block, true);
 
           // next-edit-button;
           if (
@@ -203,7 +195,7 @@ export default defineContentScript({
           //     );
           //   }
 
-          setPreviousCreatingEdit(creatingEdit);
+          // setPreviousCreatingEdit(creatingEdit);
           // } else if (
           //   (split_path.length == 3 &&
           //     path !== "edit" &&
