@@ -8,7 +8,11 @@ import { For, render } from "solid-js/web";
 import getAmanogawaURL from "./amanogawa-button";
 import HikkaFLogoSmall from "@/public/hikka-features-small.svg";
 
-export default async function aniButtons(data, location) {
+export default async function aniButtons(
+  data,
+  location,
+  smallerTitle?: boolean
+) {
   const content_type = data.data_type;
 
   const contentTypeMap = {
@@ -89,7 +93,11 @@ export default async function aniButtons(data, location) {
   render(
     () => (
       <div class="ani-buttons">
-        <h3 class="scroll-m-20 font-display text-xl font-bold tracking-normal">
+        <h3
+          class={`scroll-m-20 font-display ${
+            smallerTitle ? "text-lg" : "text-xl"
+          } font-bold tracking-normal`}
+        >
           Інші джерела
           <img src={HikkaFLogoSmall} style="width: 21px; height: 20px" />
         </h3>
