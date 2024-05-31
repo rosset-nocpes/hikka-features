@@ -1,13 +1,18 @@
 import { defineConfig } from "wxt";
 import Solid from "vite-plugin-solid";
-import UnoCSS from "unocss/vite";
+import path from "path";
 
 export default defineConfig({
   vite: () => ({
     build: {
       target: "esnext",
     },
-    plugins: [UnoCSS(), Solid()],
+    plugins: [Solid()],
+    resolve: {
+      alias: {
+        "~": path.resolve(__dirname, "./"),
+      },
+    },
   }),
   manifest: () => ({
     permissions: ["webNavigation", "tabs", "storage", "activeTab"],

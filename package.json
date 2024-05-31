@@ -15,15 +15,22 @@
     "postinstall": "wxt prepare"
   },
   "dependencies": {
-    "solid-js": "^1.8.7",
+    "@kobalte/core": "^0.13.2",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "solid-js": "^1.8.15",
+    "tailwind-merge": "^2.3.0",
+    "tailwindcss-animate": "^1.0.7",
     "solid-transition-group": "^0.2.3"
   },
   "devDependencies": {
     "@iconify-json/tabler": "^1.1.113",
-    "@violentmonkey/url": "^0.1.0",
-    "typescript": "^5.3.3",
-    "unocss": "^0.60.3",
+    "@types/node": "^20.12.13",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.3",
+    "typescript": "^5.4.5",
     "vite-plugin-solid": "^2.10.2",
-    "wxt": "^0.18.0"
+    "wxt": "^0.18.3"
   }
 }
