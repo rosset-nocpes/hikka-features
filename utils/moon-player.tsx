@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createSignal, For } from "solid-js";
+import { createSignal } from "solid-js";
 import { render } from "solid-js/web";
 
 export async function getWatchData(anime_slug: string) {
@@ -54,6 +54,12 @@ export default function Player(data: { [x: string]: any }) {
   start_node.insertAdjacentHTML("afterbegin", '<div id="player"></div>');
   const player = document.querySelector("#player")!;
 
+  const handleSelectEpisode = (e: any) => {
+    if (e) {
+      setTeamEpisode(e);
+    }
+  };
+
   render(
     () => (
       <>
@@ -78,7 +84,7 @@ export default function Player(data: { [x: string]: any }) {
           <Select
             value={teamEpisode()}
             class="w-full overflow-y-auto max-h-9"
-            onChange={(e) => setTeamEpisode(e)}
+            onChange={handleSelectEpisode}
             options={data[teamName()]}
             optionValue="video_url"
             optionTextValue="episode"
