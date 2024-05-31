@@ -1,0 +1,11 @@
+{
+    "tsx": true,
+    "componentDir": "./components/ui",
+    "tailwind": {
+      "config": "tailwind.config.js",
+      "css": "assets/app.css"
+    },
+    "aliases": {
+      "path": "~/*"
+    }
+  }
