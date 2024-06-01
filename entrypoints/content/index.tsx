@@ -10,10 +10,6 @@ import watchButton from "@/utils/watchButton";
 export default defineContentScript({
   matches: ["https://hikka.io/*"],
   async main() {
-    const [showAniBackground, toggleAniBackground] = createSignal(
-      storage.getItem("local:aniBackState")
-    );
-
     let url: string;
     const params = new URLSearchParams(document.location.search);
 
@@ -81,8 +77,7 @@ export default defineContentScript({
           aniButtons(anime_data, info_block);
 
           // aniBackground
-          const mal_id = anime_data.mal_id;
-          aniBackground(mal_id, showAniBackground);
+          aniBackground(anime_data.mal_id);
         } else if (split_path.length == 3 && path == "edit") {
           const creatingEdit = isNaN(parseInt(split_path[2]));
 

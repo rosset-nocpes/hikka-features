@@ -8,10 +8,7 @@ import { Transition } from "solid-transition-group";
 // @author      ~rosset-nocpes
 // @description Adds background
 
-export default async function aniBackground(
-  mal_id: number,
-  showAniBackground: () => any
-) {
+export default async function aniBackground(mal_id: number) {
   const anilist_url = "https://graphql.anilist.co";
   const banner_query = `
     query media($mal_id: Int, $type: MediaType) {
@@ -49,11 +46,19 @@ export default async function aniBackground(
     img.onload = () => setIsLoaded(true);
   });
 
+  let [stateBack, setAniBack] = createSignal(
+    await storage.getItem("local:aniBackState")
+  );
+
+  storage.watch<boolean>("local:aniBackState", (state) => {
+    setAniBack(state);
+  });
+
   render(
     () => (
       <div class="absolute left-0 top-0 -z-20 h-80 w-full overflow-hidden opacity-40">
         <Transition name="slide">
-          {showAniBackground() && isLoaded() && (
+          {stateBack()! && isLoaded() && (
             <img
               id="cover"
               alt="cover"
