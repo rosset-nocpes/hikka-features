@@ -43,9 +43,11 @@ export default async function aniButtons(
     {
       title: "MyAnimeList",
       host: hosts.mal,
-      url: `https://myanimelist.net/${
-        contentTypeMap[content_type]?.mal || content_type
-      }.php?q=${title}`,
+      url: isAnime
+        ? `https://myanimelist.net/anime/${data.mal_id}`
+        : `https://myanimelist.net/${
+            contentTypeMap[content_type]?.mal || content_type
+          }.php?q=${title}`,
     },
     {
       title: "AniList",
