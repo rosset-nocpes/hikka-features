@@ -4,7 +4,8 @@ Plugin uses:
 
 - [WXT](https://wxt.dev)
 - [SolidJS](https://docs.solidjs.com/)
-- [UnoCSS](https://unocss.dev/)
+- [TailwindCSS](https://tailwindcss.com/)
+- [SolidUI (shadcn-ui fork)](https://www.solid-ui.com/)
 
 ## Development
 
