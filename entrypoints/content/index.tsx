@@ -46,8 +46,6 @@ export default defineContentScript({
 
     browser.runtime.onMessage.addListener(async function (request) {
       if (request.type === "page-rendered") {
-        // console.log(NextEditURLReverse.getValue());
-
         // TODO: make something with this removing
         const features = document.querySelectorAll(".hikka-features");
         features ? features.forEach((e) => e.remove()) : null;
@@ -101,23 +99,25 @@ export default defineContentScript({
             : edit_info.content.slug;
 
           // ani-buttons on edit page
-          const data = await (
-            await fetch(
-              `https://api.hikka.io/${
-                content_type === "character"
-                  ? "characters"
-                  : content_type === "person"
-                  ? "people"
-                  : content_type
-              }/${slug}`
-            )
-          ).json();
+          if (document.querySelectorAll("div.ani-buttons").length == 0) {
+            const data = await (
+              await fetch(
+                `https://api.hikka.io/${
+                  content_type === "character"
+                    ? "characters"
+                    : content_type === "person"
+                    ? "people"
+                    : content_type
+                }/${slug}`
+              )
+            ).json();
 
-          const info_block = document.querySelector(
-            `div.gap-12:nth-child(2) > div:nth-child(${creatingEdit ? 1 : 2})`
-          )!;
+            const info_block = document.querySelector(
+              `div.gap-12:nth-child(2) > div:nth-child(${creatingEdit ? 1 : 2})`
+            )!;
 
-          aniButtons(data, info_block, true);
+            aniButtons(data, info_block, true);
+          }
 
           // next-edit-button;
           if (
@@ -190,7 +190,7 @@ export default defineContentScript({
           //     );
           //   }
 
-          // setPreviousCreatingEdit(creatingEdit);
+          setPreviousCreatingEdit(creatingEdit);
           // } else if (
           //   (split_path.length == 3 &&
           //     path !== "edit" &&
