@@ -1,65 +1,87 @@
 /* eslint-disable no-undef */
-export default async function NextEditURL(edit_id: any) {
-  const params = new URLSearchParams(document.location.search);
-
-  const pending_edits = await (
-    await fetch("https://api.hikka.io/edit/list?page=1&size=100", {
+async function fetchPendingEdits(page: number, sort: string[]) {
+  const response = await fetch(
+    `https://api.hikka.io/edit/list?page=${page}&size=15`,
+    {
       method: "POST",
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        sort: [params.get("reverse") !== null ? "created:asc" : "created:desc"],
+        sort,
         status: "pending",
         slug: "",
       }),
-    })
-  ).json();
+    }
+  );
+  return response.json();
+}
 
-  if (pending_edits["pagination"]["total"] != 0) {
-    for (let i = 1; i <= pending_edits["pagination"]["pages"]; i++) {
-      const list = (
-        await (
-          await fetch(`https://api.hikka.io/edit/list?page=${i}&size=100`, {
-            method: "POST",
-            headers: {
-              Accept: "application/json",
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              sort: [
-                params.get("reverse") !== null ? "created:asc" : "created:desc",
-              ],
-              status: "pending",
-              slug: "",
-            }),
-          })
-        ).json()
-      )["list"];
+export default async function NextEditURL(edit_id: number) {
+  const params = new URLSearchParams(document.location.search);
+  const sortDirection =
+    params.get("reverse") !== null ? "created:asc" : "created:desc";
 
-      for (const [j, elem] of list.entries()) {
-        if (j + 1 > list.length - 1) {
-          params.get("reverse") === null
-            ? params.set("reverse", "true")
-            : params.delete("reverse");
-          history.replaceState(
-            null,
-            null!,
-            document.location.href.split("?")[0] +
-              (params.get("reverse") !== null ? "?" : "") +
-              params.toString()
-          );
-          return NextEditURL(edit_id);
-        }
-        if (elem["edit_id"] == edit_id) {
-          return `https://hikka.io/edit/${
-            list[j + 1]["edit_id"] +
-            (params.get("reverse") !== null ? "?" : "") +
-            params.toString()
-          }`;
+  const pendingEdits = await fetchPendingEdits(1, [sortDirection]);
+
+  if (pendingEdits.pagination.total === 0) {
+    return;
+  } else {
+    const first_edit_pos = pendingEdits["list"]
+      .map((e) => e.edit_id)
+      .indexOf(edit_id);
+    if (first_edit_pos === -1) {
+      for (let i = 2; i <= pendingEdits.pagination.pages; i++) {
+        const { list } = await fetchPendingEdits(i, [sortDirection]);
+
+        const found_edit_pos = list.map((e) => e.edit_id).indexOf(edit_id);
+        // console.log(list);
+        console.log(found_edit_pos);
+
+        if (found_edit_pos != -1) {
+          if (
+            found_edit_pos + 1 == list.length &&
+            pendingEdits.pagination.pages == i
+          ) {
+            params.get("reverse") === null
+              ? params.set("reverse", "true")
+              : params.delete("reverse");
+            history.replaceState(
+              null,
+              "",
+              `${document.location.pathname}${
+                params.toString() ? `?${params.toString()}` : ""
+              }`
+            );
+            NextEditURL(edit_id);
+          } else if (found_edit_pos + 1 == list.length) {
+            const { list } = await fetchPendingEdits(i + 1, [sortDirection]);
+            return `https://hikka.io/edit/${list[0].edit_id}${
+              params.toString() ? `?${params.toString()}` : ""
+            }`;
+          } else {
+            return `https://hikka.io/edit/${list[found_edit_pos + 1].edit_id}${
+              params.toString() ? `?${params.toString()}` : ""
+            }`;
+          }
         }
       }
+    } else if (first_edit_pos + 1 == pendingEdits["list"].length) {
+      params.get("reverse") === null
+        ? params.set("reverse", "true")
+        : params.delete("reverse");
+      history.replaceState(
+        null,
+        "",
+        `${document.location.pathname}${
+          params.toString() ? `?${params.toString()}` : ""
+        }`
+      );
+    } else {
+      return `https://hikka.io/edit/${
+        pendingEdits["list"][first_edit_pos + 1].edit_id
+      }${params.toString() ? `?${params.toString()}` : ""}`;
     }
   }
 }
