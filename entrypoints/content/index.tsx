@@ -75,7 +75,9 @@ export default defineContentScript({
           aniButtons(anime_data, info_block);
 
           // aniBackground
-          aniBackground(anime_data.mal_id);
+          if (document.querySelectorAll("#cover").length === 0) {
+            aniBackground(anime_data.mal_id);
+          }
         } else if (split_path.length == 3 && path == "edit") {
           const creatingEdit = isNaN(parseInt(split_path[2]));
 
