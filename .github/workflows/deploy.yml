@@ -7,47 +7,54 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 jobs:
-  deploy:
-    environment:
-        name: github-pages
-        url: ${{ steps.deployment.outputs.page_url }}
-
+  Build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-  
-    - name: Prepare pnpm
-      uses: pnpm/action-setup@v3
-      with:
-        version: 9
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Set up Node
-      uses: actions/setup-node@v4
-      with:
-        node-version: lts/*
-        cache: 'pnpm'
+      - name: Prepare pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
 
-    - name: Install dependencies
-      run: pnpm i
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: "pnpm"
 
-    - name: Build
-      run: pnpm build
+      - name: Install dependencies
+        run: pnpm i
 
-    - name: Setup Pages
-      uses: actions/configure-pages@v5
+      - name: Zip extensions
+        run: |
+          pnpm run zip
+          pnpm run zip:firefox
 
-    - name: Upload artifact
-      uses: actions/upload-pages-artifact@v3
-      with:
-        path: './dist'
+  Publish:
+    needs: Build
+    runs-on: ubuntu-latest
 
-    - name: Deploy to GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v4
+    steps:
+      - name: Submit to stores
+        run: |
+          pnpm wxt submit \
+            --chrome-zip .output/*-chrome.zip \
+            --firefox-zip .output/*-firefox.zip --firefox-sources-zip .output/*-sources.zip
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        with:
+          draft: false
+          prerelease: false
+          files: |
+            .output/*-chrome.zip
+            .output/*-firefox.zip
+            .output/*-sources.zip
