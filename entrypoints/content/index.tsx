@@ -48,7 +48,7 @@ export default defineContentScript({
       if (request.type === "page-rendered") {
         // TODO: make something with this removing
         const features = document.querySelectorAll(".hikka-features");
-        features ? features.forEach((e) => e.remove()) : null;
+        features.forEach((e) => e.remove());
 
         const split_path = document.location.pathname.split("/");
         const path = split_path[1];
@@ -125,20 +125,20 @@ export default defineContentScript({
                 ? edit_info.get("slug")
                 : edit_info.content.slug;
 
-              // ani-buttons on edit page
-              if (document.querySelectorAll("div.ani-buttons").length == 0) {
-                const data = await (
-                  await fetch(
-                    `https://api.hikka.io/${
-                      content_type === "character"
-                        ? "characters"
-                        : content_type === "person"
-                        ? "people"
-                        : content_type
-                    }/${slug}`
-                  )
-                ).json();
+              const data = await (
+                await fetch(
+                  `https://api.hikka.io/${
+                    content_type === "character"
+                      ? "characters"
+                      : content_type === "person"
+                      ? "people"
+                      : content_type
+                  }/${slug}`
+                )
+              ).json();
 
+              // ani-buttons on edit page
+              if (document.querySelectorAll("#ani-buttons").length == 0) {
                 const info_block = document.querySelector(
                   `div.gap-12:nth-child(2) > div:nth-child(${
                     creatingEdit ? 1 : 2
@@ -177,6 +177,25 @@ export default defineContentScript({
                 const url = await NextEditURL(edit_info.edit_id);
 
                 url ? toggleNextEditButton(!getNextEditButton()) : null;
+              }
+
+              switch (content_type) {
+                case "anime":
+                  aniBackground(data.mal_id);
+                  break;
+                case "character":
+                  aniBackground(
+                    document.head.querySelector("[name=anime-mal-id][content]")
+                      ?.content ||
+                      (
+                        await (
+                          await fetch(
+                            `https://api.hikka.io/characters/${slug}/anime`
+                          )
+                        ).json()
+                      ).list[0].anime.mal_id
+                  );
+                  break;
               }
 
               // u-char-button
@@ -219,7 +238,7 @@ export default defineContentScript({
               //     );
               //   }
 
-              setPreviousCreatingEdit(creatingEdit);
+              // setPreviousCreatingEdit(creatingEdit);
               // } else if (
               //   (split_path.length == 3 &&
               //     path !== "edit" &&
