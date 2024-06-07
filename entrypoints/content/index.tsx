@@ -14,15 +14,19 @@ export default defineContentScript({
     const params = new URLSearchParams(document.location.search);
 
     const [getPreviousCreatingEdit, setPreviousCreatingEdit] = [
-      () => params.get("previousCreatingEdit") !== null,
+      () =>
+        document.head.querySelector("[name=previous-creating-edit][content]")
+          ?.content,
       (input: boolean) => {
-        input && !getPreviousCreatingEdit()
-          ? (params.append("previousCreatingEdit", "true"),
-            history.replaceState(
-              null,
-              null!,
-              document.location.href.split("?")[0] + "?" + params.toString()
-            ))
+        input && getPreviousCreatingEdit() === undefined
+          ? document.head.insertAdjacentHTML(
+              "beforeend",
+              `<meta name="previous-creating-edit" content="true">`
+            )
+          : input && getPreviousCreatingEdit() === "false"
+          ? (document.head.querySelector(
+              "[name=previous-creating-edit][content]"
+            )!.content = "true")
           : null;
       },
     ];
@@ -152,7 +156,8 @@ export default defineContentScript({
               if (
                 !creatingEdit &&
                 (await getEditInfo()).status === "pending" &&
-                !getPreviousCreatingEdit() &&
+                (getPreviousCreatingEdit() === undefined ||
+                  getPreviousCreatingEdit() === "false") &&
                 isModerator()
               ) {
                 const [getNextEditButton, toggleNextEditButton] =
@@ -238,7 +243,7 @@ export default defineContentScript({
               //     );
               //   }
 
-              // setPreviousCreatingEdit(creatingEdit);
+              setPreviousCreatingEdit(creatingEdit);
               // } else if (
               //   (split_path.length == 3 &&
               //     path !== "edit" &&
@@ -251,6 +256,10 @@ export default defineContentScript({
               //   setPreviousAnimeSlug("");
               // }
               break;
+            } else {
+              document.head.querySelector(
+                "[name=previous-creating-edit][content]"
+              )!.content = "false";
             }
           case "characters":
             const anime_mal_id = document.head.querySelectorAll(
@@ -272,6 +281,10 @@ export default defineContentScript({
             }
 
             break;
+          default:
+            document.head.querySelector(
+              "[name=previous-creating-edit][content]"
+            )!.content = "false";
         }
       }
     });
