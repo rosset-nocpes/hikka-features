@@ -24,7 +24,10 @@ export default async function NextEditURL(edit_id: number) {
 
   const pendingEdits = await fetchPendingEdits(1, [sortDirection]);
 
-  if (pendingEdits.pagination.total === 0) {
+  if (
+    pendingEdits.pagination.total === 0 ||
+    pendingEdits["list"].length === 1
+  ) {
     return;
   } else {
     const first_edit_pos = pendingEdits["list"]
@@ -35,8 +38,6 @@ export default async function NextEditURL(edit_id: number) {
         const { list } = await fetchPendingEdits(i, [sortDirection]);
 
         const found_edit_pos = list.map((e) => e.edit_id).indexOf(edit_id);
-        // console.log(list);
-        console.log(found_edit_pos);
 
         if (found_edit_pos != -1) {
           if (
