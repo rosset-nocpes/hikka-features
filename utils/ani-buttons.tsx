@@ -1,16 +1,10 @@
-/* eslint-disable no-undef */
-// @name        AniButtons Expansion
-// @version     1.2.0
-// @author      ~rosset-nocpes
-// @description In future will be based on https://greasyfork.org/en/scripts/398046-anime-website-custom-buttons-plus
-
-import { For, render } from "solid-js/web";
+import { For, MountableElement, render } from "solid-js/web";
 import getAmanogawaURL from "./amanogawa-button";
 import HikkaFLogoSmall from "@/public/hikka-features-small.svg";
 
 export default async function aniButtons(
   data,
-  location,
+  location: MountableElement,
   smallerTitle?: boolean
 ) {
   const content_type = data.data_type;
