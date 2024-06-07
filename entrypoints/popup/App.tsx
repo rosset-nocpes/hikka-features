@@ -1,10 +1,11 @@
 import { createSignal } from "solid-js";
 import solidLogo from "@/assets/solid.svg";
 import wxtLogo from "/hikka-features.svg";
+import { aniBackState } from "@/utils/storage";
 import "./App.css";
 
 const [showAniBackground, toggleAniBackground] = createSignal(
-  await storage.getItem("local:aniBackState")
+  await aniBackState.getValue()
 );
 
 function App() {
@@ -17,8 +18,8 @@ function App() {
           checked={showAniBackground()}
           onClick={() => {
             !showAniBackground()
-              ? storage.setItem<boolean>("local:aniBackState", true)
-              : storage.setItem<boolean>("local:aniBackState", false);
+              ? aniBackState.setValue(true)
+              : aniBackState.setValue(false);
             toggleAniBackground(!showAniBackground());
           }}
         />

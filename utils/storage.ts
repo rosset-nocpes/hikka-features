@@ -1,3 +1,3 @@
-// const aniBackState = storage.defineItem<boolean>("local:aniBackState", {
-//   defaultValue: false,
-// });
+export const aniBackState = storage.defineItem<boolean>("local:aniBackState", {
+  defaultValue: true,
+});

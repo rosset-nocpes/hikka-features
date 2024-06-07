@@ -1,6 +1,7 @@
 import { createSignal, onMount } from "solid-js";
 import { render } from "solid-js/web";
 import { Transition } from "solid-transition-group";
+import { aniBackState } from "./storage";
 
 export default async function aniBackground(mal_id: number) {
   if (document.querySelectorAll("#cover").length !== 0) {
@@ -44,13 +45,9 @@ export default async function aniBackground(mal_id: number) {
     img.onload = () => setIsLoaded(true);
   });
 
-  let [stateBack, setAniBack] = createSignal(
-    await storage.getItem("local:aniBackState")
-  );
+  let [stateBack, setAniBack] = createSignal(await aniBackState.getValue());
 
-  storage.watch<boolean>("local:aniBackState", (state) => {
-    setAniBack(state);
-  });
+  aniBackState.watch((state) => setAniBack(state));
 
   render(
     () => (
