@@ -139,7 +139,7 @@ a.watari-link:hover {
   }
 }
 
-.ani-buttons {
+#ani-buttons {
   display: flex;
   flex-direction: column;
   gap: 1rem;

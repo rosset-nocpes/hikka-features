@@ -88,9 +88,9 @@ export default async function aniButtons(
 
   render(
     () => (
-      <div class="ani-buttons">
+      <div id="ani-buttons">
         <h3
-          class={`scroll-m-20 font-display ${
+          class={`hikka-features scroll-m-20 font-display ${
             smallerTitle ? "text-lg" : "text-xl"
           } font-bold tracking-normal`}
         >
