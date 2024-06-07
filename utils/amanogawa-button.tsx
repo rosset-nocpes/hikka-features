@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 // @name        Amanogawa Button
 // @version     1.1
 // @author      Lorg0n

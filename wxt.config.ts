@@ -15,6 +15,7 @@ export default defineConfig({
     },
   }),
   manifest: () => ({
+    name: "Hikka Features",
     permissions: ["webNavigation", "storage"],
     host_permissions: [
       "https://*.hikka.io/*",

@@ -2,12 +2,6 @@ import { createSignal, onMount } from "solid-js";
 import { render } from "solid-js/web";
 import { Transition } from "solid-transition-group";
 
-/* eslint-disable no-undef */
-// @name        AniBackground
-// @version     1.0.0
-// @author      ~rosset-nocpes
-// @description Adds background
-
 export default async function aniBackground(mal_id: number) {
   const anilist_url = "https://graphql.anilist.co";
   const banner_query = `

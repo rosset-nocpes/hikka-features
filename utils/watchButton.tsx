@@ -1,11 +1,11 @@
 import { createSignal } from "solid-js";
 import Player, { getWatchData } from "./moon-player";
-import { render } from "solid-js/web";
+import { MountableElement, render } from "solid-js/web";
 import HikkaLogoMono from "@/public/hikka-features-mono.svg";
 
 export default async function watchButton(
   anime_slug: string,
-  watchButtonLocation?
+  watchButtonLocation?: MountableElement
 ) {
   const [playerDisabled, togglePlayerDisabled] = createSignal(true);
 

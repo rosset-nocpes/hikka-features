@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 async function fetchPendingEdits(page: number, sort: string[]) {
   const response = await fetch(
     `https://api.hikka.io/edit/list?page=${page}&size=15`,

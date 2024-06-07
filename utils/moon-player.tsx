@@ -1,9 +1,3 @@
-/* eslint-disable no-undef */
-// @name        Hikka x MoonAnime
-// @version     1.0.0
-// @author      ~rosset-nocpes
-// @description Додає відео з MoonAnime на сторінку аніме Хікки
-
 import {
   Select,
   SelectContent,
