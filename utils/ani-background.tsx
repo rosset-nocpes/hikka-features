@@ -3,6 +3,10 @@ import { render } from "solid-js/web";
 import { Transition } from "solid-transition-group";
 
 export default async function aniBackground(mal_id: number) {
+  if (document.querySelectorAll("#cover").length !== 0) {
+    return;
+  }
+
   const anilist_url = "https://graphql.anilist.co";
   const banner_query = `
     query media($mal_id: Int, $type: MediaType) {

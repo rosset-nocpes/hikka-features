@@ -27,10 +27,10 @@ export default defineContentScript({
       },
     ];
 
-    const [getPreviousAnimeSlug, setPreviousAnimeSlug] = [
-      () => storage.getItem("local:previousAnimeSlug"),
-      (input: string) => storage.setItem("local:previousAnimeSlug", input),
-    ];
+    // const [getPreviousAnimeSlug, setPreviousAnimeSlug] = [
+    //   () => storage.getItem("local:previousAnimeSlug"),
+    //   (input: string) => storage.setItem("local:previousAnimeSlug", input),
+    // ];
 
     // Only for edit page!
     const isModerator = () =>
@@ -42,7 +42,7 @@ export default defineContentScript({
         null
       ).booleanValue;
 
-    (await getPreviousAnimeSlug()) == "" ? setPreviousAnimeSlug("") : "";
+    // (await getPreviousAnimeSlug()) == "" ? setPreviousAnimeSlug("") : "";
 
     browser.runtime.onMessage.addListener(async function (request) {
       if (request.type === "page-rendered") {
@@ -54,156 +54,205 @@ export default defineContentScript({
         const path = split_path[1];
         const isHomepage = document.location.pathname == "/";
 
-        path == "anime" ? setPreviousAnimeSlug(split_path[2]) : null;
+        // path == "anime" ? setPreviousAnimeSlug(split_path[2]) : null;
 
-        // for anime page scripts
-        if (split_path.length == 3 && path == "anime") {
-          const anime_slug = split_path[2];
+        switch (path) {
+          case "anime":
+            const mal_id = document.head.querySelector(
+              "[name=mal-id][content]"
+            )!.content;
 
-          const info_block = document.querySelector(
-            "body main > .grid > .flex:nth-child(2) > .grid > div:nth-child(3) > .flex"
-          )!;
+            if (split_path.length === 3) {
+              const anime_slug = split_path[2];
 
-          const anime_data = await (
-            await fetch(`https://api.hikka.io/anime/${anime_slug}`)
-          ).json();
+              const info_block = document.querySelector(
+                "body main > .grid > .flex:nth-child(2) > .grid > div:nth-child(3) > .flex"
+              )!;
 
-          // Watch button
-          watchButton(anime_slug);
-
-          // aniButtons
-          aniButtons(anime_data, info_block);
-
-          // aniBackground
-          if (document.querySelectorAll("#cover").length === 0) {
-            aniBackground(anime_data.mal_id);
-          }
-        } else if (split_path.length == 3 && path == "edit") {
-          const creatingEdit = isNaN(parseInt(split_path[2]));
-
-          const edit_info = creatingEdit
-            ? new URLSearchParams(document.location.search)
-            : await (
-                await fetch(`https://api.hikka.io/edit/${split_path[2]}`)
+              const anime_data = await (
+                await fetch(`https://api.hikka.io/anime/${anime_slug}`)
               ).json();
 
-          const getEditInfo = async () =>
-            await (
-              await fetch(`https://api.hikka.io/edit/${split_path[2]}`)
-            ).json();
+              // Watch button
+              watchButton(anime_slug);
 
-          const content_type = creatingEdit
-            ? edit_info.get("content_type")
-            : edit_info.content.data_type;
+              // aniButtons
+              aniButtons(anime_data, info_block);
+            }
 
-          const slug = creatingEdit
-            ? edit_info.get("slug")
-            : edit_info.content.slug;
+            // aniBackground
+            aniBackground(mal_id);
 
-          // ani-buttons on edit page
-          if (document.querySelectorAll("div.ani-buttons").length == 0) {
-            const data = await (
-              await fetch(
-                `https://api.hikka.io/${
-                  content_type === "character"
-                    ? "characters"
-                    : content_type === "person"
-                    ? "people"
-                    : content_type
-                }/${slug}`
-              )
-            ).json();
+            if (
+              document.head.querySelectorAll("[name=anime-mal-id][content]")
+                .length === 0
+            ) {
+              document.head.insertAdjacentHTML(
+                "beforeend",
+                `<meta name="anime-mal-id" content="${mal_id}">`
+              );
+            } else if (
+              mal_id !==
+              document.head.querySelector("[name=anime-mal-id][content]")!
+                .content
+            ) {
+              document.head.querySelector(
+                "[name=anime-mal-id][content]"
+              )!.content = mal_id;
+            }
 
-            const info_block = document.querySelector(
-              `div.gap-12:nth-child(2) > div:nth-child(${creatingEdit ? 1 : 2})`
-            )!;
+            break;
+          case "edit":
+            if (split_path.length === 3) {
+              const creatingEdit = isNaN(parseInt(split_path[2]));
 
-            aniButtons(data, info_block, true);
-          }
+              const edit_info = creatingEdit
+                ? new URLSearchParams(document.location.search)
+                : await (
+                    await fetch(`https://api.hikka.io/edit/${split_path[2]}`)
+                  ).json();
 
-          // next-edit-button;
-          if (
-            !creatingEdit &&
-            (await getEditInfo()).status === "pending" &&
-            !getPreviousCreatingEdit() &&
-            isModerator()
-          ) {
-            const [getNextEditButton, toggleNextEditButton] =
-              createSignal(true);
+              const getEditInfo = async () =>
+                await (
+                  await fetch(`https://api.hikka.io/edit/${split_path[2]}`)
+                ).json();
 
-            render(
-              () => (
-                <button
-                  id="next-edit-button"
-                  class="inline-flex gap-2 items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-50 border border-secondary/60 bg-secondary/30 hover:bg-secondary/60 hover:text-secondary-foreground h-12 px-4 py-2 hikka-features"
-                  disabled={getNextEditButton()}
-                  onClick={() => {
-                    window.open(url, "_self");
-                  }}
-                >
-                  <span class="tabler--circle-arrow-right-filled"></span>
-                </button>
-              ),
-              document.querySelector("#breadcrumbs")!
+              const content_type = creatingEdit
+                ? edit_info.get("content_type")
+                : edit_info.content.data_type;
+
+              const slug = creatingEdit
+                ? edit_info.get("slug")
+                : edit_info.content.slug;
+
+              // ani-buttons on edit page
+              if (document.querySelectorAll("div.ani-buttons").length == 0) {
+                const data = await (
+                  await fetch(
+                    `https://api.hikka.io/${
+                      content_type === "character"
+                        ? "characters"
+                        : content_type === "person"
+                        ? "people"
+                        : content_type
+                    }/${slug}`
+                  )
+                ).json();
+
+                const info_block = document.querySelector(
+                  `div.gap-12:nth-child(2) > div:nth-child(${
+                    creatingEdit ? 1 : 2
+                  })`
+                )!;
+
+                aniButtons(data, info_block, true);
+              }
+
+              // next-edit-button;
+              if (
+                !creatingEdit &&
+                (await getEditInfo()).status === "pending" &&
+                !getPreviousCreatingEdit() &&
+                isModerator()
+              ) {
+                const [getNextEditButton, toggleNextEditButton] =
+                  createSignal(true);
+
+                render(
+                  () => (
+                    <button
+                      id="next-edit-button"
+                      class="inline-flex gap-2 items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-50 border border-secondary/60 bg-secondary/30 hover:bg-secondary/60 hover:text-secondary-foreground h-12 px-4 py-2 hikka-features"
+                      disabled={getNextEditButton()}
+                      onClick={() => {
+                        window.open(url, "_self");
+                      }}
+                    >
+                      <span class="tabler--circle-arrow-right-filled"></span>
+                    </button>
+                  ),
+                  document.querySelector("#breadcrumbs")!
+                );
+
+                const url = await NextEditURL(edit_info.edit_id);
+
+                url ? toggleNextEditButton(!getNextEditButton()) : null;
+              }
+
+              // u-char-button
+              //   if (
+              //     !creatingEdit &&
+              //     getPreviousCreatingEdit() &&
+              //     (content_type === "character" || content_type === "person")
+              //   ) {
+              //     const [uCharDisabled, toggleUCharDisabled] = createSignal(true);
+              //     render(
+              //       () => (
+              //         <button
+              //           id="u-char-button"
+              //           class="features-button hikka-features"
+              //           disabled={uCharDisabled()}
+              //           onClick={() => window.open(url, "_self")}
+              //         >
+              //           <span class="tabler--circle-arrow-right-filled"></span>
+              //         </button>
+              //       ),
+              //       document.querySelector("#breadcrumbs")!
+              //     );
+
+              //     !getPreviousCreatingEdit()
+              //       ? (url = await UCharURL(
+              //           slug,
+              //           content_type,
+              //           await getPreviousAnimeSlug()
+              //         ))
+              //       : null;
+              //     url ? toggleUCharDisabled(!uCharDisabled()) : null;
+              //   } else if (
+              //     creatingEdit &&
+              //     (content_type === "character" || content_type === "person")
+              //   ) {
+              //     url = await UCharURL(
+              //       slug,
+              //       content_type,
+              //       await getPreviousAnimeSlug()
+              //     );
+              //   }
+
+              setPreviousCreatingEdit(creatingEdit);
+              // } else if (
+              //   (split_path.length == 3 &&
+              //     path !== "edit" &&
+              //     path !== "characters" &&
+              //     path !== "people" &&
+              //     !getPreviousCreatingEdit()) ||
+              //   (split_path.length == 2 && path === "edit") ||
+              //   isHomepage
+              // ) {
+              //   setPreviousAnimeSlug("");
+              // }
+              break;
+            }
+          case "characters":
+            const anime_mal_id = document.head.querySelectorAll(
+              "[name=anime-mal-id][content]"
             );
 
-            const url = await NextEditURL(edit_info.edit_id);
+            if (anime_mal_id.length !== 0) {
+              aniBackground(anime_mal_id[0].content);
+            } else {
+              const anime_slug = document.body
+                .querySelector("a.mt-1.truncate")!
+                .href.split("/")[4];
 
-            url ? toggleNextEditButton(!getNextEditButton()) : null;
-          }
+              const first_anime_mal_id = await (
+                await fetch(`https://api.hikka.io/anime/${anime_slug}`)
+              ).json();
 
-          // u-char-button
-          //   if (
-          //     !creatingEdit &&
-          //     getPreviousCreatingEdit() &&
-          //     (content_type === "character" || content_type === "person")
-          //   ) {
-          //     const [uCharDisabled, toggleUCharDisabled] = createSignal(true);
-          //     render(
-          //       () => (
-          //         <button
-          //           id="u-char-button"
-          //           class="features-button hikka-features"
-          //           disabled={uCharDisabled()}
-          //           onClick={() => window.open(url, "_self")}
-          //         >
-          //           <span class="tabler--circle-arrow-right-filled"></span>
-          //         </button>
-          //       ),
-          //       document.querySelector("#breadcrumbs")!
-          //     );
+              aniBackground(first_anime_mal_id["mal_id"]);
+            }
 
-          //     !getPreviousCreatingEdit()
-          //       ? (url = await UCharURL(
-          //           slug,
-          //           content_type,
-          //           await getPreviousAnimeSlug()
-          //         ))
-          //       : null;
-          //     url ? toggleUCharDisabled(!uCharDisabled()) : null;
-          //   } else if (
-          //     creatingEdit &&
-          //     (content_type === "character" || content_type === "person")
-          //   ) {
-          //     url = await UCharURL(
-          //       slug,
-          //       content_type,
-          //       await getPreviousAnimeSlug()
-          //     );
-          //   }
-
-          setPreviousCreatingEdit(creatingEdit);
-          // } else if (
-          //   (split_path.length == 3 &&
-          //     path !== "edit" &&
-          //     path !== "characters" &&
-          //     path !== "people" &&
-          //     !getPreviousCreatingEdit()) ||
-          //   (split_path.length == 2 && path === "edit") ||
-          //   isHomepage
-          // ) {
-          //   setPreviousAnimeSlug("");
-          // }
+            break;
         }
       }
     });
