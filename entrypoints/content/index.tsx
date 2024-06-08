@@ -142,15 +142,13 @@ export default defineContentScript({
               ).json();
 
               // ani-buttons on edit page
-              if (document.querySelectorAll("#ani-buttons").length == 0) {
-                const info_block = document.querySelector(
-                  `div.gap-12:nth-child(2) > div:nth-child(${
-                    creatingEdit ? 1 : 2
-                  })`
-                )!;
+              const info_block = document.querySelector(
+                `div.gap-12:nth-child(2) > div:nth-child(${
+                  creatingEdit ? 1 : 2
+                })`
+              )!;
 
-                aniButtons(data, info_block, true);
-              }
+              aniButtons(data, info_block, true);
 
               // next-edit-button;
               if (
@@ -191,14 +189,17 @@ export default defineContentScript({
                 case "character":
                   aniBackground(
                     document.head.querySelector("[name=anime-mal-id][content]")
-                      ?.content ||
-                      (
-                        await (
-                          await fetch(
-                            `https://api.hikka.io/characters/${slug}/anime`
-                          )
-                        ).json()
-                      ).list[0].anime.mal_id
+                      ?.content !== "null"
+                      ? document.head.querySelector(
+                          "[name=anime-mal-id][content]"
+                        )?.content
+                      : (
+                          await (
+                            await fetch(
+                              `https://api.hikka.io/characters/${slug}/anime`
+                            )
+                          ).json()
+                        ).list[0].anime.mal_id
                   );
                   break;
               }
@@ -257,18 +258,28 @@ export default defineContentScript({
               // }
               break;
             } else {
-              document.head.querySelector(
+              document.head.querySelectorAll(
                 "[name=previous-creating-edit][content]"
-              )!.content = "false";
+              ).length !== 0
+                ? (document.head.querySelector(
+                    "[name=previous-creating-edit][content]"
+                  )!.content = "false")
+                : null;
+
+              document.head.querySelectorAll("[name=anime-mal-id][content]")
+                .length !== 0
+                ? (document.head.querySelector(
+                    "[name=anime-mal-id][content]"
+                  )!.content = null)
+                : null;
+              break;
             }
           case "characters":
             const anime_mal_id = document.head.querySelectorAll(
               "[name=anime-mal-id][content]"
             );
 
-            if (anime_mal_id.length !== 0) {
-              aniBackground(anime_mal_id[0].content);
-            } else {
+            async function first_aniBackground() {
               const anime_slug = document.body
                 .querySelector("a.mt-1.truncate")!
                 .href.split("/")[4];
@@ -280,11 +291,26 @@ export default defineContentScript({
               aniBackground(first_anime_mal_id["mal_id"]);
             }
 
+            (await aniBackground(anime_mal_id[0].content)) ??
+              first_aniBackground();
+
             break;
           default:
-            document.head.querySelector(
+            document.head.querySelectorAll(
               "[name=previous-creating-edit][content]"
-            )!.content = "false";
+            ).length !== 0
+              ? (document.head.querySelector(
+                  "[name=previous-creating-edit][content]"
+                )!.content = "false")
+              : null;
+
+            document.head.querySelectorAll("[name=anime-mal-id][content]")
+              .length !== 0
+              ? (document.head.querySelector(
+                  "[name=anime-mal-id][content]"
+                )!.content = null)
+              : null;
+            break;
         }
       }
     });
