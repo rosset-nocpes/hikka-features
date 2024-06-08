@@ -150,38 +150,7 @@ export default defineContentScript({
 
               aniButtons(data, info_block, true);
 
-              // next-edit-button;
-              if (
-                !creatingEdit &&
-                (await getEditInfo()).status === "pending" &&
-                (getPreviousCreatingEdit() === undefined ||
-                  getPreviousCreatingEdit() === "false") &&
-                isModerator()
-              ) {
-                const [getNextEditButton, toggleNextEditButton] =
-                  createSignal(true);
-
-                render(
-                  () => (
-                    <button
-                      id="next-edit-button"
-                      class="inline-flex gap-2 items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-50 border border-secondary/60 bg-secondary/30 hover:bg-secondary/60 hover:text-secondary-foreground h-12 px-4 py-2 hikka-features"
-                      disabled={getNextEditButton()}
-                      onClick={() => {
-                        window.open(url, "_self");
-                      }}
-                    >
-                      <span class="tabler--circle-arrow-right-filled"></span>
-                    </button>
-                  ),
-                  document.querySelector("#breadcrumbs")!
-                );
-
-                const url = await NextEditURL(edit_info.edit_id);
-
-                url ? toggleNextEditButton(!getNextEditButton()) : null;
-              }
-
+              // aniBackground
               switch (content_type) {
                 case "anime":
                   aniBackground(data.mal_id);
@@ -202,6 +171,43 @@ export default defineContentScript({
                         ).list[0].anime.mal_id
                   );
                   break;
+              }
+
+              // next-edit-button;
+              if (
+                !creatingEdit &&
+                (await getEditInfo()).status === "pending" &&
+                (getPreviousCreatingEdit() === undefined ||
+                  getPreviousCreatingEdit() === "false") &&
+                isModerator()
+              ) {
+                if (
+                  document.body.querySelectorAll("#next-edit-button").length ===
+                  0
+                ) {
+                  const [getNextEditButton, toggleNextEditButton] =
+                    createSignal(true);
+
+                  render(
+                    () => (
+                      <button
+                        id="next-edit-button"
+                        class="inline-flex gap-2 items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-50 border border-secondary/60 bg-secondary/30 hover:bg-secondary/60 hover:text-secondary-foreground h-12 px-4 py-2 hikka-features"
+                        disabled={getNextEditButton()}
+                        onClick={() => {
+                          window.open(url, "_self");
+                        }}
+                      >
+                        <span class="tabler--circle-arrow-right-filled"></span>
+                      </button>
+                    ),
+                    document.querySelector("#breadcrumbs")!
+                  );
+
+                  const url = await NextEditURL(edit_info.edit_id);
+
+                  url ? toggleNextEditButton(!getNextEditButton()) : null;
+                }
               }
 
               // u-char-button
