@@ -7,6 +7,10 @@ export default async function watchButton(
   anime_slug: string,
   watchButtonLocation?: MountableElement
 ) {
+  if (document.body.querySelectorAll("#player-button").length !== 0) {
+    return;
+  }
+
   const [playerDisabled, togglePlayerDisabled] = createSignal(true);
 
   let data: any;

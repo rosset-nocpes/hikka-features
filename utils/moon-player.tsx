@@ -36,6 +36,10 @@ export async function getWatchData(anime_slug: string) {
 }
 
 export default function Player(data: { [x: string]: any }) {
+  if (document.body.querySelectorAll("#player-block").length !== 0) {
+    return;
+  }
+
   const [teamName, setTeamName] = createSignal(Object.keys(data)[0]);
   const [teamEpisode, setTeamEpisode] = createSignal(data[teamName()][0]);
 
