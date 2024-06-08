@@ -7,6 +7,10 @@ export default async function aniButtons(
   location: MountableElement,
   smallerTitle?: boolean
 ) {
+  if (document.body.querySelectorAll("#ani-buttons").length !== 0) {
+    return;
+  }
+
   const content_type = data.data_type;
 
   const contentTypeMap = {

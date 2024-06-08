@@ -34,7 +34,11 @@ export default async function aniBackground(mal_id: number) {
     })
   ).json();
 
-  const banner = background_data["data"]["Media"]["bannerImage"];
+  const banner = background_data.data.Media?.bannerImage;
+
+  if (banner === undefined) {
+    return null;
+  }
 
   const [isLoaded, setIsLoaded] = createSignal(false);
 
