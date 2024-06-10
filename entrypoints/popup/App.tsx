@@ -1,7 +1,6 @@
 import { createSignal } from "solid-js";
 import { aniBackState } from "@/utils/storage";
 import HikkaFLogoSmall from "/hikka-features-small.svg";
-// import "./App.css";
 import "../app.css";
 import {
   Switch,
@@ -28,7 +27,7 @@ function App() {
             : aniBackState.setValue(false);
           toggleAniBackground(!showAniBackground());
         }}
-        class="flex items-center space-x-2"
+        class="flex items-center justify-between"
       >
         <SwitchLabel>Обкладинка аніме</SwitchLabel>
         <SwitchControl>
