@@ -158,17 +158,28 @@ export default defineContentScript({
                 case "character":
                   aniBackground(
                     document.head.querySelector("[name=anime-mal-id][content]")
-                      ?.content !== "null"
+                      ?.content !== "null" &&
+                      document.head.querySelector(
+                        "[name=anime-mal-id][content]"
+                      )?.content !== undefined
                       ? document.head.querySelector(
                           "[name=anime-mal-id][content]"
                         )?.content
-                      : (
+                      : await (
                           await (
                             await fetch(
-                              `https://api.hikka.io/characters/${slug}/anime`
+                              `https://api.hikka.io/anime/${
+                                (
+                                  await (
+                                    await fetch(
+                                      `https://api.hikka.io/characters/${slug}/anime`
+                                    )
+                                  ).json()
+                                ).list[0].anime.slug
+                              }`
                             )
                           ).json()
-                        ).list[0].anime.mal_id
+                        ).mal_id
                   );
                   break;
               }
