@@ -72,7 +72,7 @@ export default function Player(data: { [x: string]: any }) {
               <SelectItem item={props.item}>{props.item.rawValue}</SelectItem>
             )}
           >
-            <SelectTrigger aria-label="Team" class="w-full">
+            <SelectTrigger aria-label="Team" class="w-full focus:ring-0">
               <SelectValue<string>>
                 {(state) => state.selectedOption()}
               </SelectValue>
@@ -93,7 +93,7 @@ export default function Player(data: { [x: string]: any }) {
               </SelectItem>
             )}
           >
-            <SelectTrigger aria-label="Episode" class="w-full">
+            <SelectTrigger aria-label="Episode" class="w-full focus:ring-0">
               <SelectValue<any>>
                 {(state) =>
                   state.selectedOption() &&
