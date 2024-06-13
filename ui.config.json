@@ -6,6 +6,6 @@
     "css": "entrypoints/app.css"
   },
   "aliases": {
-    "path": "~/*"
+    "path": "@/*"
   }
 }

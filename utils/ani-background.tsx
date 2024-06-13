@@ -49,7 +49,7 @@ export default async function aniBackground(mal_id: number) {
     img.onload = () => setIsLoaded(true);
   });
 
-  let [stateBack, setAniBack] = createSignal(await aniBackState.getValue());
+  const [stateBack, setAniBack] = createSignal(await aniBackState.getValue());
 
   aniBackState.watch((state) => setAniBack(state));
 

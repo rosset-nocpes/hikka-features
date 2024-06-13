@@ -8,11 +8,6 @@ export default defineConfig({
       target: "esnext",
     },
     plugins: [Solid()],
-    resolve: {
-      alias: {
-        "~": path.resolve(__dirname, "./"),
-      },
-    },
   }),
   manifest: () => ({
     name: "Hikka Features",

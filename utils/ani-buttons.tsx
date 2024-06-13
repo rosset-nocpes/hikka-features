@@ -1,6 +1,8 @@
 import { For, MountableElement, render } from "solid-js/web";
 import getAmanogawaURL from "./amanogawa-button";
 import HikkaFLogoSmall from "@/public/hikka-features-small.svg";
+import { Transition } from "solid-transition-group";
+import { createSignal } from "solid-js";
 
 export default async function aniButtons(
   data,
@@ -90,35 +92,45 @@ export default async function aniButtons(
     },
   ];
 
+  const [blockState, setBlockState] = createSignal(
+    await aniButtonsState.getValue()
+  );
+
+  aniButtonsState.watch((state) => setBlockState(state));
+
   render(
     () => (
-      <div id="ani-buttons">
-        <h3
-          class={`hikka-features scroll-m-20 font-display ${
-            smallerTitle ? "text-lg" : "text-xl"
-          } font-bold tracking-normal`}
-        >
-          Інші джерела
-          <img src={HikkaFLogoSmall} style="width: 21px; height: 20px" />
-        </h3>
-        <div>
-          <For each={searchUrls}>
-            {(elem) => (
-              <a
-                class={elem.url ?? "link-disabled"}
-                href={elem.url}
-                target="_blank"
-              >
-                <img
-                  style="width:16px;height:16px;margin-right:2px;"
-                  src={`https://www.google.com/s2/favicons?domain=${elem.host}`}
-                />
-                {elem.title}
-              </a>
-            )}
-          </For>
-        </div>
-      </div>
+      <Transition name="slide-fade">
+        {blockState()! && (
+          <div id="ani-buttons">
+            <h3
+              class={`hikka-features scroll-m-20 font-display ${
+                smallerTitle ? "text-lg" : "text-xl"
+              } font-bold tracking-normal`}
+            >
+              Інші джерела
+              <img src={HikkaFLogoSmall} style="width: 21px; height: 20px" />
+            </h3>
+            <div>
+              <For each={searchUrls}>
+                {(elem) => (
+                  <a
+                    class={elem.url ?? "link-disabled"}
+                    href={elem.url}
+                    target="_blank"
+                  >
+                    <img
+                      style="width:16px;height:16px;margin-right:2px;"
+                      src={`https://www.google.com/s2/favicons?domain=${elem.host}`}
+                    />
+                    {elem.title}
+                  </a>
+                )}
+              </For>
+            </div>
+          </div>
+        )}
+      </Transition>
     ),
     location
   );
