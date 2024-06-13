@@ -98,8 +98,7 @@ function App() {
         >
           GitHub
         </a>
-        <a>•</a>
-        {version}
+        <a>•</a>v{version}
       </div>
     </div>
   );
