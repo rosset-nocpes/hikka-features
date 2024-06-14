@@ -83,7 +83,7 @@ function App() {
           <div class="flex flex-col gap-1 mr-10">
             <SwitchLabel>Обкладинки</SwitchLabel>
             <SwitchDescription class="text-xs font-medium text-[#A1A1A1]">
-              Покращене оформлення на сторінках тайтлів та персонажів
+              Покращене оформлення на сторінках тайтлів, персонажів та правок
             </SwitchDescription>
           </div>
           <SwitchControl>
