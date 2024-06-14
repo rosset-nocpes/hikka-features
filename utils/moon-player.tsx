@@ -111,7 +111,7 @@ export default function Player(data: { [x: string]: any }) {
           <iframe
             src={`${teamEpisode().video_url}?site=hikka.io`}
             loading="lazy"
-            style="border: medium; border-radius: 4px; position: absolute; top: 0px; left: 0px; height: 100%; width: 100%; animation: 0.5s cubic-bezier(.77,0,.18,1) 0s 1 slideInFromUp;"
+            style="border-radius: 10px; position: absolute; top: 0px; left: 0px; height: 100%; width: 100%;"
             allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
             allowfullscreen
           ></iframe>
