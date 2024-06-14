@@ -40,15 +40,10 @@ jobs:
         run: |
           pnpm wxt submit \
             --chrome-zip .output/*-chrome.zip \
-            --firefox-zip .output/*-firefox.zip --firefox-sources-zip .output/*-sources.zip
-        env:
-          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
-          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
-          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
-          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
-          FIREFOX_EXTENSION_ID: ${{ secrets.FIREFOX_EXTENSION_ID }}
-          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
-          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
+            --firefox-zip .output/*-firefox.zip --firefox-sources-zip .output/*-sources.zip \
+            --firefox-extension-id ${{ secrets.FIREFOX_EXTENSION_ID }} --firefox-jwt-issuer ${{ secrets.FIREFOX_JWT_ISSUER }} --firefox-jwt-secret ${{ secrets.FIREFOX_JWT_SECRET }} \
+            --chrome-extension-id ${{ secrets.CHROME_EXTENSION_ID }} --chrome-client-id ${{ secrets.CHROME_CLIENT_ID }} --chrome-client-secret ${{ secrets.CHROME_CLIENT_SECRET }} \
+            --chrome-refresh-token ${{ secrets.CHROME_REFRESH_TOKEN }}
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
