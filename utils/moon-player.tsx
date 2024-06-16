@@ -40,8 +40,16 @@ export default function Player(data: { [x: string]: any }) {
     return;
   }
 
+  const watched = parseInt(
+    document.body.querySelector("div.rounded-lg.border:nth-child(2) h3")
+      ?.firstChild?.nodeValue!
+  );
+
   const [teamName, setTeamName] = createSignal(Object.keys(data)[0]);
-  const [teamEpisode, setTeamEpisode] = createSignal(data[teamName()][0]);
+  const [teamEpisode, setTeamEpisode] = createSignal(
+    data[teamName()].find((obj) => obj.episode == watched + 1) ||
+      data[teamName()][0]
+  );
 
   const player_button = document.getElementById("player-button")!;
 
@@ -65,7 +73,11 @@ export default function Player(data: { [x: string]: any }) {
           <Select
             value={teamName()}
             class="w-full"
-            onChange={(e) => setTeamEpisode(data[e][0]) && setTeamName(e)}
+            onChange={(e) =>
+              setTeamEpisode(
+                data[e].find((obj) => obj.episode == watched + 1) || data[e][0]
+              ) && setTeamName(e)
+            }
             options={Object.keys(data)}
             placeholder="Оберіть команду фандабу…"
             itemComponent={(props) => (
