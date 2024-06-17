@@ -40,14 +40,15 @@ export default function Player(data: { [x: string]: any }) {
     return;
   }
 
-  const watched = parseInt(
-    document.body.querySelector("div.rounded-lg.border:nth-child(2) h3")
-      ?.firstChild?.nodeValue!
-  );
+  const getWatched = () =>
+    parseInt(
+      document.body.querySelector("div.rounded-lg.border:nth-child(2) h3")
+        ?.firstChild?.nodeValue!
+    );
 
   const [teamName, setTeamName] = createSignal(Object.keys(data)[0]);
   const [teamEpisode, setTeamEpisode] = createSignal(
-    data[teamName()].find((obj) => obj.episode == watched + 1) ||
+    data[teamName()].find((obj) => obj.episode == getWatched() + 1) ||
       data[teamName()][0]
   );
 
@@ -62,6 +63,39 @@ export default function Player(data: { [x: string]: any }) {
 
   const handleSelectEpisode = (e: any) => {
     if (e) {
+      let duration = 0;
+      let time = 0;
+
+      const iframe = document.getElementById(
+        "player-iframe"
+      ) as HTMLIFrameElement;
+      iframe.contentWindow?.postMessage({ command: "get_duration" }, "*");
+
+      window.addEventListener("message", function (event) {
+        let message = event.data;
+        if (message) {
+          if (duration === 0) {
+            duration = message.data;
+            iframe.contentWindow?.postMessage({ command: "get_time" }, "*");
+          } else if (time === 0) {
+            time = message.data;
+            window.postMessage({ type: "click" }, "*");
+          } else if (
+            message.type === "click" &&
+            time / duration > 0.75 &&
+            getWatched() + 1 === teamEpisode().episode - 1
+          ) {
+            (
+              document.body.querySelector(
+                "div.inline-flex:nth-child(2) button:nth-child(2)"
+              ) as HTMLButtonElement
+            )?.click();
+          }
+        } else {
+          console.log("Received an error response:", message);
+        }
+      });
+
       setTeamEpisode(e);
     }
   };
@@ -75,7 +109,8 @@ export default function Player(data: { [x: string]: any }) {
             class="w-full"
             onChange={(e) =>
               setTeamEpisode(
-                data[e].find((obj) => obj.episode == watched + 1) || data[e][0]
+                data[e].find((obj) => obj.episode == getWatched() + 1) ||
+                  data[e][0]
               ) && setTeamName(e)
             }
             options={Object.keys(data)}
@@ -121,6 +156,7 @@ export default function Player(data: { [x: string]: any }) {
           style="width: 100%; height: 332px; position: relative;"
         >
           <iframe
+            id="player-iframe"
             src={`${teamEpisode().video_url}?site=hikka.io`}
             loading="lazy"
             style="border-radius: 10px; position: absolute; top: 0px; left: 0px; height: 100%; width: 100%;"
