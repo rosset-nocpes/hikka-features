@@ -1,4 +1,4 @@
-import { createSignal } from "solid-js";
+import { createSignal, Match, Switch } from "solid-js";
 import Player, { getWatchData } from "./moon-player";
 import { MountableElement, render } from "solid-js/web";
 import HikkaLogoMono from "@/public/hikka-features-mono.svg";
@@ -17,13 +17,20 @@ export default async function watchButton(
     await watchButtonState.getValue()
   );
 
+  // -1 - loading; 0 - not found; 1 - found;
+  const [state, setState] = createSignal(-1);
+  const status =
+    state() === -1 ? "Шукаю" : state() === 0 ? "Немає" : "Перегляд";
+
   watchButtonState.watch((state) => setButtonState(state));
 
   let data: any;
   getWatchData(anime_slug)
     .then((x: any) => (data = x))
     .then((data: any) =>
-      data !== null ? togglePlayerDisabled(!playerDisabled()) : null
+      data !== null
+        ? (togglePlayerDisabled(!playerDisabled()), setState(1))
+        : setState(0)
     );
 
   render(
@@ -37,7 +44,19 @@ export default async function watchButton(
             disabled={playerDisabled()}
           >
             <img src={HikkaLogoMono} />
-            Перегляд
+            <Transition name="vertical-slide-fade" mode="outin">
+              <Switch>
+                <Match when={state() === -1}>
+                  <a>Шукаю</a>
+                </Match>
+                <Match when={state() === 0}>
+                  <a>Немає</a>
+                </Match>
+                <Match when={state() === 1}>
+                  <a>Перегляд</a>
+                </Match>
+              </Switch>
+            </Transition>
           </button>
         )}
       </Transition>

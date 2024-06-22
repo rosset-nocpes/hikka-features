@@ -109,6 +109,23 @@ a.watari-link:hover {
   opacity: 0;
 }
 
+.vertical-slide-fade-enter-active {
+  transition: all 0.3s ease;
+}
+.vertical-slide-fade-exit-active {
+  transition: all 0.1s cubic-bezier(1, 0.5, 0.8, 1);
+}
+
+.vertical-slide-fade-exit-to {
+  transform: translateY(10px);
+  opacity: 0;
+}
+
+.vertical-slide-fade-enter {
+  transform: translateY(-10px);
+  opacity: 0;
+}
+
 .slide-exit-to {
   transform: translateY(-100%);
 }
