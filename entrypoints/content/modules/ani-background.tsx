@@ -1,11 +1,14 @@
 import { createSignal, onMount } from "solid-js";
 import { render } from "solid-js/web";
 import { Transition } from "solid-transition-group";
-import { aniBackState } from "./storage";
 
-export default async function aniBackground(mal_id: number) {
+export default async function aniBackground(mal_id: number, type: MediaType) {
   if (document.querySelectorAll("#cover").length !== 0) {
     return;
+  }
+
+  if (type === MediaType.Novel) {
+    type = MediaType.Manga;
   }
 
   const anilist_url = "https://graphql.anilist.co";
@@ -28,7 +31,7 @@ export default async function aniBackground(mal_id: number) {
         query: banner_query,
         variables: {
           mal_id: mal_id,
-          type: "ANIME",
+          type: type.toUpperCase(),
         },
       }),
     })

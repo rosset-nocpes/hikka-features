@@ -3,7 +3,7 @@
 // @author      Lorg0n
 // @description original: https://gist.github.com/rosset-nocpes/f251942d47662b725329772533769399/raw/
 
-export default async function getAmanogawaURL(anime_data: any) {
+export async function getAmanogawaURL(anime_data: any) {
   const threshold = 0.8; // Значення -> [0; 1]. Це рівень перевірки схожості назви аніме, тому що пошук на amanogawa працює дуже дивно й іноді видає аніме, які взагалі не потрібні були.
 
   const title_ja = anime_data["title_ja"];

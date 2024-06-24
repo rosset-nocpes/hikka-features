@@ -19,8 +19,6 @@ export default async function watchButton(
 
   // -1 - loading; 0 - not found; 1 - found;
   const [state, setState] = createSignal(-1);
-  const status =
-    state() === -1 ? "Шукаю" : state() === 0 ? "Немає" : "Перегляд";
 
   watchButtonState.watch((state) => setButtonState(state));
 

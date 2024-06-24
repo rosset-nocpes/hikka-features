@@ -1,11 +1,15 @@
 import { createSignal } from "solid-js";
 import { render } from "solid-js/web";
 import "./style.css";
-import aniButtons from "@/utils/ani-buttons";
-import aniBackground from "@/utils/ani-background";
+import aniBackground from "./modules/ani-background";
+import aniButtons from "./modules/ani-buttons";
 import NextEditURL from "@/utils/next-edit-url";
 // import UCharURL from "@/utils/u-char-url";
 import watchButton from "@/utils/watchButton";
+import { MediaType } from "@/utils/common";
+// import NotionBlock from "@/utils/notion-block";
+// import Teams from "@/utils/notion-db";
+// import readerButton from "./modules/read-button";
 
 export default defineContentScript({
   matches: ["https://hikka.io/*"],
@@ -60,12 +64,14 @@ export default defineContentScript({
 
         // path == "anime" ? setPreviousAnimeSlug(split_path[2]) : null;
 
+        const mal_id = (
+          document.head.querySelector(
+            "[name=mal-id][content]"
+          ) as HTMLMetaElement
+        )?.content;
+
         switch (path) {
           case "anime":
-            const mal_id = document.head.querySelector(
-              "[name=mal-id][content]"
-            )!.content;
-
             if (split_path.length === 3) {
               const anime_slug = split_path[2];
 
@@ -81,11 +87,15 @@ export default defineContentScript({
               watchButton(anime_slug);
 
               // aniButtons
-              aniButtons(anime_data, info_block);
+              aniButtons(anime_data);
+
+              // NotionBlock(anime_slug);
             }
 
             // aniBackground
-            aniBackground(mal_id);
+            if (split_path.length >= 3) {
+              aniBackground(mal_id, MediaType.Anime);
+            }
 
             if (
               document.head.querySelectorAll("[name=anime-mal-id][content]")
@@ -102,6 +112,56 @@ export default defineContentScript({
             ) {
               document.head.querySelector(
                 "[name=anime-mal-id][content]"
+              )!.content = mal_id;
+            }
+
+            break;
+          case "manga":
+          case "novel":
+            document.head.querySelectorAll("[name=anime-mal-id][content]")
+              .length !== 0
+              ? (document.head.querySelector(
+                  "[name=anime-mal-id][content]"
+                )!.content = null)
+              : null;
+
+            if (split_path.length === 3) {
+              const slug = split_path[2];
+
+              const info_block = document.querySelector(
+                ".order-1 > div:nth-child(1)"
+              )!;
+
+              const data = await (
+                await fetch(`https://api.hikka.io/${path}/${slug}`)
+              ).json();
+
+              // readerButton(data);
+
+              // aniButtons
+              aniButtons(data);
+            }
+
+            // aniBackground
+            if (split_path.length >= 3) {
+              aniBackground(mal_id, MediaType.Manga);
+            }
+
+            if (
+              document.head.querySelectorAll("[name=manga-mal-id][content]")
+                .length === 0
+            ) {
+              document.head.insertAdjacentHTML(
+                "beforeend",
+                `<meta name="manga-mal-id" content="${mal_id}">`
+              );
+            } else if (
+              mal_id !==
+              document.head.querySelector("[name=manga-mal-id][content]")!
+                .content
+            ) {
+              document.head.querySelector(
+                "[name=manga-mal-id][content]"
               )!.content = mal_id;
             }
 
@@ -153,9 +213,15 @@ export default defineContentScript({
               // aniBackground
               switch (content_type) {
                 case "anime":
-                  aniBackground(data.mal_id);
+                  aniBackground(data.mal_id, MediaType.Anime);
+                  break;
+                case "manga":
+                case "novel":
+                  aniBackground(data.mal_id, MediaType.Manga);
                   break;
                 case "character":
+                  const haveAnime = data.anime_count !== 0;
+
                   aniBackground(
                     document.head.querySelector("[name=anime-mal-id][content]")
                       ?.content !== "null" &&
@@ -165,21 +231,35 @@ export default defineContentScript({
                       ? document.head.querySelector(
                           "[name=anime-mal-id][content]"
                         )?.content
+                      : document.head.querySelector(
+                          "[name=manga-mal-id][content]"
+                        )?.content !== "null" &&
+                        document.head.querySelector(
+                          "[name=manga-mal-id][content]"
+                        )?.content !== undefined
+                      ? document.head.querySelector(
+                          "[name=manga-mal-id][content]"
+                        )?.content
                       : await (
                           await (
                             await fetch(
-                              `https://api.hikka.io/anime/${
+                              `https://api.hikka.io/${
+                                haveAnime ? "anime" : "manga"
+                              }/${
                                 (
                                   await (
                                     await fetch(
-                                      `https://api.hikka.io/characters/${slug}/anime`
+                                      `https://api.hikka.io/characters/${slug}/${
+                                        haveAnime ? "anime" : "manga"
+                                      }`
                                     )
                                   ).json()
-                                ).list[0].anime.slug
+                                ).list[0][haveAnime ? "anime" : "manga"].slug
                               }`
                             )
                           ).json()
-                        ).mal_id
+                        ).mal_id,
+                    haveAnime ? MediaType.Anime : MediaType.Manga
                   );
                   break;
               }
@@ -292,24 +372,35 @@ export default defineContentScript({
               break;
             }
           case "characters":
-            const anime_mal_id = document.head.querySelectorAll(
-              "[name=anime-mal-id][content]"
-            );
+            const fromAnime =
+              document.head.querySelectorAll("[name=anime-mal-id][content]")
+                .length !== 0;
+
+            const source_mal_id =
+              document.head.querySelectorAll(
+                fromAnime
+                  ? "[name=anime-mal-id][content]"
+                  : "[name=manga-mal-id][content]"
+              )[0]?.content ?? null;
 
             async function first_aniBackground() {
-              const anime_slug = document.body
+              const source_slug = document.body
                 .querySelector("a.mt-1.truncate")!
-                .href.split("/")[4];
+                .href.split("/");
 
-              const first_anime_mal_id = await (
-                await fetch(`https://api.hikka.io/anime/${anime_slug}`)
+              const first_source_mal_id = await (
+                await fetch(
+                  `https://api.hikka.io/${source_slug[3]}/${source_slug[4]}`
+                )
               ).json();
 
-              aniBackground(first_anime_mal_id["mal_id"]);
+              aniBackground(first_source_mal_id["mal_id"], source_slug[3]);
             }
 
-            (await aniBackground(anime_mal_id[0].content)) ??
-              first_aniBackground();
+            (await aniBackground(
+              source_mal_id,
+              fromAnime ? MediaType.Anime : MediaType.Manga
+            )) ?? first_aniBackground();
 
             break;
           default:
@@ -325,6 +416,12 @@ export default defineContentScript({
               .length !== 0
               ? (document.head.querySelector(
                   "[name=anime-mal-id][content]"
+                )!.content = null)
+              : null;
+            document.head.querySelectorAll("[name=manga-mal-id][content]")
+              .length !== 0
+              ? (document.head.querySelector(
+                  "[name=manga-mal-id][content]"
                 )!.content = null)
               : null;
             break;
