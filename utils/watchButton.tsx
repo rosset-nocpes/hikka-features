@@ -1,4 +1,4 @@
-import { createSignal, Match, Switch } from "solid-js";
+import { createSignal, Match, Show, Switch } from "solid-js";
 import Player, { getWatchData } from "./moon-player";
 import { MountableElement, render } from "solid-js/web";
 import HikkaLogoMono from "@/public/hikka-features-mono.svg";
@@ -34,10 +34,10 @@ export default async function watchButton(
   render(
     () => (
       <Transition name="slide-fade">
-        {buttonState()! && (
+        <Show when={buttonState()}>
           <button
             id="player-button"
-            class="hikka-features inline-flex gap-2 items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-50 border border-secondary/60 bg-secondary/30 hover:bg-secondary/60 hover:text-secondary-foreground h-12 px-4 py-2"
+            class="hikka-features inline-flex gap-2 items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-50 border border-secondary/60 bg-secondary/30 hover:bg-secondary/60 hover:text-secondary-foreground h-12 px-4 py-2"
             onClick={() => Player(data)}
             disabled={playerDisabled()}
           >
@@ -56,7 +56,7 @@ export default async function watchButton(
               </Switch>
             </Transition>
           </button>
-        )}
+        </Show>
       </Transition>
     ),
     watchButtonLocation ||
