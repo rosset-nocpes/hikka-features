@@ -5,8 +5,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createSignal } from "solid-js";
+import { createSignal, Show } from "solid-js";
 import { render } from "solid-js/web";
+import { TransitionGroup } from "solid-transition-group";
 
 export async function getWatchData(anime_slug: string) {
   const moon_data = await (
@@ -102,7 +103,7 @@ export default function Player(data: { [x: string]: any }) {
 
   render(
     () => (
-      <>
+      <TransitionGroup name="vertical-slide-fade" appear={true}>
         <div class="team-selects">
           <Select
             value={teamName()}
@@ -124,7 +125,7 @@ export default function Player(data: { [x: string]: any }) {
                 {(state) => state.selectedOption()}
               </SelectValue>
             </SelectTrigger>
-            <SelectContent />
+            <SelectContent class="z-0" />
           </Select>
           <Select
             value={teamEpisode()}
@@ -148,7 +149,7 @@ export default function Player(data: { [x: string]: any }) {
                 }
               </SelectValue>
             </SelectTrigger>
-            <SelectContent class="overflow-y-auto max-h-96" />
+            <SelectContent class="overflow-y-auto max-h-96 z-0" />
           </Select>
         </div>
         <div
@@ -164,7 +165,7 @@ export default function Player(data: { [x: string]: any }) {
             allowfullscreen
           ></iframe>
         </div>
-      </>
+      </TransitionGroup>
     ),
     player
   );
