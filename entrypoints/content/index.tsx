@@ -9,7 +9,6 @@ import watchButton from "@/utils/watchButton";
 import { MediaType } from "@/utils/common";
 // import NotionBlock from "@/utils/notion-block";
 // import Teams from "@/utils/notion-db";
-// import readerButton from "./modules/read-button";
 
 export default defineContentScript({
   matches: ["https://hikka.io/*"],
@@ -136,8 +135,6 @@ export default defineContentScript({
                 await fetch(`https://api.hikka.io/${path}/${slug}`)
               ).json();
 
-              // readerButton(data);
-
               // aniButtons
               aniButtons(data);
             }
@@ -222,43 +219,34 @@ export default defineContentScript({
                 case "character":
                   const haveAnime = data.anime_count !== 0;
 
+                  const source_mal_id =
+                    document.head.querySelectorAll(
+                      haveAnime
+                        ? "[name=anime-mal-id][content]"
+                        : "[name=manga-mal-id][content]"
+                    )[0]?.content ?? null;
+
                   aniBackground(
-                    document.head.querySelector("[name=anime-mal-id][content]")
-                      ?.content !== "null" &&
-                      document.head.querySelector(
-                        "[name=anime-mal-id][content]"
-                      )?.content !== undefined
-                      ? document.head.querySelector(
-                          "[name=anime-mal-id][content]"
-                        )?.content
-                      : document.head.querySelector(
-                          "[name=manga-mal-id][content]"
-                        )?.content !== "null" &&
-                        document.head.querySelector(
-                          "[name=manga-mal-id][content]"
-                        )?.content !== undefined
-                      ? document.head.querySelector(
-                          "[name=manga-mal-id][content]"
-                        )?.content
-                      : await (
-                          await (
-                            await fetch(
-                              `https://api.hikka.io/${
-                                haveAnime ? "anime" : "manga"
-                              }/${
-                                (
-                                  await (
-                                    await fetch(
-                                      `https://api.hikka.io/characters/${slug}/${
-                                        haveAnime ? "anime" : "manga"
-                                      }`
-                                    )
-                                  ).json()
-                                ).list[0][haveAnime ? "anime" : "manga"].slug
-                              }`
-                            )
-                          ).json()
-                        ).mal_id,
+                    source_mal_id ||
+                      (await (
+                        await (
+                          await fetch(
+                            `https://api.hikka.io/${
+                              haveAnime ? "anime" : "manga"
+                            }/${
+                              (
+                                await (
+                                  await fetch(
+                                    `https://api.hikka.io/characters/${slug}/${
+                                      haveAnime ? "anime" : "manga"
+                                    }`
+                                  )
+                                ).json()
+                              ).list[0][haveAnime ? "anime" : "manga"].slug
+                            }`
+                          )
+                        ).json()
+                      ).mal_id),
                     haveAnime ? MediaType.Anime : MediaType.Manga
                   );
                   break;
