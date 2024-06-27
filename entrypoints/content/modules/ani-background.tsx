@@ -1,4 +1,4 @@
-import { createSignal, onMount } from "solid-js";
+import { createSignal, onMount, Show } from "solid-js";
 import { render } from "solid-js/web";
 import { Transition } from "solid-transition-group";
 
@@ -58,9 +58,9 @@ export default async function aniBackground(mal_id: number, type: MediaType) {
 
   render(
     () => (
-      <div class="absolute left-0 top-0 -z-20 h-80 w-full overflow-hidden opacity-40">
-        <Transition name="slide">
-          {stateBack()! && isLoaded() && (
+      <Transition name="slide" appear={true}>
+        <Show when={stateBack() && isLoaded()}>
+          <div class="absolute left-0 top-0 -z-20 h-80 w-full overflow-hidden opacity-40">
             <img
               id="cover"
               alt="cover"
@@ -72,9 +72,9 @@ export default async function aniBackground(mal_id: number, type: MediaType) {
               sizes="100vw"
               src={banner}
             />
-          )}
-        </Transition>
-      </div>
+          </div>
+        </Show>
+      </Transition>
     ),
     document.querySelector("body main > .grid")!
   );
