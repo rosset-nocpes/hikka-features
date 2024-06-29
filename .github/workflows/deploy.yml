@@ -3,7 +3,7 @@ name: Build and Publish extension
 on:
   push:
     tags:
-      - v*
+      - "*.*.*"
   workflow_dispatch:
 
 permissions:
@@ -35,7 +35,7 @@ jobs:
         run: |
           pnpm run zip
           pnpm run zip:firefox
-    
+
       - name: Submit to stores
         run: |
           pnpm wxt submit \
