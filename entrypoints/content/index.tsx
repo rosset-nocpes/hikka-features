@@ -13,13 +13,13 @@ import { MediaType } from "@/utils/common";
 export default defineContentScript({
   matches: ["https://hikka.io/*"],
   async main() {
-    let url: string;
-    const params = new URLSearchParams(document.location.search);
-
     const [getPreviousCreatingEdit, setPreviousCreatingEdit] = [
       () =>
-        document.head.querySelector("[name=previous-creating-edit][content]")
-          ?.content,
+        (
+          document.head.querySelector(
+            "[name=previous-creating-edit][content]"
+          ) as HTMLMetaElement
+        )?.content,
       (input: boolean) => {
         input && getPreviousCreatingEdit() === undefined
           ? document.head.insertAdjacentHTML(
@@ -27,12 +27,37 @@ export default defineContentScript({
               `<meta name="previous-creating-edit" content="true">`
             )
           : input && getPreviousCreatingEdit() === "false"
-          ? (document.head.querySelector(
+          ? ((document.head.querySelector(
               "[name=previous-creating-edit][content]"
-            )!.content = "true")
+            ) as HTMLMetaElement)!.content = "true")
           : null;
       },
     ];
+
+    const [getSavedMalId, setSavedMalId] = [
+      () =>
+        parseInt(
+          (
+            document.head.querySelector(
+              "[name=saved-mal-id][content]"
+            ) as HTMLMetaElement
+          )?.content
+        ),
+      (input: number) => {
+        Number.isNaN(getSavedMalId())
+          ? document.head.insertAdjacentHTML(
+              "beforeend",
+              `<meta name="saved-mal-id" content="${input}">`
+            )
+          : getSavedMalId() === -1
+          ? NaN
+          : ((document.head.querySelector(
+              "[name=saved-mal-id][content]"
+            ) as HTMLMetaElement)!.content = input.toString());
+      },
+    ];
+
+    console.log(getSavedMalId());
 
     // const [getPreviousAnimeSlug, setPreviousAnimeSlug] = [
     //   () => storage.getItem("local:previousAnimeSlug"),
@@ -63,11 +88,13 @@ export default defineContentScript({
 
         // path == "anime" ? setPreviousAnimeSlug(split_path[2]) : null;
 
-        const mal_id = (
-          document.head.querySelector(
-            "[name=mal-id][content]"
-          ) as HTMLMetaElement
-        )?.content;
+        const mal_id = parseInt(
+          (
+            document.head.querySelector(
+              "[name=mal-id][content]"
+            ) as HTMLMetaElement
+          )?.content
+        );
 
         switch (path) {
           case "anime":
@@ -96,34 +123,11 @@ export default defineContentScript({
               aniBackground(mal_id, MediaType.Anime);
             }
 
-            if (
-              document.head.querySelectorAll("[name=anime-mal-id][content]")
-                .length === 0
-            ) {
-              document.head.insertAdjacentHTML(
-                "beforeend",
-                `<meta name="anime-mal-id" content="${mal_id}">`
-              );
-            } else if (
-              mal_id !==
-              document.head.querySelector("[name=anime-mal-id][content]")!
-                .content
-            ) {
-              document.head.querySelector(
-                "[name=anime-mal-id][content]"
-              )!.content = mal_id;
-            }
+            setSavedMalId(mal_id);
 
             break;
           case "manga":
           case "novel":
-            document.head.querySelectorAll("[name=anime-mal-id][content]")
-              .length !== 0
-              ? (document.head.querySelector(
-                  "[name=anime-mal-id][content]"
-                )!.content = null)
-              : null;
-
             if (split_path.length === 3) {
               const slug = split_path[2];
 
@@ -144,23 +148,7 @@ export default defineContentScript({
               aniBackground(mal_id, MediaType.Manga);
             }
 
-            if (
-              document.head.querySelectorAll("[name=manga-mal-id][content]")
-                .length === 0
-            ) {
-              document.head.insertAdjacentHTML(
-                "beforeend",
-                `<meta name="manga-mal-id" content="${mal_id}">`
-              );
-            } else if (
-              mal_id !==
-              document.head.querySelector("[name=manga-mal-id][content]")!
-                .content
-            ) {
-              document.head.querySelector(
-                "[name=manga-mal-id][content]"
-              )!.content = mal_id;
-            }
+            setSavedMalId(mal_id);
 
             break;
           case "edit":
@@ -219,15 +207,8 @@ export default defineContentScript({
                 case "character":
                   const haveAnime = data.anime_count !== 0;
 
-                  const source_mal_id =
-                    document.head.querySelectorAll(
-                      haveAnime
-                        ? "[name=anime-mal-id][content]"
-                        : "[name=manga-mal-id][content]"
-                    )[0]?.content ?? null;
-
                   aniBackground(
-                    source_mal_id ||
+                    getSavedMalId() ||
                       (await (
                         await (
                           await fetch(
@@ -346,35 +327,21 @@ export default defineContentScript({
               document.head.querySelectorAll(
                 "[name=previous-creating-edit][content]"
               ).length !== 0
-                ? (document.head.querySelector(
-                    "[name=previous-creating-edit][content]"
-                  )!.content = "false")
+                ? setPreviousCreatingEdit(false)
                 : null;
 
-              document.head.querySelectorAll("[name=anime-mal-id][content]")
-                .length !== 0
-                ? (document.head.querySelector(
-                    "[name=anime-mal-id][content]"
-                  )!.content = null)
-                : null;
+              setSavedMalId(-1);
               break;
             }
           case "characters":
             const fromAnime =
-              document.head.querySelectorAll("[name=anime-mal-id][content]")
+              document.head.querySelectorAll("[name=saved-mal-id][content]")
                 .length !== 0;
 
-            const source_mal_id =
-              document.head.querySelectorAll(
-                fromAnime
-                  ? "[name=anime-mal-id][content]"
-                  : "[name=manga-mal-id][content]"
-              )[0]?.content ?? null;
-
             async function first_aniBackground() {
-              const source_slug = document.body
-                .querySelector("a.mt-1.truncate")!
-                .href.split("/");
+              const source_slug = (document.body.querySelector(
+                "a.mt-1.truncate"
+              ) as HTMLAnchorElement)!.href.split("/");
 
               const first_source_mal_id = await (
                 await fetch(
@@ -386,7 +353,7 @@ export default defineContentScript({
             }
 
             (await aniBackground(
-              source_mal_id,
+              getSavedMalId(),
               fromAnime ? MediaType.Anime : MediaType.Manga
             )) ?? first_aniBackground();
 
@@ -395,23 +362,10 @@ export default defineContentScript({
             document.head.querySelectorAll(
               "[name=previous-creating-edit][content]"
             ).length !== 0
-              ? (document.head.querySelector(
-                  "[name=previous-creating-edit][content]"
-                )!.content = "false")
+              ? setPreviousCreatingEdit(false)
               : null;
 
-            document.head.querySelectorAll("[name=anime-mal-id][content]")
-              .length !== 0
-              ? (document.head.querySelector(
-                  "[name=anime-mal-id][content]"
-                )!.content = null)
-              : null;
-            document.head.querySelectorAll("[name=manga-mal-id][content]")
-              .length !== 0
-              ? (document.head.querySelector(
-                  "[name=manga-mal-id][content]"
-                )!.content = null)
-              : null;
+            setSavedMalId(-1);
             break;
         }
       }
