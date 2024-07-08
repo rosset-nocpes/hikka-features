@@ -53,7 +53,9 @@ export default function Player(data: { [x: string]: any }) {
       data[teamName()][0]
   );
 
-  const player_button = document.getElementById("player-button")!;
+  const player_button = document.getElementById(
+    "player-button"
+  )! as HTMLButtonElement;
 
   // disabling player-button
   player_button.disabled = true;
@@ -62,41 +64,28 @@ export default function Player(data: { [x: string]: any }) {
   start_node.insertAdjacentHTML("afterbegin", '<div id="player"></div>');
   const player = document.querySelector("#player")!;
 
+  window.addEventListener("message", function (event) {
+    if (event.data.event === "time") {
+      let message = event.data;
+      const duration = message.duration;
+      const time = message.time;
+
+      if (
+        time / duration > 0.85 &&
+        getWatched() + 1 === teamEpisode().episode
+      ) {
+        console.log("clicked");
+        (
+          document.body.querySelector(
+            "div.inline-flex:nth-child(2) button:nth-child(2)"
+          ) as HTMLButtonElement
+        )?.click();
+      }
+    }
+  });
+
   const handleSelectEpisode = (e: any) => {
     if (e) {
-      let duration = 0;
-      let time = 0;
-
-      const iframe = document.getElementById(
-        "player-iframe"
-      ) as HTMLIFrameElement;
-      iframe.contentWindow?.postMessage({ command: "get_duration" }, "*");
-
-      window.addEventListener("message", function (event) {
-        let message = event.data;
-        if (message) {
-          if (duration === 0) {
-            duration = message.data;
-            iframe.contentWindow?.postMessage({ command: "get_time" }, "*");
-          } else if (time === 0) {
-            time = message.data;
-            window.postMessage({ type: "click" }, "*");
-          } else if (
-            message.type === "click" &&
-            time / duration > 0.75 &&
-            getWatched() + 1 === teamEpisode().episode - 1
-          ) {
-            (
-              document.body.querySelector(
-                "div.inline-flex:nth-child(2) button:nth-child(2)"
-              ) as HTMLButtonElement
-            )?.click();
-          }
-        } else {
-          console.log("Received an error response:", message);
-        }
-      });
-
       setTeamEpisode(e);
     }
   };
