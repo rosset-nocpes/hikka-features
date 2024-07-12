@@ -2,7 +2,7 @@
   "name": "hikka-features",
   "description": "Універсальне розширення для hikka.io",
   "private": true,
-  "version": "2.0.1",
+  "version": "2.1.0",
   "type": "module",
   "scripts": {
     "dev": "wxt",
@@ -18,19 +18,20 @@
     "@kobalte/core": "^0.13.3",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
-    "solid-js": "^1.8.17",
-    "tailwind-merge": "^2.3.0",
+    "solid-js": "^1.8.18",
+    "tailwind-merge": "^2.4.0",
     "tailwindcss-animate": "^1.0.7",
     "solid-transition-group": "^0.2.3"
   },
   "devDependencies": {
     "@iconify-json/tabler": "^1.1.113",
-    "@types/node": "^20.14.2",
+    "@wxt-dev/module-solid": "1.1.1",
+    "@types/node": "^20.14.10",
     "autoprefixer": "^10.4.19",
-    "postcss": "^8.4.38",
+    "postcss": "^8.4.39",
     "tailwindcss": "^3.4.4",
-    "typescript": "^5.4.5",
+    "typescript": "^5.5.3",
     "vite-plugin-solid": "^2.10.2",
-    "wxt": "^0.18.4"
+    "wxt": "^0.18.14"
   }
 }
