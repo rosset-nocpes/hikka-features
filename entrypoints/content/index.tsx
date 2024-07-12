@@ -5,8 +5,7 @@ import aniBackground from "./modules/ani-background";
 import aniButtons from "./modules/ani-buttons";
 import NextEditURL from "@/utils/next-edit-url";
 // import UCharURL from "@/utils/u-char-url";
-import watchButton from "@/utils/watchButton";
-import { MediaType } from "@/utils/common";
+import watchButton from "@/entrypoints/content/modules/watchButton";
 // import NotionBlock from "@/utils/notion-block";
 // import Teams from "@/utils/notion-db";
 
@@ -56,8 +55,6 @@ export default defineContentScript({
             ) as HTMLMetaElement)!.content = input.toString());
       },
     ];
-
-    console.log(getSavedMalId());
 
     // const [getPreviousAnimeSlug, setPreviousAnimeSlug] = [
     //   () => storage.getItem("local:previousAnimeSlug"),
@@ -120,7 +117,7 @@ export default defineContentScript({
 
             // aniBackground
             if (split_path.length >= 3) {
-              aniBackground(mal_id, MediaType.Anime);
+              aniBackground(mal_id, "anime");
             }
 
             setSavedMalId(mal_id);
@@ -145,7 +142,7 @@ export default defineContentScript({
 
             // aniBackground
             if (split_path.length >= 3) {
-              aniBackground(mal_id, MediaType.Manga);
+              aniBackground(mal_id, "manga");
             }
 
             setSavedMalId(mal_id);
@@ -198,11 +195,11 @@ export default defineContentScript({
               // aniBackground
               switch (content_type) {
                 case "anime":
-                  aniBackground(data.mal_id, MediaType.Anime);
+                  aniBackground(data.mal_id, "anime");
                   break;
                 case "manga":
                 case "novel":
-                  aniBackground(data.mal_id, MediaType.Manga);
+                  aniBackground(data.mal_id, "manga");
                   break;
                 case "character":
                   const haveAnime = data.anime_count !== 0;
@@ -228,7 +225,7 @@ export default defineContentScript({
                           )
                         ).json()
                       ).mal_id),
-                    haveAnime ? MediaType.Anime : MediaType.Manga
+                    haveAnime ? "anime" : "manga"
                   );
                   break;
               }
@@ -339,22 +336,22 @@ export default defineContentScript({
                 .length !== 0;
 
             async function first_aniBackground() {
-              const source_slug = (document.body.querySelector(
+              const source = (document.body.querySelector(
                 "a.mt-1.truncate"
               ) as HTMLAnchorElement)!.href.split("/");
 
+              const source_type = source[3] as MediaType;
+
               const first_source_mal_id = await (
-                await fetch(
-                  `https://api.hikka.io/${source_slug[3]}/${source_slug[4]}`
-                )
+                await fetch(`https://api.hikka.io/${source_type}/${source[4]}`)
               ).json();
 
-              aniBackground(first_source_mal_id["mal_id"], source_slug[3]);
+              aniBackground(first_source_mal_id["mal_id"], source_type);
             }
 
             (await aniBackground(
               getSavedMalId(),
-              fromAnime ? MediaType.Anime : MediaType.Manga
+              fromAnime ? "anime" : "manga"
             )) ?? first_aniBackground();
 
             break;

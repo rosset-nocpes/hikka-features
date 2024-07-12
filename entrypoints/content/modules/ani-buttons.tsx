@@ -1,17 +1,22 @@
 import { For, MountableElement, render } from "solid-js/web";
 import HikkaFLogoSmall from "@/public/hikka-features-small.svg";
 import { Transition } from "solid-transition-group";
-import { createSignal } from "solid-js";
+import { createResource, createSignal, Show } from "solid-js";
 
 interface Website {
-  hidden: boolean;
   title: string;
   host: string;
-  url: string;
+  url?: string;
+}
+
+enum MediaEnum {
+  Anime = "anime",
+  Manga = "manga",
+  Novel = "novel",
 }
 
 export default async function aniButtons(
-  data,
+  data: any,
   location?: MountableElement,
   smallerTitle?: boolean
 ) {
@@ -19,9 +24,9 @@ export default async function aniButtons(
     return;
   }
 
-  const content_type = data.data_type;
+  const content_type: MediaType | InfoType = data.data_type;
 
-  const contentTypeMap = {
+  const contentTypeMap: Record<string, Record<string, string>> = {
     character: {
       al: "characters",
     },
@@ -29,55 +34,46 @@ export default async function aniButtons(
     novel: { mal: "manga", al: "manga" },
   };
 
-  const isMedia = Object.values(MediaType).includes(content_type);
-  const isAnime = content_type === MediaType.Anime;
-  const isReadable =
-    !isAnime && !Object.values(InfoType).includes(content_type);
-  const title = isMedia
-    ? data.title_ja || data.title_en || data.title_original
-    : data.name_en;
+  const isMedia = Object.keys(MediaEnum).includes(content_type);
+  const isAnime = content_type === "anime";
+  const title =
+    data.title_ja || data.title_en || data.title_original || data.name_en;
 
-  const hosts = {
+  const hosts: Record<SourcesType, string> = {
     mal: "myanimelist.net",
-    al: "anilist.co",
-    ad: "anidb.net",
+    anilist: "anilist.co",
+    anidb: "anidb.net",
     ann: "animenewsnetwork.com",
     wiki: "en.wikipedia.org",
-    agawa: "amanogawa.space",
+    amanogawa: "amanogawa.space",
     mu: "mangaupdates.com",
-    denki: "dengeki.one",
   };
 
-  const getUrl = (website) =>
+  const getUrl = (website: SourcesType) =>
     isMedia
-      ? data.external.find((obj) => obj.url?.includes(hosts[website]))?.url
+      ? data.external.find((obj: any) => obj.url?.includes(hosts[website]))?.url
       : null;
 
-  const searchUrls: Website[] = [
-    {
-      hidden: true,
+  const searchUrls: Record<SourcesType, Website> = {
+    mal: {
       title: "MyAnimeList",
       host: hosts.mal,
-      url: isMedia
-        ? `https://myanimelist.net/anime/${data.mal_id}`
-        : `https://myanimelist.net/${
-            contentTypeMap[content_type]?.mal || content_type
-          }/${data.mal_id}`,
+      url: `https://myanimelist.net/${
+        contentTypeMap[content_type]?.mal || content_type
+      }${data.mal_id ? `/${data.mal_id}` : `.php?q=${title}`}`,
     },
-    {
-      hidden: true,
+    anilist: {
       title: "AniList",
-      host: hosts.al,
+      host: hosts.anilist,
       url: `https://anilist.co/search/${
         contentTypeMap[content_type]?.al || content_type
       }?search=${title}&sort=SEARCH_MATCH`,
     },
-    {
-      hidden: isAnime || Object.values(InfoType).includes(content_type),
+    anidb: {
       title: "AniDB",
-      host: hosts.ad,
+      host: hosts.anidb,
       url:
-        getUrl("ad") ??
+        getUrl("anidb") ??
         `https://anidb.net/${
           contentTypeMap[content_type]?.ad || content_type
         }/?adb.search=${
@@ -87,15 +83,13 @@ export default async function aniButtons(
             : title
         }&do.search=1`,
     },
-    {
-      hidden: isAnime || Object.values(InfoType).includes(content_type),
+    ann: {
       title: "ANN",
       host: hosts.ann,
       url:
         getUrl("ann") ?? `https://www.animenewsnetwork.com/search?q=${title}`,
     },
-    {
-      hidden: content_type !== InfoType.Character,
+    wiki: {
       title: "Wikipedia",
       host: hosts.wiki,
       url:
@@ -104,30 +98,61 @@ export default async function aniButtons(
             `https://en.wikipedia.org/w/index.php?search=${title}`
           : null,
     },
-    {
-      hidden: isAnime,
+    amanogawa: {
       title: "Amanogawa",
-      host: hosts.agawa,
-      url: await getAmanogawaURL(data),
+      host: hosts.amanogawa,
     },
-    {
-      hidden: isReadable,
+    mu: {
       title: "MU",
       host: hosts.mu,
-      url: await getMangaupdatesURL(title),
     },
-  ];
+  };
 
   const [blockState, setBlockState] = createSignal(
     await aniButtonsState.getValue()
   );
+
+  const anime_links: Website[] = [
+    searchUrls.mal,
+    searchUrls.anilist,
+    searchUrls.anidb,
+    searchUrls.ann,
+    searchUrls.wiki,
+    searchUrls.amanogawa,
+  ];
+
+  let manga_links: Website[] = [
+    searchUrls.mal,
+    searchUrls.anilist,
+    searchUrls.wiki,
+    searchUrls.mu,
+  ];
+
+  const character_links: Website[] = [
+    searchUrls.mal,
+    searchUrls.anilist,
+    searchUrls.anidb,
+    searchUrls.ann,
+    searchUrls.wiki,
+  ];
+
+  const people_links: Website[] = [
+    searchUrls.mal,
+    searchUrls.anilist,
+    searchUrls.anidb,
+    searchUrls.ann,
+    searchUrls.wiki,
+  ];
+
+  const [muUrl] = createResource(title, getMangaupdatesURL);
+  const [agawaUrl] = createResource(data, getAmanogawaURL);
 
   aniButtonsState.watch((state) => setBlockState(state));
 
   render(
     () => (
       <Transition name="slide-fade">
-        {blockState()! && (
+        <Show when={blockState()}>
           <div id="ani-buttons" class="hikka-features">
             <h3
               class={`scroll-m-20 font-display ${
@@ -138,26 +163,55 @@ export default async function aniButtons(
               <img src={HikkaFLogoSmall} style="width: 21px; height: 20px" />
             </h3>
             <div>
-              <For each={searchUrls}>
-                {(elem) =>
-                  elem.hidden && (
-                    <a
-                      class={elem.url ?? "link-disabled"}
-                      href={elem.url}
-                      target="_blank"
-                    >
-                      <img
-                        style="width:16px;height:16px;margin-right:2px;"
-                        src={`https://www.google.com/s2/favicons?domain=${elem.host}`}
-                      />
-                      {elem.title}
-                    </a>
-                  )
+              <For
+                each={
+                  isAnime
+                    ? anime_links
+                    : content_type === "character"
+                    ? character_links
+                    : content_type === "person"
+                    ? people_links
+                    : manga_links
                 }
+              >
+                {(elem) => (
+                  <a
+                    href={
+                      elem.title === "MU"
+                        ? muUrl()
+                        : elem.title === "Amanogawa"
+                        ? agawaUrl()
+                        : elem.url
+                    }
+                    target="_blank"
+                    class={cn(
+                      elem.title === "MU"
+                        ? muUrl.loading
+                          ? "animate-pulse"
+                          : muUrl() === undefined
+                          ? "link-disabled"
+                          : ""
+                        : "",
+                      elem.title === "Amanogawa"
+                        ? agawaUrl.loading
+                          ? "animate-pulse"
+                          : agawaUrl() === undefined
+                          ? "link-disabled"
+                          : ""
+                        : ""
+                    )}
+                  >
+                    <img
+                      style="width:16px;height:16px;margin-right:2px;"
+                      src={`https://www.google.com/s2/favicons?domain=${elem.host}`}
+                    />
+                    {elem.title}
+                  </a>
+                )}
               </For>
             </div>
           </div>
-        )}
+        </Show>
       </Transition>
     ),
     location ||

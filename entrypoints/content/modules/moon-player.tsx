@@ -49,7 +49,7 @@ export default function Player(data: { [x: string]: any }) {
 
   const [teamName, setTeamName] = createSignal(Object.keys(data)[0]);
   const [teamEpisode, setTeamEpisode] = createSignal(
-    data[teamName()].find((obj) => obj.episode == getWatched() + 1) ||
+    data[teamName()].find((obj: any) => obj.episode == getWatched() + 1) ||
       data[teamName()][0]
   );
 
@@ -74,7 +74,6 @@ export default function Player(data: { [x: string]: any }) {
         time / duration > 0.85 &&
         getWatched() + 1 === teamEpisode().episode
       ) {
-        console.log("clicked");
         (
           document.body.querySelector(
             "div.inline-flex:nth-child(2) button:nth-child(2)"
@@ -99,7 +98,7 @@ export default function Player(data: { [x: string]: any }) {
             class="w-full"
             onChange={(e) =>
               setTeamEpisode(
-                data[e].find((obj) => obj.episode == getWatched() + 1) ||
+                data[e].find((obj: any) => obj.episode == getWatched() + 1) ||
                   data[e][0]
               ) && setTeamName(e)
             }

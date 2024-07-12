@@ -1,10 +1,17 @@
-export enum MediaType {
-  Anime = "anime",
-  Manga = "manga",
-  Novel = "novel",
-}
+export {};
 
-export enum InfoType {
-  Character = "character",
-  Person = "person",
+declare global {
+  type MediaType = "anime" | "manga" | "novel";
+
+  type InfoType = "character" | "person";
+
+  type SourcesType =
+    | "mal"
+    | "anilist"
+    | "anidb"
+    | "ann"
+    | "wiki"
+    | "amanogawa"
+    | "mu";
+  // | "dengeki"
 }

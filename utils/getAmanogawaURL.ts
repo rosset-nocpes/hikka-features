@@ -25,7 +25,7 @@ export async function getAmanogawaURL(anime_data: any) {
   );
 
   if (anime === null) {
-    return null;
+    return;
   }
 
   return `https://amanogawa.space/anime/${anime.id}`;

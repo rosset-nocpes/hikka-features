@@ -26,7 +26,7 @@ export async function getDengekiURL(title: string) {
   let x = (await (await fetch(url)).json())[0];
 
   if (x === undefined) {
-    return null;
+    return;
   }
 
   return `https://dengeki.one/catalog?title=${x["slug"]}&translator=${x["default_translator_slug"]}&volume=1`;

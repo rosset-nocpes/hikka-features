@@ -7,8 +7,8 @@ export default async function aniBackground(mal_id: number, type: MediaType) {
     return;
   }
 
-  if (type === MediaType.Novel) {
-    type = MediaType.Manga;
+  if (type === "novel") {
+    type = "manga";
   }
 
   const anilist_url = "https://graphql.anilist.co";
