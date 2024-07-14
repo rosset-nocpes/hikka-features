@@ -25,7 +25,7 @@ const StudioLogos: Record<string, string> = {
 
 export async function getWatchData(anime_data: any) {
   const watch_data = await (
-    await fetch(`http://hikka-features.pp.ua/watch/${anime_data.slug}`)
+    await fetch(`https://hikka-features.pp.ua/watch/${anime_data.slug}`)
   ).json();
 
   if (Object.keys(watch_data)[0] === "error") {
@@ -125,6 +125,9 @@ export default async function Player(
       (obj: any) => obj.episode == getWatched() + 1
     ) || data[playerProvider()][teamName()][0]
   );
+  const [episodesData, setEpisodesData] = createSignal(
+    data[playerProvider()][teamName()]
+  );
 
   const player_button = document.getElementById(
     "player-button"
@@ -162,6 +165,18 @@ export default async function Player(
     }
   };
 
+  const handleSelectTeam = (e: any) => {
+    if (e) {
+      setTeamName(e);
+      setEpisodesData(data[playerProvider()][teamName()]);
+      setTeamEpisode(
+        data[playerProvider()][e].find(
+          (obj: any) => obj.episode == getWatched() + 1
+        ) || data[playerProvider()][e][0]
+      );
+    }
+  };
+
   render(
     () => (
       <TransitionGroup name="vertical-slide-fade" appear={true}>
@@ -172,6 +187,7 @@ export default async function Player(
             onChange={(player) => {
               setPlayerProvider(player);
               setTeamName(Object.keys(data[player])[0]);
+              setEpisodesData(data[player][teamName()]);
               setTeamEpisode(
                 data[player][teamName()].find(
                   (obj: any) => obj.episode == getWatched() + 1
@@ -199,13 +215,7 @@ export default async function Player(
           <Select
             value={teamName()}
             class="w-full"
-            onChange={(e) =>
-              setTeamEpisode(
-                data[playerProvider()][e].find(
-                  (obj: any) => obj.episode == getWatched() + 1
-                ) || data[playerProvider()][e][0]
-              ) && setTeamName(e)
-            }
+            onChange={handleSelectTeam}
             options={Object.keys(data[playerProvider()])}
             placeholder="Оберіть команду фандабу…"
             itemComponent={(props) => (
@@ -240,7 +250,7 @@ export default async function Player(
             value={teamEpisode()}
             class="w-full overflow-y-auto max-h-9"
             onChange={handleSelectEpisode}
-            options={data[playerProvider()][teamName()]}
+            options={episodesData()}
             optionValue="video_url"
             optionTextValue="episode"
             placeholder="Оберіть епізод…"
