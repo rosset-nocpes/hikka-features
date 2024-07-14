@@ -8,6 +8,7 @@ export default defineConfig({
       target: "esnext",
     },
     plugins: [Solid()],
+    modules: ["@wxt-dev/module-react"],
   }),
   manifest: () => ({
     name: "Hikka Features",

@@ -14,4 +14,6 @@ declare global {
     | "amanogawa"
     | "mu";
   // | "dengeki"
+
+  type PlayerSource = "moon" | "ashdi";
 }

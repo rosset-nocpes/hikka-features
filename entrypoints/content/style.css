@@ -214,3 +214,11 @@ a.watari-link:hover {
     height: 32px;
   }
 }
+
+.pr-8 {
+  padding-right: 2rem /* 32px */;
+}
+
+.pl-2 {
+  padding-left: 0.5rem /* 8px */;
+}

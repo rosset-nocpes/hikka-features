@@ -15,3 +15,10 @@ export const aniButtonsState = storage.defineItem<boolean>(
     defaultValue: true,
   }
 );
+
+export const defaultPlayer = storage.defineItem<PlayerSource>(
+  "local:defaultPlayer",
+  {
+    defaultValue: "moon",
+  }
+);
