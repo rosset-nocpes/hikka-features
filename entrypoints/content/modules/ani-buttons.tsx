@@ -216,7 +216,7 @@ export default async function aniButtons(
     ),
     location ||
       document.querySelector(
-        "body > main > div > div.flex.flex-col.gap-4 > div.flex.w-full.flex-col.gap-4 > div"
+        "body main > .grid > .flex:nth-child(2) > .grid > div:nth-child(3) > .flex"
       )!
   );
 }
