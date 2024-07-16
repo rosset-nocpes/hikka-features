@@ -47,8 +47,6 @@ export default defineContentScript({
               "beforeend",
               `<meta name="saved-mal-id" content="${input}">`
             )
-          : getSavedMalId() === -1
-          ? NaN
           : ((document.head.querySelector(
               "[name=saved-mal-id][content]"
             ) as HTMLMetaElement)!.content = input.toString());
@@ -117,19 +115,16 @@ export default defineContentScript({
             // aniBackground
             if (split_path.length >= 3) {
               aniBackground(mal_id, "anime");
+              setSavedMalId(mal_id);
+            } else {
+              setSavedMalId(-1);
             }
-
-            setSavedMalId(mal_id);
 
             break;
           case "manga":
           case "novel":
             if (split_path.length === 3) {
               const slug = split_path[2];
-
-              const info_block = document.querySelector(
-                ".order-1 > div:nth-child(1)"
-              )!;
 
               const data = await (
                 await fetch(`https://api.hikka.io/${path}/${slug}`)
@@ -142,9 +137,10 @@ export default defineContentScript({
             // aniBackground
             if (split_path.length >= 3) {
               aniBackground(mal_id, "manga");
+              setSavedMalId(mal_id);
+            } else {
+              setSavedMalId(-1);
             }
-
-            setSavedMalId(mal_id);
 
             break;
           case "edit":
@@ -330,10 +326,6 @@ export default defineContentScript({
               break;
             }
           case "characters":
-            const fromAnime =
-              document.head.querySelectorAll("[name=saved-mal-id][content]")
-                .length !== 0;
-
             async function first_aniBackground() {
               const source = (document.body.querySelector(
                 "a.mt-1.truncate"
@@ -348,10 +340,12 @@ export default defineContentScript({
               aniBackground(first_source_mal_id["mal_id"], source_type);
             }
 
-            (await aniBackground(
-              getSavedMalId(),
-              fromAnime ? "anime" : "manga"
-            )) ?? first_aniBackground();
+            if (getSavedMalId() !== -1 && !Number.isNaN(getSavedMalId())) {
+              (await aniBackground(getSavedMalId(), "anime")) ??
+                (await aniBackground(getSavedMalId(), "manga"));
+            } else {
+              first_aniBackground();
+            }
 
             break;
           default:
