@@ -10,6 +10,13 @@ import {
   SwitchThumb,
   SwitchDescription,
 } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const [showAniBackground, toggleAniBackground] = createSignal(
   await aniBackState.getValue()
@@ -21,6 +28,10 @@ const [showAniButtons, toggleAniButtons] = createSignal(
 
 const [showWatchButton, toggleWatchButton] = createSignal(
   await watchButtonState.getValue()
+);
+
+const [defaultPlayerProvider, setDefaultPlayerProvider] = createSignal(
+  await defaultPlayer.getValue()
 );
 
 function App() {
@@ -90,6 +101,38 @@ function App() {
             <SwitchThumb />
           </SwitchControl>
         </Switch>
+        <div class="flex justify-between">
+          <div class="flex flex-col gap-1 mr-10">
+            <label class="text-sm font-medium">Плеєр</label>
+            <div class="text-xs font-medium text-[#A1A1A1]">
+              Плеєр за замовчуванням
+            </div>
+          </div>
+          <Select
+            value={defaultPlayerProvider()}
+            onChange={(e) => {
+              defaultPlayer.setValue(e);
+              setDefaultPlayerProvider(e);
+            }}
+            options={["moon", "ashdi"]}
+            placeholder="Оберіть плеєр за замовчуванням…"
+            itemComponent={(props) => (
+              <SelectItem item={props.item}>
+                {props.item.rawValue.toUpperCase()}
+              </SelectItem>
+            )}
+          >
+            <SelectTrigger
+              aria-label="Player"
+              class="focus:ring-0 focus:ring-transparent"
+            >
+              <SelectValue<string>>
+                {(state) => state.selectedOption().toUpperCase()}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent class="dark" />
+          </Select>
+        </div>
       </div>
       <div class="flex items-center justify-center text-xs text-[#5C5C5C] gap-1">
         <a
