@@ -5,91 +5,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { StudioLogos } from "@/utils/common";
 import { createSignal, Show } from "solid-js";
 import { render } from "solid-js/web";
 import { TransitionGroup } from "solid-transition-group";
-import GlassMoonLogo from "@/assets/glass_moon_logo.jpg";
-import AmanogawaLogo from "@/assets/amanogawa_logo.jpg";
-import FanVoxUaLogo from "@/assets/fanvoxua_logo.jpg";
-import InariDubLogo from "@/assets/inaridub_logo.jpg";
-import FourUaLogo from "@/assets/4ua_logo.jpg";
-
-const StudioLogos: Record<string, string> = {
-  amanogawa: AmanogawaLogo,
-  fanvoxua: FanVoxUaLogo,
-  fanwoxua: FanVoxUaLogo,
-  inaridub: InariDubLogo,
-  "4ua": FourUaLogo,
-  glassmoon: GlassMoonLogo,
-};
 
 export async function getWatchData(anime_data: any) {
-  const watch_data = await (
-    await fetch(`https://hikka-features.pp.ua/watch/${anime_data.slug}`)
-  ).json();
+  const watch_data = await fetch(
+    `https://beta.hikka-features.pp.ua/watch/${anime_data.slug}`
+  );
 
-  if (Object.keys(watch_data)[0] === "error") {
+  if (!watch_data.ok) {
     return null;
   }
 
-  let data: Record<PlayerSource, Record<string, any>> = {
-    moon: {},
-    ashdi: {},
-  };
-
-  // moon provider
-  if (watch_data["moon"] !== undefined) {
-    watch_data["moon"].episodes.forEach(
-      (episode: { videos: any[]; episode: any }) => {
-        episode.videos.forEach((video: { studio: any; video_url: any }) => {
-          const studio = video.studio;
-          if (!data["moon"][studio]) {
-            data["moon"][studio] = [];
-          }
-          data["moon"][studio].push({
-            episode: episode.episode,
-            video_url: video.video_url,
-          });
-        });
-      }
-    );
-  }
-
-  // ashdi provider
-  // TODO: season indetifier
-  let season =
-    parseInt(
-      anime_data.title_ua.split(" ")[
-        anime_data.title_ua.split(" ").indexOf("сезон") - 1
-      ]
-    ) ||
-    parseInt(
-      anime_data.title_ja.split(" ")[
-        anime_data.title_ja.split(" ").indexOf("Part") + 1
-      ]
-    ) ||
-    1;
-
-  watch_data["ashdi"].forEach((elem: { title: string; folder: any }) => {
-    if (elem.folder[season - 1] === undefined) {
-      return;
-    }
-    elem.folder[season - 1]["folder"].forEach(
-      (episode: { title: string; id: string }) => {
-        const studio = elem.title.trimStart();
-        if (!data["ashdi"][studio]) {
-          data["ashdi"][studio] = [];
-        }
-        data["ashdi"][studio].push({
-          episode: parseInt(episode.title.split(" ")[1]),
-          video_url: `https://ashdi.vip/vod/${episode.id}`,
-        });
-      }
-    );
-  });
-  console.log(data);
-
-  return data;
+  return await watch_data.json();
 }
 
 export default async function Player(
@@ -106,10 +36,9 @@ export default async function Player(
     );
 
   const playersAvaliable: PlayerSource[] = [];
-  Object.keys(data["moon"]).length !== 0 ? playersAvaliable.push("moon") : null;
-  Object.keys(data["ashdi"]).length !== 0
-    ? playersAvaliable.push("ashdi")
-    : null;
+  data["moon"] ? playersAvaliable.push("moon") : null;
+  data["ashdi"] ? playersAvaliable.push("ashdi") : null;
+
   const [playerProvider, setPlayerProvider] = createSignal(
     playersAvaliable.includes(await defaultPlayer.getValue())
       ? await defaultPlayer.getValue()
@@ -202,10 +131,7 @@ export default async function Player(
               </SelectItem>
             )}
           >
-            <SelectTrigger
-              aria-label="PlayerProvider"
-              class="w-full focus:ring-0"
-            >
+            <SelectTrigger aria-label="PlayerProvider" class="focus:ring-0">
               <SelectValue<string>>
                 {(state) => state.selectedOption().toUpperCase()}
               </SelectValue>
@@ -239,7 +165,7 @@ export default async function Player(
               </SelectItem>
             )}
           >
-            <SelectTrigger aria-label="Team" class="w-full focus:ring-0">
+            <SelectTrigger aria-label="Team" class="focus:ring-0">
               <SelectValue<string>>
                 {(state) => state.selectedOption()}
               </SelectValue>
@@ -260,7 +186,7 @@ export default async function Player(
               </SelectItem>
             )}
           >
-            <SelectTrigger aria-label="Episode" class="w-full focus:ring-0">
+            <SelectTrigger aria-label="Episode" class="focus:ring-0">
               <SelectValue<any>>
                 {(state) =>
                   state.selectedOption() &&

@@ -148,13 +148,11 @@ a.watari-link:hover {
 }
 
 .team-selects {
-  select {
-    border-radius: 0.5rem;
-    padding: 0.25rem;
-  }
-  option {
-    background-color: #27272a;
-  }
+  display: flex;
+}
+
+.team-selects > * {
+  flex: 1;
 }
 
 #ani-buttons,

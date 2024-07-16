@@ -23,10 +23,7 @@ const SwitchControl = <T extends ValidComponent = "input">(
   return (
     <>
       <SwitchPrimitive.Input
-        class={cn(
-          "[&:focus-visible+div]:outline-none [&:focus-visible+div]:ring-2 [&:focus-visible+div]:ring-ring [&:focus-visible+div]:ring-offset-2 [&:focus-visible+div]:ring-offset-background",
-          local.class
-        )}
+        class={cn("[&:focus-visible+div]:outline-none", local.class)}
       />
       <SwitchPrimitive.Control
         class={cn(
