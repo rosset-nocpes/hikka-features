@@ -214,9 +214,6 @@ export default async function aniButtons(
         </Show>
       </Transition>
     ),
-    location ||
-      document.querySelector(
-        "body main > .grid > .flex:nth-child(2) > .grid > div:nth-child(3) > .flex"
-      )!
+    location || document.querySelector(".order-1 > div:nth-child(1)")!
   );
 }
