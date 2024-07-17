@@ -200,26 +200,27 @@ export default defineContentScript({
                   const haveAnime = data.anime_count !== 0;
 
                   aniBackground(
-                    getSavedMalId() ||
-                      (await (
-                        await (
-                          await fetch(
-                            `https://api.hikka.io/${
-                              haveAnime ? "anime" : "manga"
-                            }/${
-                              (
-                                await (
-                                  await fetch(
-                                    `https://api.hikka.io/characters/${slug}/${
-                                      haveAnime ? "anime" : "manga"
-                                    }`
-                                  )
-                                ).json()
-                              ).list[0][haveAnime ? "anime" : "manga"].slug
-                            }`
-                          )
-                        ).json()
-                      ).mal_id),
+                    getSavedMalId() !== -1 && !Number.isNaN(getSavedMalId())
+                      ? getSavedMalId()
+                      : await (
+                          await (
+                            await fetch(
+                              `https://api.hikka.io/${
+                                haveAnime ? "anime" : "manga"
+                              }/${
+                                (
+                                  await (
+                                    await fetch(
+                                      `https://api.hikka.io/characters/${slug}/${
+                                        haveAnime ? "anime" : "manga"
+                                      }`
+                                    )
+                                  ).json()
+                                ).list[0][haveAnime ? "anime" : "manga"].slug
+                              }`
+                            )
+                          ).json()
+                        ).mal_id,
                     haveAnime ? "anime" : "manga"
                   );
                   break;
