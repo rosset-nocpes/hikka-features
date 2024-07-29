@@ -12,6 +12,7 @@ import LifecycleLogo from "@/assets/lifecycle_logo.jpg";
 import UKutochkuLogo from "@/assets/u_kutochku_logo.jpg";
 import UnimayLogo from "@/assets/unimay_logo.png";
 import QTVLogo from "@/assets/qtv_logo.webp";
+import AniUaLogo from "@/assets/aniua_logo.webp";
 
 export {};
 
@@ -50,4 +51,9 @@ export const StudioLogos: Record<string, string> = {
   укуточкувтаверні: UKutochkuLogo,
   unimay: UnimayLogo,
   qtv: QTVLogo,
+  aniua: AniUaLogo,
+};
+
+export const StudiosCorrectedNames: Record<string, string> = {
+  "двоголосий закадровий | AniUA": "AniUA",
 };

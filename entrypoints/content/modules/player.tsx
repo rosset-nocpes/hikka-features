@@ -148,26 +148,40 @@ export default async function Player(
               <SelectItem item={props.item}>
                 <div class="flex items-center gap-2">
                   {StudioLogos[
-                    props.item.rawValue.replaceAll(" ", "").toLowerCase()
+                    StudiosCorrectedNames[props.item.rawValue]
+                      ? StudiosCorrectedNames[props.item.rawValue]
+                          .replaceAll(" ", "")
+                          .toLowerCase()
+                      : props.item.rawValue.replaceAll(" ", "").toLowerCase()
                   ] && (
                     <img
                       class="size-5"
                       style="border-radius: 3px"
                       src={
                         StudioLogos[
-                          props.item.rawValue.replaceAll(" ", "").toLowerCase()
+                          StudiosCorrectedNames[props.item.rawValue]
+                            ? StudiosCorrectedNames[props.item.rawValue]
+                                .replaceAll(" ", "")
+                                .toLowerCase()
+                            : props.item.rawValue
+                                .replaceAll(" ", "")
+                                .toLowerCase()
                         ]
                       }
                     />
                   )}
-                  {props.item.rawValue}
+                  {StudiosCorrectedNames[props.item.rawValue] ||
+                    props.item.rawValue}
                 </div>
               </SelectItem>
             )}
           >
             <SelectTrigger aria-label="Team" class="focus:ring-0">
               <SelectValue<string>>
-                {(state) => state.selectedOption()}
+                {(state) =>
+                  StudiosCorrectedNames[state.selectedOption()] ||
+                  state.selectedOption()
+                }
               </SelectValue>
             </SelectTrigger>
             <SelectContent class="z-0" />
