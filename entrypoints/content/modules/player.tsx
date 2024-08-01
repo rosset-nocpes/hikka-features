@@ -70,14 +70,17 @@ export default async function Player(data: Record<PlayerData, any>) {
   start_node.insertAdjacentHTML("afterbegin", '<div id="player"></div>');
   const player = document.querySelector("#player")!;
 
+  let duration = 0;
+  let time = 0;
+
   window.addEventListener("message", function (event) {
     if (event.data.event === "time") {
       let message = event.data;
-      const duration = message.duration;
-      const time = message.time;
+      duration = message.duration;
+      time = message.time;
 
       // TODO: improve (need 5 second to watch for activation)
-      if (time / duration > 0.85) {
+      if (time / duration > 0.88) {
         if (getWatched() + 1 === teamEpisode().episode) {
           (
             document.body.querySelector(
@@ -85,21 +88,39 @@ export default async function Player(data: Record<PlayerData, any>) {
             ) as HTMLButtonElement
           )?.click();
         }
-
-        if (
-          getNextEpState() === false &&
-          data[playerProvider()][teamName()].find(
-            (obj: any) => obj.episode == teamEpisode().episode + 1
-          )
-        )
-          setNextEpState(true);
       }
+    } else if (
+      event.data.event === "pause" &&
+      time / duration > 0.8 &&
+      getNextEpState() === false &&
+      data[playerProvider()][teamName()].find(
+        (obj: any) => obj.episode == teamEpisode().episode + 1
+      )
+    ) {
+      setNextEpState(true);
+    } else if (event.data.event === "play") {
+      setNextEpState(false);
     }
   });
 
   const handleSelectEpisode = (e: any) => {
     if (e) {
       setTeamEpisode(e);
+      setNextEpState(false);
+    }
+  };
+
+  const handleSelectPlayer = (e: PlayerSource) => {
+    if (e) {
+      setPlayerProvider(e);
+      setTeamName(Object.keys(data[e])[0]);
+      setEpisodesData(data[e][teamName()]);
+      setTeamEpisode(
+        data[e][teamName()].find(
+          (obj: any) => obj.episode == getWatched() + 1
+        ) || data[e][teamName()][0]
+      );
+      setNextEpState(false);
     }
   };
 
@@ -112,6 +133,7 @@ export default async function Player(data: Record<PlayerData, any>) {
           (obj: any) => obj.episode == getWatched() + 1
         ) || data[playerProvider()][e][0]
       );
+      setNextEpState(false);
     }
   };
 
@@ -122,16 +144,7 @@ export default async function Player(data: Record<PlayerData, any>) {
           <Select
             value={playerProvider()}
             class="w-full"
-            onChange={(player) => {
-              setPlayerProvider(player);
-              setTeamName(Object.keys(data[player])[0]);
-              setEpisodesData(data[player][teamName()]);
-              setTeamEpisode(
-                data[player][teamName()].find(
-                  (obj: any) => obj.episode == getWatched() + 1
-                ) || data[player][teamName()][0]
-              );
-            }}
+            onChange={handleSelectPlayer}
             placeholder="Оберіть плеєр…"
             options={playersAvaliable}
             itemComponent={(props) => (
