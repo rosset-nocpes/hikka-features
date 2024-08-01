@@ -1,7 +1,7 @@
-# Hikka Features
+# ![hikka Features logo](https://github.com/user-attachments/assets/013b9522-cd69-42b3-a706-43c6d8c79f71) ![hikka Features title](https://github.com/user-attachments/assets/6c4901ae-2b47-451a-b8d9-ad1c6cbd360c)
 
-[![Chrome Web Store Badge](https://storage.googleapis.com/web-dev-uploads/image/WlD8wC6g8khYWPJUsQceQkhXSlv1/UV4C4ybeBTsZt43U4xis.png)](https://chromewebstore.google.com/detail/hikka-features/apjnamihmmcjbchjdfhbgmmlhbnihkhk)
-[![AMO Badge](https://extensionworkshop.com/assets/img/documentation/publish/get-the-addon-178x60px.dad84b42.png)](https://addons.mozilla.org/en-US/firefox/addon/hikka-features/)
+[![Chrome Web Store Badge](https://github.com/user-attachments/assets/6a406567-8cd7-42b2-9037-482c4aea41e6)](https://chromewebstore.google.com/detail/hikka-features/apjnamihmmcjbchjdfhbgmmlhbnihkhk)
+[![AMO Badge](https://github.com/user-attachments/assets/119684c1-e569-44fd-a24c-56ac1aa1bb13)](https://addons.mozilla.org/en-US/firefox/addon/hikka-features/)
 
 Plugin uses:
 
