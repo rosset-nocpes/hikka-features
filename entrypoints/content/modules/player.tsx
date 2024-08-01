@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -8,7 +9,7 @@ import {
 import { StudioLogos } from "@/utils/common";
 import { createSignal, Show } from "solid-js";
 import { render } from "solid-js/web";
-import { TransitionGroup } from "solid-transition-group";
+import { Transition, TransitionGroup } from "solid-transition-group";
 
 export async function getWatchData(anime_data: any) {
   const watch_data = await fetch(
@@ -56,6 +57,8 @@ export default async function Player(data: Record<PlayerData, any>) {
     data[playerProvider()][teamName()]
   );
 
+  const [getNextEpState, setNextEpState] = createSignal(false);
+
   const player_button = document.getElementById(
     "player-button"
   )! as HTMLButtonElement;
@@ -73,15 +76,23 @@ export default async function Player(data: Record<PlayerData, any>) {
       const duration = message.duration;
       const time = message.time;
 
-      if (
-        time / duration > 0.85 &&
-        getWatched() + 1 === teamEpisode().episode
-      ) {
-        (
-          document.body.querySelector(
-            "div.inline-flex:nth-child(2) button:nth-child(2)"
-          ) as HTMLButtonElement
-        )?.click();
+      // TODO: improve (need 5 second to watch for activation)
+      if (time / duration > 0.85) {
+        if (getWatched() + 1 === teamEpisode().episode) {
+          (
+            document.body.querySelector(
+              "div.inline-flex:nth-child(2) button:nth-child(2)"
+            ) as HTMLButtonElement
+          )?.click();
+        }
+
+        if (
+          getNextEpState() === false &&
+          data[playerProvider()][teamName()].find(
+            (obj: any) => obj.episode == teamEpisode().episode + 1
+          )
+        )
+          setNextEpState(true);
       }
     }
   });
@@ -215,6 +226,23 @@ export default async function Player(data: Record<PlayerData, any>) {
           class="player-block"
           style="width: 100%; height: 332px; position: relative;"
         >
+          <Transition name="vertical-slide-fade-revert">
+            <Show when={getNextEpState()}>
+              <Button
+                class="next-episode-button"
+                onClick={() => {
+                  handleSelectEpisode(
+                    data[playerProvider()][teamName()].find(
+                      (obj: any) => obj.episode == teamEpisode().episode + 1
+                    )
+                  );
+                  setNextEpState(false);
+                }}
+              >
+                Наступний епізод
+              </Button>
+            </Show>
+          </Transition>
           <iframe
             id="player-iframe"
             src={`${teamEpisode().video_url}?site=hikka.io`}

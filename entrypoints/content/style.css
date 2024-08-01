@@ -121,6 +121,19 @@ a.watari-link:hover {
   opacity: 0;
 }
 
+.vertical-slide-fade-revert-enter-active {
+  transition: all 0.3s ease;
+}
+.vertical-slide-fade-revert-exit-active {
+  transition: all 0.1s cubic-bezier(1, 0.5, 0.8, 1);
+}
+
+.vertical-slide-fade-revert-enter,
+.vertical-slide-fade-revert-exit-to {
+  transform: translateY(-10px);
+  opacity: 0;
+}
+
 .slide-enter-active,
 .slide-exit-active {
   transition: all 0.5s cubic-bezier(0.77, 0, 0.18, 1);
@@ -219,4 +232,21 @@ a.watari-link:hover {
 
 .pl-2 {
   padding-left: 0.5rem /* 8px */;
+}
+
+.player-block {
+  display: flex;
+  justify-content: center;
+
+  .next-episode-button {
+    position: absolute;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 500;
+    height: 24px;
+    padding-inline: 0.5rem;
+    top: 0.5rem;
+    z-index: 1;
+  }
 }
