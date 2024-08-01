@@ -32,6 +32,8 @@ declare global {
   // | "dengeki"
 
   type PlayerSource = "moon" | "ashdi";
+
+  type PlayerData = PlayerSource | "type";
 }
 
 export const StudioLogos: Record<string, string> = {

@@ -22,9 +22,7 @@ export async function getWatchData(anime_data: any) {
   return await watch_data.json();
 }
 
-export default async function Player(
-  data: Record<PlayerSource, Record<string, any>>
-) {
+export default async function Player(data: Record<PlayerData, any>) {
   if (document.body.querySelectorAll("#player-block").length !== 0) {
     return;
   }
@@ -186,30 +184,32 @@ export default async function Player(
             </SelectTrigger>
             <SelectContent class="z-0" />
           </Select>
-          <Select
-            value={teamEpisode()}
-            class="w-full overflow-y-auto max-h-9"
-            onChange={handleSelectEpisode}
-            options={episodesData()}
-            optionValue="video_url"
-            optionTextValue="episode"
-            placeholder="Оберіть епізод…"
-            itemComponent={(props) => (
-              <SelectItem item={props.item}>
-                Епізод #{props.item.textValue}
-              </SelectItem>
-            )}
-          >
-            <SelectTrigger aria-label="Episode" class="focus:ring-0">
-              <SelectValue<any>>
-                {(state) =>
-                  state.selectedOption() &&
-                  "Епізод #" + state.selectedOption().episode
-                }
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent class="overflow-y-auto max-h-96 z-0" />
-          </Select>
+          <Show when={data["type"] !== "movie"}>
+            <Select
+              value={teamEpisode()}
+              class="w-full overflow-y-auto max-h-9"
+              onChange={handleSelectEpisode}
+              options={episodesData()}
+              optionValue="video_url"
+              optionTextValue="episode"
+              placeholder="Оберіть епізод…"
+              itemComponent={(props) => (
+                <SelectItem item={props.item}>
+                  Епізод #{props.item.textValue}
+                </SelectItem>
+              )}
+            >
+              <SelectTrigger aria-label="Episode" class="focus:ring-0">
+                <SelectValue<any>>
+                  {(state) =>
+                    state.selectedOption() &&
+                    "Епізод #" + state.selectedOption().episode
+                  }
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent class="overflow-y-auto max-h-96 z-0" />
+            </Select>
+          </Show>
         </div>
         <div
           class="player-block"
