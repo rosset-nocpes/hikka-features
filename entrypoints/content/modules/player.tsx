@@ -6,14 +6,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { StudioLogos } from "@/utils/common";
 import { createSignal, Show } from "solid-js";
 import { render } from "solid-js/web";
 import { Transition, TransitionGroup } from "solid-transition-group";
 
 export async function getWatchData(anime_data: any) {
   const watch_data = await fetch(
-    `https://beta.hikka-features.pp.ua/watch/${anime_data.slug}`
+    `${BACKEND_BRANCHES[await backendBranch.getValue()]}/watch/${
+      anime_data.slug
+    }`
   );
 
   if (!watch_data.ok) {
@@ -169,9 +170,9 @@ export default async function Player(data: Record<PlayerData, any>) {
             itemComponent={(props) => (
               <SelectItem item={props.item}>
                 <div class="flex items-center gap-2">
-                  {StudioLogos[
-                    StudiosCorrectedNames[props.item.rawValue]
-                      ? StudiosCorrectedNames[props.item.rawValue]
+                  {STUDIO_LOGOS[
+                    STUDIO_CORRECTED_NAMES[props.item.rawValue]
+                      ? STUDIO_CORRECTED_NAMES[props.item.rawValue]
                           .replaceAll(" ", "")
                           .toLowerCase()
                       : props.item.rawValue.replaceAll(" ", "").toLowerCase()
@@ -180,9 +181,9 @@ export default async function Player(data: Record<PlayerData, any>) {
                       class="size-5"
                       style="border-radius: 3px"
                       src={
-                        StudioLogos[
-                          StudiosCorrectedNames[props.item.rawValue]
-                            ? StudiosCorrectedNames[props.item.rawValue]
+                        STUDIO_LOGOS[
+                          STUDIO_CORRECTED_NAMES[props.item.rawValue]
+                            ? STUDIO_CORRECTED_NAMES[props.item.rawValue]
                                 .replaceAll(" ", "")
                                 .toLowerCase()
                             : props.item.rawValue
@@ -192,7 +193,7 @@ export default async function Player(data: Record<PlayerData, any>) {
                       }
                     />
                   )}
-                  {StudiosCorrectedNames[props.item.rawValue] ||
+                  {STUDIO_CORRECTED_NAMES[props.item.rawValue] ||
                     props.item.rawValue}
                 </div>
               </SelectItem>
@@ -201,7 +202,7 @@ export default async function Player(data: Record<PlayerData, any>) {
             <SelectTrigger aria-label="Team" class="focus:ring-0">
               <SelectValue<string>>
                 {(state) =>
-                  StudiosCorrectedNames[state.selectedOption()] ||
+                  STUDIO_CORRECTED_NAMES[state.selectedOption()] ||
                   state.selectedOption()
                 }
               </SelectValue>

@@ -15,18 +15,19 @@
     "postinstall": "wxt prepare"
   },
   "dependencies": {
+    "@corvu/drawer": "^0.2.2",
     "@kobalte/core": "^0.13.3",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "solid-js": "^1.8.18",
+    "solid-transition-group": "^0.2.3",
     "tailwind-merge": "^2.4.0",
-    "tailwindcss-animate": "^1.0.7",
-    "solid-transition-group": "^0.2.3"
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@iconify-json/tabler": "^1.1.113",
-    "@wxt-dev/module-solid": "1.1.1",
     "@types/node": "^20.14.10",
+    "@wxt-dev/module-solid": "1.1.1",
     "autoprefixer": "^10.4.19",
     "postcss": "^8.4.39",
     "tailwindcss": "^3.4.4",

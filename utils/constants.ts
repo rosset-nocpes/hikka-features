@@ -14,29 +14,7 @@ import UnimayLogo from "@/assets/unimay_logo.png";
 import QTVLogo from "@/assets/qtv_logo.webp";
 import AniUaLogo from "@/assets/aniua_logo.webp";
 
-export {};
-
-declare global {
-  type MediaType = "anime" | "manga" | "novel";
-
-  type InfoType = "character" | "person";
-
-  type SourcesType =
-    | "mal"
-    | "anilist"
-    | "anidb"
-    | "ann"
-    | "wiki"
-    | "amanogawa"
-    | "mu";
-  // | "dengeki"
-
-  type PlayerSource = "moon" | "ashdi";
-
-  type PlayerData = PlayerSource | "type";
-}
-
-export const StudioLogos: Record<string, string> = {
+export const STUDIO_LOGOS: Record<string, string> = {
   amanogawa: AmanogawaLogo,
   fanvoxua: FanVoxUaLogo,
   fanwoxua: FanVoxUaLogo,
@@ -56,6 +34,11 @@ export const StudioLogos: Record<string, string> = {
   aniua: AniUaLogo,
 };
 
-export const StudiosCorrectedNames: Record<string, string> = {
+export const STUDIO_CORRECTED_NAMES: Record<string, string> = {
   "двоголосий закадровий | AniUA": "AniUA",
+};
+
+export const BACKEND_BRANCHES: Record<BackendBranches, string> = {
+  stable: "https://hikka-features.pp.ua",
+  beta: "https://beta.hikka-features.pp.ua",
 };

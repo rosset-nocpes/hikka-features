@@ -1,6 +1,5 @@
 import { defineConfig } from "wxt";
 import Solid from "vite-plugin-solid";
-import path from "path";
 
 export default defineConfig({
   vite: () => ({
@@ -8,14 +7,14 @@ export default defineConfig({
       target: "esnext",
     },
     plugins: [Solid()],
-    modules: ["@wxt-dev/module-react"],
+    modules: ["@wxt-dev/module-solid"],
   }),
   manifest: () => ({
     name: "Hikka Features",
     permissions: ["webNavigation", "storage"],
     host_permissions: [
       "https://*.hikka.io/*",
-      "https://hikka-features.pp.ua/*",
+      "https://*.hikka-features.pp.ua/*",
       "https://corsproxy.io/*",
       "https://graphql.anilist.co/*",
     ],

@@ -22,3 +22,21 @@ export const defaultPlayer = storage.defineItem<PlayerSource>(
     defaultValue: "moon",
   }
 );
+
+export const devOptionsState = storage.defineItem<boolean>(
+  "local:devOptionsState",
+  {
+    defaultValue: false,
+  }
+);
+
+export const backendBranch = storage.defineItem<BackendBranches>(
+  "local:backendBranch",
+  {
+    defaultValue: "beta",
+  }
+);
+
+export const burunyaaMode = storage.defineItem<boolean>("local:burunyaaMode", {
+  defaultValue: false,
+});
