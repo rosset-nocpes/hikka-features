@@ -25,11 +25,13 @@ export default async function watchButton(
   let data: any;
   getWatchData(anime_data)
     .then((x: any) => (data = x))
-    .then((data: any) =>
+    .then((data: any) => {
       data !== null
         ? (togglePlayerDisabled(!playerDisabled()), setState(1))
-        : setState(0)
-    );
+        : setState(0);
+
+      Player(data);
+    });
 
   render(
     () => (
@@ -37,8 +39,7 @@ export default async function watchButton(
         <Show when={buttonState()}>
           <button
             id="player-button"
-            class="hikka-features bg-amber-600 inline-flex gap-2 items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-50 border border-secondary/60 bg-secondary/30 hover:bg-secondary/60 hover:text-secondary-foreground h-12 px-4 py-2"
-            onClick={() => Player(data)}
+            class="hikka-features inline-flex gap-2 items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-50 border border-secondary/60 bg-secondary/30 hover:bg-secondary/60 hover:text-secondary-foreground h-12 px-4 py-2"
             disabled={playerDisabled()}
           >
             <img src={HikkaLogoMono} />

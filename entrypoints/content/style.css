@@ -254,3 +254,8 @@ a.watari-link:hover {
     z-index: 1;
   }
 }
+
+.watch-button-toggled {
+  background-color: hsl(var(--secondary) / 0.6);
+  color: hsl(var(--secondary-foreground));
+}
