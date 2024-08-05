@@ -144,7 +144,10 @@ export default defineContentScript({
 
             break;
           case "edit":
-            if (split_path.length === 3) {
+            if (
+              split_path.length === 3 ||
+              (split_path.length === 4 && split_path[3] === "update")
+            ) {
               const creatingEdit = isNaN(parseInt(split_path[2]));
 
               const edit_info = creatingEdit
