@@ -42,6 +42,10 @@ const [showAniButtons, toggleAniButtons] = createSignal(
   await aniButtonsState.getValue()
 );
 
+const [showFandubBlock, toggleFandubBlock] = createSignal(
+  await fandubBlockState.getValue()
+);
+
 const [showWatchButton, toggleWatchButton] = createSignal(
   await watchButtonState.getValue()
 );
@@ -112,6 +116,24 @@ function App() {
               <SwitchLabel>Інші джерела</SwitchLabel>
               <SwitchDescription class="text-xs font-medium text-[#A1A1A1]">
                 Додаткові посилання на сторінках тайтлів
+              </SwitchDescription>
+            </div>
+            <SwitchControl>
+              <SwitchThumb />
+            </SwitchControl>
+          </Switch>
+          <Switch
+            checked={showFandubBlock()}
+            onClick={() => {
+              fandubBlockState.setValue(!showFandubBlock());
+              toggleFandubBlock(!showFandubBlock());
+            }}
+            class="flex items-center justify-between"
+          >
+            <div class="flex flex-col gap-1 mr-10">
+              <SwitchLabel>Блок фандаб команд</SwitchLabel>
+              <SwitchDescription class="text-xs font-medium text-[#A1A1A1]">
+                Посилання на фандаб команди, які озвучили аніме тайтл
               </SwitchDescription>
             </div>
             <SwitchControl>

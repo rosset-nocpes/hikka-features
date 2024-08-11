@@ -1,42 +1,49 @@
 export const aniBackState = storage.defineItem<boolean>("local:aniBackState", {
-  defaultValue: true,
+  fallback: true,
 });
 
 export const watchButtonState = storage.defineItem<boolean>(
   "local:watchButtonState",
   {
-    defaultValue: true,
+    fallback: true,
   }
 );
 
 export const aniButtonsState = storage.defineItem<boolean>(
   "local:aniButtonsState",
   {
-    defaultValue: true,
+    fallback: true,
+  }
+);
+
+export const fandubBlockState = storage.defineItem<boolean>(
+  "local:fandubBlockState",
+  {
+    fallback: true,
   }
 );
 
 export const defaultPlayer = storage.defineItem<PlayerSource>(
   "local:defaultPlayer",
   {
-    defaultValue: "moon",
+    fallback: "moon",
   }
 );
 
 export const devOptionsState = storage.defineItem<boolean>(
   "local:devOptionsState",
   {
-    defaultValue: false,
+    fallback: false,
   }
 );
 
 export const backendBranch = storage.defineItem<BackendBranches>(
   "local:backendBranch",
   {
-    defaultValue: "beta",
+    fallback: "beta",
   }
 );
 
 export const burunyaaMode = storage.defineItem<boolean>("local:burunyaaMode", {
-  defaultValue: false,
+  fallback: false,
 });
