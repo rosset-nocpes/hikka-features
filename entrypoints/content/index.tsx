@@ -6,7 +6,7 @@ import aniButtons from "./modules/ani-buttons";
 import NextEditURL from "@/utils/next-edit-url";
 // import UCharURL from "@/utils/u-char-url";
 import watchButton from "./modules/watchButton";
-// import NotionBlock from "./modules/notion-block";
+import FandubBlock from "./modules/fandub-block";
 
 export default defineContentScript({
   matches: ["https://hikka.io/*"],
@@ -109,7 +109,7 @@ export default defineContentScript({
               // aniButtons
               aniButtons(anime_data);
 
-              // NotionBlock(anime_slug);
+              FandubBlock(anime_slug);
             }
 
             // aniBackground

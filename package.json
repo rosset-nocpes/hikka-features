@@ -15,24 +15,25 @@
     "postinstall": "wxt prepare"
   },
   "dependencies": {
+    "@corvu/disclosure": "^0.2.0",
     "@corvu/drawer": "^0.2.2",
     "@kobalte/core": "^0.13.3",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
-    "solid-js": "^1.8.18",
+    "solid-js": "^1.8.19",
     "solid-transition-group": "^0.2.3",
     "tailwind-merge": "^2.4.0",
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@iconify-json/tabler": "^1.1.113",
-    "@types/node": "^20.14.10",
-    "@wxt-dev/module-solid": "1.1.1",
-    "autoprefixer": "^10.4.19",
-    "postcss": "^8.4.39",
-    "tailwindcss": "^3.4.4",
-    "typescript": "^5.5.3",
+    "@types/node": "^22.1.0",
+    "@wxt-dev/module-solid": "1.1.2",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.41",
+    "tailwindcss": "^3.4.8",
+    "typescript": "^5.5.4",
     "vite-plugin-solid": "^2.10.2",
-    "wxt": "^0.18.14"
+    "wxt": "^0.19.4"
   }
 }
