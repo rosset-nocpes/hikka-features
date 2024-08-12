@@ -50,8 +50,22 @@ export default async function FandubBlock(
                           <For each={getTeams().slice(0, 3)}>
                             {(team) => (
                               <a href={team.telegram} target="_blank">
-                                <img src={team.icon} />
-                                {team.title}
+                                <img
+                                  loading="lazy"
+                                  src={
+                                    STUDIO_LOGOS[
+                                      STUDIO_CORRECTED_NAMES[team.title]
+                                        ? STUDIO_CORRECTED_NAMES[team.title]
+                                            .replaceAll(" ", "")
+                                            .toLowerCase()
+                                        : team.title
+                                            .replaceAll(" ", "")
+                                            .toLowerCase()
+                                    ] || team.icon
+                                  }
+                                />
+                                {STUDIO_CORRECTED_NAMES[team.title] ||
+                                  team.title}
                               </a>
                             )}
                           </For>
@@ -59,8 +73,22 @@ export default async function FandubBlock(
                             <For each={getTeams().slice(3)}>
                               {(team) => (
                                 <a href={team.telegram} target="_blank">
-                                  <img src={team.icon} />
-                                  {team.title}
+                                  <img
+                                    loading="lazy"
+                                    src={
+                                      STUDIO_LOGOS[
+                                        STUDIO_CORRECTED_NAMES[team.title]
+                                          ? STUDIO_CORRECTED_NAMES[team.title]
+                                              .replaceAll(" ", "")
+                                              .toLowerCase()
+                                          : team.title
+                                              .replaceAll(" ", "")
+                                              .toLowerCase()
+                                      ] || team.icon
+                                    }
+                                  />
+                                  {STUDIO_CORRECTED_NAMES[team.title] ||
+                                    team.title}
                                 </a>
                               )}
                             </For>
@@ -82,8 +110,19 @@ export default async function FandubBlock(
                     <For each={getTeams()}>
                       {(team) => (
                         <a href={team.telegram} target="_blank">
-                          <img src={team.icon} />
-                          {team.title}
+                          <img
+                            loading="lazy"
+                            src={
+                              STUDIO_LOGOS[
+                                STUDIO_CORRECTED_NAMES[team.title]
+                                  ? STUDIO_CORRECTED_NAMES[team.title]
+                                      .replaceAll(" ", "")
+                                      .toLowerCase()
+                                  : team.title.replaceAll(" ", "").toLowerCase()
+                              ] || team.icon
+                            }
+                          />
+                          {STUDIO_CORRECTED_NAMES[team.title] || team.title}
                         </a>
                       )}
                     </For>

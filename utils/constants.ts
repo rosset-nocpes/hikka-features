@@ -36,6 +36,7 @@ export const STUDIO_LOGOS: Record<string, string> = {
 
 export const STUDIO_CORRECTED_NAMES: Record<string, string> = {
   "двоголосий закадровий | AniUA": "AniUA",
+  "Glass Moon (Gwean & Maslinka)": "Glass Moon",
 };
 
 export const BACKEND_BRANCHES: Record<BackendBranches, string> = {
