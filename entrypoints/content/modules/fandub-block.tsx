@@ -1,18 +1,15 @@
 import { For, MountableElement, render } from "solid-js/web";
 import HikkaFLogoSmall from "@/public/hikka-features-small.svg";
-import Teams from "@/utils/notion-db";
-import { createResource, createSignal, Show } from "solid-js";
+import { createSignal, Resource, Show } from "solid-js";
 import Disclosure from "@corvu/disclosure";
 import { Button } from "@/components/ui/button";
 import { Transition } from "solid-transition-group";
 
 export default async function FandubBlock(
-  anime_slug: string,
+  getTeams: Resource<any>,
   location?: MountableElement,
   smallerTitle?: boolean
 ) {
-  let [getTeams] = createResource(anime_slug, Teams);
-
   const [blockState, setBlockState] = createSignal(
     await fandubBlockState.getValue()
   );
@@ -43,11 +40,11 @@ export default async function FandubBlock(
               </Show>
               <Show when={getTeams() && !getTeams()["error"]}>
                 <div>
-                  <Show when={getTeams().length > 3}>
+                  <Show when={getTeams()["fandub"].length > 3}>
                     <Disclosure collapseBehavior="hide">
                       {(props) => (
                         <>
-                          <For each={getTeams().slice(0, 3)}>
+                          <For each={getTeams()["fandub"].slice(0, 3)}>
                             {(team) => (
                               <a href={team.telegram} target="_blank">
                                 <img
@@ -70,7 +67,7 @@ export default async function FandubBlock(
                             )}
                           </For>
                           <Disclosure.Content>
-                            <For each={getTeams().slice(3)}>
+                            <For each={getTeams()["fandub"].slice(3)}>
                               {(team) => (
                                 <a href={team.telegram} target="_blank">
                                   <img
@@ -106,8 +103,8 @@ export default async function FandubBlock(
                       )}
                     </Disclosure>
                   </Show>
-                  <Show when={getTeams().length <= 3}>
-                    <For each={getTeams()}>
+                  <Show when={getTeams()["fandub"].length <= 3}>
+                    <For each={getTeams()["fandub"]}>
                       {(team) => (
                         <a href={team.telegram} target="_blank">
                           <img

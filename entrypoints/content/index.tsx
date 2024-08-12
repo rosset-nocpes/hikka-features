@@ -1,4 +1,4 @@
-import { createSignal } from "solid-js";
+import { createResource, createSignal } from "solid-js";
 import { render } from "solid-js/web";
 import "./style.css";
 import aniBackground from "./modules/ani-background";
@@ -7,6 +7,7 @@ import NextEditURL from "@/utils/next-edit-url";
 // import UCharURL from "@/utils/u-char-url";
 import watchButton from "./modules/watchButton";
 import FandubBlock from "./modules/fandub-block";
+import NotionFetch from "@/utils/notion-db";
 
 export default defineContentScript({
   matches: ["https://hikka.io/*"],
@@ -109,7 +110,8 @@ export default defineContentScript({
               // aniButtons
               aniButtons(anime_data);
 
-              FandubBlock(anime_slug);
+              let [getNotionData] = createResource(anime_slug, NotionFetch);
+              FandubBlock(getNotionData);
             }
 
             // aniBackground
