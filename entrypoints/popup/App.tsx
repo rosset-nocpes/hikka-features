@@ -81,7 +81,14 @@ function App() {
           opacity: 0;
         }`}
       </style>
-      <div class="dark bg-black text-white p-[30px] w-[400px] flex flex-col gap-7 font-inter font-semibold rounded-none">
+      <div
+        class={cn(
+          "dark text-white p-[30px] w-[400px] flex flex-col gap-7 font-inter font-semibold rounded-none",
+          getBurunyaaMode()
+            ? "bg-[url(https://media1.tenor.com/m/PDzKPqFw6f8AAAAC/neco-neco-arc.gif)]"
+            : "bg-black"
+        )}
+      >
         <h3 class="flex justify-between items-center text-lg font-bold tracking-normal">
           Налаштування
         </h3>
