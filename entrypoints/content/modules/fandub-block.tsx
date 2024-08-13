@@ -4,12 +4,17 @@ import { createSignal, Resource, Show } from "solid-js";
 import Disclosure from "@corvu/disclosure";
 import { Button } from "@/components/ui/button";
 import { Transition } from "solid-transition-group";
+import { Image } from "@kobalte/core/image";
 
 export default async function FandubBlock(
   getTeams: Resource<any>,
   location?: MountableElement,
   smallerTitle?: boolean
 ) {
+  if (document.body.querySelectorAll("#teams-block").length !== 0) {
+    return;
+  }
+
   const [blockState, setBlockState] = createSignal(
     await fandubBlockState.getValue()
   );
@@ -47,7 +52,7 @@ export default async function FandubBlock(
                           <For each={getTeams()["fandub"].slice(0, 3)}>
                             {(team) => (
                               <a href={team.telegram} target="_blank">
-                                <img
+                                {/* <img
                                   loading="lazy"
                                   src={
                                     STUDIO_LOGOS[
@@ -60,17 +65,9 @@ export default async function FandubBlock(
                                             .toLowerCase()
                                     ] || team.icon
                                   }
-                                />
-                                {STUDIO_CORRECTED_NAMES[team.title] ||
-                                  team.title}
-                              </a>
-                            )}
-                          </For>
-                          <Disclosure.Content>
-                            <For each={getTeams()["fandub"].slice(3)}>
-                              {(team) => (
-                                <a href={team.telegram} target="_blank">
-                                  <img
+                                /> */}
+                                <Image>
+                                  <Image.Img
                                     loading="lazy"
                                     src={
                                       STUDIO_LOGOS[
@@ -84,6 +81,38 @@ export default async function FandubBlock(
                                       ] || team.icon
                                     }
                                   />
+                                  <Image.Fallback>
+                                    {team.title[0].toUpperCase()}
+                                  </Image.Fallback>
+                                </Image>
+                                {STUDIO_CORRECTED_NAMES[team.title] ||
+                                  team.title}
+                              </a>
+                            )}
+                          </For>
+                          <Disclosure.Content>
+                            <For each={getTeams()["fandub"].slice(3)}>
+                              {(team) => (
+                                <a href={team.telegram} target="_blank">
+                                  <Image>
+                                    <Image.Img
+                                      loading="lazy"
+                                      src={
+                                        STUDIO_LOGOS[
+                                          STUDIO_CORRECTED_NAMES[team.title]
+                                            ? STUDIO_CORRECTED_NAMES[team.title]
+                                                .replaceAll(" ", "")
+                                                .toLowerCase()
+                                            : team.title
+                                                .replaceAll(" ", "")
+                                                .toLowerCase()
+                                        ] || team.icon
+                                      }
+                                    />
+                                    <Image.Fallback>
+                                      {team.title[0].toUpperCase()}
+                                    </Image.Fallback>
+                                  </Image>
                                   {STUDIO_CORRECTED_NAMES[team.title] ||
                                     team.title}
                                 </a>
@@ -107,18 +136,25 @@ export default async function FandubBlock(
                     <For each={getTeams()["fandub"]}>
                       {(team) => (
                         <a href={team.telegram} target="_blank">
-                          <img
-                            loading="lazy"
-                            src={
-                              STUDIO_LOGOS[
-                                STUDIO_CORRECTED_NAMES[team.title]
-                                  ? STUDIO_CORRECTED_NAMES[team.title]
-                                      .replaceAll(" ", "")
-                                      .toLowerCase()
-                                  : team.title.replaceAll(" ", "").toLowerCase()
-                              ] || team.icon
-                            }
-                          />
+                          <Image>
+                            <Image.Img
+                              loading="lazy"
+                              src={
+                                STUDIO_LOGOS[
+                                  STUDIO_CORRECTED_NAMES[team.title]
+                                    ? STUDIO_CORRECTED_NAMES[team.title]
+                                        .replaceAll(" ", "")
+                                        .toLowerCase()
+                                    : team.title
+                                        .replaceAll(" ", "")
+                                        .toLowerCase()
+                                ] || team.icon
+                              }
+                            />
+                            <Image.Fallback>
+                              {team.title[0].toUpperCase()}
+                            </Image.Fallback>
+                          </Image>
                           {STUDIO_CORRECTED_NAMES[team.title] || team.title}
                         </a>
                       )}
