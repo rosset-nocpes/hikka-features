@@ -58,7 +58,23 @@ export default async function aniBackground(mal_id: number, type: MediaType) {
 
   render(
     () => (
-      <Transition name="slide" appear={true}>
+      <Transition
+        onEnter={(el, done) => {
+          const a = el.animate([{ height: "0%" }, { height: "normal" }], {
+            duration: 500,
+            easing: "cubic-bezier(0.77, 0, 0.18, 1)",
+          });
+          a.finished.then(done);
+        }}
+        onExit={(el, done) => {
+          const a = el.animate([{ height: "normal" }, { height: "0%" }], {
+            duration: 500,
+            easing: "cubic-bezier(0.77, 0, 0.18, 1)",
+          });
+          a.finished.then(done);
+        }}
+        appear={true}
+      >
         <Show when={stateBack() && isLoaded()}>
           <div class="absolute left-0 top-0 -z-20 h-80 w-full overflow-hidden opacity-40">
             <img
