@@ -198,7 +198,7 @@ a.watari-link:hover {
   }
 
   a:hover {
-    background-color: #27272a;
+    background-color: hsl(var(--secondary) / 0.6);
   }
 
   a.link-disabled {
@@ -225,6 +225,16 @@ a.watari-link:hover {
   }
 
   img {
+    width: 32px;
+    height: 32px;
+  }
+
+  span {
+    display: flex;
+    border-radius: 0.25rem;
+    align-items: center;
+    justify-content: center;
+    background-color: #27272a;
     width: 32px;
     height: 32px;
   }
