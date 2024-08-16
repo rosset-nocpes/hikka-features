@@ -1,7 +1,7 @@
 import { createSignal, Show } from "solid-js";
 import { aniBackState } from "@/utils/storage";
 import { version } from "@/package.json";
-import HikkaFLogoSmall from "/hikka-features-small.svg";
+import MaterialSymbolsExpandAllRounded from "~icons/material-symbols/expand-all-rounded";
 import "../app.css";
 import {
   Switch,
@@ -22,7 +22,6 @@ import {
   Drawer,
   DrawerClose,
   DrawerContent,
-  DrawerDescription,
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
@@ -36,6 +35,14 @@ const [showDevOptions, toggleDevOptions] = createSignal(
 
 const [showAniBackground, toggleAniBackground] = createSignal(
   await aniBackState.getValue()
+);
+
+const [showLocalizedPosterButton, toggleLocalizedPosterButton] = createSignal(
+  await localizedPosterButtonState.getValue()
+);
+
+const [showLocalizedPoster, toggleLocalizedPoster] = createSignal(
+  await localizedPosterState.getValue()
 );
 
 const [showAniButtons, toggleAniButtons] = createSignal(
@@ -165,6 +172,70 @@ function App() {
               <SwitchThumb />
             </SwitchControl>
           </Switch>
+          <Drawer>
+            <div class="flex justify-between">
+              <div class="flex flex-col gap-1 mr-10">
+                <label class="text-sm font-medium">Локалізовані постери</label>
+                <div class="text-xs font-medium text-[#A1A1A1]">
+                  Налаштування локалізованих постерів
+                </div>
+              </div>
+              <DrawerTrigger>
+                <Button size="icon-sm">
+                  <MaterialSymbolsExpandAllRounded />
+                </Button>
+              </DrawerTrigger>
+            </div>
+            <DrawerContent class="dark text-white">
+              <div class="mx-auto w-full max-w-sm">
+                <DrawerHeader>
+                  <DrawerTitle>Локалізовані постери</DrawerTitle>
+                </DrawerHeader>
+                <div class="flex flex-col gap-5 px-[30px]">
+                  <Switch
+                    checked={showLocalizedPosterButton()}
+                    onClick={() => {
+                      localizedPosterButtonState.setValue(
+                        !showLocalizedPosterButton()
+                      );
+                      toggleLocalizedPosterButton(!showLocalizedPosterButton());
+                    }}
+                    class="flex items-center justify-between"
+                  >
+                    <div class="flex flex-col gap-1 mr-10">
+                      <SwitchLabel>Кнопка локалізації постера</SwitchLabel>
+                    </div>
+                    <SwitchControl>
+                      <SwitchThumb />
+                    </SwitchControl>
+                  </Switch>
+                  <Switch
+                    checked={showLocalizedPoster()}
+                    onClick={() => {
+                      localizedPosterState.setValue(!showLocalizedPoster());
+                      toggleLocalizedPoster(!showLocalizedPoster());
+                    }}
+                    class="flex items-center justify-between"
+                  >
+                    <div class="flex flex-col gap-1 mr-10">
+                      <SwitchLabel>Авто-локалізація постера</SwitchLabel>
+                      <SwitchDescription class="text-xs font-medium text-[#A1A1A1]">
+                        Автоматично замінює постер локалізованою версією
+                      </SwitchDescription>
+                    </div>
+                    <SwitchControl>
+                      <SwitchThumb />
+                    </SwitchControl>
+                  </Switch>
+                </div>
+                <DrawerFooter>
+                  <DrawerClose as={Button<"button">} variant="outline">
+                    Зачинити
+                  </DrawerClose>
+                </DrawerFooter>
+              </div>
+            </DrawerContent>
+          </Drawer>
           <div class="flex justify-between">
             <div class="flex flex-col gap-1 mr-10">
               <label class="text-sm font-medium">Плеєр</label>

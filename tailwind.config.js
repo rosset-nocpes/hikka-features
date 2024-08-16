@@ -1,3 +1,5 @@
+import corvuPlugin from "@corvu/tailwind";
+
 /**@type {import("tailwindcss").Config} */
 module.exports = {
   darkMode: ["class", '[data-kb-theme="dark"]'],
@@ -69,6 +71,22 @@ module.exports = {
         sm: "calc(var(--radius) - 4px)",
       },
       keyframes: {
+        expand: {
+          "0%": {
+            height: "0px",
+          },
+          "100%": {
+            height: "var(--corvu-disclosure-content-height)",
+          },
+        },
+        collapse: {
+          "0%": {
+            height: "var(--corvu-disclosure-content-height)",
+          },
+          "100%": {
+            height: "0px",
+          },
+        },
         "accordion-down": {
           from: { height: 0 },
           to: { height: "var(--kb-accordion-content-height)" },
@@ -87,6 +105,8 @@ module.exports = {
         },
       },
       animation: {
+        expand: "expand 250ms cubic-bezier(0.32,0.72,0,0.75)",
+        collapse: "collapse 250ms cubic-bezier(0.32,0.72,0,0.75)",
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "content-show": "content-show 0.2s ease-out",
@@ -97,5 +117,5 @@ module.exports = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [require("tailwindcss-animate"), corvuPlugin],
 };

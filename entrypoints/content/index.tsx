@@ -8,6 +8,7 @@ import NextEditURL from "@/utils/next-edit-url";
 import watchButton from "./modules/watchButton";
 import FandubBlock from "./modules/fandub-block";
 import NotionFetch from "@/utils/notion-db";
+import localizedPosterButton from "./modules/localized-poster-button";
 
 export default defineContentScript({
   matches: ["https://hikka.io/*"],
@@ -112,6 +113,7 @@ export default defineContentScript({
 
               let [getNotionData] = createResource(anime_slug, NotionFetch);
               FandubBlock(getNotionData);
+              localizedPosterButton(getNotionData);
             }
 
             // aniBackground

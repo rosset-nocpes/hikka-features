@@ -304,3 +304,13 @@ a.watari-link:hover {
     height: 0px;
   }
 }
+
+#localized-poster-button {
+  bottom: 0.5rem;
+  right: 3rem;
+}
+
+#localized-poster {
+  top: 0;
+  left: 0;
+}

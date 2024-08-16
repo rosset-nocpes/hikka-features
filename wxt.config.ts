@@ -1,12 +1,13 @@
 import { defineConfig } from "wxt";
 import Solid from "vite-plugin-solid";
+import Icons from "unplugin-icons/vite";
 
 export default defineConfig({
   vite: () => ({
     build: {
       target: "esnext",
     },
-    plugins: [Solid()],
+    plugins: [Solid(), Icons({ compiler: "solid" })],
     modules: ["@wxt-dev/module-solid"],
   }),
   manifest: () => ({
