@@ -13,6 +13,8 @@ import UKutochkuLogo from "@/assets/u_kutochku_logo.jpg";
 import UnimayLogo from "@/assets/unimay_logo.png";
 import QTVLogo from "@/assets/qtv_logo.webp";
 import AniUaLogo from "@/assets/aniua_logo.webp";
+import ClanKaizokuLogo from "@/assets/clan_kaizoku_logo.jpg";
+import DidkoStudioLogo from "@/assets/didko_studio_logo.jpg";
 
 export const STUDIO_LOGOS: Record<string, string> = {
   amanogawa: AmanogawaLogo,
@@ -22,6 +24,7 @@ export const STUDIO_LOGOS: Record<string, string> = {
   "4ua": FourUaLogo,
   "10gu": TenguLogo,
   glassmoon: GlassMoonLogo,
+  субтитриgm: GlassMoonLogo,
   "gwean&maslinka": GlassMoonLogo,
   dzuski: DzuskiLogo,
   espadastudio: EspadaStudioLogo,
@@ -32,11 +35,16 @@ export const STUDIO_LOGOS: Record<string, string> = {
   unimay: UnimayLogo,
   qtv: QTVLogo,
   aniua: AniUaLogo,
+  clankaizoku: ClanKaizokuLogo,
+  субтитриclankaizoku: ClanKaizokuLogo,
+  didkostudio: DidkoStudioLogo,
 };
 
 export const STUDIO_CORRECTED_NAMES: Record<string, string> = {
   "двоголосий закадровий | AniUA": "AniUA",
   "Glass Moon (Gwean & Maslinka)": "Glass Moon",
+  "Gwean & Maslinka": "Glass Moon",
+  "Клан Кайзоку": "Clan Kaizoku",
 };
 
 export const BACKEND_BRANCHES: Record<BackendBranches, string> = {
