@@ -25,16 +25,16 @@ export default async function FandubBlock(
     () => (
       <Transition name="slide-fade">
         <Show when={blockState()}>
-          <div id="teams-block">
+          <div id="teams-block" class="hikka-features">
             <h3
-              class={`hikka-features scroll-m-20 font-display ${
+              class={`scroll-m-20 font-display ${
                 smallerTitle ? "text-lg" : "text-xl"
               } font-bold tracking-normal`}
             >
               Від команд
               <img src={HikkaFLogoSmall} style="width: 21px; height: 20px" />
             </h3>
-            <div>
+            <div class="teams-items">
               <Show when={getTeams.loading}>
                 <div class="animate-pulse h-10 rounded-md bg-secondary/60" />
                 <div class="animate-pulse h-10 rounded-md bg-secondary/60" />
@@ -52,20 +52,6 @@ export default async function FandubBlock(
                           <For each={getTeams()["fandub"].slice(0, 3)}>
                             {(team) => (
                               <a href={team.telegram} target="_blank">
-                                {/* <img
-                                  loading="lazy"
-                                  src={
-                                    STUDIO_LOGOS[
-                                      STUDIO_CORRECTED_NAMES[team.title]
-                                        ? STUDIO_CORRECTED_NAMES[team.title]
-                                            .replaceAll(" ", "")
-                                            .toLowerCase()
-                                        : team.title
-                                            .replaceAll(" ", "")
-                                            .toLowerCase()
-                                    ] || team.icon
-                                  }
-                                /> */}
                                 <Image>
                                   <Image.Img
                                     loading="lazy"
