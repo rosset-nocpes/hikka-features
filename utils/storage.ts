@@ -54,7 +54,7 @@ export const devOptionsState = storage.defineItem<boolean>(
 export const backendBranch = storage.defineItem<BackendBranches>(
   "local:backendBranch",
   {
-    fallback: "beta",
+    fallback: "stable",
   }
 );
 

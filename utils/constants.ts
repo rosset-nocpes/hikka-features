@@ -48,6 +48,6 @@ export const STUDIO_CORRECTED_NAMES: Record<string, string> = {
 };
 
 export const BACKEND_BRANCHES: Record<BackendBranches, string> = {
-  stable: "https://hikka-features.pp.ua",
+  stable: "https://api.hikka-features.pp.ua",
   beta: "https://beta.hikka-features.pp.ua",
 };
