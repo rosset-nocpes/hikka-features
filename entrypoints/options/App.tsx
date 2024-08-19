@@ -321,30 +321,18 @@ function App() {
                       </Switch>
                       <div class="flex justify-between items-center">
                         <label class="text-sm font-medium">Гілка бекенду</label>
-                        <Select
+                        <select
+                          class="h-10 px-3 py-1 border bg-transparent rounded-md"
                           value={getBackendBranch()}
                           onChange={(e) => {
-                            backendBranch.setValue(e);
-                            setBackendBranch(e);
+                            const target = e.target.value as BackendBranches;
+                            backendBranch.setValue(target);
+                            setBackendBranch(target);
                           }}
-                          options={["stable", "beta"]}
-                          placeholder="Оберіть гілку бекенду…"
-                          itemComponent={(props) => (
-                            <SelectItem item={props.item}>
-                              {props.item.rawValue}
-                            </SelectItem>
-                          )}
                         >
-                          <SelectTrigger
-                            aria-label="Backend"
-                            class="focus:ring-0 focus:ring-transparent"
-                          >
-                            <SelectValue<string>>
-                              {(state) => state.selectedOption()}
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent class="dark" />
-                        </Select>
+                          <option value="stable">stable</option>
+                          <option value="beta">beta</option>
+                        </select>
                       </div>
                     </div>
                     <DrawerFooter>
