@@ -23,6 +23,8 @@ export const watchButtonState = storage.defineItem<boolean>(
   }
 );
 
+export const hikkaSecret = storage.defineItem<string>("local:hikkaSecret");
+
 export const aniButtonsState = storage.defineItem<boolean>(
   "local:aniButtonsState",
   {

@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createSignal, Show } from "solid-js";
+import { createEffect, createResource, createSignal, Show } from "solid-js";
 import { render } from "solid-js/web";
 import { Transition, TransitionGroup } from "solid-transition-group";
 
@@ -24,16 +24,56 @@ export async function getWatchData(anime_data: any) {
   return await watch_data.json();
 }
 
-export default async function Player(data: Record<PlayerData, any>) {
+export default async function Player(
+  data: Record<PlayerData, any>,
+  anime_slug: string
+) {
   if (document.body.querySelectorAll("#player-block").length !== 0) {
     return;
   }
 
-  const getWatched = () =>
-    parseInt(
-      document.body.querySelector("div.rounded-lg.border:nth-child(2) h3")
-        ?.firstChild?.nodeValue!
-    );
+  const [getWatched, { refetch }] = createResource(async () => {
+    if ((await hikkaSecret.getValue()) === null) {
+      return;
+    }
+
+    const r = await fetch(`https://api.hikka.io/watch/${anime_slug}`, {
+      headers: { auth: (await hikkaSecret.getValue())! },
+    });
+
+    return r.json();
+  });
+
+  const [getWatchedLegacy, setWatched] = [
+    async () => {
+      // if ((await hikkaSecret.getValue()) === null) {
+      //   return;
+      // }
+      // const r = await (
+      //   await fetch(`https://api.hikka.io/watch/${anime_slug}`, {
+      //     headers: { auth: (await hikkaSecret.getValue())! },
+      //   })
+      // ).json();
+      // return r["episodes"];
+    },
+    async (episode: number, status: string) => {
+      if ((await hikkaSecret.getValue()) === null) {
+        return;
+      }
+
+      const r = await fetch(`https://api.hikka.io/watch/${anime_slug}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          auth: (await hikkaSecret.getValue())!,
+        },
+        body: JSON.stringify({
+          episodes: episode,
+          status: status,
+        }),
+      });
+    },
+  ];
 
   const playersAvaliable: PlayerSource[] = [];
   data["moon"] ? playersAvaliable.push("moon") : null;
@@ -49,16 +89,27 @@ export default async function Player(data: Record<PlayerData, any>) {
   const [teamName, setTeamName] = createSignal(
     Object.keys(data[playerProvider()])[0]
   );
-  const [teamEpisode, setTeamEpisode] = createSignal(
-    data[playerProvider()][teamName()].find(
-      (obj: any) => obj.episode == getWatched() + 1
-    ) || data[playerProvider()][teamName()][0]
+
+  let [teamEpisode, setTeamEpisode] = createSignal(
+    data[playerProvider()][teamName()][0]
   );
+  createEffect(() => {
+    if (getWatched()) {
+      [teamEpisode, setTeamEpisode] = createSignal(
+        data[playerProvider()][teamName()].find(
+          (obj: any) => obj.episode == getWatched()["episodes"] + 1
+        )
+      );
+    }
+  });
+
   const [episodesData, setEpisodesData] = createSignal(
     data[playerProvider()][teamName()]
   );
 
   const [getNextEpState, setNextEpState] = createSignal(false);
+
+  const [getWatchedState, toggleWatchedState] = createSignal(false);
 
   const [getPlayerState, togglePlayerState] = createSignal(false);
 
@@ -84,20 +135,22 @@ export default async function Player(data: Record<PlayerData, any>) {
   let duration = 0;
   let time = 0;
 
-  window.addEventListener("message", function (event) {
+  window.addEventListener("message", async function (event) {
     if (event.data.event === "time") {
       let message = event.data;
       duration = message.duration;
       time = message.time;
 
       // TODO: improve (need 5 second to watch for activation)
-      if (time / duration > 0.88) {
-        if (getWatched() + 1 === teamEpisode().episode) {
-          (
-            document.body.querySelector(
-              "div.inline-flex:nth-child(2) button:nth-child(2)"
-            ) as HTMLButtonElement
-          )?.click();
+      if (time / duration > 0.88 && !getWatchedState() && getWatched()) {
+        if (getWatched()["episodes"] + 1 === teamEpisode().episode) {
+          setWatched(
+            teamEpisode().episode,
+            getWatched()["anime"]["episodes_total"] === teamEpisode().episode
+              ? "completed"
+              : "watching"
+          );
+          toggleWatchedState(true);
         }
       }
     } else if (
@@ -118,6 +171,7 @@ export default async function Player(data: Record<PlayerData, any>) {
     if (e) {
       setTeamEpisode(e);
       setNextEpState(false);
+      toggleWatchedState(false);
     }
   };
 
@@ -128,10 +182,11 @@ export default async function Player(data: Record<PlayerData, any>) {
       setEpisodesData(data[e][teamName()]);
       setTeamEpisode(
         data[e][teamName()].find(
-          (obj: any) => obj.episode == getWatched() + 1
+          async (obj: any) => obj.episode == (await getWatched()) + 1
         ) || data[e][teamName()][0]
       );
       setNextEpState(false);
+      toggleWatchedState(false);
     }
   };
 
@@ -141,10 +196,11 @@ export default async function Player(data: Record<PlayerData, any>) {
       setEpisodesData(data[playerProvider()][teamName()]);
       setTeamEpisode(
         data[playerProvider()][e].find(
-          (obj: any) => obj.episode == getWatched() + 1
+          async (obj: any) => obj.episode == (await getWatched()) + 1
         ) || data[playerProvider()][e][0]
       );
       setNextEpState(false);
+      toggleWatchedState(false);
     }
   };
 

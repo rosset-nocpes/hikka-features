@@ -1,7 +1,13 @@
-import { createSignal, Show } from "solid-js";
-import { aniBackState } from "@/utils/storage";
+import {
+  createEffect,
+  createResource,
+  createSignal,
+  Match,
+  Show,
+} from "solid-js";
 import { version } from "@/package.json";
 import MaterialSymbolsExpandAllRounded from "~icons/material-symbols/expand-all-rounded";
+import MaterialSymbolsPersonRounded from "~icons/material-symbols/person-rounded";
 import "../app.css";
 import {
   Switch,
@@ -28,6 +34,15 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { Transition } from "solid-transition-group";
+import HikkaLogo from "@/assets/hikka_logo.svg";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Logout } from "@/utils/hikka-integration";
 
 const [showDevOptions, toggleDevOptions] = createSignal(
   await devOptionsState.getValue()
@@ -69,6 +84,12 @@ const [getBackendBranch, setBackendBranch] = createSignal(
   await backendBranch.getValue()
 );
 
+const [userData, { refetch }] = createResource(getUserData);
+
+hikkaSecret.watch(() => {
+  refetch();
+});
+
 let devClicked = 0;
 
 function App() {
@@ -98,6 +119,32 @@ function App() {
       >
         <h3 class="flex justify-between items-center text-lg font-bold tracking-normal">
           Налаштування
+          <DropdownMenu>
+            <DropdownMenuTrigger as={"button"}>
+              <Avatar>
+                <AvatarImage src={userData() && userData()["avatar"]} />
+                <AvatarFallback>
+                  {(userData() && userData()["username"][0]) || (
+                    <MaterialSymbolsPersonRounded />
+                  )}
+                </AvatarFallback>
+              </Avatar>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent class="dark">
+              <Show when={!userData()}>
+                <DropdownMenuItem onClick={Login} class="items-center gap-2">
+                  <img src={HikkaLogo} class="size-5 rounded-sm" />
+                  Увійти в акаунт hikka.io
+                </DropdownMenuItem>
+              </Show>
+              <Show when={userData()}>
+                <DropdownMenuItem onClick={Logout} class="items-center gap-2">
+                  <img src={HikkaLogo} class="size-5 rounded-sm" />
+                  Вийти з акаунта
+                </DropdownMenuItem>
+              </Show>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </h3>
         <div class="flex flex-col gap-5">
           <Switch

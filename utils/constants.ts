@@ -51,3 +51,7 @@ export const BACKEND_BRANCHES: Record<BackendBranches, string> = {
   stable: "https://api.hikka-features.pp.ua",
   beta: "https://beta.hikka-features.pp.ua",
 };
+
+export const CLIENT_REFERENCE: string = "a327508d-64e2-4a09-8ae2-c1e313bde39a";
+
+export const NEEDED_SCOPES: string[] = ["watchlist", "read:user-details"];
