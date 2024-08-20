@@ -60,6 +60,8 @@ export default async function Player(data: Record<PlayerData, any>) {
 
   const [getNextEpState, setNextEpState] = createSignal(false);
 
+  const [getWatchedState, toggleWatchedState] = createSignal(false);
+
   const [getPlayerState, togglePlayerState] = createSignal(false);
 
   const player_button = document.getElementById(
@@ -70,9 +72,6 @@ export default async function Player(data: Record<PlayerData, any>) {
     player_button.classList.toggle("watch-button-toggled");
     togglePlayerState(!getPlayerState());
   });
-
-  // disabling player-button
-  // player_button.disabled = true;
 
   const start_node = document.querySelector(".order-2")!;
   start_node.insertAdjacentHTML(
@@ -91,13 +90,14 @@ export default async function Player(data: Record<PlayerData, any>) {
       time = message.time;
 
       // TODO: improve (need 5 second to watch for activation)
-      if (time / duration > 0.88) {
+      if (time / duration > 0.88 && !getWatchedState()) {
         if (getWatched() + 1 === teamEpisode().episode) {
           (
             document.body.querySelector(
               "div.inline-flex:nth-child(2) button:nth-child(2)"
             ) as HTMLButtonElement
           )?.click();
+          toggleWatchedState(true);
         }
       }
     } else if (
@@ -118,6 +118,7 @@ export default async function Player(data: Record<PlayerData, any>) {
     if (e) {
       setTeamEpisode(e);
       setNextEpState(false);
+      toggleWatchedState(false);
     }
   };
 
@@ -132,6 +133,7 @@ export default async function Player(data: Record<PlayerData, any>) {
         ) || data[e][teamName()][0]
       );
       setNextEpState(false);
+      toggleWatchedState(false);
     }
   };
 
@@ -145,6 +147,7 @@ export default async function Player(data: Record<PlayerData, any>) {
         ) || data[playerProvider()][e][0]
       );
       setNextEpState(false);
+      toggleWatchedState(false);
     }
   };
 
