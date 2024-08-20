@@ -111,6 +111,8 @@ export default async function Player(
 
   const [getWatchedState, toggleWatchedState] = createSignal(false);
 
+  const [getWatchedState, toggleWatchedState] = createSignal(false);
+
   const [getPlayerState, togglePlayerState] = createSignal(false);
 
   const player_button = document.getElementById(
@@ -121,9 +123,6 @@ export default async function Player(
     player_button.classList.toggle("watch-button-toggled");
     togglePlayerState(!getPlayerState());
   });
-
-  // disabling player-button
-  // player_button.disabled = true;
 
   const start_node = document.querySelector(".order-2")!;
   start_node.insertAdjacentHTML(
@@ -142,14 +141,13 @@ export default async function Player(
       time = message.time;
 
       // TODO: improve (need 5 second to watch for activation)
-      if (time / duration > 0.88 && !getWatchedState() && getWatched()) {
-        if (getWatched()["episodes"] + 1 === teamEpisode().episode) {
-          setWatched(
-            teamEpisode().episode,
-            getWatched()["anime"]["episodes_total"] === teamEpisode().episode
-              ? "completed"
-              : "watching"
-          );
+      if (time / duration > 0.88 && !getWatchedState()) {
+        if (getWatched() + 1 === teamEpisode().episode) {
+          (
+            document.body.querySelector(
+              "div.inline-flex:nth-child(2) button:nth-child(2)"
+            ) as HTMLButtonElement
+          )?.click();
           toggleWatchedState(true);
         }
       }
@@ -172,6 +170,7 @@ export default async function Player(
       setTeamEpisode(e);
       setNextEpState(false);
       toggleWatchedState(false);
+      toggleWatchedState(false);
     }
   };
 
@@ -187,6 +186,7 @@ export default async function Player(
       );
       setNextEpState(false);
       toggleWatchedState(false);
+      toggleWatchedState(false);
     }
   };
 
@@ -200,6 +200,7 @@ export default async function Player(
         ) || data[playerProvider()][e][0]
       );
       setNextEpState(false);
+      toggleWatchedState(false);
       toggleWatchedState(false);
     }
   };
