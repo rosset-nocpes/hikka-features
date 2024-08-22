@@ -39,7 +39,7 @@ const SelectTrigger = <T extends ValidComponent = "button">(
         stroke-width="2"
         stroke-linecap="round"
         stroke-linejoin="round"
-        class="size-4 opacity-50"
+        class="size-4 opacity-50 shrink-0"
       >
         <path d="M8 9l4 -4l4 4" />
         <path d="M16 15l-4 4l-4 -4" />
