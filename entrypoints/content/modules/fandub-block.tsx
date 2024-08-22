@@ -1,5 +1,6 @@
 import { For, MountableElement, render } from "solid-js/web";
 import HikkaFLogoSmall from "@/public/hikka-features-small.svg";
+import MaterialSymbolsSadTabRounded from "~icons/material-symbols/sad-tab-rounded";
 import { createSignal, Resource, Show } from "solid-js";
 import Disclosure from "@corvu/disclosure";
 import { Button } from "@/components/ui/button";
@@ -41,7 +42,14 @@ export default async function FandubBlock(
                 <div class="animate-pulse h-10 rounded-md bg-secondary/60" />
               </Show>
               <Show when={getTeams() && getTeams()["error"]}>
-                <a class="text-muted-foreground">Немає даних</a>
+                <a class="text-muted-foreground cursor-default">
+                  <Image>
+                    <Image.Fallback>
+                      <MaterialSymbolsSadTabRounded class="size-6" />
+                    </Image.Fallback>
+                  </Image>
+                  Немає даних
+                </a>
               </Show>
               <Show when={getTeams() && !getTeams()["error"]}>
                 <div>
