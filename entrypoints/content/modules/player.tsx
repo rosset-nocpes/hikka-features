@@ -215,10 +215,12 @@ export default async function Player(data: Record<PlayerData, any>) {
             >
               <SelectTrigger aria-label="Team" class="focus:ring-0">
                 <SelectValue<string>>
-                  {(state) =>
-                    STUDIO_CORRECTED_NAMES[state.selectedOption()] ||
-                    state.selectedOption()
-                  }
+                  {(state) => (
+                    <a class="text-left line-clamp-1">
+                      {STUDIO_CORRECTED_NAMES[state.selectedOption()] ||
+                        state.selectedOption()}
+                    </a>
+                  )}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent class="z-0" />
