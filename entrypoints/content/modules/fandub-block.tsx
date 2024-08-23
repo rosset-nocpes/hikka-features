@@ -37,9 +37,9 @@ export default async function FandubBlock(
             </h3>
             <div class="teams-items">
               <Show when={getTeams.loading}>
-                <div class="animate-pulse h-10 rounded-md bg-secondary/60" />
-                <div class="animate-pulse h-10 rounded-md bg-secondary/60" />
-                <div class="animate-pulse h-10 rounded-md bg-secondary/60" />
+                <div class="skeleton animate-pulse h-10 bg-secondary/60" />
+                <div class="skeleton animate-pulse h-10 bg-secondary/60" />
+                <div class="skeleton animate-pulse h-10 bg-secondary/60" />
               </Show>
               <Show when={getTeams() && getTeams()["error"]}>
                 <a class="text-muted-foreground cursor-default">

@@ -209,6 +209,10 @@ a.watari-link:hover {
   img {
     border-radius: 0.25rem;
   }
+
+  .skeleton {
+    border-radius: 0.25rem;
+  }
 }
 
 #ani-buttons div {
@@ -222,11 +226,6 @@ a.watari-link:hover {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-  }
-
-  img {
-    width: 32px;
-    height: 32px;
   }
 
   span {
