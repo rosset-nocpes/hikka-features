@@ -60,14 +60,14 @@ export default async function aniBackground(mal_id: number, type: MediaType) {
     () => (
       <Transition
         onEnter={(el, done) => {
-          const a = el.animate([{ height: "0%" }, { height: "normal" }], {
+          const a = el.animate([{ height: "0%" }, { height: "20rem" }], {
             duration: 500,
             easing: "cubic-bezier(0.77, 0, 0.18, 1)",
           });
           a.finished.then(done);
         }}
         onExit={(el, done) => {
-          const a = el.animate([{ height: "normal" }, { height: "0%" }], {
+          const a = el.animate([{ height: "20rem" }, { height: "0%" }], {
             duration: 500,
             easing: "cubic-bezier(0.77, 0, 0.18, 1)",
           });
