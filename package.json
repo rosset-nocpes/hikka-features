@@ -21,6 +21,8 @@
     "@kobalte/core": "^0.13.4",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "embla-carousel-solid": "^8.1.8",
+    "embla-carousel-wheel-gestures": "^8.0.1",
     "solid-js": "^1.8.21",
     "solid-transition-group": "^0.2.3",
     "tailwind-merge": "^2.5.2",
