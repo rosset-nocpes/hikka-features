@@ -111,8 +111,6 @@ export default async function Player(
 
   const [getWatchedState, toggleWatchedState] = createSignal(false);
 
-  const [getWatchedState, toggleWatchedState] = createSignal(false);
-
   const [getPlayerState, togglePlayerState] = createSignal(false);
 
   const player_button = document.getElementById(
@@ -170,7 +168,6 @@ export default async function Player(
       setTeamEpisode(e);
       setNextEpState(false);
       toggleWatchedState(false);
-      toggleWatchedState(false);
     }
   };
 
@@ -186,7 +183,6 @@ export default async function Player(
       );
       setNextEpState(false);
       toggleWatchedState(false);
-      toggleWatchedState(false);
     }
   };
 
@@ -200,7 +196,6 @@ export default async function Player(
         ) || data[playerProvider()][e][0]
       );
       setNextEpState(false);
-      toggleWatchedState(false);
       toggleWatchedState(false);
     }
   };
