@@ -16,8 +16,8 @@
   },
   "dependencies": {
     "@corvu/disclosure": "^0.2.0",
-    "@corvu/tailwind": "^0.1.5",
     "@corvu/drawer": "^0.2.2",
+    "@corvu/tailwind": "^0.1.5",
     "@kobalte/core": "^0.13.4",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
@@ -28,6 +28,7 @@
   },
   "devDependencies": {
     "@iconify-json/material-symbols": "^1.1.87",
+    "@iconify-json/mdi": "^1.1.68",
     "@types/node": "^22.3.0",
     "@wxt-dev/module-solid": "1.1.2",
     "autoprefixer": "^10.4.20",
