@@ -1,7 +1,9 @@
 import { createSignal, Show } from "solid-js";
-import { aniBackState } from "@/utils/storage";
 import { version } from "@/package.json";
 import MaterialSymbolsExpandAllRounded from "~icons/material-symbols/expand-all-rounded";
+import MaterialSymbolsPersonRounded from "~icons/material-symbols/person-rounded";
+import MaterialSymbolsExitToAppRounded from "~icons/material-symbols/exit-to-app-rounded";
+import MdiBeta from "~icons/mdi/beta";
 import "../app.css";
 import {
   Switch,
@@ -28,6 +30,21 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { Transition } from "solid-transition-group";
+import HikkaLogo from "@/assets/hikka_logo.svg";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuGroupLabel,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Logout } from "@/utils/hikka-integration";
+import { Badge } from "@/components/ui/badge";
 
 const [showDevOptions, toggleDevOptions] = createSignal(
   await devOptionsState.getValue()
@@ -69,6 +86,16 @@ const [getBackendBranch, setBackendBranch] = createSignal(
   await backendBranch.getValue()
 );
 
+const [getRichPresence, toggleRichPresence] = createSignal(
+  await richPresence.getValue()
+);
+
+const [getUserData, setUserData] = createSignal(await userData.getValue());
+
+hikkaSecret.watch(async () => {
+  setUserData(await userData.getValue());
+});
+
 let devClicked = 0;
 
 function App() {
@@ -98,6 +125,59 @@ function App() {
       >
         <h3 class="flex justify-between items-center text-lg font-bold tracking-normal">
           Налаштування
+          <DropdownMenu placement="bottom-end">
+            <DropdownMenuTrigger as={"button"}>
+              <Avatar>
+                <AvatarImage src={getUserData()?.["avatar"]} />
+                <AvatarFallback>
+                  {getUserData()?.["avatar"] || (
+                    <MaterialSymbolsPersonRounded />
+                  )}
+                </AvatarFallback>
+              </Avatar>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent class="dark">
+              <Show when={!getUserData()}>
+                <DropdownMenuItem onClick={Login} class="items-center gap-2">
+                  <img src={HikkaLogo} class="size-5 rounded-sm" />
+                  Увійти в акаунт hikka.io
+                </DropdownMenuItem>
+              </Show>
+              <Show when={getUserData()}>
+                <DropdownMenuLabel class="line-clamp-1 bg-secondary/30 -m-1 p-2">
+                  {getUserData()!["username"]}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={Logout} class="items-center gap-2">
+                  <MaterialSymbolsExitToAppRounded class="text-destructive" />
+                  Вийти з акаунта
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuGroupLabel class="flex gap-2">
+                    Фічі
+                    <Badge
+                      variant="outline"
+                      round
+                      class="text-primary-foreground cursor-default bg-yellow-500"
+                    >
+                      <MdiBeta />
+                      Beta
+                    </Badge>
+                  </DropdownMenuGroupLabel>
+                  <DropdownMenuCheckboxItem
+                    checked={getRichPresence()}
+                    onChange={(e) => {
+                      richPresence.setValue(e);
+                      toggleRichPresence(e);
+                    }}
+                  >
+                    Rich Presence
+                  </DropdownMenuCheckboxItem>
+                </DropdownMenuGroup>
+              </Show>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </h3>
         <div class="flex flex-col gap-5">
           <Switch

@@ -363,6 +363,16 @@ export default defineContentScript({
               ? setPreviousCreatingEdit(false)
               : null;
 
+            if (
+              (await richPresence.getValue()) &&
+              (await userData.getValue())?.["description"]
+            ) {
+              EditDesc((await userData.getValue())!["description"]);
+              let r = await userData.getValue();
+              delete r!["description"];
+              userData.setValue(r);
+            }
+
             setSavedMalId(-1);
             break;
         }
