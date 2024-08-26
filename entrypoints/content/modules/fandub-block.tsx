@@ -87,7 +87,7 @@ export default async function FandubBlock(
                           <Disclosure.Content>
                             <For each={getTeams()["fandub"].slice(3)}>
                               {(team) => (
-                                <a href={team.telegram} target="_blank">
+                                <a href={team.link} target="_blank">
                                   <Image>
                                     <Image.Img
                                       loading="lazy"
