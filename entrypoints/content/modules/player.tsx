@@ -124,9 +124,25 @@ export default async function Player(
   });
 
   let saved_desc_state = false;
+  const [getRichPresenceCheck, setRichPresenceCheck] = createSignal<boolean>();
+  browser.runtime.onMessage.addListener((response) => {
+    if (
+      response.type === "rich-presence-reply" &&
+      response.action === "check"
+    ) {
+      setRichPresenceCheck(response.tabs_count === 1);
+    }
+  });
 
   createEffect(async () => {
-    if (getPlayerState() && getRichPresence() && teamName() && teamEpisode()) {
+    actionRichPresence("check");
+    if (
+      getPlayerState() &&
+      getRichPresence() &&
+      teamName() &&
+      teamEpisode() &&
+      getRichPresenceCheck()
+    ) {
       if (!saved_desc_state) {
         let r = await userData.getValue();
         r!["description"] = (await getUserData())["description"];

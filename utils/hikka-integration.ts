@@ -32,3 +32,12 @@ export async function EditDesc(description: string) {
     }),
   });
 }
+
+export async function actionRichPresence(action: "check" | "remove") {
+  if (await richPresence.getValue()) {
+    browser.runtime.sendMessage({
+      type: "rich-presence-check",
+      action: action,
+    });
+  }
+}
