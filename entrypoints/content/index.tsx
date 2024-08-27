@@ -146,6 +146,8 @@ export default defineContentScript({
               setSavedMalId(-1);
             }
 
+            actionRichPresence("remove");
+
             break;
           case "edit":
             if (
@@ -322,7 +324,6 @@ export default defineContentScript({
               // ) {
               //   setPreviousAnimeSlug("");
               // }
-              break;
             } else {
               document.head.querySelectorAll(
                 "[name=previous-creating-edit][content]"
@@ -331,8 +332,11 @@ export default defineContentScript({
                 : null;
 
               setSavedMalId(-1);
-              break;
             }
+
+            actionRichPresence("remove");
+
+            break;
           case "characters":
             async function first_aniBackground() {
               const source = (document.body.querySelector(
@@ -355,6 +359,8 @@ export default defineContentScript({
               first_aniBackground();
             }
 
+            actionRichPresence("remove");
+
             break;
           default:
             document.head.querySelectorAll(
@@ -367,14 +373,26 @@ export default defineContentScript({
               (await richPresence.getValue()) &&
               (await userData.getValue())?.["description"]
             ) {
-              EditDesc((await userData.getValue())!["description"]);
-              let r = await userData.getValue();
-              delete r!["description"];
-              userData.setValue(r);
+              browser.runtime.sendMessage(undefined, {
+                type: "rich-presence-check",
+              });
             }
 
             setSavedMalId(-1);
+            actionRichPresence("remove");
+
             break;
+        }
+      } else if (request.type === "rich-presence-reply") {
+        if (
+          request.tabs_count === 0 &&
+          request.action === "remove" &&
+          (await userData.getValue())?.["description"]
+        ) {
+          EditDesc((await userData.getValue())!["description"]);
+          let r = await userData.getValue();
+          delete r!["description"];
+          userData.setValue(r);
         }
       }
     });
