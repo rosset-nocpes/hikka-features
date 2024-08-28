@@ -155,7 +155,9 @@ export default async function Player(
           anime_data["title_ua"] ||
           anime_data["title_en"] ||
           anime_data["title_ja"]
-        }](${`https://hikka.io/anime/${anime_data["slug"]}`}) в озвучці ${teamName()}`
+        }](${`https://hikka.io/anime/${anime_data["slug"]}`}) в озвучці ${
+          STUDIO_CORRECTED_NAMES[teamName()] || teamName()
+        }`
       );
     } else if (saved_desc_state) {
       EditDesc((await userData.getValue())!["description"]);
