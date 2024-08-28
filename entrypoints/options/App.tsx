@@ -10,13 +10,6 @@ import {
   SwitchThumb,
   SwitchDescription,
 } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -153,7 +146,9 @@ function App() {
                     >
                       <For each={["moon", "ashdi"]}>
                         {(elem) => (
-                          <option value={elem}>{elem.toUpperCase()}</option>
+                          <option class="bg-black" value={elem}>
+                            {elem.toUpperCase()}
+                          </option>
                         )}
                       </For>
                     </select>
@@ -347,8 +342,13 @@ function App() {
                             setBackendBranch(target);
                           }}
                         >
-                          <option value="stable">stable</option>
-                          <option value="beta">beta</option>
+                          <For each={["stable", "beta"]}>
+                            {(elem) => (
+                              <option class="bg-black" value={elem}>
+                                {elem}
+                              </option>
+                            )}
+                          </For>
                         </select>
                       </div>
                     </div>
