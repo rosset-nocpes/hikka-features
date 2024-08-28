@@ -1,4 +1,4 @@
-import { createSignal, Show } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
 import { version } from "@/package.json";
 import MaterialSymbolsExpandAllRounded from "~icons/material-symbols/expand-all-rounded";
 import MaterialSymbolsPersonRounded from "~icons/material-symbols/person-rounded";
@@ -180,24 +180,73 @@ function App() {
           </DropdownMenu>
         </h3>
         <div class="flex flex-col gap-5">
-          <Switch
-            checked={showWatchButton()}
-            onClick={() => {
-              watchButtonState.setValue(!showWatchButton());
-              toggleWatchButton(!showWatchButton());
-            }}
-            class="flex items-center justify-between"
-          >
-            <div class="flex flex-col gap-1 mr-10">
-              <SwitchLabel>Перегляд</SwitchLabel>
-              <SwitchDescription class="text-xs font-medium text-[#A1A1A1]">
-                Кнопка для відображення плеєру
-              </SwitchDescription>
+          <Drawer>
+            <div class="flex justify-between">
+              <div class="flex flex-col gap-1 mr-10">
+                <label class="text-sm font-medium">Плеєр</label>
+                <div class="text-xs font-medium text-[#A1A1A1]">
+                  Налаштування плеєра
+                </div>
+              </div>
+              <DrawerTrigger>
+                <Button size="icon-sm">
+                  <MaterialSymbolsExpandAllRounded />
+                </Button>
+              </DrawerTrigger>
             </div>
-            <SwitchControl>
-              <SwitchThumb />
-            </SwitchControl>
-          </Switch>
+            <DrawerContent class="dark text-white">
+              <div class="mx-auto w-full max-w-sm">
+                <DrawerHeader>
+                  <DrawerTitle>Налаштування плеєра</DrawerTitle>
+                </DrawerHeader>
+                <div class="flex flex-col gap-5 px-[30px]">
+                  <Switch
+                    checked={showWatchButton()}
+                    onClick={() => {
+                      watchButtonState.setValue(!showWatchButton());
+                      toggleWatchButton(!showWatchButton());
+                    }}
+                    class="flex items-center justify-between"
+                  >
+                    <div class="flex flex-col gap-1 mr-10">
+                      <SwitchLabel>Кнопка перегляду</SwitchLabel>
+                      <SwitchDescription class="text-xs font-medium text-[#A1A1A1]">
+                        Кнопка для відображення плеєру
+                      </SwitchDescription>
+                    </div>
+                    <SwitchControl>
+                      <SwitchThumb />
+                    </SwitchControl>
+                  </Switch>
+                  <div class="flex items-center justify-between">
+                    <label class="text-sm font-medium">
+                      Плеєр за замовчуванням
+                    </label>
+                    <select
+                      class="h-10 px-3 py-1 border bg-transparent rounded-md"
+                      value={defaultPlayerProvider()}
+                      onChange={(e) => {
+                        const target = e.target.value as PlayerSource;
+                        defaultPlayer.setValue(target);
+                        setDefaultPlayerProvider(target);
+                      }}
+                    >
+                      <For each={["moon", "ashdi"]}>
+                        {(elem) => (
+                          <option value={elem}>{elem.toUpperCase()}</option>
+                        )}
+                      </For>
+                    </select>
+                  </div>
+                </div>
+                <DrawerFooter>
+                  <DrawerClose as={Button<"button">} variant="outline">
+                    Зачинити
+                  </DrawerClose>
+                </DrawerFooter>
+              </div>
+            </DrawerContent>
+          </Drawer>
           <Switch
             checked={showAniButtons()}
             onClick={() => {
@@ -316,38 +365,6 @@ function App() {
               </div>
             </DrawerContent>
           </Drawer>
-          <div class="flex justify-between">
-            <div class="flex flex-col gap-1 mr-10">
-              <label class="text-sm font-medium">Плеєр</label>
-              <div class="text-xs font-medium text-[#A1A1A1]">
-                Плеєр за замовчуванням
-              </div>
-            </div>
-            <Select
-              value={defaultPlayerProvider()}
-              onChange={(e) => {
-                defaultPlayer.setValue(e);
-                setDefaultPlayerProvider(e);
-              }}
-              options={["moon", "ashdi"]}
-              placeholder="Оберіть плеєр за замовчуванням…"
-              itemComponent={(props) => (
-                <SelectItem item={props.item}>
-                  {props.item.rawValue.toUpperCase()}
-                </SelectItem>
-              )}
-            >
-              <SelectTrigger
-                aria-label="Player"
-                class="focus:ring-0 focus:ring-transparent"
-              >
-                <SelectValue<string>>
-                  {(state) => state.selectedOption().toUpperCase()}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent class="dark" />
-            </Select>
-          </div>
         </div>
         <div class="flex items-center justify-center text-xs text-[#5C5C5C] gap-1">
           <a
