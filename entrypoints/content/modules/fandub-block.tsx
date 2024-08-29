@@ -59,7 +59,7 @@ export default async function FandubBlock(
                         <>
                           <For each={getTeams()["fandub"].slice(0, 3)}>
                             {(team) => (
-                              <a href={team.telegram} target="_blank">
+                              <a href={team.link} target="_blank">
                                 <Image>
                                   <Image.Img
                                     loading="lazy"
@@ -129,7 +129,7 @@ export default async function FandubBlock(
                   <Show when={getTeams()["fandub"].length <= 3}>
                     <For each={getTeams()["fandub"]}>
                       {(team) => (
-                        <a href={team.telegram} target="_blank">
+                        <a href={team.link} target="_blank">
                           <Image>
                             <Image.Img
                               loading="lazy"
