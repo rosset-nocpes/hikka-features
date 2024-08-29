@@ -29,6 +29,8 @@ import UfdubLogo from "@/assets/ufdub_logo.webp";
 import StarfallLogo from "@/assets/starfall_logo.webp";
 import SKOLogo from "@/assets/sko_logo.webp";
 import YuigenLogo from "@/assets/yuigen_logo.webp";
+import AidSubStudioLogo from "@/assets/aid_sub_studio_logo.webp";
+import FortyEightVoltsLogo from "@/assets/48volts_logo.webp";
 
 export const STUDIO_LOGOS: Record<string, string> = {
   amanogawa: AmanogawaLogo,
@@ -67,6 +69,8 @@ export const STUDIO_LOGOS: Record<string, string> = {
   starfall: StarfallLogo,
   справжнякозацькаозвучка: SKOLogo,
   юіґень: YuigenLogo,
+  aidsubstudio: AidSubStudioLogo,
+  "48volts": FortyEightVoltsLogo,
 };
 
 export const STUDIO_CORRECTED_NAMES: Record<string, string> = {
