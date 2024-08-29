@@ -368,7 +368,7 @@ function App() {
           >
             GitHub
           </a>
-          <a>•</a>
+          <a class="cursor-default">•</a>
           <button
             onClick={() => {
               devClicked++;
@@ -381,6 +381,10 @@ function App() {
           >
             v{version}
           </button>
+          <a class="cursor-default">•</a>
+          <a href="https://t.me/hikka_features" class="font-bold">
+            TG канал
+          </a>
           <Transition name="slide-fade">
             <Show when={showDevOptions()}>
               <Drawer>
