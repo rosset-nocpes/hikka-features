@@ -1,5 +1,5 @@
 import { For, MountableElement, render } from "solid-js/web";
-import HikkaFLogoSmall from "@/public/hikka-features-small.svg";
+import HFxCPRBadge from "@/public/hf-x-cpr.svg";
 import MaterialSymbolsSadTabRounded from "~icons/material-symbols/sad-tab-rounded";
 import { createSignal, Resource, Show } from "solid-js";
 import Disclosure from "@corvu/disclosure";
@@ -33,7 +33,12 @@ export default async function FandubBlock(
               } font-bold tracking-normal`}
             >
               Від команд
-              <img src={HikkaFLogoSmall} style="width: 21px; height: 20px" />
+              <a
+                href="https://cprcatalog.notion.site/65526ba93733463aa6c6bcf588cd9682"
+                target="_blank"
+              >
+                <img src={HFxCPRBadge} style="height: 20px" />
+              </a>
             </h3>
             <div class="teams-items">
               <Show when={getTeams.loading}>
