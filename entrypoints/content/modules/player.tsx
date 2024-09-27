@@ -28,7 +28,7 @@ export default async function Player(
   data: Record<PlayerData, any>,
   anime_data: any
 ) {
-  if (document.body.querySelectorAll("#player-block").length !== 0) {
+  if (document.body.querySelectorAll("#player").length !== 0) {
     return;
   }
 
