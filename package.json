@@ -18,25 +18,25 @@
     "@corvu/disclosure": "^0.2.0",
     "@corvu/drawer": "^0.2.2",
     "@corvu/tailwind": "^0.1.5",
-    "@kobalte/core": "^0.13.4",
+    "@kobalte/core": "^0.13.6",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
-    "solid-js": "^1.8.21",
+    "solid-js": "^1.9.1",
     "solid-transition-group": "^0.2.3",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
-    "@iconify-json/material-symbols": "^1.1.87",
-    "@iconify-json/mdi": "^1.1.68",
-    "@types/node": "^22.3.0",
+    "@iconify-json/material-symbols": "^1.2.1",
+    "@iconify-json/mdi": "^1.2.0",
+    "@types/node": "^22.7.3",
     "@wxt-dev/module-solid": "1.1.2",
     "autoprefixer": "^10.4.20",
-    "postcss": "^8.4.41",
-    "tailwindcss": "^3.4.10",
-    "typescript": "^5.5.4",
-    "unplugin-icons": "^0.19.2",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.13",
+    "typescript": "^5.6.2",
+    "unplugin-icons": "^0.19.3",
     "vite-plugin-solid": "^2.10.2",
-    "wxt": "^0.19.6"
+    "wxt": "^0.19.10"
   }
 }
