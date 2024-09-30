@@ -13,7 +13,7 @@ export default async function localizedPoster(
   const start_node = document.querySelector("div.top-0:nth-child(1)")!;
   start_node.insertAdjacentHTML(
     "afterbegin",
-    '<div id="localized-poster" class="absolute"></div>'
+    '<div id="localized-poster" class="absolute h-full"></div>'
   );
   const localized_poster = document.querySelector("#localized-poster")!;
 
@@ -54,7 +54,7 @@ export default async function localizedPoster(
             height="225"
             decoding="async"
             class="opacity-100 !transition size-full object-cover"
-            style="color:transparent"
+            style={{ color: "transparent" }}
             src={getNotionData() && getNotionData()["poster"]}
           />
         </Show>

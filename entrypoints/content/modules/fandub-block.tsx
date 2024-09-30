@@ -1,11 +1,11 @@
-import { For, MountableElement, render } from "solid-js/web";
-import HFxCPRBadge from "@/public/hf-x-cpr.svg";
-import MaterialSymbolsSadTabRounded from "~icons/material-symbols/sad-tab-rounded";
-import { createSignal, Resource, Show } from "solid-js";
-import Disclosure from "@corvu/disclosure";
 import { Button } from "@/components/ui/button";
-import { Transition } from "solid-transition-group";
+import HFxCPRBadge from "@/public/hf-x-cpr.svg";
+import Disclosure from "@corvu/disclosure";
 import { Image } from "@kobalte/core/image";
+import { createSignal, Resource, Show } from "solid-js";
+import { For, MountableElement, render } from "solid-js/web";
+import { Transition } from "solid-transition-group";
+import MaterialSymbolsSadTabRounded from "~icons/material-symbols/sad-tab-rounded";
 
 export default async function FandubBlock(
   getTeams: Resource<any>,
@@ -46,7 +46,12 @@ export default async function FandubBlock(
                 <div class="skeleton animate-pulse h-10 bg-secondary/60" />
                 <div class="skeleton animate-pulse h-10 bg-secondary/60" />
               </Show>
-              <Show when={getTeams() && getTeams()["error"]}>
+              <Show
+                when={
+                  (getTeams() && getTeams()["error"]) ||
+                  (getTeams() && !getTeams()["fandub"])
+                }
+              >
                 <a class="text-muted-foreground cursor-default">
                   <Image>
                     <Image.Fallback>
@@ -56,7 +61,11 @@ export default async function FandubBlock(
                   Немає даних
                 </a>
               </Show>
-              <Show when={getTeams() && !getTeams()["error"]}>
+              <Show
+                when={
+                  getTeams() && !getTeams()["error"] && getTeams()["fandub"]
+                }
+              >
                 <div>
                   <Show when={getTeams()["fandub"].length > 3}>
                     <Disclosure collapseBehavior="hide">
