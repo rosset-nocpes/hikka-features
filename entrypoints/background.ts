@@ -20,7 +20,10 @@ export default defineBackground(() => {
           .then((response_url) => {
             const params = new URLSearchParams(response_url.split("?")[1]);
 
-            hikkaSecret.setValue(params.get("secret"));
+            hikkaSecret.setValue({
+              secret: String(params.get("secret")),
+              expiration: Number(params.get("expiration")),
+            });
 
             getUserData().then((r) => {
               userData.setValue({
