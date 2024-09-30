@@ -336,6 +336,40 @@ export default async function Player(
               allowfullscreen
             ></iframe>
           </div>
+          <div style={{
+            "margin-top": "1rem",
+            "display": "flex",
+            "justify-content": teamEpisode().episode > 1 ? "space-between" : "center",
+            "align-items": "center",
+            "width": "100%",
+          }}>
+            <Show when={teamEpisode().episode > 1}>
+              <Button
+                onClick={() => {
+                  handleSelectEpisode(
+                    data[playerProvider()][teamName()].find(
+                      (obj: any) => obj.episode == teamEpisode().episode - 1
+                    )
+                  );
+                  setNextEpState(false);
+                }}
+                variant="outline">
+                Попередній епізод {teamEpisode().episode - 1}
+                </Button>
+            </Show>
+            <Button
+              onClick={() => {
+                handleSelectEpisode(
+                  data[playerProvider()][teamName()].find(
+                    (obj: any) => obj.episode == teamEpisode().episode + 1
+                  )
+                );
+                setNextEpState(false);
+              }}
+              variant="outline">
+            Наступний епізод {teamEpisode().episode + 1}
+            </Button>
+          </div>
           <div style="height:3rem" />
         </Show>
       </TransitionGroup>
