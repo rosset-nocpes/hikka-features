@@ -339,7 +339,6 @@ export default async function Player(
           <div style={{
             "margin-top": "1rem",
             "display": "flex",
-            "justify-content": teamEpisode().episode > 1 ? "space-between" : "center",
             "align-items": "center",
             "width": "100%",
           }}>
@@ -357,18 +356,24 @@ export default async function Player(
                 Попередній епізод {teamEpisode().episode - 1}
                 </Button>
             </Show>
-            <Button
-              onClick={() => {
-                handleSelectEpisode(
-                  data[playerProvider()][teamName()].find(
-                    (obj: any) => obj.episode == teamEpisode().episode + 1
-                  )
-                );
-                setNextEpState(false);
-              }}
-              variant="outline">
-            Наступний епізод {teamEpisode().episode + 1}
-            </Button>
+            <Show when={teamEpisode().episode < data[playerProvider()][teamName()].length}>
+
+              <Button
+                style={{
+                  "margin-left": "auto",
+                }}
+                onClick={() => {
+                  handleSelectEpisode(
+                    data[playerProvider()][teamName()].find(
+                      (obj: any) => obj.episode == teamEpisode().episode + 1
+                    )
+                  );
+                  setNextEpState(false);
+                }}
+                variant="outline">
+              Наступний епізод {teamEpisode().episode + 1}
+              </Button>
+            </Show>
           </div>
           <div style="height:3rem" />
         </Show>
