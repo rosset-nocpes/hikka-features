@@ -1,7 +1,9 @@
-import { createSignal, Show } from "solid-js";
-import { aniBackState } from "@/utils/storage";
+import { createSignal, For, Show } from "solid-js";
 import { version } from "@/package.json";
 import MaterialSymbolsExpandAllRounded from "~icons/material-symbols/expand-all-rounded";
+import MaterialSymbolsPersonRounded from "~icons/material-symbols/person-rounded";
+import MaterialSymbolsExitToAppRounded from "~icons/material-symbols/exit-to-app-rounded";
+import MdiBeta from "~icons/mdi/beta";
 import "../app.css";
 import {
   Switch,
@@ -10,13 +12,6 @@ import {
   SwitchThumb,
   SwitchDescription,
 } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -28,6 +23,21 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { Transition } from "solid-transition-group";
+import HikkaLogo from "@/assets/hikka_logo.svg";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuGroupLabel,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Logout } from "@/utils/hikka-integration";
+import { Badge } from "@/components/ui/badge";
 
 const [showDevOptions, toggleDevOptions] = createSignal(
   await devOptionsState.getValue()
@@ -69,6 +79,16 @@ const [getBackendBranch, setBackendBranch] = createSignal(
   await backendBranch.getValue()
 );
 
+const [getRichPresence, toggleRichPresence] = createSignal(
+  await richPresence.getValue()
+);
+
+const [getUserData, setUserData] = createSignal(await userData.getValue());
+
+hikkaSecret.watch(async () => {
+  setUserData(await userData.getValue());
+});
+
 let devClicked = 0;
 
 function App() {
@@ -98,26 +118,130 @@ function App() {
       >
         <h3 class="flex justify-between items-center text-lg font-bold tracking-normal">
           Налаштування
+          <DropdownMenu placement="bottom-end">
+            <DropdownMenuTrigger as={"button"}>
+              <Avatar>
+                <AvatarImage src={getUserData()?.["avatar"]} />
+                <AvatarFallback>
+                  {getUserData()?.["avatar"] || (
+                    <MaterialSymbolsPersonRounded />
+                  )}
+                </AvatarFallback>
+              </Avatar>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent class="dark">
+              <Show when={!getUserData()}>
+                <DropdownMenuItem onClick={Login} class="items-center gap-2">
+                  <img src={HikkaLogo} class="size-5 rounded-sm" />
+                  Увійти в акаунт hikka.io
+                </DropdownMenuItem>
+              </Show>
+              <Show when={getUserData()}>
+                <DropdownMenuLabel class="line-clamp-1 bg-secondary/30 -m-1 p-2">
+                  {getUserData()!["username"]}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={Logout} class="items-center gap-2">
+                  <MaterialSymbolsExitToAppRounded class="text-destructive" />
+                  Вийти з акаунта
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuGroupLabel class="flex gap-2">
+                    Фічі
+                    <Badge
+                      variant="outline"
+                      round
+                      class="text-primary-foreground cursor-default bg-yellow-500"
+                    >
+                      <MdiBeta />
+                      Beta
+                    </Badge>
+                  </DropdownMenuGroupLabel>
+                  <DropdownMenuCheckboxItem
+                    checked={getRichPresence()}
+                    onChange={(e) => {
+                      richPresence.setValue(e);
+                      toggleRichPresence(e);
+                    }}
+                  >
+                    Rich Presence
+                  </DropdownMenuCheckboxItem>
+                </DropdownMenuGroup>
+              </Show>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </h3>
         <div class="flex flex-col gap-5">
-          <Switch
-            checked={showWatchButton()}
-            onClick={() => {
-              watchButtonState.setValue(!showWatchButton());
-              toggleWatchButton(!showWatchButton());
-            }}
-            class="flex items-center justify-between"
-          >
-            <div class="flex flex-col gap-1 mr-10">
-              <SwitchLabel>Перегляд</SwitchLabel>
-              <SwitchDescription class="text-xs font-medium text-[#A1A1A1]">
-                Кнопка для відображення плеєру
-              </SwitchDescription>
+          <Drawer>
+            <div class="flex justify-between">
+              <div class="flex flex-col gap-1 mr-10">
+                <label class="text-sm font-medium">Плеєр</label>
+                <div class="text-xs font-medium text-[#A1A1A1]">
+                  Налаштування плеєра
+                </div>
+              </div>
+              <DrawerTrigger>
+                <Button size="icon-sm">
+                  <MaterialSymbolsExpandAllRounded />
+                </Button>
+              </DrawerTrigger>
             </div>
-            <SwitchControl>
-              <SwitchThumb />
-            </SwitchControl>
-          </Switch>
+            <DrawerContent class="dark text-white">
+              <div class="mx-auto w-full max-w-sm">
+                <DrawerHeader>
+                  <DrawerTitle>Налаштування плеєра</DrawerTitle>
+                </DrawerHeader>
+                <div class="flex flex-col gap-5 px-[30px]">
+                  <Switch
+                    checked={showWatchButton()}
+                    onClick={() => {
+                      watchButtonState.setValue(!showWatchButton());
+                      toggleWatchButton(!showWatchButton());
+                    }}
+                    class="flex items-center justify-between"
+                  >
+                    <div class="flex flex-col gap-1 mr-10">
+                      <SwitchLabel>Кнопка перегляду</SwitchLabel>
+                      <SwitchDescription class="text-xs font-medium text-[#A1A1A1]">
+                        Кнопка для відображення плеєру
+                      </SwitchDescription>
+                    </div>
+                    <SwitchControl>
+                      <SwitchThumb />
+                    </SwitchControl>
+                  </Switch>
+                  <div class="flex items-center justify-between">
+                    <label class="text-sm font-medium">
+                      Плеєр за замовчуванням
+                    </label>
+                    <select
+                      class="h-10 px-3 py-1 border bg-transparent rounded-md"
+                      value={defaultPlayerProvider()}
+                      onChange={(e) => {
+                        const target = e.target.value as PlayerSource;
+                        defaultPlayer.setValue(target);
+                        setDefaultPlayerProvider(target);
+                      }}
+                    >
+                      <For each={["moon", "ashdi"]}>
+                        {(elem) => (
+                          <option class="bg-black" value={elem}>
+                            {elem.toUpperCase()}
+                          </option>
+                        )}
+                      </For>
+                    </select>
+                  </div>
+                </div>
+                <DrawerFooter>
+                  <DrawerClose as={Button<"button">} variant="outline">
+                    Зачинити
+                  </DrawerClose>
+                </DrawerFooter>
+              </div>
+            </DrawerContent>
+          </Drawer>
           <Switch
             checked={showAniButtons()}
             onClick={() => {
@@ -236,38 +360,6 @@ function App() {
               </div>
             </DrawerContent>
           </Drawer>
-          <div class="flex justify-between">
-            <div class="flex flex-col gap-1 mr-10">
-              <label class="text-sm font-medium">Плеєр</label>
-              <div class="text-xs font-medium text-[#A1A1A1]">
-                Плеєр за замовчуванням
-              </div>
-            </div>
-            <Select
-              value={defaultPlayerProvider()}
-              onChange={(e) => {
-                defaultPlayer.setValue(e);
-                setDefaultPlayerProvider(e);
-              }}
-              options={["moon", "ashdi"]}
-              placeholder="Оберіть плеєр за замовчуванням…"
-              itemComponent={(props) => (
-                <SelectItem item={props.item}>
-                  {props.item.rawValue.toUpperCase()}
-                </SelectItem>
-              )}
-            >
-              <SelectTrigger
-                aria-label="Player"
-                class="focus:ring-0 focus:ring-transparent"
-              >
-                <SelectValue<string>>
-                  {(state) => state.selectedOption().toUpperCase()}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent class="dark" />
-            </Select>
-          </div>
         </div>
         <div class="flex items-center justify-center text-xs text-[#5C5C5C] gap-1">
           <a
@@ -276,7 +368,7 @@ function App() {
           >
             GitHub
           </a>
-          <a>•</a>
+          <a class="cursor-default">•</a>
           <button
             onClick={() => {
               devClicked++;
@@ -289,6 +381,10 @@ function App() {
           >
             v{version}
           </button>
+          <a class="cursor-default">•</a>
+          <a href="https://t.me/hikka_features" class="font-bold">
+            TG канал
+          </a>
           <Transition name="slide-fade">
             <Show when={showDevOptions()}>
               <Drawer>
@@ -330,8 +426,13 @@ function App() {
                             setBackendBranch(target);
                           }}
                         >
-                          <option value="stable">stable</option>
-                          <option value="beta">beta</option>
+                          <For each={["stable", "beta"]}>
+                            {(elem) => (
+                              <option class="bg-black" value={elem}>
+                                {elem}
+                              </option>
+                            )}
+                          </For>
                         </select>
                       </div>
                     </div>

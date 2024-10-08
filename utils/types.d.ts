@@ -20,4 +20,14 @@ declare global {
   type PlayerData = PlayerSource | "type";
 
   type BackendBranches = "stable" | "beta";
+
+  type UserData = {
+    username: string;
+    avatar: string;
+  };
+
+  type HikkaSecret = {
+    secret: string;
+    expiration: number;
+  };
 }

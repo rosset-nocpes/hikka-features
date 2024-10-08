@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createSignal, Show } from "solid-js";
+import { createEffect, createSignal, Show } from "solid-js";
 import { render } from "solid-js/web";
 import { Transition, TransitionGroup } from "solid-transition-group";
 
@@ -24,8 +24,11 @@ export async function getWatchData(anime_data: any) {
   return await watch_data.json();
 }
 
-export default async function Player(data: Record<PlayerData, any>) {
-  if (document.body.querySelectorAll("#player-block").length !== 0) {
+export default async function Player(
+  data: Record<PlayerData, any>,
+  anime_data: any
+) {
+  if (document.body.querySelectorAll("#player").length !== 0) {
     return;
   }
 
@@ -63,6 +66,12 @@ export default async function Player(data: Record<PlayerData, any>) {
   const [getWatchedState, toggleWatchedState] = createSignal(false);
 
   const [getPlayerState, togglePlayerState] = createSignal(false);
+
+  const [getRichPresence, setRichPresence] = createSignal(
+    await richPresence.getValue()
+  );
+
+  richPresence.watch(setRichPresence);
 
   const player_button = document.getElementById(
     "player-button"
@@ -111,6 +120,51 @@ export default async function Player(data: Record<PlayerData, any>) {
       setNextEpState(true);
     } else if (event.data.event === "play") {
       setNextEpState(false);
+    }
+  });
+
+  let saved_desc_state = false;
+  const [getRichPresenceCheck, setRichPresenceCheck] = createSignal<boolean>();
+  browser.runtime.onMessage.addListener((response) => {
+    if (
+      response.type === "rich-presence-reply" &&
+      response.action === "check"
+    ) {
+      setRichPresenceCheck(response.tabs_count === 1);
+    }
+  });
+
+  createEffect(async () => {
+    actionRichPresence("check");
+    if (
+      getPlayerState() &&
+      getRichPresence() &&
+      teamName() &&
+      teamEpisode() &&
+      getRichPresenceCheck()
+    ) {
+      if (!saved_desc_state) {
+        let r = await userData.getValue();
+        r!["description"] = (await getUserData())["description"];
+        userData.setValue(r);
+        saved_desc_state = true;
+      }
+
+      EditDesc(
+        `Дивлюся ${teamEpisode()["episode"]} епізод аніме [${
+          anime_data["title_ua"] ||
+          anime_data["title_en"] ||
+          anime_data["title_ja"]
+        }](${`https://hikka.io/anime/${anime_data["slug"]}`}) в озвучці ${
+          STUDIO_CORRECTED_NAMES[teamName()] || teamName()
+        }`
+      );
+    } else if (saved_desc_state) {
+      EditDesc((await userData.getValue())!["description"]);
+      let r = await userData.getValue();
+      delete r!["description"];
+      userData.setValue(r);
+      saved_desc_state = false;
     }
   });
 

@@ -30,7 +30,7 @@ export default async function watchButton(
         ? (togglePlayerDisabled(!playerDisabled()), setState(1))
         : setState(0);
 
-      Player(data);
+      Player(data, anime_data);
     });
 
   render(

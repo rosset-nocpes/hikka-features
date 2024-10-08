@@ -12,7 +12,9 @@ export async function getAmanogawaURL(anime_data: any) {
   const url_cors_proxy_amanogawa =
     "https://corsproxy.io/?" +
     encodeURIComponent(
-      `https://amanogawa.space/api/search?s="${encodeURIComponent(title_ja)}"`
+      `https://amanogawa.space/api/search?s="${encodeURIComponent(
+        title_ja.replaceAll('"', "'")
+      )}"`
     );
 
   const amanogawa_data = await (await fetch(url_cors_proxy_amanogawa)).json();

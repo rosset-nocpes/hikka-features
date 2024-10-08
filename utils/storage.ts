@@ -23,6 +23,10 @@ export const watchButtonState = storage.defineItem<boolean>(
   }
 );
 
+export const hikkaSecret = storage.defineItem<HikkaSecret>("local:hikkaSecret");
+
+export const userData = storage.defineItem<UserData>("local:userData");
+
 export const aniButtonsState = storage.defineItem<boolean>(
   "local:aniButtonsState",
   {
@@ -59,5 +63,9 @@ export const backendBranch = storage.defineItem<BackendBranches>(
 );
 
 export const burunyaaMode = storage.defineItem<boolean>("local:burunyaaMode", {
+  fallback: false,
+});
+
+export const richPresence = storage.defineItem<boolean>("local:richPresence", {
   fallback: false,
 });

@@ -1,4 +1,4 @@
-import { Accessor, createSignal, Resource, Show } from "solid-js";
+import { Accessor, createEffect, createSignal, Resource, Show } from "solid-js";
 import { render } from "solid-js/web";
 import { Transition } from "solid-transition-group";
 
@@ -13,9 +13,20 @@ export default async function localizedPoster(
   const start_node = document.querySelector("div.top-0:nth-child(1)")!;
   start_node.insertAdjacentHTML(
     "afterbegin",
-    '<div id="localized-poster" class="absolute"></div>'
+    '<div id="localized-poster" class="absolute h-full"></div>'
   );
   const localized_poster = document.querySelector("#localized-poster")!;
+
+  const [isLoaded, setIsLoaded] = createSignal(false);
+
+  createEffect(() => {
+    if (getNotionData() && getNotionData()["poster"]) {
+      const img = new Image();
+      img.src = getNotionData()["poster"];
+
+      img.onload = () => setIsLoaded(true);
+    }
+  });
 
   render(
     () => (
@@ -36,14 +47,14 @@ export default async function localizedPoster(
         }}
         appear
       >
-        <Show when={poster_state()}>
+        <Show when={poster_state() && isLoaded()}>
           <img
             alt="Localized Poster"
             width="150"
             height="225"
             decoding="async"
             class="opacity-100 !transition size-full object-cover"
-            style="color:transparent"
+            style={{ color: "transparent" }}
             src={getNotionData() && getNotionData()["poster"]}
           />
         </Show>
