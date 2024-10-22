@@ -30,4 +30,12 @@ declare global {
     secret: string;
     expiration: number;
   };
+
+  type ChapterDataEntry = {
+    id: string;
+    volume: number;
+    chapter: number;
+    title: string;
+    pages: number;
+  };
 }
