@@ -18,20 +18,20 @@
     "@corvu/disclosure": "^0.2.0",
     "@corvu/drawer": "^0.2.2",
     "@corvu/tailwind": "^0.1.5",
-    "@kobalte/core": "^0.13.6",
+    "@kobalte/core": "^0.13.7",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
-    "embla-carousel-solid": "^8.1.8",
+    "embla-carousel-solid": "^8.3.0",
     "embla-carousel-wheel-gestures": "^8.0.1",
-    "solid-js": "^1.9.1",
+    "solid-js": "^1.9.2",
     "solid-transition-group": "^0.2.3",
-    "tailwind-merge": "^2.5.2",
+    "tailwind-merge": "^2.5.3",
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
-    "@iconify-json/material-symbols": "^1.2.1",
-    "@iconify-json/mdi": "^1.2.0",
-    "@types/node": "^22.7.3",
+    "@iconify-json/material-symbols": "^1.2.3",
+    "@iconify-json/mdi": "^1.2.1",
+    "@types/node": "^22.7.5",
     "@wxt-dev/module-solid": "1.1.2",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.47",
@@ -39,6 +39,6 @@
     "typescript": "^5.6.2",
     "unplugin-icons": "^0.19.3",
     "vite-plugin-solid": "^2.10.2",
-    "wxt": "^0.19.10"
+    "wxt": "^0.19.11"
   }
 }
