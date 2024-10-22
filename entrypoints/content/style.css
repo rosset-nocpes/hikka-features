@@ -363,3 +363,8 @@ a.watari-link:hover {
   width: 20px;
   padding-inline: 0;
 }
+
+reader-image-skeleton {
+  width: 50%;
+  height: 83%;
+}

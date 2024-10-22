@@ -1,14 +1,15 @@
+import NextEditURL from "@/utils/next-edit-url";
 import { createResource, createSignal } from "solid-js";
 import { render } from "solid-js/web";
-import "./style.css";
 import aniBackground from "./modules/ani-background";
 import aniButtons from "./modules/ani-buttons";
-import NextEditURL from "@/utils/next-edit-url";
+import "./style.css";
 // import UCharURL from "@/utils/u-char-url";
-import watchButton from "./modules/watchButton";
-import FandubBlock from "./modules/fandub-block";
 import NotionFetch from "@/utils/notion-db";
+import FandubBlock from "./modules/fandub-block";
 import localizedPosterButton from "./modules/localized-poster-button";
+import readerButton from "./modules/reader-button";
+import watchButton from "./modules/watchButton";
 
 export default defineContentScript({
   matches: ["https://hikka.io/*"],
@@ -133,6 +134,9 @@ export default defineContentScript({
               const data = await (
                 await fetch(`https://api.hikka.io/${path}/${slug}`)
               ).json();
+
+              // readerButton
+              readerButton(slug);
 
               // aniButtons
               aniButtons(data);

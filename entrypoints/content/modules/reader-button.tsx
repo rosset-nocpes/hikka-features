@@ -1,6 +1,12 @@
-import { createSignal, Match, Switch } from "solid-js";
-import { MountableElement, render } from "solid-js/web";
 import HikkaLogoMono from "@/public/hikka-features-mono.svg";
+import {
+  createEffect,
+  createResource,
+  createSignal,
+  Match,
+  Switch,
+} from "solid-js";
+import { MountableElement, render } from "solid-js/web";
 import { Transition } from "solid-transition-group";
 import Reader, { getReaderData } from "./reader";
 
@@ -12,7 +18,7 @@ export default async function readerButton(
     return;
   }
 
-  const [readerDisabled, toggleReaderDisabled] = createSignal(true);
+  const [readerDisabled, setReaderDisabled] = createSignal(true);
   const [buttonState, setButtonState] = createSignal(
     await watchButtonState.getValue()
   );
@@ -22,14 +28,18 @@ export default async function readerButton(
 
   watchButtonState.watch((state) => setButtonState(state));
 
-  let data: any;
-  getReaderData(slug)
-    .then((x: any) => (data = x))
-    .then((y: any) =>
-      y !== null
-        ? (toggleReaderDisabled(!readerDisabled()), setState(1))
-        : setState(0)
-    );
+  const [readerData] = createResource(slug, getReaderData);
+
+  createEffect(() => {
+    if (!readerData.loading) {
+      if (readerData()) {
+        setReaderDisabled(false);
+        setState(1);
+      } else if (readerData.error) {
+        setState(0);
+      }
+    }
+  });
 
   render(
     () => (
@@ -38,7 +48,7 @@ export default async function readerButton(
           <button
             id="reader-button"
             class="hikka-features inline-flex gap-2 items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-50 border border-secondary/60 bg-secondary/30 hover:bg-secondary/60 hover:text-secondary-foreground h-12 px-4 py-2"
-            onClick={() => Reader(data)}
+            onClick={() => Reader(readerData())}
             disabled={readerDisabled()}
           >
             <img src={HikkaLogoMono} />
