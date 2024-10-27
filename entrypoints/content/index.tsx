@@ -6,14 +6,15 @@ import aniButtons from "./modules/ani-buttons";
 import "./style.css";
 // import UCharURL from "@/utils/u-char-url";
 import NotionFetch from "@/utils/notion-db";
-import FandubBlock from "./modules/fandub-block";
+import fandubBlock from "./modules/fandub-block";
 import localizedPosterButton from "./modules/localized-poster-button";
 import readerButton from "./modules/reader-button";
 import watchButton from "./modules/watchButton";
 
 export default defineContentScript({
   matches: ["https://hikka.io/*"],
-  async main() {
+  cssInjectionMode: "ui",
+  async main(ctx) {
     const [getPreviousCreatingEdit, setPreviousCreatingEdit] = [
       () =>
         (
@@ -79,6 +80,10 @@ export default defineContentScript({
         const features = document.querySelectorAll(".hikka-features");
         features.forEach((e) => e.remove());
 
+        getComputedStyle(document.documentElement).colorScheme === "dark"
+          ? darkMode.setValue(true)
+          : darkMode.setValue(false);
+
         const split_path = document.location.pathname.split("/");
         const path = split_path[1];
         const isHomepage = document.location.pathname == "/";
@@ -107,14 +112,14 @@ export default defineContentScript({
               ).json();
 
               // Watch button
-              watchButton(anime_data);
+              (await watchButton(ctx, anime_data))!.mount();
 
               // aniButtons
-              aniButtons(anime_data);
+              (await aniButtons(ctx, anime_data))!.mount();
 
               let [getNotionData] = createResource(anime_slug, NotionFetch);
-              FandubBlock(getNotionData);
-              localizedPosterButton(getNotionData);
+              (await fandubBlock(ctx, getNotionData))!.mount();
+              (await localizedPosterButton(ctx, getNotionData))!.mount();
             }
 
             // aniBackground
@@ -136,10 +141,10 @@ export default defineContentScript({
               ).json();
 
               // readerButton
-              readerButton(slug);
+              (await readerButton(ctx, slug))!.mount();
 
               // aniButtons
-              aniButtons(data);
+              (await aniButtons(ctx, data))!.mount();
             }
 
             // aniBackground
@@ -198,7 +203,7 @@ export default defineContentScript({
                 })`
               )!;
 
-              aniButtons(data, info_block, true);
+              (await aniButtons(ctx, data, info_block, true))!.mount();
 
               // aniBackground
               switch (content_type) {
@@ -391,11 +396,11 @@ export default defineContentScript({
         if (
           request.tabs_count === 0 &&
           request.action === "remove" &&
-          (await userData.getValue())?.["description"]
+          (await userData.getValue())?.description
         ) {
-          EditDesc((await userData.getValue())!["description"]);
+          EditDesc((await userData.getValue())!.description!);
           let r = await userData.getValue();
-          delete r!["description"];
+          delete r!.description;
           userData.setValue(r);
         }
       }

@@ -117,5 +117,9 @@ module.exports = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate"), corvuPlugin],
+  plugins: [
+    require("tailwindcss-animate"),
+    corvuPlugin,
+    require("tailwind-gradient-mask-image"),
+  ],
 };

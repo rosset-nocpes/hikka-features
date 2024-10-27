@@ -25,6 +25,7 @@
     "embla-carousel-wheel-gestures": "^8.0.1",
     "solid-js": "^1.9.2",
     "solid-transition-group": "^0.2.3",
+    "tailwind-gradient-mask-image": "^1.2.0",
     "tailwind-merge": "^2.5.3",
     "tailwindcss-animate": "^1.0.7"
   },

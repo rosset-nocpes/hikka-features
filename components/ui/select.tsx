@@ -1,7 +1,8 @@
 import type { JSX, ValidComponent } from "solid-js";
 import { splitProps } from "solid-js";
 
-import { PolymorphicProps } from "@kobalte/core/polymorphic";
+import "@/entrypoints/app.css";
+import type { PolymorphicProps } from "@kobalte/core/polymorphic";
 import * as SelectPrimitive from "@kobalte/core/select";
 
 const Select = SelectPrimitive.Root;
@@ -49,14 +50,17 @@ const SelectTrigger = <T extends ValidComponent = "button">(
 };
 
 type SelectContentProps<T extends ValidComponent = "div"> =
-  SelectPrimitive.SelectContentProps<T> & { class?: string | undefined };
+  SelectPrimitive.SelectContentProps<T> & {
+    class?: string | undefined;
+    useContainer?: Node | undefined;
+  };
 
 const SelectContent = <T extends ValidComponent = "div">(
   props: PolymorphicProps<T, SelectContentProps<T>>
 ) => {
   const [local, others] = splitProps(props as SelectContentProps, ["class"]);
   return (
-    <SelectPrimitive.Portal>
+    <SelectPrimitive.Portal mount={others.useContainer}>
       <SelectPrimitive.Content
         class={cn(
           "relative z-50 min-w-32 overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md animate-in fade-in-80",
@@ -113,9 +117,9 @@ const SelectItem = <T extends ValidComponent = "li">(
 
 export {
   Select,
-  SelectValue,
-  SelectHiddenSelect,
-  SelectTrigger,
   SelectContent,
+  SelectHiddenSelect,
   SelectItem,
+  SelectTrigger,
+  SelectValue,
 };
