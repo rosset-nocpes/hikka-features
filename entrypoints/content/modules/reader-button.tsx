@@ -1,47 +1,53 @@
 import { Button } from "@/components/ui/button";
 import HikkaLogoMono from "@/public/hikka-features-mono.svg";
-import { createSignal, Match, Show, Switch } from "solid-js";
+import {
+  createEffect,
+  createResource,
+  createSignal,
+  Match,
+  Switch,
+} from "solid-js";
 import { render } from "solid-js/web";
 import { Transition } from "solid-transition-group";
 import { ContentScriptContext } from "wxt/client";
-import Player, { getWatchData } from "./player";
+import reader, { getReaderData } from "./reader";
 
-export default async function watchButton(
+export default async function readerButton(
   ctx: ContentScriptContext,
-  anime_data: any,
+  slug: string,
   location?: Element
 ) {
-  if (document.body.querySelectorAll("#player-button").length !== 0) {
+  if (document.body.querySelectorAll("#reader-button").length !== 0) {
     return;
   }
 
-  const [playerDisabled, togglePlayerDisabled] = createSignal(true);
+  const [readerDisabled, setReaderDisabled] = createSignal(true);
   const [buttonState, setButtonState] = createSignal(
     await watchButtonState.getValue()
   );
-
-  const [playerState, togglePlayerState] = createSignal(false);
 
   // -1 - loading; 0 - not found; 1 - found;
   const [state, setState] = createSignal(-1);
 
   watchButtonState.watch((state) => setButtonState(state));
 
-  let data: any;
-  getWatchData(anime_data)
-    .then((x: any) => (data = x))
-    .then((data: any) => {
-      data !== null
-        ? (togglePlayerDisabled(!playerDisabled()), setState(1))
-        : setState(0);
+  const [readerData] = createResource(slug, getReaderData);
 
-      Player(ctx, data, anime_data, playerState).then((x) => x!.mount());
-    });
+  createEffect(() => {
+    if (!readerData.loading) {
+      if (readerData()) {
+        setReaderDisabled(false);
+        setState(1);
+      } else if (readerData.error) {
+        setState(0);
+      }
+    }
+  });
 
   const dark = await darkMode.getValue();
 
   return createShadowRootUi(ctx, {
-    name: "watch-button",
+    name: "reader-button",
     position: "inline",
     append: "last",
     anchor:
@@ -80,13 +86,16 @@ export default async function watchButton(
               a.finished.then(done);
             }}
           >
-            <Show when={buttonState()}>
+            {buttonState()! && (
               <Button
                 variant="outline"
-                id="player-button"
+                id="reader-button"
                 class={cn("w-full gap-2", dark ? "dark" : "")}
-                onClick={() => togglePlayerState(!playerState())}
-                disabled={playerDisabled()}
+                onClick={async () => {
+                  (await reader(ctx, readerData())).mount();
+                  setReaderDisabled(true);
+                }}
+                disabled={readerDisabled()}
               >
                 <img src={HikkaLogoMono} class={!dark ? "invert" : ""} />
                 <Transition name="vertical-slide-fade" mode="outin">
@@ -98,12 +107,12 @@ export default async function watchButton(
                       <a>Немає</a>
                     </Match>
                     <Match when={state() === 1}>
-                      <a>Перегляд</a>
+                      <a>Читати</a>
                     </Match>
                   </Switch>
                 </Transition>
               </Button>
-            </Show>
+            )}
           </Transition>
         ),
         container

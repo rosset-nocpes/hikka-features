@@ -6,9 +6,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createEffect, createSignal, Show } from "solid-js";
+import { Accessor, createEffect, createSignal, Show } from "solid-js";
 import { render } from "solid-js/web";
 import { Transition, TransitionGroup } from "solid-transition-group";
+import { ContentScriptContext } from "wxt/client";
 
 export async function getWatchData(anime_data: any) {
   const watch_data = await fetch(
@@ -25,8 +26,10 @@ export async function getWatchData(anime_data: any) {
 }
 
 export default async function Player(
+  ctx: ContentScriptContext,
   data: Record<PlayerData, any>,
-  anime_data: any
+  anime_data: any,
+  playerState: Accessor<boolean>
 ) {
   if (document.body.querySelectorAll("#player").length !== 0) {
     return;
@@ -73,21 +76,14 @@ export default async function Player(
 
   richPresence.watch(setRichPresence);
 
-  const player_button = document.getElementById(
-    "player-button"
-  )! as HTMLButtonElement;
+  // const player_button = document.getElementById(
+  //   "player-button"
+  // )! as HTMLButtonElement;
 
-  player_button.addEventListener("click", () => {
-    player_button.classList.toggle("watch-button-toggled");
-    togglePlayerState(!getPlayerState());
-  });
-
-  const start_node = document.querySelector(".order-2")!;
-  start_node.insertAdjacentHTML(
-    "afterbegin",
-    '<div style="margin-bottom:-3rem" id="player"></div>'
-  );
-  const player = document.querySelector("#player")!;
+  // player_button.addEventListener("click", () => {
+  //   player_button.classList.toggle("watch-button-toggled");
+  //   togglePlayerState(!getPlayerState());
+  // });
 
   let duration = 0;
   let time = 0;
@@ -205,141 +201,157 @@ export default async function Player(
     }
   };
 
-  render(
-    () => (
-      <TransitionGroup name="vertical-slide-fade-revert">
-        <Show when={getPlayerState()}>
-          <div class="team-selects">
-            <Select
-              value={playerProvider()}
-              class="w-full"
-              onChange={handleSelectPlayer}
-              placeholder="Оберіть плеєр…"
-              options={playersAvaliable}
-              itemComponent={(props) => (
-                <SelectItem item={props.item}>
-                  {props.item.rawValue.toUpperCase()}
-                </SelectItem>
-              )}
-            >
-              <SelectTrigger aria-label="PlayerProvider" class="focus:ring-0">
-                <SelectValue<string>>
-                  {(state) => state.selectedOption().toUpperCase()}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent class="z-0" />
-            </Select>
-            <Select
-              value={teamName()}
-              class="w-full"
-              onChange={handleSelectTeam}
-              options={Object.keys(data[playerProvider()])}
-              placeholder="Оберіть команду фандабу…"
-              itemComponent={(props) => (
-                <SelectItem item={props.item}>
-                  <div class="flex items-center gap-2">
-                    {STUDIO_LOGOS[
-                      STUDIO_CORRECTED_NAMES[props.item.rawValue]
-                        ? STUDIO_CORRECTED_NAMES[props.item.rawValue]
-                            .replaceAll(" ", "")
-                            .toLowerCase()
-                        : props.item.rawValue.replaceAll(" ", "").toLowerCase()
-                    ] && (
-                      <img
-                        class="size-5"
-                        style="border-radius: 3px"
-                        src={
-                          STUDIO_LOGOS[
-                            STUDIO_CORRECTED_NAMES[props.item.rawValue]
-                              ? STUDIO_CORRECTED_NAMES[props.item.rawValue]
-                                  .replaceAll(" ", "")
-                                  .toLowerCase()
-                              : props.item.rawValue
-                                  .replaceAll(" ", "")
-                                  .toLowerCase()
-                          ]
-                        }
-                      />
-                    )}
-                    {STUDIO_CORRECTED_NAMES[props.item.rawValue] ||
-                      props.item.rawValue}
-                  </div>
-                </SelectItem>
-              )}
-            >
-              <SelectTrigger aria-label="Team" class="focus:ring-0">
-                <SelectValue<string>>
-                  {(state) => (
-                    <a class="text-left line-clamp-1">
-                      {STUDIO_CORRECTED_NAMES[state.selectedOption()] ||
-                        state.selectedOption()}
-                    </a>
+  const dark = await darkMode.getValue();
+
+  return createShadowRootUi(ctx, {
+    name: "player-ui",
+    position: "inline",
+    append: "first",
+    anchor: document.querySelector(".order-2"),
+    onMount(container) {
+      render(
+        () => (
+          <TransitionGroup name="vertical-slide-fade-revert">
+            <Show when={playerState()}>
+              <div class={cn("team-selects", dark ? "dark" : "")}>
+                <Select
+                  value={playerProvider()}
+                  class="w-full"
+                  onChange={handleSelectPlayer}
+                  placeholder="Оберіть плеєр…"
+                  options={playersAvaliable}
+                  itemComponent={(props) => (
+                    <SelectItem item={props.item}>
+                      {props.item.rawValue.toUpperCase()}
+                    </SelectItem>
                   )}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent class="z-0" />
-            </Select>
-            <Show when={data["type"] !== "movie"}>
-              <Select
-                value={teamEpisode()}
-                class="w-full overflow-y-auto max-h-9"
-                onChange={handleSelectEpisode}
-                options={episodesData()}
-                optionValue="video_url"
-                optionTextValue="episode"
-                placeholder="Оберіть епізод…"
-                itemComponent={(props) => (
-                  <SelectItem item={props.item}>
-                    Епізод #{props.item.textValue}
-                  </SelectItem>
-                )}
-              >
-                <SelectTrigger aria-label="Episode" class="focus:ring-0">
-                  <SelectValue<any>>
-                    {(state) =>
-                      state.selectedOption() &&
-                      "Епізод #" + state.selectedOption().episode
-                    }
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent class="overflow-y-auto max-h-96 z-0" />
-              </Select>
-            </Show>
-          </div>
-          <div
-            class="player-block"
-            style="width: 100%; height: 332px; position: relative;"
-          >
-            <Transition name="vertical-slide-fade-revert">
-              <Show when={getNextEpState()}>
-                <Button
-                  class="next-episode-button"
-                  onClick={() => {
-                    handleSelectEpisode(
-                      data[playerProvider()][teamName()].find(
-                        (obj: any) => obj.episode == teamEpisode().episode + 1
-                      )
-                    );
-                    setNextEpState(false);
-                  }}
                 >
-                  Наступний епізод
-                </Button>
-              </Show>
-            </Transition>
-            <iframe
-              id="player-iframe"
-              src={`${teamEpisode().video_url}?site=hikka.io`}
-              loading="lazy"
-              style="border-radius: 10px; position: absolute; top: 0px; left: 0px; height: 100%; width: 100%;"
-              allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
-              allowfullscreen
-            ></iframe>
-          </div>
-          <div style="height:3rem" />
-        </Show>
-      </TransitionGroup>
-    ),
-    player
-  );
+                  <SelectTrigger
+                    aria-label="PlayerProvider"
+                    class="focus:ring-0"
+                  >
+                    <SelectValue<string>>
+                      {(state) => state.selectedOption().toUpperCase()}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent class="z-0" />
+                </Select>
+                <Select
+                  value={teamName()}
+                  class="w-full"
+                  onChange={handleSelectTeam}
+                  options={Object.keys(data[playerProvider()])}
+                  placeholder="Оберіть команду фандабу…"
+                  itemComponent={(props) => (
+                    <SelectItem item={props.item}>
+                      <div class="flex items-center gap-2">
+                        {STUDIO_LOGOS[
+                          STUDIO_CORRECTED_NAMES[props.item.rawValue]
+                            ? STUDIO_CORRECTED_NAMES[props.item.rawValue]
+                                .replaceAll(" ", "")
+                                .toLowerCase()
+                            : props.item.rawValue
+                                .replaceAll(" ", "")
+                                .toLowerCase()
+                        ] && (
+                          <img
+                            class="size-5"
+                            style="border-radius: 3px"
+                            src={
+                              STUDIO_LOGOS[
+                                STUDIO_CORRECTED_NAMES[props.item.rawValue]
+                                  ? STUDIO_CORRECTED_NAMES[props.item.rawValue]
+                                      .replaceAll(" ", "")
+                                      .toLowerCase()
+                                  : props.item.rawValue
+                                      .replaceAll(" ", "")
+                                      .toLowerCase()
+                              ]
+                            }
+                          />
+                        )}
+                        {STUDIO_CORRECTED_NAMES[props.item.rawValue] ||
+                          props.item.rawValue}
+                      </div>
+                    </SelectItem>
+                  )}
+                >
+                  <SelectTrigger aria-label="Team" class="focus:ring-0">
+                    <SelectValue<string>>
+                      {(state) => (
+                        <a class="text-left line-clamp-1">
+                          {STUDIO_CORRECTED_NAMES[state.selectedOption()] ||
+                            state.selectedOption()}
+                        </a>
+                      )}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent class="z-0" />
+                </Select>
+                <Show when={data["type"] !== "movie"}>
+                  <Select
+                    value={teamEpisode()}
+                    class="w-full overflow-y-auto max-h-9"
+                    onChange={handleSelectEpisode}
+                    options={episodesData()}
+                    optionValue="video_url"
+                    optionTextValue="episode"
+                    placeholder="Оберіть епізод…"
+                    itemComponent={(props) => (
+                      <SelectItem item={props.item}>
+                        Епізод #{props.item.textValue}
+                      </SelectItem>
+                    )}
+                  >
+                    <SelectTrigger aria-label="Episode" class="focus:ring-0">
+                      <SelectValue<any>>
+                        {(state) =>
+                          state.selectedOption() &&
+                          "Епізод #" + state.selectedOption().episode
+                        }
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent class="overflow-y-auto max-h-96 z-0" />
+                  </Select>
+                </Show>
+              </div>
+              <div
+                class="player-block"
+                style="width: 100%; height: 332px; position: relative;"
+              >
+                <Transition name="vertical-slide-fade-revert">
+                  <Show when={getNextEpState()}>
+                    <Button
+                      class="next-episode-button"
+                      onClick={() => {
+                        handleSelectEpisode(
+                          data[playerProvider()][teamName()].find(
+                            (obj: any) =>
+                              obj.episode == teamEpisode().episode + 1
+                          )
+                        );
+                        setNextEpState(false);
+                      }}
+                    >
+                      Наступний епізод
+                    </Button>
+                  </Show>
+                </Transition>
+                <iframe
+                  id="player-iframe"
+                  src={`${teamEpisode().video_url}?site=hikka.io`}
+                  loading="lazy"
+                  style="border-radius: 10px; position: absolute; top: 0px; left: 0px; height: 100%; width: 100%;"
+                  allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+                  allowfullscreen
+                ></iframe>
+              </div>
+              <div style="height:3rem" />
+            </Show>
+          </TransitionGroup>
+        ),
+        container
+      );
+    },
+  });
 }

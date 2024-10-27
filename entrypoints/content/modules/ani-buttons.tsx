@@ -1,7 +1,8 @@
-import { For, MountableElement, render } from "solid-js/web";
 import HikkaFLogoSmall from "@/public/hikka-features-small.svg";
-import { Transition } from "solid-transition-group";
 import { createResource, createSignal, Show } from "solid-js";
+import { For, render } from "solid-js/web";
+import { Transition } from "solid-transition-group";
+import { ContentScriptContext } from "wxt/client";
 
 interface Website {
   title: string;
@@ -16,8 +17,9 @@ enum MediaEnum {
 }
 
 export default async function aniButtons(
+  ctx: ContentScriptContext,
   data: any,
-  location?: MountableElement,
+  location?: Element,
   smallerTitle?: boolean
 ) {
   if (document.body.querySelectorAll("#ani-buttons").length !== 0) {
@@ -149,71 +151,87 @@ export default async function aniButtons(
 
   aniButtonsState.watch((state) => setBlockState(state));
 
-  render(
-    () => (
-      <Transition name="slide-fade">
-        <Show when={blockState()}>
-          <div id="ani-buttons" class="hikka-features">
-            <h3
-              class={`scroll-m-20 font-display ${
-                smallerTitle ? "text-lg" : "text-xl"
-              } font-bold tracking-normal`}
-            >
-              Інші джерела
-              <img src={HikkaFLogoSmall} style="width: 21px; height: 20px" />
-            </h3>
-            <div>
-              <For
-                each={
-                  isAnime
-                    ? anime_links
-                    : content_type === "character"
-                    ? character_links
-                    : content_type === "person"
-                    ? people_links
-                    : manga_links
-                }
+  const dark = await darkMode.getValue();
+
+  return createShadowRootUi(ctx, {
+    name: "ani-buttons",
+    position: "inline",
+    append: "last",
+    anchor: location || document.querySelector(".order-1 > div:nth-child(1)")!,
+    onMount(container) {
+      render(
+        () => (
+          <Transition name="slide-fade">
+            <Show when={blockState()}>
+              <div
+                id="ani-buttons"
+                class={cn("hikka-features", dark ? "dark" : "")}
               >
-                {(elem) => (
-                  <a
-                    href={
-                      elem.title === "MU"
-                        ? muUrl()
-                        : elem.title === "Amanogawa"
-                        ? agawaUrl()
-                        : elem.url
+                <h3
+                  class={`scroll-m-20 font-display ${
+                    smallerTitle ? "text-lg" : "text-xl"
+                  } font-bold tracking-normal`}
+                >
+                  Інші джерела
+                  <img
+                    src={HikkaFLogoSmall}
+                    style="width: 21px; height: 20px"
+                  />
+                </h3>
+                <div>
+                  <For
+                    each={
+                      isAnime
+                        ? anime_links
+                        : content_type === "character"
+                        ? character_links
+                        : content_type === "person"
+                        ? people_links
+                        : manga_links
                     }
-                    target="_blank"
-                    class={cn(
-                      elem.title === "MU"
-                        ? muUrl.loading
-                          ? "animate-pulse"
-                          : muUrl() === undefined
-                          ? "link-disabled"
-                          : ""
-                        : "",
-                      elem.title === "Amanogawa"
-                        ? agawaUrl.loading
-                          ? "animate-pulse"
-                          : agawaUrl() === undefined
-                          ? "link-disabled"
-                          : ""
-                        : ""
-                    )}
                   >
-                    <img
-                      style="width:16px;height:16px;margin-right:2px;"
-                      src={`https://www.google.com/s2/favicons?domain=${elem.host}`}
-                    />
-                    {elem.title}
-                  </a>
-                )}
-              </For>
-            </div>
-          </div>
-        </Show>
-      </Transition>
-    ),
-    location || document.querySelector(".order-1 > div:nth-child(1)")!
-  );
+                    {(elem) => (
+                      <a
+                        href={
+                          elem.title === "MU"
+                            ? muUrl()
+                            : elem.title === "Amanogawa"
+                            ? agawaUrl()
+                            : elem.url
+                        }
+                        target="_blank"
+                        class={cn(
+                          elem.title === "MU"
+                            ? muUrl.loading
+                              ? "animate-pulse"
+                              : muUrl() === undefined
+                              ? "link-disabled"
+                              : ""
+                            : "",
+                          elem.title === "Amanogawa"
+                            ? agawaUrl.loading
+                              ? "animate-pulse"
+                              : agawaUrl() === undefined
+                              ? "link-disabled"
+                              : ""
+                            : ""
+                        )}
+                      >
+                        <img
+                          style="width:16px;height:16px;margin-right:2px;"
+                          src={`https://www.google.com/s2/favicons?domain=${elem.host}`}
+                        />
+                        {elem.title}
+                      </a>
+                    )}
+                  </For>
+                </div>
+              </div>
+            </Show>
+          </Transition>
+        ),
+        container
+      );
+    },
+  });
 }

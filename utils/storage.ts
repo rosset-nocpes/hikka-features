@@ -69,3 +69,7 @@ export const burunyaaMode = storage.defineItem<boolean>("local:burunyaaMode", {
 export const richPresence = storage.defineItem<boolean>("local:richPresence", {
   fallback: false,
 });
+
+export const darkMode = storage.defineItem<boolean>("local:darkMode", {
+  fallback: true,
+});

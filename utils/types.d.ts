@@ -23,11 +23,34 @@ declare global {
 
   type UserData = {
     username: string;
+    description?: string;
     avatar: string;
   };
 
   type HikkaSecret = {
     secret: string;
     expiration: number;
+  };
+
+  type MangaScanlationGroup = {
+    id: string;
+    name: string;
+    website: string;
+    description: string;
+  };
+
+  type MangaUser = {
+    id: string;
+    username: string;
+  };
+
+  type ChapterDataEntry = {
+    id: string;
+    volume: number;
+    chapter: number;
+    title: string;
+    pages: number;
+    scanlation_groups: MangaScanlationGroup[];
+    users: MangaUser[];
   };
 }
