@@ -46,10 +46,6 @@ const [showFandubBlock, toggleFandubBlock] = createSignal(
   await fandubBlockState.getValue()
 );
 
-const [showRecommendationBlock, toggleRecommendationBlock] = createSignal(
-  await recommendationBlockState.getValue()
-);
-
 const [showWatchButton, toggleWatchButton] = createSignal(
   await watchButtonState.getValue()
 );
@@ -196,24 +192,6 @@ function App() {
               <SwitchLabel>Блок фандаб команд</SwitchLabel>
               <SwitchDescription class="text-xs font-medium text-[#A1A1A1]">
                 Посилання на фандаб команди, які озвучили аніме тайтл
-              </SwitchDescription>
-            </div>
-            <SwitchControl>
-              <SwitchThumb />
-            </SwitchControl>
-          </Switch>
-          <Switch
-            checked={showRecommendationBlock()}
-            onClick={() => {
-              recommendationBlockState.setValue(!showRecommendationBlock());
-              toggleRecommendationBlock(!showRecommendationBlock());
-            }}
-            class="flex items-center justify-between"
-          >
-            <div class="flex flex-col gap-1 mr-10">
-              <SwitchLabel>Блок рекомендацій</SwitchLabel>
-              <SwitchDescription class="text-xs font-medium text-[#A1A1A1]">
-                Блок із контентом, який схожий на той, який ви дивитеся
               </SwitchDescription>
             </div>
             <SwitchControl>

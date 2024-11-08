@@ -9,7 +9,7 @@ import watchButton from "./modules/watchButton";
 import FandubBlock from "./modules/fandub-block";
 import NotionFetch from "@/utils/notion-db";
 import localizedPosterButton from "./modules/localized-poster-button";
-import RecommendationBlock from "./modules/recommendation-block";
+import recommendationBlock from "./modules/recommendation-block";
 
 export default defineContentScript({
   matches: ["https://hikka.io/*"],
@@ -112,15 +112,7 @@ export default defineContentScript({
               // aniButtons
               aniButtons(anime_data);
               
-              const recommendation_search_data = await (
-                await fetch(`https://corsproxy.io/?https://anibrain.ai/api/-/recommender/autosuggest?searchValue=${anime_data['title_en']}&mediaType=ANIME&adult=false`)
-              ).json();
-
-              const recommendation_data = await (
-                await fetch(`https://corsproxy.io/?https://anibrain.ai/api/-/recommender/recs/anime?filterCountry=[]&filterFormat=["movie","ona","tv"]&filterGenre={}&filterTag={"max":{},"min":{}}&filterRelease=[1917,2024]&filterScore=0&algorithmWeights={"genre":0.3,"setting":0.15,"synopsis":0.4,"theme":0.2}&mediaId=${recommendation_search_data["data"][0]["id"]}&mediaType=ANIME&adult=false&page=1`)
-              ).json();
-
-              RecommendationBlock(recommendation_data);
+              recommendationBlock(anime_data);
 
               let [getNotionData] = createResource(anime_slug, NotionFetch);
               FandubBlock(getNotionData);
