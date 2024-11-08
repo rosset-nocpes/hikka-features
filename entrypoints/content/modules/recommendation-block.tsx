@@ -39,7 +39,6 @@ export default async function recommendationBlock(
       );
       const searchData = await searchResponse.json();
 
-      // const mediaId = searchData?.data?.[0]?.id;
       const mediaId = searchData?.data?.[0]?.id;
 
       if (!mediaId) {
