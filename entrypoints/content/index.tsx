@@ -1,15 +1,15 @@
+import NextEditURL from "@/utils/next-edit-url";
 import { createResource, createSignal } from "solid-js";
 import { render } from "solid-js/web";
-import "./style.css";
 import aniBackground from "./modules/ani-background";
 import aniButtons from "./modules/ani-buttons";
-import NextEditURL from "@/utils/next-edit-url";
+import "./style.css";
 // import UCharURL from "@/utils/u-char-url";
-import watchButton from "./modules/watchButton";
-import FandubBlock from "./modules/fandub-block";
 import NotionFetch from "@/utils/notion-db";
+import FandubBlock from "./modules/fandub-block";
 import localizedPosterButton from "./modules/localized-poster-button";
 import recommendationBlock from "./modules/recommendation-block";
+import watchButton from "./modules/watchButton";
 
 export default defineContentScript({
   matches: ["https://hikka.io/*"],
@@ -64,7 +64,7 @@ export default defineContentScript({
     // Only for edit page!
     const isModerator = () =>
       document.evaluate(
-        "/html/body/main/div/div[1]/div/div[1]/div[2]",
+        "/html/body/div/main/div/div[1]/div/div[1]/div[2]",
         document,
         null,
         XPathResult.BOOLEAN_TYPE,

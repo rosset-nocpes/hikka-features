@@ -1,8 +1,8 @@
-import { createSignal, Match, Show, Switch } from "solid-js";
-import Player, { getWatchData } from "./player";
-import { MountableElement, render } from "solid-js/web";
 import HikkaLogoMono from "@/public/hikka-features-mono.svg";
+import { createSignal, Match, Show, Switch } from "solid-js";
+import { MountableElement, render } from "solid-js/web";
 import { Transition } from "solid-transition-group";
+import Player, { getWatchData } from "./player";
 
 export default async function watchButton(
   anime_data: any,
@@ -62,7 +62,7 @@ export default async function watchButton(
     ),
     watchButtonLocation ||
       document.querySelector(
-        "body > main > div > div.flex.flex-col.gap-4 > div.flex.w-full.flex-col.gap-4 > div > div"
+        "body > div > main > div > div.flex.flex-col.gap-4 > div.flex.w-full.flex-col.gap-4 > div > div"
       )!
   );
 }

@@ -177,7 +177,7 @@ export default async function FandubBlock(
     ),
     location ||
       document.querySelector(
-        "body > main > div > div.flex.flex-col.gap-4 > div.flex.w-full.flex-col.gap-4 > div"
+        "body > div > main > div > div.flex.flex-col.gap-4 > div.flex.w-full.flex-col.gap-4 > div"
       )!
   );
 }
