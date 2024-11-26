@@ -41,6 +41,13 @@ export const fandubBlockState = storage.defineItem<boolean>(
   }
 );
 
+export const recommendationBlockState = storage.defineItem<boolean>(
+  "local:recommendationBlockState",
+  {
+    fallback: true,
+  }
+);
+
 export const defaultPlayer = storage.defineItem<PlayerSource>(
   "local:defaultPlayer",
   {

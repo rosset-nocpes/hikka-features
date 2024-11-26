@@ -8,6 +8,7 @@ import "./style.css";
 import NotionFetch from "@/utils/notion-db";
 import FandubBlock from "./modules/fandub-block";
 import localizedPosterButton from "./modules/localized-poster-button";
+import recommendationBlock from "./modules/recommendation-block";
 import watchButton from "./modules/watchButton";
 
 export default defineContentScript({
@@ -110,6 +111,8 @@ export default defineContentScript({
 
               // aniButtons
               aniButtons(anime_data);
+              
+              recommendationBlock(anime_data);
 
               let [getNotionData] = createResource(anime_slug, NotionFetch);
               FandubBlock(getNotionData);
