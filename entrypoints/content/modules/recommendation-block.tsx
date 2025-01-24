@@ -26,7 +26,7 @@ export default async function recommendationBlock(anime_data: any, recommendatio
 
   async function fetchRecommendations() {
     try {
-      const recommendationResponse = await fetch(`https://api.jikan.moe/v4/anime/${mal_id}/recommendations`);
+      const recommendationResponse = await fetch(`https://corsproxy.io/?url=https://api.jikan.moe/v4/anime/${mal_id}/recommendations`);
       const recommendationData = await recommendationResponse.json();
       const result = await Promise.all(recommendationData.data.slice(0, 4).map(async (element: any) => {
         try {
