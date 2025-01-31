@@ -1,9 +1,8 @@
 {
   "extends": "./.wxt/tsconfig.json",
   "compilerOptions": {
-    "jsx": "preserve",
-    "jsxImportSource": "solid-js",
-    "types": ["unplugin-icons/types/solid"]
+    "jsx": "react-jsx",
+    "types": ["unplugin-icons/types/react"]
   },
   "baseUrl": "."
 }

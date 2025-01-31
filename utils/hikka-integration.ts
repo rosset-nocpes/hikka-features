@@ -1,5 +1,5 @@
 export async function Login() {
-  browser.runtime.sendMessage(undefined, { type: "login" });
+  browser.runtime.sendMessage(undefined, { type: 'login' });
 }
 
 export async function Logout() {
@@ -14,17 +14,17 @@ export async function getUserData() {
   }
 
   return await (
-    await fetch("https://api.hikka.io/user/me", {
+    await fetch('https://api.hikka.io/user/me', {
       headers: { auth: (await hikkaSecret.getValue())! },
     })
   ).json();
 }
 
 export async function EditDesc(description: string) {
-  await fetch("https://api.hikka.io/settings/description", {
-    method: "PUT",
+  await fetch('https://api.hikka.io/settings/description', {
+    method: 'PUT',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
       auth: (await hikkaSecret.getValue())!,
     },
     body: JSON.stringify({
@@ -33,10 +33,10 @@ export async function EditDesc(description: string) {
   });
 }
 
-export async function actionRichPresence(action: "check" | "remove") {
+export async function actionRichPresence(action: 'check' | 'remove') {
   if (await richPresence.getValue()) {
     browser.runtime.sendMessage({
-      type: "rich-presence-check",
+      type: 'rich-presence-check',
       action: action,
     });
   }

@@ -23,9 +23,37 @@ export const watchButtonState = storage.defineItem<boolean>(
   }
 );
 
-export const hikkaSecret = storage.defineItem<HikkaSecret>("local:hikkaSecret");
+export const hikkaSecret = storage.defineItem<string>("local:hikkaSecret", {
+  version: 2,
+  migrations: {
+    2: (oldValue: HikkaSecretV1): string => {
+      hikkaSecret.setMeta({ expiration: oldValue.expiration });
+      return oldValue.secret;
+    },
+  },
+});
 
-export const userData = storage.defineItem<UserData>("local:userData");
+export const userData = storage.defineItem<UserDataV2>("local:userData", {
+  version: 2,
+  migrations: {
+    2: (oldValue: UserDataV1): UserDataV2 => {
+      let r: any;
+      hikkaSecret.getValue().then((r) => {
+        if (r !== null && typeof r === "string") {
+          getUserData().then((result) => {
+            r = result;
+          });
+        }
+      });
+
+      return {
+        hikkaId: r["reference"],
+        username: r["username"],
+        avatar: r["avatar"],
+      };
+    },
+  },
+});
 
 export const aniButtonsState = storage.defineItem<boolean>(
   "local:aniButtonsState",
@@ -58,7 +86,7 @@ export const devOptionsState = storage.defineItem<boolean>(
 export const backendBranch = storage.defineItem<BackendBranches>(
   "local:backendBranch",
   {
-    fallback: "stable",
+    fallback: import.meta.env.MODE === "development" ? "localhost" : "stable",
   }
 );
 
@@ -68,4 +96,8 @@ export const burunyaaMode = storage.defineItem<boolean>("local:burunyaaMode", {
 
 export const richPresence = storage.defineItem<boolean>("local:richPresence", {
   fallback: false,
+});
+
+export const darkMode = storage.defineItem<boolean>("local:darkMode", {
+  fallback: true,
 });
