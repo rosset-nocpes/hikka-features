@@ -217,7 +217,7 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
       </CardHeader>
       <CardContent className="min-h-0 flex-1">
         <div className="flex size-full gap-4">
-          <div className="min-w-0 flex-1 gap-2">
+          <div className="flex min-w-0 flex-1 flex-col gap-2">
             <AspectRatio ratio={16 / 9}>
               {/* <div className="absolute h-[100%] w-[100%] bg-white blur-lg z-[-1] opacity-50" /> */}
               {playerState.provider === 'moon' ? (
@@ -242,7 +242,7 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
                 />
               )}
             </AspectRatio>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-end gap-2">
               {getUserData && (
                 <WatchTogetherControls
                   container={container}
@@ -251,7 +251,7 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
                   animeSlug={anime_data.slug}
                 />
               )}
-              <div className="flex space-x-2">
+              <div className="flex gap-2">
                 <Button
                   variant="outline"
                   size="sm"

@@ -127,7 +127,7 @@ const WatchTogetherControls: FC<Props> = ({
   }
 
   return (
-    <div className="flex flex-1 items-center gap-2 py-2">
+    <div className="flex flex-1 items-center gap-2">
       {!roomId ? (
         <div className="flex items-center gap-2">
           <Button size="sm" variant="ghost" onClick={handleCreateRoom}>
