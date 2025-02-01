@@ -14,6 +14,7 @@ import { FC, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ContentScriptContext } from 'wxt/client';
 import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
+import MaterialSymbolsVisibilityRounded from '~icons/material-symbols/visibility-rounded';
 import MaterialSymbolsWidthFullOutlineSharp from '~icons/material-symbols/width-full-outline-sharp';
 import AshdiPlayer from './providers/ashdi';
 import MoonPlayer from './providers/moon';
@@ -319,22 +320,25 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
                 {episodesData.map((ep) => (
                   <Button
                     key={ep.episode}
-                    variant={
-                      ep.episode == playerState.episode.episode
-                        ? 'outline'
-                        : 'ghost'
-                    }
+                    variant="ghost"
                     ref={
                       ep.episode == playerState.episode.episode
                         ? currentEpisodeRef
                         : null
                     }
-                    className="w-full justify-start"
+                    className={cn(
+                      'w-full justify-start border',
+                      ep.episode == playerState.episode.episode
+                        ? 'border-secondary'
+                        : 'border-transparent',
+                    )}
                     onClick={() => handleSelectEpisode(ep)}
                   >
                     <div className="flex w-full items-center justify-between">
-                      <span>Episode {ep.episode}: NULL</span>
-                      <span className="text-gray-500 text-sm">0:00</span>
+                      <span>Епізод #{ep.episode}</span>
+                      {ep.episode <= getWatched() && (
+                        <MaterialSymbolsVisibilityRounded className="size-5 text-gray-500" />
+                      )}
                     </div>
                   </Button>
                 ))}
