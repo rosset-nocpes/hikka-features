@@ -72,7 +72,7 @@ const AshdiPlayer: FC<Props> = ({
   });
 
   return (
-    <div>
+    <>
       {getNextEpState && (
         <Button
           className="absolute top-4"
@@ -101,7 +101,7 @@ const AshdiPlayer: FC<Props> = ({
         allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
         allowFullScreen
       ></iframe>
-    </div>
+    </>
   );
 };
 
