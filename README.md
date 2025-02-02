@@ -6,9 +6,9 @@
 Plugin uses:
 
 - [WXT](https://wxt.dev)
-- [SolidJS](https://docs.solidjs.com/)
-- [TailwindCSS](https://tailwindcss.com/)
-- [SolidUI (shadcn-ui fork)](https://www.solid-ui.com/)
+- [React](https://react.dev/)
+- [tailwindCSS](https://tailwindcss.com/)
+- [shadcn/ui](https://ui.shadcn.com/)
 
 ## Development
 
