@@ -16,7 +16,7 @@ import MaterialSymbolsPlannerBannerAdPtRounded from '~icons/material-symbols/pla
 import { queryClient } from '..';
 
 const localizedPoster = async (ctx: ContentScriptContext, anime_data: any) => {
-  if (document.body.querySelectorAll('localaized-poster').length !== 0) {
+  if (document.body.querySelectorAll('localized-poster').length !== 0) {
     return;
   }
 
@@ -55,10 +55,6 @@ interface Props {
 }
 
 const LocalizedPoster: FC<Props> = ({ anime_data }) => {
-  //   if (document.body.querySelectorAll('#localized-poster').length !== 0) {
-  //     return;
-  //   }
-
   const { data, isLoading, isError } = useNotionData(anime_data.slug);
 
   const [isLoaded, setIsLoaded] = useState(false);
