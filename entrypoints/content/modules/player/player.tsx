@@ -9,15 +9,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Toaster } from '@/components/ui/sonner';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FC, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { toast } from 'sonner';
 import { ContentScriptContext } from 'wxt/client';
 import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
+import MaterialSymbolsFullscreen from '~icons/material-symbols/fullscreen';
 import MaterialSymbolsVisibilityRounded from '~icons/material-symbols/visibility-rounded';
 import MaterialSymbolsWidthFullOutlineSharp from '~icons/material-symbols/width-full-outline-sharp';
-import AshdiPlayer from './providers/ashdi';
-import MoonPlayer from './providers/moon';
 import WatchTogetherControls from './watch-together-controls';
 
 export default function player(
@@ -48,13 +49,13 @@ export default function player(
               player(ctx, data!, anime_data)!.then((x) => x!.remove())
             }
           />
-
           <Player
             container={container}
             ctx={ctx}
             data={data}
             anime_data={anime_data}
           />
+          <Toaster position="top-center" />
         </>,
       );
 
@@ -86,6 +87,10 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
         ?.firstChild?.nodeValue!,
     );
 
+  const playerIframe = container.querySelector(
+    '#player-iframe',
+  ) as HTMLIFrameElement;
+
   const playersAvaliable: PlayerSource[] = Object.keys(data).filter(
     (e) => e !== 'type',
   ) as PlayerSource[];
@@ -114,6 +119,7 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
   const [getNextEpState, setNextEpState] = useState(false);
   const [getWatchedState, toggleWatchedState] = useState(false);
   const [getTheatreState, toggleTheatreState] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [getPlayerState, togglePlayerState] = useState(true);
   const [getRichPresence, setRichPresence] = useState(false);
   const [getRichPresenceCheck, setRichPresenceCheck] = useState<boolean>();
@@ -125,7 +131,6 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
 
   const handleSelectEpisode = (value: any) => {
     setPlayerState((prev) => ({ ...prev, episode: value }));
-    setNextEpState(false);
     toggleWatchedState(false);
   };
 
@@ -142,7 +147,6 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
       episode: newEpisode,
     });
     setEpisodesData(data[value][newTeamName]);
-    setNextEpState(false);
     toggleWatchedState(false);
   };
 
@@ -158,9 +162,77 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
       episode: newEpisode,
     }));
     setEpisodesData(data[playerState.provider][value]);
-    setNextEpState(false);
     toggleWatchedState(false);
   };
+
+  const handleEnterFullscreen = () => {
+    setIsFullscreen(true);
+    document.documentElement.requestFullscreen();
+
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement) {
+        handleExitFullscreen();
+      }
+    });
+  };
+
+  const handleExitFullscreen = () => {
+    setIsFullscreen(false);
+    document.exitFullscreen();
+
+    document.removeEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement) {
+        handleExitFullscreen();
+      }
+    });
+  };
+
+  let duration = 0;
+  let time = 0;
+
+  useEffect(() => {
+    const messageHandler = (event: MessageEvent) => {
+      if (event.data.event === 'time') {
+        const message = event.data;
+        duration = message.duration;
+        time = message.time;
+
+        if (time / duration > 0.88 && !getWatchedState) {
+          if (getWatched() + 1 === playerState.episode.episode) {
+            (
+              document.body.querySelector(
+                'div.inline-flex:nth-child(2) button:nth-child(2)',
+              ) as HTMLButtonElement
+            )?.click();
+            toggleWatchedState(true);
+          }
+        }
+      } else if (
+        event.data.event === 'end' &&
+        !getNextEpState &&
+        data[playerState.provider][playerState.team].find(
+          (obj: any) => obj.episode == playerState.episode.episode + 1,
+        )
+      ) {
+        setNextEpState(true);
+        handleSelectEpisode(
+          data[playerState.provider][playerState.team].find(
+            (obj) => obj.episode == playerState.episode.episode + 1,
+          ),
+        );
+      } else if (event.data.event === 'init' && getNextEpState) {
+        setNextEpState(false);
+        playerIframe.contentWindow?.postMessage({ api: 'play' }, '*');
+
+        toast(
+          `Зараз ви дивитесь ${playerState.episode.episode} епізод в озвучці ${playerState.team}`,
+        );
+      }
+    };
+
+    window.addEventListener('message', messageHandler);
+    return () => window.removeEventListener('message', messageHandler);
+  }, [getNextEpState, playerState, data, getWatchedState]);
 
   // Handle async initialization
   useEffect(() => {
@@ -219,30 +291,26 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
       <CardContent className="min-h-0 flex-1">
         <div className="flex size-full gap-4">
           <div className="flex min-w-0 flex-1 flex-col gap-2">
-            <AspectRatio ratio={16 / 9}>
-              {/* <div className="absolute h-[100%] w-[100%] bg-white blur-lg z-[-1] opacity-50" /> */}
-              {playerState.provider === 'moon' ? (
-                <MoonPlayer
-                  playerState={playerState}
-                  data={data}
-                  getWatchedState={getWatchedState}
-                  getNextEpState={getNextEpState}
-                  setNextEpState={setNextEpState}
-                  toggleWatchedState={toggleWatchedState}
-                />
-              ) : (
-                <AshdiPlayer
-                  container={container}
-                  playerState={playerState}
-                  data={data}
-                  getWatchedState={getWatchedState}
-                  getNextEpState={getNextEpState}
-                  setNextEpState={setNextEpState}
-                  toggleWatchedState={toggleWatchedState}
-                  handleSelectEpisode={handleSelectEpisode}
-                />
-              )}
-            </AspectRatio>
+            <div
+              className={cn(isFullscreen && 'absolute inset-0 z-10 size-full')}
+            >
+              <AspectRatio ratio={16 / 9}>
+                {/* <div className="absolute h-[100%] w-[100%] bg-white blur-lg z-[-1] opacity-50" /> */}
+                <iframe
+                  id="player-iframe"
+                  src={`${playerState.episode.video_url}?site=hikka.io`}
+                  loading="lazy"
+                  style={{
+                    borderRadius: '10px',
+                    height: '100%',
+                    width: '100%',
+                    zIndex: 2,
+                  }}
+                  allow="fullscreen; accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+                  allowFullScreen
+                ></iframe>
+              </AspectRatio>
+            </div>
             <div className="flex items-center justify-end gap-2">
               {getUserData && (
                 <WatchTogetherControls
@@ -252,11 +320,20 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
                   animeSlug={anime_data.slug}
                 />
               )}
-              <div className="flex gap-2">
+              <div className="flex items-center">
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
-                  onClick={() => toggleTheatreState(!getTheatreState)}
+                  onClick={handleEnterFullscreen}
+                >
+                  <MaterialSymbolsFullscreen className="flex-1" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    toggleTheatreState(!getTheatreState);
+                  }}
                 >
                   <MaterialSymbolsWidthFullOutlineSharp className="flex-1" />
                 </Button>
