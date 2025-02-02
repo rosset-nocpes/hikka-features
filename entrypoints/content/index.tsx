@@ -7,6 +7,7 @@ import fandubBlock from './modules/fandub-block';
 import localizedPoster from './modules/localized-poster';
 import watchButton from './modules/player/watchButton';
 import readButton from './modules/reader/readButton';
+import recommendationBlock from './modules/recommendation-block';
 
 export const queryClient = new QueryClient({
   // defaultOptions: { queries: { gcTime: Infinity, staleTime: Infinity } },
@@ -118,7 +119,7 @@ export default defineContentScript({
 
               // aniButtons
               (await aniButtons(ctx, anime_data))?.mount();
-              
+
               // recommendationBlock
               (await recommendationBlock(ctx, anime_data))?.mount();
 
