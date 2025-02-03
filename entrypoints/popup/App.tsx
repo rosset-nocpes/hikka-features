@@ -55,6 +55,10 @@ function App() {
 
   const [showFandubBlock, toggleFandubBlock] = useState<boolean | null>(null);
 
+  const [showRecommendationBlock, toggleRecommendationBlock] = useState<
+    boolean | null
+  >(null);
+
   const [showWatchButton, toggleWatchButton] = useState<boolean | null>(null);
 
   const [defaultPlayerProvider, setDefaultPlayerProvider] =
@@ -79,6 +83,7 @@ function App() {
       localizedPosterState.getValue(),
       aniButtonsState.getValue(),
       fandubBlockState.getValue(),
+      recommendationBlockState.getValue(),
       watchButtonState.getValue(),
       defaultPlayer.getValue(),
       burunyaaMode.getValue(),
@@ -93,6 +98,7 @@ function App() {
         localizedPoster,
         aniButtons,
         fandubBlock,
+        recommendationBlock,
         watchButton,
         defaultPlayerValue,
         burunyaaMode,
@@ -106,6 +112,7 @@ function App() {
         toggleLocalizedPoster(localizedPoster);
         toggleAniButtons(aniButtons);
         toggleFandubBlock(fandubBlock);
+        toggleRecommendationBlock(recommendationBlock);
         toggleWatchButton(watchButton);
         setDefaultPlayerProvider(defaultPlayerValue);
         toggleBurunyaaMode(burunyaaMode);
@@ -147,7 +154,7 @@ function App() {
         )}
       >
         <h3 className="flex items-center justify-between">
-          <span className="flex items-center gap-2 text-lg font-bold tracking-normal">
+          <span className="flex items-center gap-2 font-bold text-lg tracking-normal">
             Налаштування
             <AnimatePresence>
               {showDevOptions && (
@@ -171,7 +178,7 @@ function App() {
                         <div className="flex items-center justify-between">
                           <div className="mr-10 flex flex-col gap-1">
                             <Label>Burunyaa режим</Label>
-                            <p className="text-xs font-medium text-[#A1A1A1]">
+                            <p className="font-medium text-[#A1A1A1] text-xs">
                               Burunyaaaaaa
                             </p>
                           </div>
@@ -185,7 +192,7 @@ function App() {
                           />
                         </div>
                         <div className="flex items-center justify-between">
-                          <label className="text-sm font-medium">
+                          <label className="font-medium text-sm">
                             Гілка бекенду
                           </label>
                           <select
@@ -286,8 +293,8 @@ function App() {
           <Drawer>
             <div className="flex justify-between">
               <div className="mr-10 flex flex-col gap-1">
-                <label className="text-sm font-medium">Плеєр</label>
-                <div className="text-xs font-medium text-[#A1A1A1]">
+                <label className="font-medium text-sm">Плеєр</label>
+                <div className="font-medium text-[#A1A1A1] text-xs">
                   Налаштування плеєра
                 </div>
               </div>
@@ -306,7 +313,7 @@ function App() {
                   <div className="flex items-center justify-between">
                     <div className="mr-10 flex flex-col gap-1">
                       <Label>Кнопка перегляду</Label>
-                      <p className="text-xs font-medium text-[#A1A1A1]">
+                      <p className="font-medium text-[#A1A1A1] text-xs">
                         Кнопка для відображення плеєру
                       </p>
                     </div>
@@ -320,7 +327,7 @@ function App() {
                     />
                   </div>
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium">
+                    <label className="font-medium text-sm">
                       Плеєр за замовчуванням
                     </label>
                     <select
@@ -353,7 +360,7 @@ function App() {
           <div className="flex items-center justify-between">
             <div className="mr-10 flex flex-col gap-1">
               <Label>Інші джерела</Label>
-              <p className="text-xs font-medium text-[#A1A1A1]">
+              <p className="font-medium text-[#A1A1A1] text-xs">
                 Додаткові посилання на сторінках тайтлів
               </p>
             </div>
@@ -369,7 +376,7 @@ function App() {
           <div className="flex items-center justify-between">
             <div className="mr-10 flex flex-col gap-1">
               <Label>Блок фандаб команд</Label>
-              <p className="text-xs font-medium text-[#A1A1A1]">
+              <p className="font-medium text-[#A1A1A1] text-xs">
                 Посилання на фандаб команди, які озвучили аніме тайтл
               </p>
             </div>
@@ -384,8 +391,24 @@ function App() {
           </div>
           <div className="flex items-center justify-between">
             <div className="mr-10 flex flex-col gap-1">
+              <Label>Блок рекомендацій</Label>
+              <p className="font-medium text-[#A1A1A1] text-xs">
+                Блок із контентом, який схожий на той, який ви дивитеся
+              </p>
+            </div>
+            <Switch
+              checked={showRecommendationBlock!}
+              onClick={() => {
+                recommendationBlockState.setValue(!showRecommendationBlock);
+                toggleRecommendationBlock(!showRecommendationBlock);
+              }}
+              className="flex items-center justify-between"
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="mr-10 flex flex-col gap-1">
               <Label>Обкладинки</Label>
-              <p className="text-xs font-medium text-[#A1A1A1]">
+              <p className="font-medium text-[#A1A1A1] text-xs">
                 Покращене оформлення на сторінках тайтлів, персонажів та правок
               </p>
             </div>
@@ -401,10 +424,10 @@ function App() {
           <Drawer>
             <div className="flex justify-between">
               <div className="mr-10 flex flex-col gap-1">
-                <label className="text-sm font-medium">
+                <label className="font-medium text-sm">
                   Локалізовані постери
                 </label>
-                <div className="text-xs font-medium text-[#A1A1A1]">
+                <div className="font-medium text-[#A1A1A1] text-xs">
                   Налаштування локалізованих постерів
                 </div>
               </div>
@@ -438,7 +461,7 @@ function App() {
                   <div className="flex items-center justify-between">
                     <div className="mr-10 flex flex-col gap-1">
                       <Label>Авто-локалізація постера</Label>
-                      <p className="text-xs font-medium text-[#A1A1A1]">
+                      <p className="font-medium text-[#A1A1A1] text-xs">
                         Автоматично замінює постер локалізованою версією
                       </p>
                     </div>
@@ -463,7 +486,7 @@ function App() {
             </DrawerContent>
           </Drawer>
         </div>
-        <div className="flex items-center justify-between gap-1 text-xs text-[#5C5C5C]">
+        <div className="flex items-center justify-between gap-1 text-[#5C5C5C] text-xs">
           <a
             href="https://github.com/rosset-nocpes/hikka-features"
             className="flex items-center gap-1 font-bold"
