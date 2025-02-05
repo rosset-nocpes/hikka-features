@@ -1,15 +1,15 @@
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Carousel,
   CarouselApi,
   CarouselContent,
   CarouselItem,
-} from '@/components/ui/carousel';
-import { SidebarProvider } from '@/components/ui/sidebar';
-import useReadChapterData from '@/hooks/use-read-chapter-data';
-import { QueryClientProvider } from '@tanstack/react-query';
-import { WheelGesturesPlugin } from 'embla-carousel-wheel-gestures';
+} from "@/components/ui/carousel";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import useReadChapterData from "@/hooks/use-read-chapter-data";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { WheelGesturesPlugin } from "embla-carousel-wheel-gestures";
 import {
   Bell,
   Check,
@@ -23,33 +23,33 @@ import {
   Paintbrush,
   Settings,
   Video,
-} from 'lucide-react';
-import { AnimatePresence } from 'motion/react';
-import { FC, useEffect, useState } from 'react';
-import { createRoot } from 'react-dom/client';
-import { ContentScriptContext } from 'wxt/client';
-import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
-import { queryClient } from '../..';
-import SelectChapter from './select-chapter';
+} from "lucide-react";
+import { AnimatePresence } from "motion/react";
+import { FC, useEffect, useState } from "react";
+import { createRoot } from "react-dom/client";
+import { ContentScriptContext } from "wxt/client";
+import MaterialSymbolsCloseRounded from "~icons/material-symbols/close-rounded";
+import { queryClient } from "../..";
+import SelectChapter from "./select-chapter";
 
 const reader = async (
   ctx: ContentScriptContext,
   data: API.ChapterResponse,
-  slug: string,
+  slug: string
 ) => {
   return createShadowRootUi(ctx, {
-    name: 'reader-ui',
-    position: 'modal',
+    name: "reader-ui",
+    position: "modal",
     zIndex: 100,
     async onMount(container) {
-      const wrapper = document.createElement('div');
+      const wrapper = document.createElement("div");
       container.append(wrapper);
 
       wrapper.className =
-        'size-full backdrop-blur-sm bg-black/60 flex items-center justify-center p-8';
+        "size-full backdrop-blur-sm bg-black/60 flex items-center justify-center p-8";
 
-      container.className = 'h-full';
-      container.classList.toggle('dark', await darkMode.getValue());
+      container.className = "h-full";
+      container.classList.toggle("dark", await darkMode.getValue());
 
       const root = createRoot(wrapper);
       root.render(
@@ -60,7 +60,7 @@ const reader = async (
           />
 
           <Reader container={container} ctx={ctx} data={data} slug={slug} />
-        </QueryClientProvider>,
+        </QueryClientProvider>
       );
 
       return { root, wrapper };
@@ -70,9 +70,9 @@ const reader = async (
         x?.root.unmount();
         x?.wrapper.remove();
       });
-      document.body.removeChild(document.getElementsByTagName('reader-ui')[0]);
-      document.body.classList.toggle('h-full');
-      document.body.classList.toggle('overflow-hidden');
+      document.body.removeChild(document.getElementsByTagName("reader-ui")[0]);
+      document.body.classList.toggle("h-full");
+      document.body.classList.toggle("overflow-hidden");
     },
   });
 };
@@ -86,18 +86,18 @@ interface Props {
 
 const data_nav = {
   nav: [
-    { name: 'Notifications', icon: Bell },
-    { name: 'Navigation', icon: Menu },
-    { name: 'Home', icon: Home },
-    { name: 'Appearance', icon: Paintbrush },
-    { name: 'Messages & media', icon: MessageCircle },
-    { name: 'Language & region', icon: Globe },
-    { name: 'Accessibility', icon: Keyboard },
-    { name: 'Mark as read', icon: Check },
-    { name: 'Audio & video', icon: Video },
-    { name: 'Connected accounts', icon: Link },
-    { name: 'Privacy & visibility', icon: Lock },
-    { name: 'Advanced', icon: Settings },
+    { name: "Notifications", icon: Bell },
+    { name: "Navigation", icon: Menu },
+    { name: "Home", icon: Home },
+    { name: "Appearance", icon: Paintbrush },
+    { name: "Messages & media", icon: MessageCircle },
+    { name: "Language & region", icon: Globe },
+    { name: "Accessibility", icon: Keyboard },
+    { name: "Mark as read", icon: Check },
+    { name: "Audio & video", icon: Video },
+    { name: "Connected accounts", icon: Link },
+    { name: "Privacy & visibility", icon: Lock },
+    { name: "Advanced", icon: Settings },
   ],
 };
 
@@ -133,37 +133,15 @@ const Reader: FC<Props> = ({ container, ctx, data, slug }) => {
   return (
     <Card
       className={cn(
-        'z-10 flex h-full max-h-full w-[1280px] flex-col overflow-hidden',
+        "z-10 flex h-full max-h-full w-[1280px] flex-col overflow-hidden"
         // getTheatreState && 'h-full',
       )}
     >
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-5">
-            Reader / Читалка{' '}
+            Читалка
             <div className="flex items-center gap-2">
-              {/* <Select
-                value={readerState.chapterData.id}
-                onValueChange={(value) =>
-                  setReaderState((prev) => ({
-                    ...prev,
-                    chapterData: data.chapters.find(
-                      (chapter) => chapter.id === value,
-                    )!,
-                  }))
-                }
-              >
-                <SelectTrigger className="w-48 border-neutral-700 bg-transparent text-neutral-200">
-                  <SelectValue placeholder="Select chapter" />
-                </SelectTrigger>
-                <SelectContent container={container}>
-                  {data.chapters.map((chapter) => (
-                    <SelectItem key={chapter.id} value={chapter.id}>
-                      Chapter {chapter.chapter}: {chapter.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select> */}
               <SelectChapter
                 readerState={readerState}
                 setReaderState={setReaderState}

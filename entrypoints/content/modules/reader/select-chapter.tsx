@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -6,14 +6,14 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from '@/components/ui/command';
+} from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
-import { Check, ChevronsUpDown } from 'lucide-react';
-import { FC, useState } from 'react';
+} from "@/components/ui/popover";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { FC, useState } from "react";
 
 interface Props {
   readerState: ReaderState;
@@ -37,7 +37,7 @@ const SelectChapter: FC<Props> = ({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-48 justify-between"
+          className="line-clamp-1 flex h-10 w-48 justify-between"
         >
           {readerState.chapterData.title}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -45,34 +45,30 @@ const SelectChapter: FC<Props> = ({
       </PopoverTrigger>
       <PopoverContent className="p-0" container={container}>
         <Command>
-          <CommandInput placeholder="Search chapter..." />
+          <CommandInput placeholder="Пошук розділу..." />
           <CommandList>
-            <CommandEmpty>No chapter found.</CommandEmpty>
+            <CommandEmpty>Розділ не знайдено.</CommandEmpty>
             <CommandGroup>
               {data.chapters.map((chapter) => (
                 <CommandItem
                   key={chapter.id}
-                  // value={chapter.chapter}
-                  onSelect={(currentValue) => {
-                    // setValue(currentValue === value ? "" : currentValue)
+                  onSelect={() => {
                     setReaderState((prev) => ({
                       ...prev,
-                      chapterData: data.chapters.find(
-                        (chapter) => chapter.id === currentValue,
-                      )!,
+                      chapterData: chapter,
                     }));
                     setOpen(false);
                   }}
                 >
                   <Check
                     className={cn(
-                      'mr-2 h-4 w-4',
+                      "mr-2 h-4 w-4",
                       readerState.chapterData.id === chapter.id
-                        ? 'opacity-100'
-                        : 'opacity-0',
+                        ? "opacity-100"
+                        : "opacity-0"
                     )}
                   />
-                  Chapter {chapter.chapter}: {chapter.title}
+                  Розділ {chapter.chapter}: {chapter.title}
                 </CommandItem>
               ))}
             </CommandGroup>
