@@ -22,6 +22,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { version } from '@/package.json';
 import { Logout } from '@/utils/hikka-integration';
@@ -147,7 +154,7 @@ function App() {
       </style>
       <div
         className={cn(
-          'dark flex w-[400px] flex-col gap-7 rounded-none p-[30px] font-inter font-semibold text-white',
+          'flex w-[400px] flex-col gap-7 rounded-none p-[30px] font-inter font-semibold',
           getBurunyaaMode
             ? 'bg-[url(https://media1.tenor.com/m/PDzKPqFw6f8AAAAC/neco-neco-arc.gif)]'
             : 'bg-black',
@@ -169,7 +176,7 @@ function App() {
                       <MaterialSymbolsExperiment />
                     </motion.span>
                   </DrawerTrigger>
-                  <DrawerContent className="dark text-white">
+                  <DrawerContent>
                     <div className="mx-auto w-full max-w-sm">
                       <DrawerHeader>
                         <DrawerTitle>Експерементальні функції</DrawerTitle>
@@ -195,25 +202,25 @@ function App() {
                           <label className="font-medium text-sm">
                             Гілка бекенду
                           </label>
-                          <select
-                            className="h-10 rounded-md border bg-transparent px-3 py-1"
+                          <Select
                             value={getBackendBranch!}
-                            onChange={(e) => {
-                              const target = e.target.value as BackendBranches;
+                            onValueChange={(value) => {
+                              const target = value as BackendBranches;
                               backendBranch.setValue(target);
                               setBackendBranch(target);
                             }}
                           >
-                            {['stable', 'beta', 'localhost'].map((elem) => (
-                              <option
-                                key={elem}
-                                className="bg-black"
-                                value={elem}
-                              >
-                                {elem}
-                              </option>
-                            ))}
-                          </select>
+                            <SelectTrigger className="w-24">
+                              <SelectValue placeholder="Оберіть гілку бекенду" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {['stable', 'beta', 'localhost'].map((elem) => (
+                                <SelectItem key={elem} value={elem}>
+                                  {elem}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
                       <DrawerFooter>
@@ -238,7 +245,7 @@ function App() {
                 </AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="dark" align="end">
+            <DropdownMenuContent align="end">
               {!getUserData && (
                 <DropdownMenuItem
                   onClick={Login}
@@ -304,7 +311,7 @@ function App() {
                 </Button>
               </DrawerTrigger>
             </div>
-            <DrawerContent className="dark text-white">
+            <DrawerContent>
               <div className="mx-auto w-full max-w-sm">
                 <DrawerHeader>
                   <DrawerTitle>Налаштування плеєра</DrawerTitle>
@@ -330,21 +337,24 @@ function App() {
                     <label className="font-medium text-sm">
                       Плеєр за замовчуванням
                     </label>
-                    <select
-                      className="h-10 rounded-md border bg-transparent px-3 py-1"
+                    <Select
                       value={defaultPlayerProvider!}
-                      onChange={(e) => {
-                        const target = e.target.value as PlayerSource;
-                        defaultPlayer.setValue(target);
-                        setDefaultPlayerProvider(target);
+                      onValueChange={(value) => {
+                        defaultPlayer.setValue(value as PlayerSource);
+                        setDefaultPlayerProvider(value as PlayerSource);
                       }}
                     >
-                      {['moon', 'ashdi'].map((elem) => (
-                        <option key={elem} className="bg-black" value={elem}>
-                          {elem.toUpperCase()}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger className="w-24">
+                        <SelectValue placeholder="Оберіть програвач за замовчуванням" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {['moon', 'ashdi'].map((elem) => (
+                          <SelectItem key={elem} value={elem}>
+                            {elem.toUpperCase()}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 <DrawerFooter>
@@ -437,7 +447,7 @@ function App() {
                 </Button>
               </DrawerTrigger>
             </div>
-            <DrawerContent className="dark text-white">
+            <DrawerContent>
               <div className="mx-auto w-full max-w-sm">
                 <DrawerHeader>
                   <DrawerTitle>Локалізовані постери</DrawerTitle>
