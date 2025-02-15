@@ -56,27 +56,32 @@ interface Props {
 }
 
 const WatchButton: FC<Props> = ({ container, ctx, anime_data }) => {
-  const [playerDisabled, togglePlayerDisabled] = useState(true);
   const [buttonState, setButtonState] = useState<boolean>();
 
   const { data, isLoading, isError } = useWatchData(anime_data);
+
+  const openPlayer = () => {
+    document.body.classList.toggle('h-full');
+    document.body.classList.toggle('overflow-hidden');
+    player(ctx, data!, anime_data).then((ui) => ui.mount());
+  };
 
   useEffect(() => {
     if (data === null || data === undefined) return;
 
     const path_params = new URLSearchParams(document.location.search);
 
-    if (path_params.has('room')) {
+    if (
+      path_params.has('room') ||
+      (path_params.has('playerProvider') &&
+        path_params.has('playerTeam') &&
+        path_params.has('playerEpisode'))
+    ) {
       document.body.classList.toggle('h-full');
       document.body.classList.toggle('overflow-hidden');
       player(ctx, data!, anime_data).then((ui) => ui.mount());
     }
   }, [data]);
-
-  const [playerState, togglePlayerState] = useState(false);
-
-  // -1 - loading; 0 - not found; 1 - found;
-  const [state, setState] = useState(-1);
 
   watchButtonState.watch((state) => setButtonState(state));
 
@@ -109,11 +114,7 @@ const WatchButton: FC<Props> = ({ container, ctx, anime_data }) => {
             id="player-button"
             className="w-full gap-2"
             disabled={isLoading || isError}
-            onClick={() => {
-              document.body.classList.toggle('h-full');
-              document.body.classList.toggle('overflow-hidden');
-              player(ctx, data!, anime_data).then((ui) => ui.mount());
-            }}
+            onClick={openPlayer}
           >
             <img src={HikkaLogoMono} className={!dark ? 'invert' : ''} />
             <AnimatePresence mode="wait" initial={false}>

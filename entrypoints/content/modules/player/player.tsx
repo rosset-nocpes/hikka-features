@@ -19,6 +19,13 @@ import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
 import MaterialSymbolsFullscreen from '~icons/material-symbols/fullscreen';
 import MaterialSymbolsVisibilityRounded from '~icons/material-symbols/visibility-rounded';
 import MaterialSymbolsWidthFullOutlineSharp from '~icons/material-symbols/width-full-outline-sharp';
+import {
+  PlayerProvider,
+  getWatched,
+  playersAvaliable,
+  usePlayerContext,
+} from './context/player-context';
+import ShareLinkButton from './toolbar/share-link-button';
 import WatchTogetherControls from './watch-together-controls';
 
 export default function player(
@@ -42,7 +49,7 @@ export default function player(
 
       const root = createRoot(wrapper);
       root.render(
-        <>
+        <PlayerProvider data={data!}>
           <div
             className="fixed z-0 size-full"
             onClick={() =>
@@ -56,7 +63,7 @@ export default function player(
             anime_data={anime_data}
           />
           <Toaster position="top-center" />
-        </>,
+        </PlayerProvider>,
       );
 
       return { root, wrapper };
@@ -81,45 +88,40 @@ interface Props {
 }
 
 export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
-  const getWatched = () =>
-    parseInt(
-      document.body.querySelector('div.rounded-lg.border:nth-child(2) h3')
-        ?.firstChild?.nodeValue!,
-    );
+  const playerContext = usePlayerContext();
+
+  const [urlParams] = useState(() => {
+    const path_params = new URLSearchParams(window.location.search);
+    return {
+      sharedPlayerProvider: path_params.get('playerProvider'),
+      sharedPlayerTeam: path_params.get('playerTeam'),
+      sharedPlayerEpisode: path_params.get('playerEpisode'),
+      sharedPlayerTime: path_params.get('time'),
+      sharedCheck: !!(
+        path_params.get('playerProvider') &&
+        path_params.get('playerTeam') &&
+        path_params.get('playerEpisode')
+      ),
+    };
+  });
 
   const playerIframe = container.querySelector(
     '#player-iframe',
   ) as HTMLIFrameElement;
 
-  const playersAvaliable: PlayerSource[] = Object.keys(data).filter(
-    (e) => e !== 'type',
-  ) as PlayerSource[];
-
   // Initialize with default values
   // TODO: move it to hooks
-  const [playerState, setPlayerState] = useState<PlayerState>(() => {
-    const defaultProvider = playersAvaliable[0];
-    const defaultTeam = Object.keys(data[defaultProvider])[0];
-    const defaultEpisode =
-      data[defaultProvider][defaultTeam].find(
-        (obj: any) => obj.episode == getWatched() + 1,
-      ) || data[defaultProvider][defaultTeam][0];
-
-    return {
-      provider: defaultProvider,
-      team: defaultTeam,
-      episode: defaultEpisode,
-    };
-  });
 
   const [episodesData, setEpisodesData] = useState(
-    data[playersAvaliable[0]][Object.keys(data[playersAvaliable[0]])[0]],
+    data[playerContext.playerState.provider][playerContext.playerState.team],
   );
 
   const [getNextEpState, setNextEpState] = useState(false);
   const [getWatchedState, toggleWatchedState] = useState(false);
   const [getTheatreState, toggleTheatreState] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isTimecodeLink, toggleTimestampLink] = useState(false);
+  const [timecodeLink, setTimecodeLink] = useState(0);
   const [getPlayerState, togglePlayerState] = useState(true);
   const [getRichPresence, setRichPresence] = useState(false);
   const [getRichPresenceCheck, setRichPresenceCheck] = useState<boolean>();
@@ -129,8 +131,8 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
 
   let saved_desc_state = false;
 
-  const handleSelectEpisode = (value: any) => {
-    setPlayerState((prev) => ({ ...prev, episode: value }));
+  const handleSelectEpisode = (value: API.EpisodeData) => {
+    playerContext.setPlayerState((prev) => ({ ...prev, episode: value }));
     toggleWatchedState(false);
   };
 
@@ -141,7 +143,7 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
         (obj: any) => obj.episode == getWatched() + 1,
       ) || data[value][newTeamName][0];
 
-    setPlayerState({
+    playerContext.setPlayerState({
       provider: value,
       team: newTeamName,
       episode: newEpisode,
@@ -152,16 +154,16 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
 
   const handleSelectTeam = (value: string) => {
     const newEpisode =
-      data[playerState.provider][value].find(
-        (obj: any) => obj.episode == getWatched() + 1,
-      ) || data[playerState.provider][value][0];
+      data[playerContext.playerState.provider][value].find(
+        (obj: any) => obj.episode === getWatched() + 1,
+      ) || data[playerContext.playerState.provider][value][0];
 
-    setPlayerState((prev) => ({
+    playerContext.setPlayerState((prev) => ({
       ...prev,
       team: value,
       episode: newEpisode,
     }));
-    setEpisodesData(data[playerState.provider][value]);
+    setEpisodesData(data[playerContext.playerState.provider][value]);
     toggleWatchedState(false);
   };
 
@@ -187,18 +189,19 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
     });
   };
 
+  const [seekToSharedTime, toggleSeekToSharedTime] = useState(false);
   let duration = 0;
-  let time = 0;
+  const [time, setTime] = useState(0);
 
   useEffect(() => {
     const messageHandler = (event: MessageEvent) => {
       if (event.data.event === 'time') {
         const message = event.data;
         duration = message.duration;
-        time = message.time;
+        setTime(message.time);
 
         if (time / duration > 0.88 && !getWatchedState) {
-          if (getWatched() + 1 === playerState.episode.episode) {
+          if (getWatched() + 1 === playerContext.playerState.episode.episode) {
             (
               document.body.querySelector(
                 'div.inline-flex:nth-child(2) button:nth-child(2)',
@@ -210,29 +213,50 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
       } else if (
         event.data.event === 'end' &&
         !getNextEpState &&
-        data[playerState.provider][playerState.team].find(
-          (obj: any) => obj.episode == playerState.episode.episode + 1,
+        data[playerContext.playerState.provider][
+          playerContext.playerState.team
+        ].find(
+          (obj: any) =>
+            obj.episode === playerContext.playerState.episode.episode + 1,
         )
       ) {
         setNextEpState(true);
         handleSelectEpisode(
-          data[playerState.provider][playerState.team].find(
-            (obj) => obj.episode == playerState.episode.episode + 1,
-          ),
+          data[playerContext.playerState.provider][
+            playerContext.playerState.team
+          ].find(
+            (obj) =>
+              obj.episode === playerContext.playerState.episode.episode + 1,
+          )!,
         );
       } else if (event.data.event === 'init' && getNextEpState) {
         setNextEpState(false);
         playerIframe.contentWindow?.postMessage({ api: 'play' }, '*');
 
         toast(
-          `Зараз ви дивитесь ${playerState.episode.episode} епізод в озвучці ${playerState.team}`,
+          `Зараз ви переглядаєте ${playerContext.playerState.episode.episode} епізод в озвучці ${playerContext.playerState.team}`,
+        );
+      }
+
+      if (event.data.event === 'init' && seekToSharedTime) {
+        toggleSeekToSharedTime(false);
+        playerIframe.contentWindow?.postMessage(
+          { api: 'play', set: `[seek:${urlParams.sharedPlayerTime}]` },
+          '*',
         );
       }
     };
 
     window.addEventListener('message', messageHandler);
     return () => window.removeEventListener('message', messageHandler);
-  }, [getNextEpState, playerState, data, getWatchedState]);
+  }, [
+    getNextEpState,
+    playerContext.playerState,
+    data,
+    getWatchedState,
+    seekToSharedTime,
+    urlParams.sharedPlayerTime,
+  ]);
 
   // Handle async initialization
   useEffect(() => {
@@ -242,19 +266,31 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
       const darkModeValue = await darkMode.getValue();
       const userDataValue = await userData.getValue();
 
-      handleSelectPlayer(
-        playersAvaliable.includes(defaultPlayerValue)
-          ? defaultPlayerValue
-          : defaultPlayerValue === 'moon'
-            ? 'ashdi'
-            : 'moon',
-      );
+      if (!urlParams.sharedCheck) {
+        handleSelectPlayer(
+          playersAvaliable(data).includes(defaultPlayerValue)
+            ? defaultPlayerValue
+            : defaultPlayerValue === 'moon'
+              ? 'ashdi'
+              : 'moon',
+        );
+      }
+
       setRichPresence(richPresenceValue);
       setDarkModeState(darkModeValue);
       setUserData(userDataValue);
     };
 
     initializeAsync();
+
+    toggleSeekToSharedTime(!!urlParams.sharedPlayerTime);
+
+    const url = new URL(window.location.href);
+    ['playerProvider', 'playerTeam', 'playerEpisode', 'time'].forEach((param) =>
+      url.searchParams.delete(param),
+    );
+
+    history.replaceState(history.state, '', url.href);
 
     richPresence.watch(setRichPresence);
   }, []);
@@ -276,7 +312,7 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
     >
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          Player
+          Програвач
           <Button
             variant="ghost"
             size="icon-md"
@@ -298,7 +334,7 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
                 {/* <div className="absolute h-[100%] w-[100%] bg-white blur-lg z-[-1] opacity-50" /> */}
                 <iframe
                   id="player-iframe"
-                  src={`${playerState.episode.video_url}?site=hikka.io`}
+                  src={`${playerContext.playerState.episode.video_url}?site=hikka.io`}
                   loading="lazy"
                   style={{
                     borderRadius: '10px',
@@ -315,8 +351,8 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
               {getUserData && (
                 <WatchTogetherControls
                   container={container}
-                  playerState={playerState}
-                  setPlayerState={setPlayerState}
+                  playerState={playerContext.playerState}
+                  setPlayerState={playerContext.setPlayerState}
                   animeSlug={anime_data.slug}
                 />
               )}
@@ -337,59 +373,72 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
                 >
                   <MaterialSymbolsWidthFullOutlineSharp className="flex-1" />
                 </Button>
+                <ShareLinkButton
+                  container={container}
+                  time={time}
+                  isTimecodeLink={isTimecodeLink}
+                  timecodeLink={timecodeLink}
+                  setTimecodeLink={setTimecodeLink}
+                  toggleTimestampLink={toggleTimestampLink}
+                />
               </div>
             </div>
           </div>
           <div className="flex min-h-0 w-80 flex-col gap-4 rounded-md bg-secondary/30 p-4">
             <Tabs
-              value={playerState.provider}
+              value={playerContext.playerState.provider}
               onValueChange={(value) =>
                 handleSelectPlayer(value as PlayerSource)
               }
             >
               <TabsList className="w-full">
-                {playersAvaliable.map((elem) => (
+                {playersAvaliable(data).map((elem) => (
                   <TabsTrigger key={elem} value={elem} className="flex-1">
                     {elem.toUpperCase()}
                   </TabsTrigger>
                 ))}
               </TabsList>
             </Tabs>
-            <Select value={playerState.team} onValueChange={handleSelectTeam}>
+            <Select
+              value={playerContext.playerState.team}
+              onValueChange={handleSelectTeam}
+            >
               <SelectTrigger className="text-left">
                 <SelectValue placeholder="Team name">
-                  {playerState.team}
+                  {playerContext.playerState.team}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent container={container}>
-                {Object.keys(data[playerState.provider]).map((elem) => (
-                  <SelectItem key={elem} value={elem}>
-                    <div className="flex items-center gap-2">
-                      {STUDIO_LOGOS[
-                        STUDIO_CORRECTED_NAMES[elem]
-                          ? STUDIO_CORRECTED_NAMES[elem]
-                              .replaceAll(' ', '')
-                              .toLowerCase()
-                          : elem.replaceAll(' ', '').toLowerCase()
-                      ] && (
-                        <img
-                          className="size-5"
-                          style={{ borderRadius: '3px' }}
-                          src={
-                            STUDIO_LOGOS[
-                              STUDIO_CORRECTED_NAMES[elem]
-                                ? STUDIO_CORRECTED_NAMES[elem]
-                                    .replaceAll(' ', '')
-                                    .toLowerCase()
-                                : elem.replaceAll(' ', '').toLowerCase()
-                            ]
-                          }
-                        />
-                      )}
-                      {STUDIO_CORRECTED_NAMES[elem] || elem}
-                    </div>
-                  </SelectItem>
-                ))}
+                {Object.keys(data[playerContext.playerState.provider]).map(
+                  (elem) => (
+                    <SelectItem key={elem} value={elem}>
+                      <div className="flex items-center gap-2">
+                        {STUDIO_LOGOS[
+                          STUDIO_CORRECTED_NAMES[elem]
+                            ? STUDIO_CORRECTED_NAMES[elem]
+                                .replaceAll(' ', '')
+                                .toLowerCase()
+                            : elem.replaceAll(' ', '').toLowerCase()
+                        ] && (
+                          <img
+                            className="size-5"
+                            style={{ borderRadius: '3px' }}
+                            src={
+                              STUDIO_LOGOS[
+                                STUDIO_CORRECTED_NAMES[elem]
+                                  ? STUDIO_CORRECTED_NAMES[elem]
+                                      .replaceAll(' ', '')
+                                      .toLowerCase()
+                                  : elem.replaceAll(' ', '').toLowerCase()
+                              ]
+                            }
+                          />
+                        )}
+                        {STUDIO_CORRECTED_NAMES[elem] || elem}
+                      </div>
+                    </SelectItem>
+                  ),
+                )}
               </SelectContent>
             </Select>
             {data['type'] !== 'movie' && (
@@ -399,13 +448,13 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
                     key={ep.episode}
                     variant="ghost"
                     ref={
-                      ep.episode == playerState.episode.episode
+                      ep.episode == playerContext.playerState.episode.episode
                         ? currentEpisodeRef
                         : null
                     }
                     className={cn(
                       'w-full justify-start border',
-                      ep.episode == playerState.episode.episode
+                      ep.episode == playerContext.playerState.episode.episode
                         ? 'border-secondary'
                         : 'border-transparent',
                     )}

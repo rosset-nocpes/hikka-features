@@ -234,7 +234,7 @@ function App() {
               <Avatar className="cursor-pointer">
                 <AvatarImage src={getUserData?.['avatar']} />
                 <AvatarFallback>
-                  {getUserData?.['avatar'] || <MaterialSymbolsPersonRounded />}
+                  <MaterialSymbolsPersonRounded className="size-5" />
                 </AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>

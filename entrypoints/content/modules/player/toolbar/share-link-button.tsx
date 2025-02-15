@@ -1,0 +1,138 @@
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Copy, CopyCheck, Link } from 'lucide-react';
+import { FC } from 'react';
+import MaterialSymbolsShareOutline from '~icons/material-symbols/share-outline';
+import { usePlayerContext } from '../context/player-context';
+
+interface Props {
+  container: HTMLElement;
+  time: number;
+  isTimecodeLink: boolean;
+  timecodeLink: number;
+  setTimecodeLink: (value: number) => void;
+  toggleTimestampLink: (value: boolean) => void;
+}
+
+const ShareLinkButton: FC<Props> = ({
+  container,
+  time,
+  isTimecodeLink,
+  timecodeLink,
+  setTimecodeLink,
+  toggleTimestampLink,
+}) => {
+  const player = usePlayerContext();
+
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  const handleCopyShareLink = () => {
+    const query_params = new URLSearchParams();
+    query_params.append('playerProvider', player.playerState.provider);
+    query_params.append('playerTeam', player.playerState.team);
+    query_params.append(
+      'playerEpisode',
+      player.playerState.episode.episode.toString(),
+    );
+
+    if (isTimecodeLink) {
+      query_params.append('time', timecodeLink.toString());
+    }
+
+    navigator.clipboard.writeText(
+      `${window.location.origin}${window.location.pathname}?${query_params.toString()}`,
+    );
+  };
+
+  return (
+    <Popover
+      onOpenChange={(open) => {
+        if (open) {
+          toggleTimestampLink(false);
+          setTimecodeLink(Math.floor(time));
+        }
+      }}
+    >
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="sm">
+          <MaterialSymbolsShareOutline className="flex-1" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="flex flex-col gap-2" container={container}>
+        <div className="flex items-center gap-2 rounded-md bg-muted py-1 pr-1 pl-2">
+          <Link className="size-3.5 shrink-0 text-muted-foreground" />
+          <span className="gradient-mask-r-90 cursor-default overflow-hidden text-nowrap font-medium text-xs">
+            {window.location.href}
+          </span>
+          <TooltipProvider>
+            <Tooltip delayDuration={0} open={showTooltip}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-6 shrink-0 rounded-sm hover:bg-background"
+                  onClick={() => {
+                    handleCopyShareLink();
+                    setShowTooltip(true);
+                    setTimeout(() => setShowTooltip(false), 1000);
+                  }}
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent
+                side="left"
+                className="flex items-center gap-1 font-medium text-xs"
+              >
+                <CopyCheck className="size-3.5 shrink-0" />
+                Скопійовано
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        <div className="flex items-center gap-2">
+          <Checkbox
+            checked={isTimecodeLink}
+            onCheckedChange={() => toggleTimestampLink(!isTimecodeLink)}
+          />
+          <label
+            className={cn(
+              'flex items-center gap-2',
+              !isTimecodeLink && 'cursor-not-allowed opacity-70',
+            )}
+          >
+            <div className="text-muted-foreground text-xs">Починати з:</div>
+            <Input
+              disabled={!isTimecodeLink}
+              defaultValue={new Date(timecodeLink * 1000)
+                .toISOString()
+                .slice(11, 19)}
+              onBlur={(e) => {
+                const [hours, minutes, seconds] = e.target.value
+                  .split(':')
+                  .map(Number);
+                setTimecodeLink(hours * 3600 + minutes * 60 + seconds);
+              }}
+              placeholder="00:00:00"
+              className="h-6 w-24 text-xs focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0"
+            />
+          </label>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
+export default ShareLinkButton;
