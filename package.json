@@ -54,6 +54,7 @@
     "tailwindcss": "3.4.17",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^1.1.2",
+    "vite": "^6.0.8",
     "zod": "^3.24.1"
   },
   "devDependencies": {

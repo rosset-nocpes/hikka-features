@@ -1,16 +1,19 @@
+import { resolve } from 'node:path';
 import Icons from 'unplugin-icons/vite';
+import { loadEnv } from 'vite';
 import { defineConfig } from 'wxt';
 
+const env = loadEnv('', process.cwd(), '');
+const isPersistent = JSON.parse(env.WXT_PERSIST_BROWSER_DATA);
+const isWindows = process.platform === 'win32';
+
 export default defineConfig({
+  extensionApi: 'chrome',
   modules: ['@wxt-dev/module-react'],
   vite: () => ({
-    build: {
-      target: 'esnext',
-      // minify: 'esbuild',
-    },
     plugins: [Icons({ compiler: 'jsx', jsx: 'react' })],
     optimizeDeps: {
-      entries: ['src/**/*.{ts,tsx}'],
+      entries: ['entrypoints/content/**/*.tsx'],
       include: ['react', 'react-dom'],
     },
   }),
@@ -31,5 +34,9 @@ export default defineConfig({
   }),
   runner: {
     startUrls: ['https://hikka.io'],
+    chromiumArgs:
+      !isWindows && isPersistent ? ['--user-data-dir=./.wxt/chrome-data'] : [],
+    chromiumProfile: isWindows && isPersistent && resolve('.wxt/chrome-data'),
+    keepProfileChanges: isWindows && isPersistent,
   },
 });
