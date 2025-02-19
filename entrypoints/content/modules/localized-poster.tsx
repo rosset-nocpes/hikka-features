@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
+  TooltipPortal,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
@@ -41,7 +42,7 @@ const localizedPoster = async (ctx: ContentScriptContext, anime_data: any) => {
       const root = createRoot(wrapper);
       root.render(
         <QueryClientProvider client={queryClient}>
-          <LocalizedPoster anime_data={anime_data} />
+          <LocalizedPoster container={container} anime_data={anime_data} />
         </QueryClientProvider>,
       );
 
@@ -51,10 +52,11 @@ const localizedPoster = async (ctx: ContentScriptContext, anime_data: any) => {
 };
 
 interface Props {
+  container: HTMLElement;
   anime_data: any;
 }
 
-const LocalizedPoster: FC<Props> = ({ anime_data }) => {
+const LocalizedPoster: FC<Props> = ({ container, anime_data }) => {
   const { data, isLoading, isError } = useNotionData(anime_data.slug);
 
   const [isLoaded, setIsLoaded] = useState(false);
@@ -111,7 +113,9 @@ const LocalizedPoster: FC<Props> = ({ anime_data }) => {
                   )}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="top">Локалізувати постер</TooltipContent>
+              <TooltipPortal container={container}>
+                <TooltipContent side="top">Локалізувати постер</TooltipContent>
+              </TooltipPortal>
             </Tooltip>
           </TooltipProvider>
         </motion.div>
