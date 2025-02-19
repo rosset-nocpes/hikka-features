@@ -121,7 +121,7 @@ const LocalizedPoster: FC<Props> = ({ anime_data }) => {
           key="poster"
           alt="Localized Poster"
           decoding="async"
-          className="size-full object-cover"
+          className="size-full object-cover [overflow-clip-margin:unset]"
           style={{ color: 'transparent' }}
           src={data.poster}
           initial={{ opacity: 0 }}
