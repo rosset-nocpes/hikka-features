@@ -47,18 +47,16 @@ interface Props {
 }
 
 const ReadButton: FC<Props> = ({ ctx, slug }) => {
-  const [readerDisabled, toggleReaderDisabled] = useState(true);
   const [buttonState, setButtonState] = useState<boolean>();
-  const [readerState, toggleReaderState] = useState(false);
 
   const { data, isLoading, isError } = useReadData(slug);
 
-  //   watchButtonState.watch((state) => setButtonState(state));
+  readerButtonState.watch((state) => setButtonState(state));
 
   let dark = true;
   useEffect(() => {
     const initializeAsync = async () => {
-      setButtonState(await watchButtonState.getValue());
+      setButtonState(await readerButtonState.getValue());
       dark = await darkMode.getValue();
     };
 

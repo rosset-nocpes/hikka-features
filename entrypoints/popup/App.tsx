@@ -10,6 +10,7 @@ import ExperimentalSettings from './options/experimental-settings';
 import FandubSettings from './options/fandub-settings';
 import LocalizedPosterSettings from './options/localized-poster-settings';
 import PlayerSettings from './options/player-settings';
+import ReaderSettings from './options/reader-settings';
 import RecommendationBlockSettings from './options/recommendation-block-settings';
 import UserOptions from './options/user-options';
 
@@ -66,6 +67,7 @@ function App() {
         </h3>
         <div className="flex flex-col gap-5">
           <PlayerSettings />
+          <ReaderSettings />
           <AniButtonsSettings />
           <FandubSettings />
           <RecommendationBlockSettings />

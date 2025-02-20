@@ -1,29 +1,36 @@
-export const aniBackState = storage.defineItem<boolean>("local:aniBackState", {
+export const aniBackState = storage.defineItem<boolean>('local:aniBackState', {
   fallback: true,
 });
 
 export const localizedPosterState = storage.defineItem<boolean>(
-  "local:localizedPosterState",
+  'local:localizedPosterState',
   {
     fallback: false,
-  }
+  },
 );
 
 export const localizedPosterButtonState = storage.defineItem<boolean>(
-  "local:localizedPosterButtonState",
+  'local:localizedPosterButtonState',
   {
     fallback: true,
-  }
+  },
 );
 
 export const watchButtonState = storage.defineItem<boolean>(
-  "local:watchButtonState",
+  'local:watchButtonState',
   {
     fallback: true,
-  }
+  },
 );
 
-export const hikkaSecret = storage.defineItem<string>("local:hikkaSecret", {
+export const readerButtonState = storage.defineItem<boolean>(
+  'local:readerButtonState',
+  {
+    fallback: true,
+  },
+);
+
+export const hikkaSecret = storage.defineItem<string>('local:hikkaSecret', {
   version: 2,
   migrations: {
     2: (oldValue: HikkaSecretV1): string => {
@@ -33,13 +40,13 @@ export const hikkaSecret = storage.defineItem<string>("local:hikkaSecret", {
   },
 });
 
-export const userData = storage.defineItem<UserDataV2>("local:userData", {
+export const userData = storage.defineItem<UserDataV2>('local:userData', {
   version: 2,
   migrations: {
     2: (oldValue: UserDataV1): UserDataV2 => {
       let r: any;
       hikkaSecret.getValue().then((r) => {
-        if (r !== null && typeof r === "string") {
+        if (r !== null && typeof r === 'string') {
           getUserData().then((result) => {
             r = result;
           });
@@ -47,64 +54,64 @@ export const userData = storage.defineItem<UserDataV2>("local:userData", {
       });
 
       return {
-        hikkaId: r["reference"],
-        username: r["username"],
-        avatar: r["avatar"],
+        hikkaId: r['reference'],
+        username: r['username'],
+        avatar: r['avatar'],
       };
     },
   },
 });
 
 export const aniButtonsState = storage.defineItem<boolean>(
-  "local:aniButtonsState",
+  'local:aniButtonsState',
   {
     fallback: true,
-  }
+  },
 );
 
 export const fandubBlockState = storage.defineItem<boolean>(
-  "local:fandubBlockState",
+  'local:fandubBlockState',
   {
     fallback: true,
-  }
+  },
 );
 
 export const recommendationBlockState = storage.defineItem<boolean>(
-  "local:recommendationBlockState",
+  'local:recommendationBlockState',
   {
     fallback: true,
-  }
+  },
 );
 
 export const defaultPlayer = storage.defineItem<PlayerSource>(
-  "local:defaultPlayer",
+  'local:defaultPlayer',
   {
-    fallback: "moon",
-  }
+    fallback: 'moon',
+  },
 );
 
 export const devOptionsState = storage.defineItem<boolean>(
-  "local:devOptionsState",
+  'local:devOptionsState',
   {
     fallback: false,
-  }
+  },
 );
 
 export const backendBranch = storage.defineItem<BackendBranches>(
-  "local:backendBranch",
+  'local:backendBranch',
   {
-    fallback: import.meta.env.MODE === "development" ? "localhost" : "stable",
-  }
+    fallback: import.meta.env.MODE === 'development' ? 'localhost' : 'stable',
+  },
 );
 
-export const burunyaaMode = storage.defineItem<boolean>("local:burunyaaMode", {
+export const burunyaaMode = storage.defineItem<boolean>('local:burunyaaMode', {
   fallback: false,
 });
 
-export const richPresence = storage.defineItem<boolean>("local:richPresence", {
+export const richPresence = storage.defineItem<boolean>('local:richPresence', {
   fallback: false,
 });
 
-export const darkMode = storage.defineItem<boolean>("local:darkMode", {
+export const darkMode = storage.defineItem<boolean>('local:darkMode', {
   fallback: true,
 });
