@@ -40,11 +40,11 @@ const ShareLinkButton: FC<Props> = ({
 
   const handleCopyShareLink = () => {
     const query_params = new URLSearchParams();
-    query_params.append('playerProvider', player.playerState.provider);
-    query_params.append('playerTeam', player.playerState.team);
+    query_params.append('playerProvider', player.state.provider);
+    query_params.append('playerTeam', player.state.team);
     query_params.append(
       'playerEpisode',
-      player.playerState.episode.episode.toString(),
+      player.state.episode.episode.toString(),
     );
 
     if (isTimecodeLink) {

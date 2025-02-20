@@ -23,14 +23,13 @@ import {
 } from '@/components/ui/popover';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Copy, Link, MessageCircle, UserPlus, Users, X } from 'lucide-react';
-import { Dispatch, FC, SetStateAction, useState } from 'react';
+import { FC, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { usePlayerContext } from './context/player-context';
 
 interface Props {
   container: HTMLElement;
-  playerState: PlayerState;
-  setPlayerState: Dispatch<SetStateAction<PlayerState>>;
   animeSlug: string;
 }
 
@@ -38,12 +37,9 @@ const formSchema = z.object({
   roomId: z.string().min(7).max(7),
 });
 
-const WatchTogetherControls: FC<Props> = ({
-  container,
-  playerState,
-  setPlayerState,
-  animeSlug,
-}) => {
+const WatchTogetherControls: FC<Props> = ({ container, animeSlug }) => {
+  const playerContext = usePlayerContext();
+
   const [isHost, setIsHost] = useState(false);
   const [roomId, setRoomId] = useState('');
   const [showChat, setShowChat] = useState(false);
@@ -67,7 +63,7 @@ const WatchTogetherControls: FC<Props> = ({
 
         case 'joined':
           setRoomId(response.roomId);
-          setPlayerState({
+          playerContext.setState({
             provider: response.playerProvider,
             team: response.teamName,
             episode: response.episodeNumber,
@@ -96,9 +92,9 @@ const WatchTogetherControls: FC<Props> = ({
       action: 'create',
       animeSlug,
       playerInfo: {
-        playerProvider: playerState.provider,
-        teamName: playerState.team,
-        episodeNumber: playerState.episode.episode,
+        playerProvider: playerContext.state.provider,
+        teamName: playerContext.state.team,
+        episodeNumber: playerContext.state.episode.episode,
       },
     });
   };

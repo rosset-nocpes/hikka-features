@@ -106,15 +106,6 @@
 
     --sidebar-ring: 217.2 91.2% 59.8%;
 
-    & body {
-      background-image: linear-gradient(
-        180deg,
-        #160820 0%,
-        #000 60%,
-        #000 100%
-      );
-    }
-
     & .no-gradient {
       background-image: none !important;
     }
@@ -126,9 +117,7 @@
     @apply border-border;
   }
   body {
-    font-feature-settings:
-      'rlig' 1,
-      'calt' 1;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
