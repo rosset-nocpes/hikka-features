@@ -173,6 +173,7 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
   const [seekToSharedTime, toggleSeekToSharedTime] = useState(false);
   let duration = 0;
   const [time, setTime] = useState(0);
+  const isHandlingNext = useRef(false);
 
   useEffect(() => {
     const messageHandler = (event: MessageEvent) => {
@@ -180,13 +181,17 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
         case 'init':
           togglePlayerReady(true);
 
-          if (getNextEpState) {
+          if (getNextEpState && !isHandlingNext.current) {
+            isHandlingNext.current = true;
             setNextEpState(false);
             playerIframe.contentWindow?.postMessage({ api: 'play' }, '*');
 
             toast(
               `Зараз ви переглядаєте ${playerContext.state.episode.episode} епізод в озвучці ${playerContext.state.team}`,
             );
+            setTimeout(() => {
+              isHandlingNext.current = false;
+            }, 1000);
           }
 
           if (seekToSharedTime) {
