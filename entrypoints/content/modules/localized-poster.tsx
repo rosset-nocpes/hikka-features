@@ -131,7 +131,7 @@ const LocalizedPoster: FC<Props> = ({ container, anime_data }) => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.3, ease: 'cubic-bezier(0.77, 0, 0.18, 1)' }}
+          transition={{ duration: 0.2, ease: 'easeInOut' }}
         />
       )}
     </AnimatePresence>
