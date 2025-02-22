@@ -147,32 +147,36 @@ const FandubBlock: FC<Props> = ({ anime_data, smallerTitle }) => {
                         {STUDIO_CORRECTED_NAMES[team.title] || team.title}
                       </BlockEntry>
                     ))}
-                    {/* todo: fix/change animation */}
-                    <CollapsibleContent className="flex flex-col gap-2 overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
-                      {data.fandub.slice(3).map((team) => (
-                        <BlockEntry key={team.title} href={team.link}>
-                          <Avatar className="size-8 rounded-sm">
-                            <AvatarImage
-                              loading="lazy"
-                              src={
-                                STUDIO_LOGOS[
-                                  STUDIO_CORRECTED_NAMES[team.title]
-                                    ? STUDIO_CORRECTED_NAMES[team.title]
-                                        .replaceAll(' ', '')
-                                        .toLowerCase()
-                                    : team.title
-                                        .replaceAll(' ', '')
-                                        .toLowerCase()
-                                ]
-                              }
-                            />
-                            <AvatarFallback>
-                              {team.title[0].toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          {STUDIO_CORRECTED_NAMES[team.title] || team.title}
-                        </BlockEntry>
-                      ))}
+                    <CollapsibleContent
+                      asChild
+                      className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down"
+                    >
+                      <div className="flex flex-col gap-2">
+                        {data.fandub.slice(3).map((team) => (
+                          <BlockEntry key={team.title} href={team.link}>
+                            <Avatar className="size-8 rounded-sm">
+                              <AvatarImage
+                                loading="lazy"
+                                src={
+                                  STUDIO_LOGOS[
+                                    STUDIO_CORRECTED_NAMES[team.title]
+                                      ? STUDIO_CORRECTED_NAMES[team.title]
+                                          .replaceAll(' ', '')
+                                          .toLowerCase()
+                                      : team.title
+                                          .replaceAll(' ', '')
+                                          .toLowerCase()
+                                  ]
+                                }
+                              />
+                              <AvatarFallback>
+                                {team.title[0].toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            {STUDIO_CORRECTED_NAMES[team.title] || team.title}
+                          </BlockEntry>
+                        ))}
+                      </div>
                     </CollapsibleContent>
                     <div className="footer">
                       <CollapsibleTrigger asChild>
