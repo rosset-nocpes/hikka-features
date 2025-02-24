@@ -1,62 +1,48 @@
-import type { ValidComponent } from "solid-js";
-import { splitProps } from "solid-js";
+'use client';
 
-import * as ImagePrimitive from "@kobalte/core/image";
-import type { PolymorphicProps } from "@kobalte/core/polymorphic";
+import * as AvatarPrimitive from '@radix-ui/react-avatar';
+import * as React from 'react';
 
-type AvatarRootProps<T extends ValidComponent = "span"> =
-  ImagePrimitive.ImageRootProps<T> & {
-    class?: string | undefined;
-  };
+const Avatar = React.forwardRef<
+  React.ElementRef<typeof AvatarPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root>
+>(({ className, ...props }, ref) => (
+  <AvatarPrimitive.Root
+    ref={ref}
+    className={cn(
+      'relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full',
+      className,
+    )}
+    {...props}
+  />
+));
+Avatar.displayName = AvatarPrimitive.Root.displayName;
 
-const Avatar = <T extends ValidComponent = "span">(
-  props: PolymorphicProps<T, AvatarRootProps<T>>
-) => {
-  const [local, others] = splitProps(props as AvatarRootProps, ["class"]);
-  return (
-    <ImagePrimitive.Root
-      class={cn(
-        "relative flex size-10 shrink-0 overflow-hidden rounded-full",
-        local.class
-      )}
-      {...others}
-    />
-  );
-};
+const AvatarImage = React.forwardRef<
+  React.ElementRef<typeof AvatarPrimitive.Image>,
+  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image>
+>(({ className, ...props }, ref) => (
+  <AvatarPrimitive.Image
+    ref={ref}
+    className={cn('aspect-square h-full w-full', className)}
+    {...props}
+  />
+));
+AvatarImage.displayName = AvatarPrimitive.Image.displayName;
 
-type AvatarImageProps<T extends ValidComponent = "img"> =
-  ImagePrimitive.ImageImgProps<T> & {
-    class?: string | undefined;
-  };
+const AvatarFallback = React.forwardRef<
+  React.ElementRef<typeof AvatarPrimitive.Fallback>,
+  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Fallback>
+>(({ className, ...props }, ref) => (
+  <AvatarPrimitive.Fallback
+    ref={ref}
+    className={cn(
+      'flex h-full w-full items-center justify-center bg-muted',
+      className,
+    )}
+    {...props}
+  />
+));
+AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName;
 
-const AvatarImage = <T extends ValidComponent = "img">(
-  props: PolymorphicProps<T, AvatarImageProps<T>>
-) => {
-  const [local, others] = splitProps(props as AvatarImageProps, ["class"]);
-  return (
-    <ImagePrimitive.Img
-      class={cn("aspect-square size-full", local.class)}
-      {...others}
-    />
-  );
-};
-
-type AvatarFallbackProps<T extends ValidComponent = "span"> =
-  ImagePrimitive.ImageFallbackProps<T> & { class?: string | undefined };
-
-const AvatarFallback = <T extends ValidComponent = "span">(
-  props: PolymorphicProps<T, AvatarFallbackProps<T>>
-) => {
-  const [local, others] = splitProps(props as AvatarFallbackProps, ["class"]);
-  return (
-    <ImagePrimitive.Fallback
-      class={cn(
-        "flex size-full items-center justify-center rounded-full bg-muted",
-        local.class
-      )}
-      {...others}
-    />
-  );
-};
-
-export { Avatar, AvatarImage, AvatarFallback };
+export { Avatar, AvatarFallback, AvatarImage };

@@ -1,11 +1,8 @@
-import type { Component, ComponentProps } from "solid-js";
-import { splitProps } from "solid-js";
-
-import type { VariantProps } from "class-variance-authority";
-import { cva } from "class-variance-authority";
+import { cva, type VariantProps } from "class-variance-authority";
+import * as React from "react";
 
 const badgeVariants = cva(
-  "inline-flex items-center border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
   {
     variants: {
       variant: {
@@ -24,24 +21,14 @@ const badgeVariants = cva(
   }
 );
 
-type BadgeProps = ComponentProps<"div"> &
-  VariantProps<typeof badgeVariants> & {
-    round?: boolean;
-  };
+export interface BadgeProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof badgeVariants> {}
 
-const Badge: Component<BadgeProps> = (props) => {
-  const [local, others] = splitProps(props, ["class", "variant", "round"]);
+function Badge({ className, variant, ...props }: BadgeProps) {
   return (
-    <div
-      class={cn(
-        badgeVariants({ variant: local.variant }),
-        local.round ? "rounded-full" : "rounded-md",
-        local.class
-      )}
-      {...others}
-    />
+    <div className={cn(badgeVariants({ variant }), className)} {...props} />
   );
-};
+}
 
-export type { BadgeProps };
 export { Badge, badgeVariants };

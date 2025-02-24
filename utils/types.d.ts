@@ -1,33 +1,74 @@
 export {};
 
 declare global {
-  type MediaType = "anime" | "manga" | "novel";
+  type MediaType = 'anime' | 'manga' | 'novel';
 
-  type InfoType = "character" | "person";
+  type InfoType = 'character' | 'person';
 
   type SourcesType =
-    | "mal"
-    | "anilist"
-    | "anidb"
-    | "ann"
-    | "wiki"
-    | "amanogawa"
-    | "mu";
+    | 'mal'
+    | 'anilist'
+    | 'anidb'
+    | 'ann'
+    | 'wiki'
+    | 'amanogawa'
+    | 'mu';
   // | "dengeki"
 
-  type PlayerSource = "moon" | "ashdi";
+  type PlayerSource = 'moon' | 'ashdi';
 
-  type PlayerData = PlayerSource | "type";
+  type PlayerData = PlayerSource | 'type';
 
-  type BackendBranches = "stable" | "beta";
+  type BackendBranches = 'stable' | 'beta' | 'localhost';
 
-  type UserData = {
+  type UserDataV1 = {
     username: string;
+    description?: string;
     avatar: string;
   };
 
-  type HikkaSecret = {
+  type UserDataV2 = {
+    hikkaId: string;
+    username: string;
+    description?: string;
+    avatar: string;
+  };
+
+  type HikkaSecretV1 = {
     secret: string;
     expiration: number;
   };
+
+  type MangaScanlationGroup = {
+    id: string;
+    name: string;
+    website: string;
+    description: string;
+  };
+
+  type MangaUser = {
+    id: string;
+    username: string;
+  };
+
+  type ChapterDataEntry = {
+    id: string;
+    volume: number;
+    chapter: number;
+    title: string;
+    pages: number;
+    scanlation_groups: MangaScanlationGroup[];
+    users: MangaUser[];
+  };
+
+  interface PlayerState {
+    provider: PlayerSource;
+    team: string;
+    episode: API.EpisodeData;
+  }
+
+  interface ReaderState {
+    chapterData: API.ChapterData;
+    images: string[];
+  }
 }
