@@ -1,3 +1,4 @@
+import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Button } from '@/components/ui/button';
 import useRecommendation from '@/hooks/use-recommendation';
 import HikkaFLogoSmall from '@/public/hikka-features-small.svg';
@@ -96,13 +97,16 @@ const RecommendationBlock: FC<Props> = ({ anime_data }) => {
               </a>
             </Button>
           </div>
-          <div className="-my-4 no-scrollbar -mx-4 gradient-mask-r-90-d md:gradient-mask-none relative grid auto-cols-scroll grid-flow-col grid-cols-scroll gap-4 overflow-x-scroll px-4 py-4 md:grid-cols-4 lg:gap-8">
+          <div className="-my-4 no-scrollbar -mx-4 gradient-mask-r-90-d md:gradient-mask-none relative grid auto-cols-scroll grid-flow-col grid-cols-scroll gap-4 overflow-auto px-4 py-4 md:grid-cols-4 md:overflow-x-scroll lg:gap-8">
             {isLoading
               ? Array.from({ length: 4 }).map(() => (
-                  <div
-                    className="skeleton animate-pulse rounded-md bg-secondary/60"
-                    style={{ paddingBottom: '142.857%' }}
-                  />
+                  <div className="flex flex-col gap-2">
+                    <AspectRatio
+                      ratio={0.7}
+                      className="skeleton animate-pulse rounded-md bg-secondary/60"
+                    />
+                    <div className="skeleton h-5 animate-pulse rounded-full bg-secondary/60" />
+                  </div>
                 ))
               : data?.recommendations.map((item) => (
                   <a
@@ -111,9 +115,9 @@ const RecommendationBlock: FC<Props> = ({ anime_data }) => {
                     rel="noopener noreferrer"
                     className="flex flex-col gap-2"
                   >
-                    <div
-                      className="relative overflow-hidden rounded-md"
-                      style={{ paddingBottom: '142.857%' }}
+                    <AspectRatio
+                      ratio={0.7}
+                      className="relative w-full overflow-hidden rounded-md bg-muted"
                     >
                       <img
                         className="absolute inset-0 h-full w-full bg-secondary/30 object-cover"
@@ -138,7 +142,7 @@ const RecommendationBlock: FC<Props> = ({ anime_data }) => {
                           (item?.mal.votes / data.maxSingleVotes) * 100,
                         )}
                       </p>
-                    </div>
+                    </AspectRatio>
                     <span className="line-clamp-2 font-medium text-sm leading-5">
                       {item?.title_ua || item?.title_en || item?.title_ja}
                     </span>
