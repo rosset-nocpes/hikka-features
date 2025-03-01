@@ -311,13 +311,15 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
             <div
               className={cn(isFullscreen && 'absolute inset-0 z-10 size-full')}
             >
-              <AspectRatio ratio={16 / 9}>
-                {/* <div className="absolute h-[100%] w-[100%] bg-white blur-lg z-[-1] opacity-50" /> */}
+              <AspectRatio
+                ratio={16 / 9}
+                className="overflow-hidden rounded-sm bg-secondary/30"
+              >
                 <iframe
                   id="player-iframe"
                   src={`${playerContext.state.episode.video_url}?site=hikka.io`}
                   loading="lazy"
-                  className="z-[2] size-full rounded-sm"
+                  className="z-[2] size-full"
                   allow="fullscreen; accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
                   allowFullScreen
                 ></iframe>
