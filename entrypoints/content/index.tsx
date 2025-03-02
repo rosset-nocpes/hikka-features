@@ -63,7 +63,7 @@ export default defineContentScript({
     // Only for edit page!
     const isModerator = () =>
       document.evaluate(
-        "/html/body/div/main/div/div[1]/div/div[1]/div[2]",
+        "/html/body/div/div/main/div/div[1]/div/div[1]/div[2]",
         document,
         null,
         XPathResult.BOOLEAN_TYPE,

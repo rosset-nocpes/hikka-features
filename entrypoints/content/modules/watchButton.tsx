@@ -62,7 +62,7 @@ export default async function watchButton(
     ),
     watchButtonLocation ||
       document.querySelector(
-        "body > div > main > div > div.flex.flex-col.gap-4 > div.flex.w-full.flex-col.gap-4 > div > div"
+        "main > div > div.flex.flex-col.gap-4 > div.flex.w-full.flex-col.gap-4 > div > div"
       )!
   );
 }

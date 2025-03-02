@@ -34,7 +34,7 @@ export default async function FandubBlock(
             >
               Від команд
               <a
-                href="https://cprcatalog.notion.site/65526ba93733463aa6c6bcf588cd9682"
+                href="https://drbryanman.github.io/CPRcatalog/#/"
                 target="_blank"
               >
                 <img src={HFxCPRBadge} style="height: 20px" />
@@ -177,7 +177,7 @@ export default async function FandubBlock(
     ),
     location ||
       document.querySelector(
-        "body > div > main > div > div.flex.flex-col.gap-4 > div.flex.w-full.flex-col.gap-4 > div"
+        "main > div > div.flex.flex-col.gap-4 > div.flex.w-full.flex-col.gap-4 > div"
       )!
   );
 }

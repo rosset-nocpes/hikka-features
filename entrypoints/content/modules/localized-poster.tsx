@@ -50,11 +50,9 @@ export default async function localizedPoster(
         <Show when={poster_state() && isLoaded()}>
           <img
             alt="Localized Poster"
-            width="150"
-            height="225"
             decoding="async"
             class="opacity-100 !transition size-full object-cover"
-            style={{ color: "transparent" }}
+            style={{ color: "transparent", "overflow-clip-margin": "unset" }}
             src={getNotionData() && getNotionData()["poster"]}
           />
         </Show>
