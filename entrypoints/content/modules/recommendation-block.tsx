@@ -26,7 +26,7 @@ const recommendationBlock = async (
     anchor:
       location ||
       document.querySelector(
-        'body > div > main > div > div.flex.flex-col.gap-12 > div.grid.grid-cols-1.gap-12 > div.relative.order-2.flex.flex-col.gap-12',
+        'main > div > div.flex.flex-col.gap-12 > div.grid.grid-cols-1.gap-12 > div.relative.order-2.flex.flex-col.gap-12',
       )!,
     async onMount(container) {
       const wrapper = document.createElement('div');

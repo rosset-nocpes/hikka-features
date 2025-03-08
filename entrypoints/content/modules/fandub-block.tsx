@@ -33,7 +33,7 @@ const fandubBlock = async (
     anchor:
       location ||
       document.querySelector(
-        'body > div > main > div > div.flex.flex-col.gap-4 > div.flex.w-full.flex-col.gap-4 > div',
+        'main > div > div.flex.flex-col.gap-4 > div.flex.w-full.flex-col.gap-4 > div',
       )!,
     async onMount(container) {
       const wrapper = document.createElement('div');
@@ -59,10 +59,6 @@ interface Props {
 }
 
 const FandubBlock: FC<Props> = ({ anime_data, smallerTitle }) => {
-  //   if (document.body.querySelectorAll("#teams-block").length !== 0) {
-  //     return;
-  //   }
-
   const { data, isLoading, isError } = useNotionData(anime_data.slug);
 
   const [isOpen, setIsOpen] = useState(false);
