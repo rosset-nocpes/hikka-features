@@ -19,16 +19,10 @@ import {
 interface Props {
   container: HTMLElement;
   data: API.WatchData;
-  episodesData: API.EpisodeData[];
   toggleWatchedState: (state: boolean) => void;
 }
 
-const PlayerSidebar: FC<Props> = ({
-  container,
-  data,
-  episodesData,
-  toggleWatchedState,
-}) => {
+const PlayerSidebar: FC<Props> = ({ container, data, toggleWatchedState }) => {
   const playerContext = usePlayerContext();
 
   const handleSelectEpisode = (value: API.EpisodeData) => {
@@ -43,15 +37,20 @@ const PlayerSidebar: FC<Props> = ({
         (episode: API.EpisodeData) => episode.episode === getWatched() + 1,
       ) || data[value][newTeamName][0];
 
+    const newEpisodeData = data[value][newTeamName];
+
     playerContext.setState({
       provider: value,
       team: newTeamName,
-      episode: newEpisode,
+      episodeData: newEpisodeData,
+      currentEpisode: newEpisode,
     });
     toggleWatchedState(false);
   };
 
   const handleSelectTeam = (value: string) => {
+    const newEpisodeData = data[playerContext.state.provider][value];
+
     const newEpisode =
       data[playerContext.state.provider][value].find(
         (episode: API.EpisodeData) => episode.episode === getWatched() + 1,
@@ -60,7 +59,8 @@ const PlayerSidebar: FC<Props> = ({
     playerContext.setState((prev) => ({
       ...prev,
       team: value,
-      episode: newEpisode,
+      episodeData: newEpisodeData,
+      currentEpisode: newEpisode,
     }));
     toggleWatchedState(false);
   };
@@ -124,18 +124,18 @@ const PlayerSidebar: FC<Props> = ({
       </Select>
       {data['type'] !== 'movie' && (
         <ScrollArea className="flex-1 rounded-md border bg-background p-2">
-          {episodesData.map((ep) => (
+          {playerContext.state.episodeData.map((ep) => (
             <Button
               key={ep.episode}
               variant="ghost"
               ref={
-                ep.episode == playerContext.state.episode.episode
+                ep.episode == playerContext.state.currentEpisode.episode
                   ? currentEpisodeRef
                   : null
               }
               className={cn(
                 'w-full justify-start border',
-                ep.episode == playerContext.state.episode.episode
+                ep.episode == playerContext.state.currentEpisode.episode
                   ? 'border-secondary'
                   : 'border-transparent',
               )}

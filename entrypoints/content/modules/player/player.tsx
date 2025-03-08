@@ -103,10 +103,6 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
     '#player-iframe',
   ) as HTMLIFrameElement;
 
-  const [episodesData, setEpisodesData] = useState(
-    data[playerContext.state.provider][playerContext.state.team],
-  );
-
   const [isPlayerReady, togglePlayerReady] = useState(false);
   const [getNextEpState, setNextEpState] = useState(false);
   const [getWatchedState, toggleWatchedState] = useState(false);
@@ -128,27 +124,14 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
         (episode: API.EpisodeData) => episode.episode === getWatched() + 1,
       ) || data[value][newTeamName][0];
 
+    const newEpisodeData = data[value][newTeamName];
+
     playerContext.setState({
       provider: value,
       team: newTeamName,
-      episode: newEpisode,
+      episodeData: newEpisodeData,
+      currentEpisode: newEpisode,
     });
-    setEpisodesData(data[value][newTeamName]);
-    toggleWatchedState(false);
-  };
-
-  const handleSelectTeam = (value: string) => {
-    const newEpisode =
-      data[playerContext.state.provider][value].find(
-        (episode: API.EpisodeData) => episode.episode === getWatched() + 1,
-      ) || data[playerContext.state.provider][value][0];
-
-    playerContext.setState((prev) => ({
-      ...prev,
-      team: value,
-      episode: newEpisode,
-    }));
-    setEpisodesData(data[playerContext.state.provider][value]);
     toggleWatchedState(false);
   };
 
@@ -187,7 +170,7 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
             playerIframe.contentWindow?.postMessage({ api: 'play' }, '*');
 
             toast(
-              `Зараз ви переглядаєте ${playerContext.state.episode.episode} епізод в озвучці ${playerContext.state.team}`,
+              `Зараз ви переглядаєте ${playerContext.state.currentEpisode.episode} епізод в озвучці ${playerContext.state.team}`,
             );
             setTimeout(() => {
               isHandlingNext.current = false;
@@ -213,7 +196,10 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
             !getWatchedState &&
             isPlayerReady
           ) {
-            if (getWatched() + 1 === playerContext.state.episode.episode) {
+            if (
+              getWatched() + 1 ===
+              playerContext.state.currentEpisode.episode
+            ) {
               (
                 document.body.querySelector(
                   'div.inline-flex:nth-child(2) button:nth-child(2)',
@@ -229,14 +215,16 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
             !getNextEpState &&
             data[playerContext.state.provider][playerContext.state.team].find(
               (episode: API.EpisodeData) =>
-                episode.episode === playerContext.state.episode.episode + 1,
+                episode.episode ===
+                playerContext.state.currentEpisode.episode + 1,
             )
           ) {
             setNextEpState(true);
             handleSelectEpisode(
               data[playerContext.state.provider][playerContext.state.team].find(
                 (episode: API.EpisodeData) =>
-                  episode.episode === playerContext.state.episode.episode + 1,
+                  episode.episode ===
+                  playerContext.state.currentEpisode.episode + 1,
               )!,
             );
           }
@@ -317,7 +305,7 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
               >
                 <iframe
                   id="player-iframe"
-                  src={`${playerContext.state.episode.video_url}?site=hikka.io`}
+                  src={`${playerContext.state.currentEpisode.video_url}?site=hikka.io`}
                   loading="lazy"
                   className="z-[2] size-full"
                   allow="fullscreen; accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
@@ -341,7 +329,6 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
           <PlayerSidebar
             container={container}
             data={data}
-            episodesData={episodesData}
             toggleWatchedState={toggleWatchedState}
           />
         </div>

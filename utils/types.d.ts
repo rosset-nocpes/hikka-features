@@ -64,7 +64,8 @@ declare global {
   interface PlayerState {
     provider: PlayerSource;
     team: string;
-    episode: API.EpisodeData;
+    episodeData: API.EpisodeData[];
+    currentEpisode: API.EpisodeData;
   }
 
   interface ReaderState {

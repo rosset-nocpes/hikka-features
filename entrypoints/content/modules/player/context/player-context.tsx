@@ -70,6 +70,8 @@ const getInitialPlayerState = (
       ? sharedParams.team!
       : Object.keys(data[provider])[0];
 
+  const episodeData = data[provider][team];
+
   // Find episode
   const episodes = data[provider][team];
   const targetEpisode = isShared
@@ -79,7 +81,8 @@ const getInitialPlayerState = (
   return {
     provider,
     team,
-    episode: targetEpisode ?? episodes[0],
+    episodeData,
+    currentEpisode: targetEpisode ?? episodes[0],
   };
 };
 
