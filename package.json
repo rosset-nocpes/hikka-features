@@ -54,7 +54,7 @@
     "tailwindcss": "3.4.17",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^1.1.2",
-    "vite": "6.0.8",
+    "vite": "6.2.1",
     "zod": "^3.24.2"
   },
   "devDependencies": {
@@ -71,6 +71,6 @@
     "rollup-plugin-visualizer": "^5.14.0",
     "typescript": "^5.7.3",
     "unplugin-icons": "^22.1.0",
-    "wxt": "^0.19.27"
+    "wxt": "^0.19.29"
   }
 }
