@@ -4,7 +4,7 @@ import aniBackground from './modules/ani-background';
 // import UCharURL from "@/utils/u-char-url";
 import aniButtons from './modules/ani-buttons';
 import fandubBlock from './modules/fandub-block';
-import localizedPoster from './modules/localized-poster';
+import localizedPosterButton from './modules/localized-poster/localized-poster-button';
 import watchButton from './modules/player/watchButton';
 import readButton from './modules/reader/readButton';
 import recommendationBlock from './modules/recommendation-block';
@@ -76,7 +76,7 @@ export default defineContentScript({
 
     // (await getPreviousAnimeSlug()) == "" ? setPreviousAnimeSlug("") : "";
 
-    browser.runtime.onMessage.addListener(async function (request) {
+    browser.runtime.onMessage.addListener(async function (request: any) {
       if ((request as any).type === 'page-rendered') {
         // TODO: make something with this removing
         const features = document.querySelectorAll('.hikka-features');
@@ -124,7 +124,7 @@ export default defineContentScript({
               (await recommendationBlock(ctx, anime_data))?.mount();
 
               (await fandubBlock(ctx, anime_data))?.mount();
-              (await localizedPoster(ctx, anime_data))?.mount();
+              (await localizedPosterButton(ctx, anime_data))?.mount();
             }
 
             // aniBackground
