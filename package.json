@@ -15,7 +15,7 @@
     "postinstall": "wxt prepare"
   },
   "dependencies": {
-    "@hookform/resolvers": "^3.10.0",
+    "@hookform/resolvers": "^4.1.3",
     "@radix-ui/react-aspect-ratio": "^1.1.2",
     "@radix-ui/react-avatar": "^1.1.3",
     "@radix-ui/react-checkbox": "^1.1.4",
@@ -64,6 +64,7 @@
     "@svgr/core": "^8.1.0",
     "@svgr/plugin-jsx": "^8.1.0",
     "@tanstack/eslint-plugin-query": "^5.66.1",
+    "@types/chrome": "^0.0.309",
     "@types/node": "^22.13.5",
     "@wxt-dev/module-react": "^1.1.3",
     "autoprefixer": "^10.4.20",
