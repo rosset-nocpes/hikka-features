@@ -88,7 +88,33 @@ const PlayerSidebar: FC<Props> = ({ container, data, toggleWatchedState }) => {
       <Select value={playerContext.state.team} onValueChange={handleSelectTeam}>
         <SelectTrigger className="text-left">
           <SelectValue placeholder="Team name">
-            {playerContext.state.team}
+            <div className="flex items-center gap-2">
+              {STUDIO_LOGOS[
+                STUDIO_CORRECTED_NAMES[playerContext.state.team]
+                  ? STUDIO_CORRECTED_NAMES[playerContext.state.team]
+                      .replaceAll(' ', '')
+                      .toLowerCase()
+                  : playerContext.state.team.replaceAll(' ', '').toLowerCase()
+              ] && (
+                <img
+                  className="size-5"
+                  style={{ borderRadius: '3px' }}
+                  src={
+                    STUDIO_LOGOS[
+                      STUDIO_CORRECTED_NAMES[playerContext.state.team]
+                        ? STUDIO_CORRECTED_NAMES[playerContext.state.team]
+                            .replaceAll(' ', '')
+                            .toLowerCase()
+                        : playerContext.state.team
+                            .replaceAll(' ', '')
+                            .toLowerCase()
+                    ]
+                  }
+                />
+              )}
+              {STUDIO_CORRECTED_NAMES[playerContext.state.team] ||
+                playerContext.state.team}
+            </div>
           </SelectValue>
         </SelectTrigger>
         <SelectContent container={container}>
