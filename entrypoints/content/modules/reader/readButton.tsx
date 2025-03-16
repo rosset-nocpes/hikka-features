@@ -21,7 +21,7 @@ const readButton = async (
     anchor:
       location ||
       document.querySelector(
-        'body > div > main > div > div.flex.flex-col.gap-4 > div.flex.w-full.flex-col.gap-4 > div > div',
+        'main > div > div.flex.flex-col.gap-4 > div.flex.w-full.flex-col.gap-4 > div > div',
       )!,
     async onMount(container) {
       const wrapper = document.createElement('div');
