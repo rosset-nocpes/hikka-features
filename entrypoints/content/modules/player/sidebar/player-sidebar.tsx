@@ -13,6 +13,7 @@ import {
 import { cn } from '@/utils/cn';
 import { FC, useEffect, useRef, useState } from 'react';
 import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
+import { usePlayerContext } from '../context/player-context';
 import player from '../player';
 import EpisodeList from './episode-list';
 import ProviderSelect from './provider-select';
@@ -21,21 +22,15 @@ import TeamSelect from './team-select';
 interface Props {
   container: HTMLElement;
   ctx: ContentScriptContext;
-  data: API.WatchData;
-  anime_data: any;
   toggleWatchedState: (state: boolean) => void;
 }
 
-const PlayerSidebar: FC<Props> = ({
-  container,
-  ctx,
-  data,
-  anime_data,
-  toggleWatchedState,
-}) => {
+const PlayerSidebar: FC<Props> = ({ container, ctx, toggleWatchedState }) => {
   const [isScrolled, setIsScrolled] = useState({ top: false, bottom: false });
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const playerContext = usePlayerContext();
+  const { data } = useWatchData(playerContext.state.animeData);
   const { open } = useSidebar();
 
   useEffect(() => {
@@ -77,7 +72,9 @@ const PlayerSidebar: FC<Props> = ({
                 variant="ghost"
                 size="sm"
                 onClick={() =>
-                  player(ctx, data!, anime_data)!.then((x) => x!.remove())
+                  player(ctx, data!, playerContext.state.animeData)!.then((x) =>
+                    x!.remove(),
+                  )
                 }
               >
                 <MaterialSymbolsCloseRounded />
@@ -92,13 +89,10 @@ const PlayerSidebar: FC<Props> = ({
         <SidebarMenu>
           <ProviderSelect
             container={container}
-            data={data}
             toggleWatchedState={toggleWatchedState}
           />
           <TeamSelect
             container={container}
-            data={data}
-            anime_data={anime_data}
             toggleWatchedState={toggleWatchedState}
           />
         </SidebarMenu>
@@ -115,7 +109,7 @@ const PlayerSidebar: FC<Props> = ({
           scrollbarWidth: 'none',
         }}
       >
-        <EpisodeList data={data} toggleWatchedState={toggleWatchedState} />
+        <EpisodeList toggleWatchedState={toggleWatchedState} />
       </SidebarContent>
       {/* <SidebarFooter>
         <WatchTogetherButton />

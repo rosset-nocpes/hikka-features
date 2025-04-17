@@ -2,12 +2,12 @@ import { Button } from '@/components/ui/button';
 import { FC } from 'react';
 import MaterialSymbolsFullscreen from '~icons/material-symbols/fullscreen';
 import MaterialSymbolsWidthFullOutlineSharp from '~icons/material-symbols/width-full-outline-sharp';
+import { usePlayerContext } from '../context/player-context';
 import WatchTogetherControls from '../watch-together-controls';
 import ShareLinkButton from './share-link-button';
 
 interface Props {
   container: HTMLElement;
-  animeSlug: string;
   time: number;
   isTimecodeLink: boolean;
   timecodeLink: number;
@@ -20,7 +20,6 @@ interface Props {
 
 const PlayerToolbar: FC<Props> = ({
   container,
-  animeSlug,
   time,
   isTimecodeLink,
   timecodeLink,
@@ -30,6 +29,8 @@ const PlayerToolbar: FC<Props> = ({
   toggleTheatreState,
   getTheatreState,
 }) => {
+  const playerContext = usePlayerContext();
+
   const [getUserData, setUserData] = useState<UserDataV2 | null>();
 
   useEffect(() => {
@@ -45,7 +46,10 @@ const PlayerToolbar: FC<Props> = ({
   return (
     <div className="flex items-center justify-end gap-2">
       {getUserData && (
-        <WatchTogetherControls container={container} animeSlug={animeSlug} />
+        <WatchTogetherControls
+          container={container}
+          animeSlug={playerContext.state.animeData.slug}
+        />
       )}
       <div className="flex items-center">
         <Button variant="ghost" size="sm" onClick={handleEnterFullscreen}>

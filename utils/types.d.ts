@@ -62,6 +62,7 @@ declare global {
   };
 
   interface PlayerState {
+    animeData: any;
     provider: PlayerSource;
     team: string;
     episodeData: API.EpisodeData[];

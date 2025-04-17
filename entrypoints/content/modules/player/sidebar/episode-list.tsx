@@ -10,11 +10,10 @@ import { FC } from 'react';
 import { getWatched, usePlayerContext } from '../context/player-context';
 
 interface Props {
-  data: API.WatchData;
   toggleWatchedState: (state: boolean) => void;
 }
 
-const EpisodeList: FC<Props> = ({ data, toggleWatchedState }) => {
+const EpisodeList: FC<Props> = ({ toggleWatchedState }) => {
   const { open } = useSidebar();
   const playerContext = usePlayerContext();
 

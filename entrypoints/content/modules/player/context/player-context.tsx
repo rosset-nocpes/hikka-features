@@ -53,6 +53,7 @@ export const getWatched = (): number => {
 
 const getInitialPlayerState = (
   data: API.WatchData,
+  anime_data: any,
   sharedParams: SharedPlayerParams,
   isShared: boolean,
 ): PlayerState => {
@@ -79,6 +80,7 @@ const getInitialPlayerState = (
     : episodes?.find((ep) => ep.episode === getWatched() + 1);
 
   return {
+    animeData: anime_data,
     provider,
     team,
     episodeData,
@@ -88,13 +90,18 @@ const getInitialPlayerState = (
 
 interface PlayerProviderProps extends PropsWithChildren {
   data: API.WatchData;
+  anime_data: any;
 }
 
-export const PlayerProvider: FC<PlayerProviderProps> = ({ children, data }) => {
+export const PlayerProvider: FC<PlayerProviderProps> = ({
+  children,
+  data,
+  anime_data,
+}) => {
   const [sharedParams, isShared] = useSharedPlayerParams();
 
   const [playerState, setPlayerState] = useState<PlayerState>(() =>
-    getInitialPlayerState(data, sharedParams, isShared),
+    getInitialPlayerState(data, anime_data, sharedParams, isShared),
   );
 
   return (

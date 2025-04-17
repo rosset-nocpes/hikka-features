@@ -13,26 +13,20 @@ import { getWatched, usePlayerContext } from '../context/player-context';
 
 interface Props {
   container: HTMLElement;
-  data: API.WatchData;
-  anime_data: any;
   toggleWatchedState: (state: boolean) => void;
 }
 
-const TeamSelect: FC<Props> = ({
-  container,
-  data,
-  anime_data,
-  toggleWatchedState,
-}) => {
+const TeamSelect: FC<Props> = ({ container, toggleWatchedState }) => {
   const playerContext = usePlayerContext();
+  const { data } = useWatchData(playerContext.state.animeData);
 
   const handleSelectTeam = (value: string) => {
-    const newEpisodeData = data[playerContext.state.provider][value];
+    const newEpisodeData = data![playerContext.state.provider][value];
 
     const newEpisode =
-      data[playerContext.state.provider][value].find(
+      data![playerContext.state.provider][value].find(
         (episode: API.EpisodeData) => episode.episode === getWatched() + 1,
-      ) || data[playerContext.state.provider][value][0];
+      ) || data![playerContext.state.provider][value][0];
 
     playerContext.setState((prev) => ({
       ...prev,
@@ -75,7 +69,7 @@ const TeamSelect: FC<Props> = ({
               </span>
               <span className="truncate text-xs">
                 {playerContext.state.episodeData.length}/
-                {anime_data.episodes_total}
+                {playerContext.state.animeData.episodes_total}
               </span>
             </div>
             <ChevronsUpDown className="ml-auto" />
@@ -92,7 +86,7 @@ const TeamSelect: FC<Props> = ({
           <DropdownMenuLabel className="text-muted-foreground text-xs">
             Команди
           </DropdownMenuLabel>
-          {Object.keys(data[playerContext.state.provider]).map((team) => (
+          {Object.keys(data![playerContext.state.provider]).map((team) => (
             <DropdownMenuItem
               key={team}
               onClick={() => handleSelectTeam(team)}
@@ -117,8 +111,8 @@ const TeamSelect: FC<Props> = ({
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">{team}</span>
                   <span className="truncate text-xs">
-                    {data[playerContext.state.provider][team].length}/
-                    {anime_data.episodes_total}
+                    {data![playerContext.state.provider][team].length}/
+                    {playerContext.state.animeData.episodes_total}
                   </span>
                 </div>
               </div>

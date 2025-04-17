@@ -5,7 +5,9 @@ import { FC, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { toast } from 'sonner';
 
-import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '../..';
 import {
   PlayerProvider,
   getWatched,
@@ -36,23 +38,20 @@ export default function player(
 
       const root = createRoot(wrapper);
       root.render(
-        <SidebarProvider className="h-full w-full">
-          <PlayerProvider data={data!}>
-            <div
-              className="fixed z-0 size-full"
-              onClick={() =>
-                player(ctx, data!, anime_data)!.then((x) => x!.remove())
-              }
-            />
-            <Player
-              container={container}
-              ctx={ctx}
-              data={data}
-              anime_data={anime_data}
-            />
-            <Toaster position="top-center" />
-          </PlayerProvider>
-        </SidebarProvider>,
+        <QueryClientProvider client={queryClient}>
+          <SidebarProvider className="h-full w-full">
+            <PlayerProvider data={data!} anime_data={anime_data}>
+              <div
+                className="fixed z-0 size-full"
+                onClick={() =>
+                  player(ctx, data!, anime_data)!.then((x) => x!.remove())
+                }
+              />
+              <Player container={container} ctx={ctx} />
+              <Toaster position="top-center" />
+            </PlayerProvider>
+          </SidebarProvider>
+        </QueryClientProvider>,
       );
 
       return { root, wrapper };
@@ -77,13 +76,11 @@ interface AnimeData {
 interface Props {
   container: HTMLElement;
   ctx: ContentScriptContext;
-  data: API.WatchData;
-  anime_data: AnimeData;
 }
 
-export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
+export const Player: FC<Props> = ({ container, ctx }) => {
   const playerContext = usePlayerContext();
-  const { toggleSidebar, open } = useSidebar();
+  const { data } = useWatchData(playerContext.state.animeData);
 
   const [urlParams] = useState(() => {
     const path_params = new URLSearchParams(window.location.search);
@@ -120,13 +117,13 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
   };
 
   const handleSelectPlayer = (value: PlayerSource) => {
-    const newTeamName = Object.keys(data[value])[0];
+    const newTeamName = Object.keys(data![value])[0];
     const newEpisode =
-      data[value][newTeamName].find(
+      data![value][newTeamName].find(
         (episode: API.EpisodeData) => episode.episode === getWatched() + 1,
-      ) || data[value][newTeamName][0];
+      ) || data![value][newTeamName][0];
 
-    const newEpisodeData = data[value][newTeamName];
+    const newEpisodeData = data![value][newTeamName];
 
     playerContext.setState((prev) => ({
       ...prev,
@@ -214,7 +211,7 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
           break;
 
         case 'end':
-          const nextEpisode = data[playerContext.state.provider][
+          const nextEpisode = data![playerContext.state.provider][
             playerContext.state.team
           ].find(
             (episode: API.EpisodeData) =>
@@ -249,7 +246,7 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
 
       if (!urlParams.sharedCheck) {
         handleSelectPlayer(
-          playersAvaliable(data).includes(defaultPlayerValue)
+          playersAvaliable(data!).includes(defaultPlayerValue)
             ? defaultPlayerValue
             : defaultPlayerValue === 'moon'
               ? 'ashdi'
@@ -297,7 +294,6 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
           </div>
           <PlayerToolbar
             container={container}
-            animeSlug={anime_data.slug}
             time={time}
             isTimecodeLink={isTimecodeLink}
             timecodeLink={timecodeLink}
@@ -312,8 +308,6 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
       <PlayerSidebar
         container={container}
         ctx={ctx}
-        data={data}
-        anime_data={anime_data}
         toggleWatchedState={toggleWatchedState}
       />
     </Card>
