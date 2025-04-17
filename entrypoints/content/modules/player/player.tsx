@@ -1,20 +1,18 @@
-import { AspectRatio } from '@/components/ui/aspect-ratio';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ContentScriptContext } from '#imports';
+import { Card, CardContent } from '@/components/ui/card';
 import { Toaster } from '@/components/ui/sonner';
 import { FC, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { toast } from 'sonner';
-import { ContentScriptContext } from 'wxt/client';
-import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
 
-import PlayerSidebar from './_base/player-sidebar';
+import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import {
   PlayerProvider,
   getWatched,
   playersAvaliable,
   usePlayerContext,
 } from './context/player-context';
+import PlayerSidebar from './sidebar/player-sidebar';
 import PlayerToolbar from './toolbar/player-toolbar';
 
 export default function player(
@@ -38,21 +36,23 @@ export default function player(
 
       const root = createRoot(wrapper);
       root.render(
-        <PlayerProvider data={data!}>
-          <div
-            className="fixed z-0 size-full"
-            onClick={() =>
-              player(ctx, data!, anime_data)!.then((x) => x!.remove())
-            }
-          />
-          <Player
-            container={container}
-            ctx={ctx}
-            data={data}
-            anime_data={anime_data}
-          />
-          <Toaster position="top-center" />
-        </PlayerProvider>,
+        <SidebarProvider className="h-full w-full">
+          <PlayerProvider data={data!}>
+            <div
+              className="fixed z-0 size-full"
+              onClick={() =>
+                player(ctx, data!, anime_data)!.then((x) => x!.remove())
+              }
+            />
+            <Player
+              container={container}
+              ctx={ctx}
+              data={data}
+              anime_data={anime_data}
+            />
+            <Toaster position="top-center" />
+          </PlayerProvider>
+        </SidebarProvider>,
       );
 
       return { root, wrapper };
@@ -83,6 +83,7 @@ interface Props {
 
 export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
   const playerContext = usePlayerContext();
+  const { toggleSidebar, open } = useSidebar();
 
   const [urlParams] = useState(() => {
     const path_params = new URLSearchParams(window.location.search);
@@ -110,9 +111,10 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isTimecodeLink, toggleTimestampLink] = useState(false);
   const [timecodeLink, setTimecodeLink] = useState(0);
+  // const [showSidebar, toggleSidebar] = useState(true);
 
   const handleSelectEpisode = (value: API.EpisodeData) => {
-    playerContext.setState((prev) => ({ ...prev, episode: value }));
+    playerContext.setState((prev) => ({ ...prev, currentEpisode: value }));
     toggleWatchedState(false);
     togglePlayerReady(false);
   };
@@ -126,12 +128,13 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
 
     const newEpisodeData = data[value][newTeamName];
 
-    playerContext.setState({
+    playerContext.setState((prev) => ({
+      ...prev,
       provider: value,
       team: newTeamName,
       episodeData: newEpisodeData,
       currentEpisode: newEpisode,
-    });
+    }));
     toggleWatchedState(false);
   };
 
@@ -211,22 +214,17 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
           break;
 
         case 'end':
-          if (
-            !getNextEpState &&
-            data[playerContext.state.provider][playerContext.state.team].find(
-              (episode: API.EpisodeData) =>
-                episode.episode ===
-                playerContext.state.currentEpisode.episode + 1,
-            )
-          ) {
+          const nextEpisode = data[playerContext.state.provider][
+            playerContext.state.team
+          ].find(
+            (episode: API.EpisodeData) =>
+              episode.episode ===
+              playerContext.state.currentEpisode.episode + 1,
+          );
+
+          if (!getNextEpState && nextEpisode) {
             setNextEpState(true);
-            handleSelectEpisode(
-              data[playerContext.state.provider][playerContext.state.team].find(
-                (episode: API.EpisodeData) =>
-                  episode.episode ===
-                  playerContext.state.currentEpisode.episode + 1,
-              )!,
-            );
+            handleSelectEpisode(nextEpisode);
           }
           break;
       }
@@ -275,64 +273,49 @@ export const Player: FC<Props> = ({ container, ctx, data, anime_data }) => {
   return (
     <Card
       className={cn(
-        'z-10 flex h-[776px] max-h-full w-[1280px] flex-col overflow-hidden',
+        'relative z-10 flex size-full max-h-[720px] max-w-[1280px] overflow-hidden',
         getTheatreState && 'h-full',
       )}
     >
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          Програвач
-          <Button
-            variant="ghost"
-            size="icon-md"
-            onClick={() =>
-              player(ctx, data!, anime_data)!.then((x) => x!.remove())
-            }
+      <div className="flex flex-1 flex-col">
+        <CardContent className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 p-2">
+          <div
+            className={cn(
+              isFullscreen
+                ? 'fixed inset-0 z-20 size-full'
+                : 'aspect-video overflow-hidden rounded-sm bg-secondary/30',
+            )}
           >
-            <MaterialSymbolsCloseRounded />
-          </Button>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="min-h-0 flex-1">
-        <div className="flex size-full gap-4">
-          <div className="flex min-w-0 flex-1 flex-col gap-2">
-            <div
-              className={cn(isFullscreen && 'absolute inset-0 z-10 size-full')}
-            >
-              <AspectRatio
-                ratio={16 / 9}
-                className="overflow-hidden rounded-sm bg-secondary/30"
-              >
-                <iframe
-                  id="player-iframe"
-                  src={`${playerContext.state.currentEpisode.video_url}?site=hikka.io`}
-                  loading="lazy"
-                  className="z-[2] size-full"
-                  allow="fullscreen; accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
-                  allowFullScreen
-                ></iframe>
-              </AspectRatio>
-            </div>
-            <PlayerToolbar
-              container={container}
-              animeSlug={anime_data.slug}
-              time={time}
-              isTimecodeLink={isTimecodeLink}
-              timecodeLink={timecodeLink}
-              setTimecodeLink={setTimecodeLink}
-              toggleTimestampLink={toggleTimestampLink}
-              toggleTheatreState={toggleTheatreState}
-              getTheatreState={getTheatreState}
-              handleEnterFullscreen={handleEnterFullscreen}
-            />
+            <iframe
+              id="player-iframe"
+              src={`${playerContext.state.currentEpisode.video_url}?site=hikka.io`}
+              loading="lazy"
+              className="z-[2] size-full"
+              allow="fullscreen; accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+              allowFullScreen
+            ></iframe>
           </div>
-          <PlayerSidebar
+          <PlayerToolbar
             container={container}
-            data={data}
-            toggleWatchedState={toggleWatchedState}
+            animeSlug={anime_data.slug}
+            time={time}
+            isTimecodeLink={isTimecodeLink}
+            timecodeLink={timecodeLink}
+            setTimecodeLink={setTimecodeLink}
+            toggleTimestampLink={toggleTimestampLink}
+            toggleTheatreState={toggleTheatreState}
+            getTheatreState={getTheatreState}
+            handleEnterFullscreen={handleEnterFullscreen}
           />
-        </div>
-      </CardContent>
+        </CardContent>
+      </div>
+      <PlayerSidebar
+        container={container}
+        ctx={ctx}
+        data={data}
+        anime_data={anime_data}
+        toggleWatchedState={toggleWatchedState}
+      />
     </Card>
   );
 };

@@ -44,7 +44,7 @@ const ShareLinkButton: FC<Props> = ({
     query_params.append('playerTeam', player.state.team);
     query_params.append(
       'playerEpisode',
-      player.state.episode.episode.toString(),
+      player.state.currentEpisode.episode.toString(),
     );
 
     if (isTimecodeLink) {

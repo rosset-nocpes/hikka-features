@@ -63,11 +63,19 @@ const WatchTogetherControls: FC<Props> = ({ container, animeSlug }) => {
 
         case 'joined':
           setRoomId(response.roomId);
-          playerContext.setState({
+
+          const newEpisode = playerContext.state.episodeData.find(
+            (episode: API.EpisodeData) =>
+              episode.episode === response.episodeNumber,
+          );
+          if (!newEpisode) break;
+
+          playerContext.setState((prev) => ({
+            ...prev,
             provider: response.playerProvider,
             team: response.teamName,
-            episode: response.episodeNumber,
-          });
+            currentEpisode: newEpisode,
+          }));
 
           setShowChat(false);
           break;
@@ -94,7 +102,7 @@ const WatchTogetherControls: FC<Props> = ({ container, animeSlug }) => {
       playerInfo: {
         playerProvider: playerContext.state.provider,
         teamName: playerContext.state.team,
-        episodeNumber: playerContext.state.episode.episode,
+        episodeNumber: playerContext.state.currentEpisode.episode,
       },
     });
   };
@@ -117,6 +125,53 @@ const WatchTogetherControls: FC<Props> = ({ container, animeSlug }) => {
   const handleCopyRoomId = () => {
     navigator.clipboard.writeText(roomId);
   };
+
+  const handlePlaybackResume = () => {
+    browser.runtime.sendMessage(undefined, {
+      type: 'watch-together',
+      action: 'resume-playback',
+    });
+  };
+
+  const handlePlaybackPause = () => {
+    browser.runtime.sendMessage(undefined, {
+      type: 'watch-together',
+      action: 'pause-playback',
+    });
+  };
+
+  // useEffect(() => {
+  //   const messageHandler = (event: MessageEvent) => {
+  //     if (event.data.type !== 'watch-together') return;
+
+  //     switch (event.data.event) {
+  //       case 'resume-playback':
+  //         handlePlaybackResume();
+  //         break;
+
+  //       case 'pause-playback':
+  //         handlePlaybackPause();
+  //         break;
+  //     }
+  //   };
+
+  //   window.addEventListener('message', messageHandler);
+  //   return () => window.removeEventListener('message', messageHandler);
+  // }, []);
+
+  browser.runtime.onMessage.addListener(async (response: any) => {
+    if (response.type === 'watch-together') {
+      switch (response.action) {
+        case 'resume-playback':
+          console.log('resume-playback');
+          break;
+
+        case 'pause-playback':
+          console.log('pause-playback');
+          break;
+      }
+    }
+  });
 
   if (path_params.has('room')) {
     handleJoinRoom({ roomId: path_params.get('room')! });
@@ -226,6 +281,15 @@ const WatchTogetherControls: FC<Props> = ({ container, animeSlug }) => {
               </div>
             </PopoverContent>
           </Popover>
+
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8"
+            onClick={handlePlaybackPause}
+          >
+            TestPause
+          </Button>
 
           <Button
             size="sm"
