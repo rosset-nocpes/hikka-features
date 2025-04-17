@@ -1,7 +1,7 @@
+import { ContentScriptContext } from '#imports';
 import { AnimatePresence, motion } from 'motion/react';
 import { FC, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ContentScriptContext } from 'wxt/client';
 
 const aniBackground = async (
   ctx: ContentScriptContext,

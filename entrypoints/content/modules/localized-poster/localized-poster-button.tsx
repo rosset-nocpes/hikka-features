@@ -1,3 +1,4 @@
+import { ContentScriptContext } from '#imports';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -11,7 +12,6 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { FC, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ContentScriptContext } from 'wxt/client';
 import MaterialSymbolsPlannerBannerAdPtOutlineRounded from '~icons/material-symbols/planner-banner-ad-pt-outline-rounded';
 import MaterialSymbolsPlannerBannerAdPtRounded from '~icons/material-symbols/planner-banner-ad-pt-rounded';
 import { queryClient } from '../..';

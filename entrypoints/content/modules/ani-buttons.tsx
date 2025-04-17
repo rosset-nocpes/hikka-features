@@ -1,3 +1,4 @@
+import { ContentScriptContext } from '#imports';
 import useAmanogawaUrl from '@/hooks/use-amanogawa-url';
 import useMUUrl from '@/hooks/use-mu-url';
 import HikkaFLogoSmall from '@/public/hikka-features-small.svg';
@@ -5,7 +6,6 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { FC, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ContentScriptContext } from 'wxt/client';
 import { queryClient } from '..';
 
 interface Website {

@@ -1,3 +1,4 @@
+import { ContentScriptContext } from '#imports';
 import BlockEntry from '@/components/block-entry';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,6 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { FC, Fragment, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ContentScriptContext } from 'wxt/client';
 import MaterialSymbolsSadTabRounded from '~icons/material-symbols/sad-tab-rounded';
 import { queryClient } from '..';
 

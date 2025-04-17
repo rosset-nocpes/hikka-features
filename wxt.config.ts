@@ -8,7 +8,6 @@ const isPersistent = JSON.parse(env.WXT_PERSIST_BROWSER_DATA);
 const isWindows = process.platform === 'win32';
 
 export default defineConfig({
-  extensionApi: 'chrome',
   modules: ['@wxt-dev/module-react'],
   vite: () => ({
     plugins: [Icons({ compiler: 'jsx', jsx: 'react' })],
@@ -32,7 +31,7 @@ export default defineConfig({
       },
     },
   }),
-  runner: {
+  webExt: {
     startUrls: ['https://hikka.io'],
     chromiumArgs:
       !isWindows && isPersistent ? ['--user-data-dir=./.wxt/chrome-data'] : [],

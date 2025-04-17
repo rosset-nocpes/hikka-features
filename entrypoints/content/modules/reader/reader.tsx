@@ -1,3 +1,4 @@
+import { ContentScriptContext } from '#imports';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -27,7 +28,6 @@ import {
 import { AnimatePresence } from 'motion/react';
 import { FC, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ContentScriptContext } from 'wxt/client';
 import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
 import { queryClient } from '../..';
 import SelectChapter from './select-chapter';

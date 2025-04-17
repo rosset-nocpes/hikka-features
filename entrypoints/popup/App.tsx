@@ -50,7 +50,7 @@ function App() {
         className={cn(
           'flex w-[400px] flex-col gap-7 rounded-none p-[30px] font-inter font-semibold',
           getBurunyaaMode
-            ? 'bg-[url(https://media1.tenor.com/m/PDzKPqFw6f8AAAAC/neco-neco-arc.gif)]'
+            ? 'bg-[url(https://media1.tenor.com/m/PDzKPqFw6f8AAAAC/neco-neco-arc.gif)] bg-center bg-cover bg-no-repeat'
             : 'bg-black',
         )}
       >

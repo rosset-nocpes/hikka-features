@@ -1,3 +1,4 @@
+import { ContentScriptContext } from '#imports';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Button } from '@/components/ui/button';
 import useRecommendation from '@/hooks/use-recommendation';
@@ -6,7 +7,6 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { FC } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ContentScriptContext } from 'wxt/client';
 import MaterialSymbolsArrowRightAltRounded from '~icons/material-symbols/arrow-right-alt-rounded';
 import { queryClient } from '..';
 
@@ -97,7 +97,7 @@ const RecommendationBlock: FC<Props> = ({ anime_data }) => {
               </a>
             </Button>
           </div>
-          <div className="-my-4 no-scrollbar -mx-4 gradient-mask-r-90-d md:gradient-mask-none relative grid auto-cols-scroll grid-flow-col grid-cols-scroll gap-4 overflow-auto px-4 py-4 md:grid-cols-4 md:overflow-x-scroll lg:gap-8">
+          <div className="-my-4 no-scrollbar -mx-4 gradient-mask-r-90-d md:gradient-mask-none relative grid auto-cols-scroll grid-flow-col grid-cols-scroll gap-4 overflow-auto px-4 py-4 md:grid-cols-4 lg:gap-8">
             {isLoading
               ? Array.from({ length: 4 }).map(() => (
                   <div className="flex flex-col gap-2">
