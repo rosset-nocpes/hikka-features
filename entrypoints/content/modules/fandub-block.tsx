@@ -100,9 +100,12 @@ const FandubBlock: FC<Props> = ({ anime_data, smallerTitle }) => {
           </h3>
           <div className="flex flex-col gap-2">
             {isLoading &&
-              Array(3).fill(
-                <div className="skeleton h-10 animate-pulse bg-secondary/60" />,
-              )}
+              Array(3).map((_, i) => (
+                <div
+                  key={`skeleton-${i}`}
+                  className="skeleton h-10 animate-pulse bg-secondary/60"
+                />
+              ))}
             {(isError || (data && !data.fandub)) && (
               <BlockEntry className="cursor-default text-muted-foreground">
                 <Avatar className="size-8 rounded-sm">
@@ -185,7 +188,7 @@ const FandubBlock: FC<Props> = ({ anime_data, smallerTitle }) => {
                 )}
                 {data.fandub.length <= 3 &&
                   data.fandub.map((team) => (
-                    <BlockEntry href={team.link}>
+                    <BlockEntry key={team.title} href={team.link}>
                       <Avatar className="size-8 rounded-sm">
                         <AvatarImage
                           loading="lazy"
