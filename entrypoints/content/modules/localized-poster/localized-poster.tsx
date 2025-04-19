@@ -1,7 +1,9 @@
 import { ContentScriptContext } from '#imports';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { FC, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { queryClient } from '../..';
 
 export const posterState = {
   isVisible: false,
@@ -17,7 +19,7 @@ export const posterState = {
 
 const localizedPoster = async (
   ctx: ContentScriptContext,
-  data: API.NotionData | undefined,
+  slug: string,
   initialPosterState: boolean,
 ) => {
   posterState.isVisible = initialPosterState;
@@ -49,7 +51,9 @@ const localizedPoster = async (
       const root = createRoot(wrapper);
 
       root.render(
-        <LocalizedPoster data={data} initialState={initialPosterState} />,
+        <QueryClientProvider client={queryClient}>
+          <LocalizedPoster slug={slug} initialState={initialPosterState} />
+        </QueryClientProvider>,
       );
 
       return { root, wrapper };
@@ -58,11 +62,13 @@ const localizedPoster = async (
 };
 
 interface Props {
-  data: API.NotionData | undefined;
+  slug: string;
   initialState: boolean;
 }
 
-const LocalizedPoster: FC<Props> = ({ data, initialState }) => {
+const LocalizedPoster: FC<Props> = ({ slug, initialState }) => {
+  const { data } = useNotionData(slug);
+
   const [isLoaded, setIsLoaded] = useState(false);
   const [showPoster, setShowPoster] = useState(initialState);
 

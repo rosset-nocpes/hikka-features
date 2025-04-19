@@ -86,9 +86,11 @@ const LocalizedPosterButton: FC<Props> = ({ ctx, container, anime_data }) => {
   }, []);
 
   useEffect(() => {
-    if (initalized)
-      localizedPoster(ctx, data, isPosterVisible).then((ui) => ui?.mount());
-  }, [data, initalized]);
+    if (initalized && data?.poster)
+      localizedPoster(ctx, anime_data.slug, isPosterVisible).then((ui) =>
+        ui?.mount(),
+      );
+  }, [data, initalized, isPosterVisible]);
 
   const togglePoster = () => {
     const newState = !isPosterVisible;
