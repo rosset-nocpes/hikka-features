@@ -43,11 +43,10 @@ const TeamSelect: FC<Props> = ({ container, toggleWatchedState }) => {
         <DropdownMenuTrigger asChild>
           <SidebarMenuButton
             size="lg"
-            className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             tooltip={STUDIO_CORRECTED_NAMES[playerContext.state.team]}
             tooltipContainer={container}
           >
-            <Avatar className="size-8 rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
+            <Avatar className="size-8 rounded-md">
               <AvatarImage
                 src={
                   STUDIO_LOGOS[
