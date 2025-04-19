@@ -100,7 +100,7 @@ const FandubBlock: FC<Props> = ({ anime_data, smallerTitle }) => {
           </h3>
           <div className="flex flex-col gap-2">
             {isLoading &&
-              Array(3).map((_, i) => (
+              Array.from({ length: 3 }).map((_, i) => (
                 <div
                   key={`skeleton-${i}`}
                   className="skeleton h-10 animate-pulse bg-secondary/60"
