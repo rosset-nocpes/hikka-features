@@ -67,8 +67,12 @@ const TeamSelect: FC<Props> = ({ container, toggleWatchedState }) => {
                 {playerContext.state.team}
               </span>
               <span className="truncate text-xs">
-                {playerContext.state.episodeData.length}/
-                {playerContext.state.animeData.episodes_total}
+                {
+                  new Set(
+                    playerContext.state.episodeData.map((item) => item.episode),
+                  ).size
+                }
+                /{playerContext.state.animeData.episodes_total}
               </span>
             </div>
             <ChevronsUpDown className="ml-auto" />
@@ -110,8 +114,14 @@ const TeamSelect: FC<Props> = ({ container, toggleWatchedState }) => {
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">{team}</span>
                   <span className="truncate text-xs">
-                    {data![playerContext.state.provider][team].length}/
-                    {playerContext.state.animeData.episodes_total}
+                    {
+                      new Set(
+                        data![playerContext.state.provider][team].map(
+                          (item) => item.episode,
+                        ),
+                      ).size
+                    }
+                    /{playerContext.state.animeData.episodes_total}
                   </span>
                 </div>
               </div>
