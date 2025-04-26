@@ -71,6 +71,10 @@ const PlayerSidebar: FC<Props> = ({ container, ctx, toggleWatchedState }) => {
               <Button
                 variant="ghost"
                 size="sm"
+                className={cn(
+                  'transition-[margin] duration-300',
+                  !open && '-ml-2',
+                )}
                 onClick={() =>
                   player(ctx, data!, playerContext.state.animeData)!.then((x) =>
                     x!.remove(),
