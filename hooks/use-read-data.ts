@@ -12,7 +12,7 @@ const useReadData = (slug: string) => {
         throw new Error('Not found');
       }
 
-      return (await r.json()) as API.ChapterResponse;
+      return (await r.json()) as API.ReadData;
     },
     retry: false,
     staleTime: 0,

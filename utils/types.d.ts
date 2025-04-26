@@ -70,7 +70,9 @@ declare global {
   }
 
   interface ReaderState {
-    chapterData: API.ChapterData;
-    images: string[];
+    mangaData: API.ReadData;
+    currentChapter: API.ChapterData;
+    chapterImages: string[];
+    imagesLoading: boolean;
   }
 }

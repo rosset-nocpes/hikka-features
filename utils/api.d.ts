@@ -28,6 +28,11 @@ declare global {
     };
 
     /* Manga */
+    type ReadData = {
+      translators: Record<string, Omit<ScanlationGroup, 'name'>>;
+      chapters: ChapterData[];
+    };
+
     type ChapterData = {
       id: string;
       volume: number;
@@ -36,11 +41,6 @@ declare global {
       pages: number;
       scanlation_groups: ScanlationGroup[];
       users: ChapterUser[];
-    };
-
-    type ChapterResponse = {
-      translators: Record<string, Omit<ScanlationGroup, 'name'>>;
-      chapters: ChapterData[];
     };
 
     type ReadChapterData = {
