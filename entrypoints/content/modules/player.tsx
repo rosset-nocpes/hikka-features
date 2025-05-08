@@ -38,9 +38,7 @@ export default async function Player(
         ?.firstChild?.nodeValue!
     );
 
-  const playersAvaliable: PlayerSource[] = [];
-  data["moon"] ? playersAvaliable.push("moon") : null;
-  data["ashdi"] ? playersAvaliable.push("ashdi") : null;
+  const playersAvaliable = Object.keys(data).filter((key) => key !== 'type') as PlayerSource[];
 
   const [playerProvider, setPlayerProvider] = createSignal(
     playersAvaliable.includes(await defaultPlayer.getValue())
