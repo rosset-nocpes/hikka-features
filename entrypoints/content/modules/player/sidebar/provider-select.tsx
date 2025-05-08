@@ -6,7 +6,11 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
+import {
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from '@/components/ui/sidebar';
 import { ChevronsUpDown } from 'lucide-react';
 import { FC } from 'react';
 import {
@@ -23,6 +27,8 @@ interface Props {
 const ProviderSelect: FC<Props> = ({ container, toggleWatchedState }) => {
   const playerContext = usePlayerContext();
   const { data } = useWatchData(playerContext.state.animeData);
+
+  const { open } = useSidebar();
 
   const handleSelectPlayer = (value: PlayerSource) => {
     const newTeamName = Object.keys(data![value])[0];
@@ -68,10 +74,9 @@ const ProviderSelect: FC<Props> = ({ container, toggleWatchedState }) => {
         </DropdownMenuTrigger>
         <DropdownMenuContent
           className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-          align="end"
-          // side={isMobile ? "bottom" : "right"}
-          side="bottom"
-          // sideOffset={4}
+          align={open ? 'end' : 'start'}
+          side={open ? 'bottom' : 'left'}
+          sideOffset={open ? 0 : 12}
           container={container}
         >
           <DropdownMenuLabel className="text-muted-foreground text-xs">
