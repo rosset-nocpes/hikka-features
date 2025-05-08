@@ -43,9 +43,7 @@ export default async function Player(
   const [playerProvider, setPlayerProvider] = createSignal(
     playersAvaliable.includes(await defaultPlayer.getValue())
       ? await defaultPlayer.getValue()
-      : (await defaultPlayer.getValue()) === "moon"
-      ? "ashdi"
-      : "moon"
+      : playersAvaliable[0]
   );
   const [teamName, setTeamName] = createSignal(
     Object.keys(data[playerProvider()])[0]

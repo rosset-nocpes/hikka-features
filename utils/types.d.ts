@@ -1,4 +1,4 @@
-export {};
+export { };
 
 declare global {
   type MediaType = "anime" | "manga" | "novel";
@@ -15,7 +15,7 @@ declare global {
     | "mu";
   // | "dengeki"
 
-  type PlayerSource = "moon" | "ashdi";
+  type PlayerSource = "moon" | "ashdi" | "vidsrc";
 
   type PlayerData = PlayerSource | "type";
 
