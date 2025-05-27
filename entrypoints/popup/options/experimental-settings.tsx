@@ -1,3 +1,5 @@
+import { AnimatePresence, motion } from 'motion/react';
+import { FC } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Drawer,
@@ -15,8 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { AnimatePresence, motion } from 'motion/react';
-import { FC } from 'react';
 import MaterialSymbolsExperiment from '~icons/material-symbols/experiment';
 import SwitchOption from '../_base/switch-option';
 
@@ -35,10 +35,15 @@ const ExperimentalSettings: FC<Props> = ({
     null,
   );
 
+  const [getDevMode, toggleDevMode] = useState<boolean | null>(null);
+
   useEffect(() => {
-    backendBranch.getValue().then((branch) => {
-      setBackendBranch(branch);
-    });
+    Promise.all([backendBranch.getValue(), devMode.getValue()]).then(
+      ([backendBranch, devMode]) => {
+        setBackendBranch(backendBranch);
+        toggleDevMode(devMode);
+      },
+    );
   }, []);
 
   return (
@@ -69,6 +74,15 @@ const ExperimentalSettings: FC<Props> = ({
                     toggleBurunyaaMode(!getBurunyaaMode);
                   }}
                 />
+                <SwitchOption
+                  label="Режим розробника"
+                  description="Додає функції, які полегшують роботу з розширенням"
+                  checked={getDevMode!}
+                  onClick={() => {
+                    devMode.setValue(!getDevMode);
+                    toggleDevMode(!getDevMode);
+                  }}
+                />
                 <div className="flex items-center justify-between">
                   <label className="font-medium text-sm">Гілка бекенду</label>
                   <Select
@@ -79,11 +93,11 @@ const ExperimentalSettings: FC<Props> = ({
                       setBackendBranch(target);
                     }}
                   >
-                    <SelectTrigger className="w-24">
+                    <SelectTrigger className="w-32">
                       <SelectValue placeholder="Оберіть гілку бекенду" />
                     </SelectTrigger>
                     <SelectContent>
-                      {['stable', 'beta', 'localhost'].map((elem) => (
+                      {Object.keys(BACKEND_BRANCHES).map((elem) => (
                         <SelectItem key={elem} value={elem}>
                           {elem}
                         </SelectItem>

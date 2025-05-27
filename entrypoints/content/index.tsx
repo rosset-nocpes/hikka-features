@@ -3,6 +3,7 @@ import '../app.css';
 import aniBackground from './modules/ani-background';
 // import UCharURL from "@/utils/u-char-url";
 import aniButtons from './modules/ani-buttons';
+import devButtons from './modules/dev-buttons';
 import fandubBlock from './modules/fandub-block';
 import localizedPosterButton from './modules/localized-poster/localized-poster-button';
 import watchButton from './modules/player/watchButton';
@@ -109,10 +110,12 @@ export default defineContentScript({
               // queryClient.refetchQueries({
               //   queryKey: ['notion-data', 'watch-data'],
               // });
-
+              
               const anime_data = await (
                 await fetch(`https://api.hikka.io/anime/${anime_slug}`)
               ).json();
+
+              (await devButtons(ctx, anime_data))?.mount();
 
               // Watch button
               (await watchButton(ctx, anime_data))?.mount();
@@ -144,6 +147,8 @@ export default defineContentScript({
               const data = await (
                 await fetch(`https://api.hikka.io/${path}/${slug}`)
               ).json();
+
+              (await devButtons(ctx, data))?.mount();
 
               // readerButton
               (await readButton(ctx, slug))!.mount();

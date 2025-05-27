@@ -108,6 +108,10 @@ export const burunyaaMode = storage.defineItem<boolean>('local:burunyaaMode', {
   fallback: false,
 });
 
+export const devMode = storage.defineItem<boolean>('local:devMode', {
+  fallback: import.meta.env.MODE === 'development',
+});
+
 export const richPresence = storage.defineItem<boolean>('local:richPresence', {
   fallback: false,
 });
