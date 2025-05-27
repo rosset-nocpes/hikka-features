@@ -4,7 +4,7 @@ declare global {
   namespace API {
     /* Anime */
     type WatchData = {
-      type: 'tv' | 'movie';
+      type: 'tv' | 'movie' | 'ona';
       [key: string]: ProviderData;
     };
 

@@ -1,3 +1,5 @@
+import { Copy, CopyCheck, Link } from 'lucide-react';
+import { FC } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -12,8 +14,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Copy, CopyCheck, Link } from 'lucide-react';
-import { FC } from 'react';
 import MaterialSymbolsShareOutline from '~icons/material-symbols/share-outline';
 import { usePlayerContext } from '../context/player-context';
 
@@ -65,10 +65,15 @@ const ShareLinkButton: FC<Props> = ({
         }
       }}
     >
-      <PopoverTrigger asChild>
-        <Button variant="ghost" size="sm">
-          <MaterialSymbolsShareOutline className="flex-1" />
-        </Button>
+      <PopoverTrigger>
+        <Tooltip>
+          <TooltipTrigger>
+            <Button variant="ghost" size="sm">
+              <MaterialSymbolsShareOutline className="flex-1" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Поділитися</TooltipContent>
+        </Tooltip>
       </PopoverTrigger>
       <PopoverContent className="flex flex-col gap-2" container={container}>
         <div className="flex items-center gap-2 rounded-md bg-muted py-1 pr-1 pl-2">

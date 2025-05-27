@@ -116,6 +116,12 @@
   * {
     @apply border-border;
   }
+  @font-face {
+    font-family: "UnitySans";
+    src: url("/fonts/UnitySans-Basic.woff2") format("woff2");
+    font-weight: normal;
+    font-style: normal;
+  }
   body {
     @apply font-inter;
     font-feature-settings: "rlig" 1, "calt" 1;

@@ -1,3 +1,5 @@
+import { ChevronsUpDown } from 'lucide-react';
+import { FC } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -11,8 +13,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { ChevronsUpDown } from 'lucide-react';
-import { FC } from 'react';
 import { getWatched, usePlayerContext } from '../context/player-context';
 
 interface Props {
@@ -45,7 +45,7 @@ const TeamSelect: FC<Props> = ({ container, toggleWatchedState }) => {
 
   return (
     <SidebarMenuItem>
-      <DropdownMenu>
+      <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <SidebarMenuButton
             size="lg"

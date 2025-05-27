@@ -1,7 +1,7 @@
 import {
+  createContext,
   FC,
   PropsWithChildren,
-  createContext,
   useContext,
   useState,
 } from 'react';
@@ -85,6 +85,7 @@ const getInitialPlayerState = (
     team,
     episodeData,
     currentEpisode: targetEpisode ?? episodes[0],
+    sidebarMode: 'offcanvas', // todo
   };
 };
 

@@ -1,5 +1,12 @@
+import { FC, useEffect, useRef, useState } from 'react';
 import { ContentScriptContext } from '#imports';
 import { Button } from '@/components/ui/button';
+import {
+  ContextMenu,
+  ContextMenuCheckboxItem,
+  ContextMenuContent,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu';
 import {
   Sidebar,
   SidebarContent,
@@ -11,7 +18,6 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { cn } from '@/utils/cn';
-import { FC, useEffect, useRef, useState } from 'react';
 import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
 import { usePlayerContext } from '../context/player-context';
 import player from '../player';
@@ -54,7 +60,7 @@ const PlayerSidebar: FC<Props> = ({ container, ctx, toggleWatchedState }) => {
 
   return (
     <Sidebar
-      collapsible="icon"
+      collapsible={playerContext.state.sidebarMode}
       side="right"
       className="flex overflow-hidden"
       // onMouseLeave={toggleSidebar}
@@ -70,7 +76,7 @@ const PlayerSidebar: FC<Props> = ({ container, ctx, toggleWatchedState }) => {
             >
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon-sm"
                 className={cn(
                   'transition-[margin] duration-300',
                   !open && '-ml-2',
@@ -87,7 +93,7 @@ const PlayerSidebar: FC<Props> = ({ container, ctx, toggleWatchedState }) => {
                 Програвач
               </span>
             </div>
-            <SidebarTrigger />
+            <div className="h-8 w-8" />
           </SidebarMenuItem>
         </SidebarMenu>
         <SidebarMenu>

@@ -1,7 +1,10 @@
+import { ChevronsUpDown } from 'lucide-react';
+import { FC } from 'react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
@@ -11,8 +14,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { ChevronsUpDown } from 'lucide-react';
-import { FC } from 'react';
 import {
   getWatched,
   playersAvaliable,
@@ -51,7 +52,7 @@ const ProviderSelect: FC<Props> = ({ container, toggleWatchedState }) => {
 
   return (
     <SidebarMenuItem>
-      <DropdownMenu>
+      <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <SidebarMenuButton
             size="lg"
@@ -79,25 +80,66 @@ const ProviderSelect: FC<Props> = ({ container, toggleWatchedState }) => {
           sideOffset={open ? 0 : 12}
           container={container}
         >
-          <DropdownMenuLabel className="text-muted-foreground text-xs">
+          {/* <DropdownMenuLabel className="text-muted-foreground text-xs">
             Провайдери
-          </DropdownMenuLabel>
-          <div className="flex">
-            {playersAvaliable(data!).map((elem: PlayerSource) => (
-              <DropdownMenuItem
-                key={elem}
-                onClick={() => handleSelectPlayer(elem)}
-                className={cn(
-                  'flex-1 items-center justify-center px-1 py-1.5 font-normal',
-                  playerContext.state.provider === elem &&
-                    'bg-accent/60 text-accent-foreground',
-                )}
-              >
-                <span className="flex h-8 items-center justify-center truncate text-center font-semibold">
-                  {elem.toUpperCase()}
-                </span>
-              </DropdownMenuItem>
-            ))}
+          </DropdownMenuLabel> */}
+          <div className="flex flex-col">
+            {playersAvaliable(data!).filter((elem) =>
+              UkrainianPlayerSource.includes(elem),
+            ).length > 0 && (
+              <DropdownMenuGroup>
+                <DropdownMenuLabel className="text-muted-foreground text-xs">
+                  Україномовні
+                </DropdownMenuLabel>
+                <div className="flex flex-wrap">
+                  {playersAvaliable(data!)
+                    .filter((elem) => UkrainianPlayerSource.includes(elem))
+                    .map((elem: PlayerSource) => (
+                      <DropdownMenuItem
+                        key={elem}
+                        onClick={() => handleSelectPlayer(elem)}
+                        className={cn(
+                          'flex-[1_1_calc(33.33%)] items-center justify-center px-1 py-1.5 font-normal',
+                          playerContext.state.provider === elem &&
+                            'bg-accent/60 text-accent-foreground',
+                        )}
+                      >
+                        <span className="flex h-8 items-center justify-center truncate text-center font-semibold">
+                          {elem.toUpperCase()}
+                        </span>
+                      </DropdownMenuItem>
+                    ))}
+                </div>
+              </DropdownMenuGroup>
+            )}
+            {playersAvaliable(data!).filter((elem) =>
+              SubPlayerSource.includes(elem),
+            ).length > 0 && (
+              <DropdownMenuGroup>
+                <DropdownMenuLabel className="text-muted-foreground text-xs">
+                  Оригінал/Саби
+                </DropdownMenuLabel>
+                <div className="flex flex-wrap">
+                  {playersAvaliable(data!)
+                    .filter((elem) => SubPlayerSource.includes(elem))
+                    .map((elem: PlayerSource) => (
+                      <DropdownMenuItem
+                        key={elem}
+                        onClick={() => handleSelectPlayer(elem)}
+                        className={cn(
+                          'flex-[1_1_calc(33.33%)] items-center justify-center px-1 py-1.5 font-normal',
+                          playerContext.state.provider === elem &&
+                            'bg-accent/60 text-accent-foreground',
+                        )}
+                      >
+                        <span className="flex h-8 items-center justify-center truncate text-center font-semibold">
+                          {elem.toUpperCase()}
+                        </span>
+                      </DropdownMenuItem>
+                    ))}
+                </div>
+              </DropdownMenuGroup>
+            )}
           </div>
         </DropdownMenuContent>
       </DropdownMenu>

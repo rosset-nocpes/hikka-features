@@ -15,7 +15,10 @@ declare global {
     | 'mu';
   // | "dengeki"
 
-  type PlayerSource = 'moon' | 'ashdi';
+  type UkrainianPlayerSource = 'moon' | 'ashdi';
+  type SubPlayerSource = 'vidsrc' | 'hikari';
+
+  type PlayerSource = UkrainianPlayerSource | SubPlayerSource;
 
   type PlayerData = PlayerSource | 'type';
 
@@ -67,6 +70,7 @@ declare global {
     team: string;
     episodeData: API.EpisodeData[];
     currentEpisode: API.EpisodeData;
+    sidebarMode: 'offcanvas' | 'icon';
   }
 
   interface ReaderState {
@@ -74,5 +78,6 @@ declare global {
     currentChapter: API.ChapterData;
     chapterImages: string[];
     imagesLoading: boolean;
+    sidebarMode: 'offcanvas' | 'icon';
   }
 }

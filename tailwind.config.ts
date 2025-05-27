@@ -2,7 +2,7 @@ import type { Config } from 'tailwindcss';
 
 export default {
   darkMode: ['class', '[data-kb-theme="dark"]'],
-  content: ['./components/ui/**/*.tsx', './entrypoints/**/*.tsx'],
+  content: ['./components/**/*.tsx', './entrypoints/**/*.tsx'],
   theme: {
     container: {
       center: true,
@@ -133,5 +133,6 @@ export default {
   plugins: [
     require('tailwindcss-animate'),
     require('tailwind-gradient-mask-image'),
+    require('@vidstack/react/tailwind.cjs'),
   ],
 } satisfies Config;

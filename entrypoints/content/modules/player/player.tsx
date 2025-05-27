@@ -1,21 +1,23 @@
-import { ContentScriptContext } from '#imports';
-import { Card, CardContent } from '@/components/ui/card';
-import { Toaster } from '@/components/ui/sonner';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { MediaPlayerInstance } from '@vidstack/react';
 import { FC, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { toast } from 'sonner';
-
-import { SidebarProvider } from '@/components/ui/sidebar';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { ContentScriptContext } from '#imports';
+import { Card, CardContent } from '@/components/ui/card';
+import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
+import { Toaster } from '@/components/ui/sonner';
 import { queryClient } from '../..';
 import {
-  PlayerProvider,
   getWatched,
+  PlayerProvider,
   playersAvaliable,
   usePlayerContext,
 } from './context/player-context';
+import PlayerNavbar from './player-navbar';
 import PlayerSidebar from './sidebar/player-sidebar';
 import PlayerToolbar from './toolbar/player-toolbar';
+import VidStackPlayer from './vidstack-player';
 
 export default function player(
   ctx: ContentScriptContext,
@@ -31,7 +33,7 @@ export default function player(
       container.append(wrapper);
 
       wrapper.className =
-        'size-full backdrop-blur-sm bg-black/60 flex items-center justify-center p-8';
+        'size-full backdrop-blur-sm bg-black/60 flex items-center justify-center sm:p-8';
 
       container.className = 'h-full';
       container.classList.toggle('dark', await darkMode.getValue());
@@ -43,9 +45,14 @@ export default function player(
             <PlayerProvider data={data!} anime_data={anime_data}>
               <div
                 className="fixed z-0 size-full"
-                onClick={() =>
-                  player(ctx, data!, anime_data)!.then((x) => x!.remove())
-                }
+                onClick={() => {
+                  const radixFocusGuards = document.querySelectorAll(
+                    '[data-radix-focus-guard]',
+                  );
+                  radixFocusGuards.forEach((guard) => guard.remove());
+
+                  player(ctx, data!, anime_data)!.then((x) => x!.remove());
+                }}
               />
               <Player container={container} ctx={ctx} />
               <Toaster position="top-center" />
@@ -70,7 +77,6 @@ export default function player(
 
 interface AnimeData {
   slug: string;
-  // Add other anime data properties as needed
 }
 
 interface Props {
@@ -81,6 +87,8 @@ interface Props {
 export const Player: FC<Props> = ({ container, ctx }) => {
   const playerContext = usePlayerContext();
   const { data } = useWatchData(playerContext.state.animeData);
+
+  const { open } = useSidebar();
 
   const [urlParams] = useState(() => {
     const path_params = new URLSearchParams(window.location.search);
@@ -108,7 +116,9 @@ export const Player: FC<Props> = ({ container, ctx }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isTimecodeLink, toggleTimestampLink] = useState(false);
   const [timecodeLink, setTimecodeLink] = useState(0);
-  // const [showSidebar, toggleSidebar] = useState(true);
+
+  const VidStackPlayerRef = useRef<MediaPlayerInstance>(null);
+  const [showControls, setShowControls] = useState(true);
 
   const handleSelectEpisode = (value: API.EpisodeData) => {
     playerContext.setState((prev) => ({ ...prev, currentEpisode: value }));
@@ -169,9 +179,6 @@ export const Player: FC<Props> = ({ container, ctx }) => {
             setNextEpState(false);
             playerIframe.contentWindow?.postMessage({ api: 'play' }, '*');
 
-            toast(
-              `Зараз ви переглядаєте ${playerContext.state.currentEpisode.episode} епізод в озвучці ${playerContext.state.team}`,
-            );
             setTimeout(() => {
               isHandlingNext.current = false;
             }, 1000);
@@ -222,8 +229,15 @@ export const Player: FC<Props> = ({ container, ctx }) => {
           if (!getNextEpState && nextEpisode) {
             setNextEpState(true);
             handleSelectEpisode(nextEpisode);
+
+            toast(
+              `Зараз ви переглядаєте ${nextEpisode.episode} епізод в озвучці ${playerContext.state.team}`,
+            );
           }
           break;
+
+        case 'ui':
+          setShowControls(Boolean(event.data.data));
       }
     };
 
@@ -267,27 +281,79 @@ export const Player: FC<Props> = ({ container, ctx }) => {
     history.replaceState(history.state, '', url.href);
   }, []);
 
+  useEffect(() => {
+    const player = VidStackPlayerRef.current;
+    if (!player) return;
+
+    const handleControlsChange = () => {
+      setShowControls(player.controls.showing);
+    };
+
+    player.addEventListener('controls-change', handleControlsChange);
+
+    setShowControls(player.controls.showing);
+
+    return () => {
+      player.removeEventListener('controls-change', handleControlsChange);
+    };
+  }, [VidStackPlayerRef.current]);
+
   return (
     <Card
       className={cn(
-        'relative z-10 flex size-full max-h-[720px] max-w-[1280px] overflow-hidden',
-        getTheatreState && 'h-full',
+        'relative z-10 flex size-full overflow-hidden rounded-none sm:max-h-[720px] sm:max-w-[1280px] sm:rounded-lg',
+        getTheatreState && 'sm:max-h-full sm:max-w-full',
       )}
     >
+      <PlayerNavbar
+        container={container}
+        ctx={ctx}
+        data={data}
+        showControls={showControls}
+      />
       <div className="flex flex-1 flex-col">
-        <CardContent className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 p-2">
+        <CardContent
+          className={cn(
+            'flex min-h-0 min-w-0 flex-1 flex-col gap-2 p-0 pb-2 duration-300',
+            !open && 'gap-0 pb-0',
+          )}
+        >
           <div
             className={cn(
-              isFullscreen
-                ? 'fixed inset-0 z-20 size-full'
-                : 'aspect-video overflow-hidden rounded-sm bg-secondary/30',
+              'duration-300',
+              isFullscreen ? 'fixed inset-0 z-20 size-full' : 'flex border-b',
+              !open && 'flex-1 border-b-0',
             )}
           >
+            {/* Will be used in future */}
+            {/* {['ashdi', 'moon'].includes(playerContext.state.provider) ? (
+              <iframe
+                id="player-iframe"
+                src={`${playerContext.state.currentEpisode.video_url}?site=hikka.io?v2=1`} // todo: move params to backend
+                loading="lazy"
+                className={cn(
+                  'z-[2] aspect-video size-full',
+                  getTheatreState && !open && 'aspect-auto',
+                )}
+                allow="fullscreen; accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+                allowFullScreen
+              ></iframe>
+            ) : (
+              <VidStackPlayer
+                url={playerContext.state.currentEpisode.video_url}
+                title=""
+                data={data!}
+                ref={VidStackPlayerRef}
+              />
+            )} */}
             <iframe
               id="player-iframe"
-              src={`${playerContext.state.currentEpisode.video_url}?site=hikka.io`}
+              src={`${playerContext.state.currentEpisode.video_url}?site=hikka.io?v2=1`} // todo: move params to backend
               loading="lazy"
-              className="z-[2] size-full"
+              className={cn(
+                'z-[2] aspect-video size-full',
+                getTheatreState && !open && 'aspect-auto',
+              )}
               allow="fullscreen; accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
               allowFullScreen
             ></iframe>
