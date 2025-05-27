@@ -1,13 +1,14 @@
+import { QueryClientProvider } from '@tanstack/react-query';
+import { AnimatePresence, motion } from 'motion/react';
+import { FC } from 'react';
+import { createRoot } from 'react-dom/client';
 import { ContentScriptContext } from '#imports';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Button } from '@/components/ui/button';
 import useRecommendation from '@/hooks/use-recommendation';
 import HikkaFLogoSmall from '@/public/hikka-features-small.svg';
-import { QueryClientProvider } from '@tanstack/react-query';
-import { AnimatePresence, motion } from 'motion/react';
-import { FC } from 'react';
-import { createRoot } from 'react-dom/client';
 import MaterialSymbolsArrowRightAltRounded from '~icons/material-symbols/arrow-right-alt-rounded';
+import MaterialSymbolsSadTabRounded from '~icons/material-symbols/sad-tab-rounded';
 import { queryClient } from '..';
 
 const recommendationBlock = async (
@@ -93,61 +94,76 @@ const RecommendationBlock: FC<Props> = ({ anime_data }) => {
                 href={`https://myanimelist.net/anime/${mal_id}`}
                 target="_blank"
               >
-                <MaterialSymbolsArrowRightAltRounded className="text-lg" />
+                <MaterialSymbolsArrowRightAltRounded className="text-sm" />
               </a>
             </Button>
           </div>
           <div className="-my-4 no-scrollbar -mx-4 gradient-mask-r-90-d md:gradient-mask-none relative grid auto-cols-scroll grid-flow-col grid-cols-scroll gap-4 overflow-auto px-4 py-4 md:grid-cols-4 lg:gap-8">
-            {isLoading
-              ? Array.from({ length: 4 }).map(() => (
-                  <div className="flex flex-col gap-2">
-                    <AspectRatio
-                      ratio={0.7}
-                      className="skeleton animate-pulse rounded-md bg-secondary/60"
-                    />
-                    <div className="skeleton h-5 animate-pulse rounded-full bg-secondary/60" />
-                  </div>
-                ))
-              : data?.recommendations.map((item) => (
-                  <a
-                    href={`https://hikka.io/anime/${item.slug}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex flex-col gap-2"
+            {isLoading &&
+              Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="flex flex-col gap-2">
+                  <AspectRatio
+                    ratio={0.7}
+                    className="skeleton animate-pulse rounded-md bg-secondary/60"
+                  />
+                  <div className="skeleton h-5 animate-pulse rounded-full bg-secondary/60" />
+                </div>
+              ))}
+            {data?.recommendations.length === 0 &&
+              Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="flex flex-col gap-2">
+                  <AspectRatio
+                    ratio={0.7}
+                    className="skeleton flex items-center justify-center rounded-md bg-secondary/60"
                   >
-                    <AspectRatio
-                      ratio={0.7}
-                      className="relative w-full overflow-hidden rounded-md bg-muted"
-                    >
-                      <img
-                        className="absolute inset-0 h-full w-full bg-secondary/30 object-cover"
-                        src={item.image}
-                        alt={item.title_ua || item.title_en || item.title_ja}
-                        loading="lazy"
-                      />
-                      <p
-                        className={`absolute top-2 left-2 rounded-md bg-secondary/80 px-2 py-1 text-sm ${
-                          Math.round(
-                            (item?.mal.votes / data.maxSingleVotes) * 100,
-                          ) > 90
-                            ? 'text-success'
-                            : Math.round(
-                                  (item?.mal.votes / data.maxSingleVotes) * 100,
-                                ) > 50
-                              ? 'text-warning'
-                              : 'text-destructive'
-                        }`}
-                      >
-                        {Math.round(
+                    <MaterialSymbolsSadTabRounded className="size-9 text-muted-foreground" />
+                  </AspectRatio>
+                  <div className="skeleton h-5 rounded-full bg-secondary/60" />
+                </div>
+              ))}
+            {data &&
+              data.recommendations.length > 0 &&
+              data.recommendations.map((item) => (
+                <a
+                  key={item.slug}
+                  href={`https://hikka.io/anime/${item.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col gap-2"
+                >
+                  <AspectRatio
+                    ratio={0.7}
+                    className="relative w-full overflow-hidden rounded-md bg-muted"
+                  >
+                    <img
+                      className="absolute inset-0 h-full w-full bg-secondary/30 object-cover"
+                      src={item.image}
+                      alt={item.title_ua || item.title_en || item.title_ja}
+                      loading="lazy"
+                    />
+                    <p
+                      className={`absolute top-2 left-2 rounded-md bg-secondary/80 px-2 py-1 text-sm ${
+                        Math.round(
                           (item?.mal.votes / data.maxSingleVotes) * 100,
-                        )}
-                      </p>
-                    </AspectRatio>
-                    <span className="line-clamp-2 font-medium text-sm leading-5">
-                      {item?.title_ua || item?.title_en || item?.title_ja}
-                    </span>
-                  </a>
-                ))}
+                        ) > 90
+                          ? 'text-success'
+                          : Math.round(
+                                (item?.mal.votes / data.maxSingleVotes) * 100,
+                              ) > 50
+                            ? 'text-warning'
+                            : 'text-destructive'
+                      }`}
+                    >
+                      {Math.round(
+                        (item?.mal.votes / data.maxSingleVotes) * 100,
+                      )}
+                    </p>
+                  </AspectRatio>
+                  <span className="line-clamp-2 font-medium text-sm leading-5">
+                    {item?.title_ua || item?.title_en || item?.title_ja}
+                  </span>
+                </a>
+              ))}
           </div>
         </motion.div>
       )}
