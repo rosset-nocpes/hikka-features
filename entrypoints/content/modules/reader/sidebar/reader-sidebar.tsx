@@ -1,3 +1,4 @@
+import { FC } from 'react';
 import { ContentScriptContext } from '#imports';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,7 +11,6 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { cn } from '@/utils/cn';
-import { FC } from 'react';
 import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
 import { useReaderContext } from '../context/reader-context';
 import reader from '../reader';
@@ -29,7 +29,7 @@ const ReaderSidebar: FC<Props> = ({ container, ctx, slug }) => {
 
   return (
     <Sidebar
-      collapsible="icon"
+      collapsible={readerContext.state.sidebarMode}
       side="right"
       className="flex overflow-hidden"
       // onMouseLeave={toggleSidebar}
@@ -45,7 +45,7 @@ const ReaderSidebar: FC<Props> = ({ container, ctx, slug }) => {
             >
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon-sm"
                 className={cn(
                   'transition-[margin] duration-300',
                   !open && '-ml-2',
@@ -62,7 +62,7 @@ const ReaderSidebar: FC<Props> = ({ container, ctx, slug }) => {
                 Читалка
               </span>
             </div>
-            <SidebarTrigger />
+            <div className="h-8 w-8" />
           </SidebarMenuItem>
         </SidebarMenu>
         <SidebarMenu>

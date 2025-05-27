@@ -1,7 +1,7 @@
 import {
+  createContext,
   FC,
   PropsWithChildren,
-  createContext,
   useContext,
   useState,
 } from 'react';
@@ -30,6 +30,7 @@ const getInitialReaderState = (
     currentChapter,
     chapterImages: [],
     imagesLoading: true,
+    sidebarMode: 'offcanvas', // todo: move to local storage
   };
 };
 

@@ -1,20 +1,23 @@
-import { ContentScriptContext } from '#imports';
-import { Card, CardContent } from '@/components/ui/card';
-import { Toaster } from '@/components/ui/sonner';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { WheelGesturesPlugin } from 'embla-carousel-wheel-gestures';
 import { FC, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { ContentScriptContext } from '#imports';
 
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Carousel,
   CarouselApi,
   CarouselContent,
   CarouselItem,
 } from '@/components/ui/carousel';
-import { SidebarProvider } from '@/components/ui/sidebar';
-import { QueryClientProvider } from '@tanstack/react-query';
-import { WheelGesturesPlugin } from 'embla-carousel-wheel-gestures';
+import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
+import { Toaster } from '@/components/ui/sonner';
 import { queryClient } from '../..';
 import { ReaderProvider, useReaderContext } from './context/reader-context';
+import ReaderMobileToolbar from './mobile-toolbar/reader-mobile-toolbar';
+import ReaderNavbar from './reader-navbar';
 import ReaderSidebar from './sidebar/reader-sidebar';
 
 export default function reader(
@@ -31,7 +34,7 @@ export default function reader(
       container.append(wrapper);
 
       wrapper.className =
-        'size-full backdrop-blur-sm bg-black/60 flex items-center justify-center p-8';
+        'size-full sm:backdrop-blur-sm bg-black/60 flex items-center justify-center sm:p-8';
 
       container.className = 'h-full';
       container.classList.toggle('dark', await darkMode.getValue());
@@ -77,7 +80,6 @@ interface Props {
 
 export const Reader: FC<Props> = ({ container, ctx, data, slug }) => {
   const [api, setApi] = useState<CarouselApi>();
-  const [open, setOpen] = useState(false);
 
   const readerContext = useReaderContext();
 
@@ -88,9 +90,13 @@ export const Reader: FC<Props> = ({ container, ctx, data, slug }) => {
   return (
     <Card
       className={cn(
-        'relative z-10 flex size-full max-w-[1280px] overflow-hidden',
+        'relative z-10 flex size-full overflow-hidden rounded-none sm:max-w-[1280px] sm:rounded-lg',
       )}
     >
+      <ReaderMobileToolbar ctx={ctx} container={container} slug={slug} />
+
+      <ReaderNavbar container={container} ctx={ctx} data={data} slug={slug} />
+
       <div className="flex flex-1 flex-col">
         <CardContent className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 p-0">
           <Carousel
@@ -109,7 +115,7 @@ export const Reader: FC<Props> = ({ container, ctx, data, slug }) => {
               {readerContext.state.chapterImages.map((img_url) => {
                 // const [image] = createResource<string>(() => loadImage(img_url));
                 return (
-                  <CarouselItem className="h-full py-2">
+                  <CarouselItem key={img_url} className="h-full py-2">
                     <div className="flex h-full items-center justify-center">
                       {/* <Show
                       when={image()}

@@ -1,11 +1,11 @@
-import { ContentScriptContext } from '#imports';
-import { Button } from '@/components/ui/button';
-import useReadData from '@/hooks/use-read-data';
-import HikkaLogoMono from '@/public/hikka-features-mono.svg';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { FC, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { ContentScriptContext } from '#imports';
+import { Button } from '@/components/ui/button';
+import useReadData from '@/hooks/use-read-data';
+import HikkaLogoMono from '@/public/hikka-features-mono.svg';
 import { queryClient } from '../..';
 import reader from './reader';
 
@@ -14,6 +14,10 @@ const readButton = async (
   slug: string,
   location?: Element,
 ) => {
+  if (document.body.querySelectorAll('read-button').length !== 0) {
+    return;
+  }
+
   return createShadowRootUi(ctx, {
     name: 'read-button',
     position: 'inline',
