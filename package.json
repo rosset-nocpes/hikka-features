@@ -63,7 +63,7 @@
     "zod": "^3.24.3"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.0.0-beta.2",
+    "@biomejs/biome": "^2.0.0-beta.5",
     "@iconify-json/material-symbols": "^1.2.20",
     "@iconify-json/mdi": "^1.2.3",
     "@svgr/core": "^8.1.0",
