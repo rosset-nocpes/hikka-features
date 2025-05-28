@@ -301,7 +301,7 @@ export const Player: FC<Props> = ({ container, ctx }) => {
   return (
     <Card
       className={cn(
-        'relative z-10 flex size-full overflow-hidden rounded-none sm:max-h-[720px] sm:max-w-[1280px] sm:rounded-lg',
+        'relative z-10 flex size-full overflow-hidden rounded-none duration-300 sm:max-h-[720px] sm:max-w-[1280px] sm:rounded-lg',
         getTheatreState && 'sm:max-h-full sm:max-w-full',
       )}
     >
@@ -322,7 +322,7 @@ export const Player: FC<Props> = ({ container, ctx }) => {
             className={cn(
               'duration-300',
               isFullscreen ? 'fixed inset-0 z-20 size-full' : 'flex border-b',
-              !open && 'flex-1 border-b-0',
+              (!open || getTheatreState) && 'flex-1 border-b-0',
             )}
           >
             {/* Will be used in future */}
@@ -352,7 +352,7 @@ export const Player: FC<Props> = ({ container, ctx }) => {
               loading="lazy"
               className={cn(
                 'z-[2] aspect-video size-full',
-                getTheatreState && !open && 'aspect-auto',
+                getTheatreState && 'aspect-auto',
               )}
               allow="fullscreen; accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
               allowFullScreen
