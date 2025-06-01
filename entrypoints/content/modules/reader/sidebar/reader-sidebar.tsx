@@ -3,6 +3,7 @@ import { ContentScriptContext } from '#imports';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
+  SidebarFooter,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,
@@ -15,6 +16,7 @@ import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
 import { useReaderContext } from '../context/reader-context';
 import reader from '../reader';
 import ChapterList from './chapter-list';
+import ReaderSettings from './reader-settings';
 
 interface Props {
   container: HTMLElement;
@@ -65,22 +67,11 @@ const ReaderSidebar: FC<Props> = ({ container, ctx, slug }) => {
             <div className="h-8 w-8" />
           </SidebarMenuItem>
         </SidebarMenu>
-        <SidebarMenu>
-          {/* <ProviderSelect
-            container={container}
-            toggleWatchedState={toggleWatchedState}
-          />
-          <TeamSelect
-            container={container}
-            toggleWatchedState={toggleWatchedState}
-          /> */}
-        </SidebarMenu>
       </SidebarHeader>
-      <SidebarSeparator className="mx-0" />
       <ChapterList container={container} />
-      {/* <SidebarFooter>
-        <WatchTogetherButton />
-      </SidebarFooter> */}
+      <SidebarFooter>
+        <ReaderSettings container={container} />
+      </SidebarFooter>
     </Sidebar>
   );
 };

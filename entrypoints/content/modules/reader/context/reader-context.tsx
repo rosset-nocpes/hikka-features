@@ -53,7 +53,7 @@ export const ReaderProvider: FC<ReaderProviderProps> = ({
   // Call useReadChapterData at the top level
   const { data: chapterImagesData, isLoading } = useReadChapterData(
     slug,
-    readerState.currentChapter?.id,
+    readerState.currentChapter?.chapter,
   );
 
   // useEffect to update state when chapterImagesData changes
