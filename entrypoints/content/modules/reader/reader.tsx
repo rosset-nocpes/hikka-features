@@ -11,19 +11,22 @@ import {
   CarouselApi,
   CarouselContent,
   CarouselItem,
+  CarouselPrevious,
 } from '@/components/ui/carousel';
 import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
 import { queryClient } from '../..';
 import { ReaderProvider, useReaderContext } from './context/reader-context';
 import ReaderMobileToolbar from './mobile-toolbar/reader-mobile-toolbar';
+import PageIndicator from './page-indicator';
 import ReaderNavbar from './reader-navbar';
+import ReaderNextPages from './reader-next-pages';
 import ReaderSidebar from './sidebar/reader-sidebar';
 
 export default function reader(
   ctx: ContentScriptContext,
   data: API.ReadData,
-  slug: string,
+  title: string,
 ) {
   return createShadowRootUi(ctx, {
     name: 'reader-ui',
@@ -43,14 +46,19 @@ export default function reader(
       root.render(
         <QueryClientProvider client={queryClient}>
           <SidebarProvider className="h-full w-full">
-            <ReaderProvider data={data} slug={slug}>
+            <ReaderProvider data={data} title={title}>
               <div
                 className="fixed z-0 size-full"
                 onClick={() =>
-                  reader(ctx, data!, slug)!.then((x) => x!.remove())
+                  reader(ctx, data!, title)!.then((x) => x!.remove())
                 }
               />
-              <Reader container={container} ctx={ctx} data={data} slug={slug} />
+              <Reader
+                container={container}
+                ctx={ctx}
+                data={data}
+                title={title}
+              />
               <Toaster position="top-center" />
             </ReaderProvider>
           </SidebarProvider>
@@ -75,11 +83,11 @@ interface Props {
   container: HTMLElement;
   ctx: ContentScriptContext;
   data: API.ReadData;
-  slug: string;
+  title: string;
 }
 
-export const Reader: FC<Props> = ({ container, ctx, data, slug }) => {
-  const [api, setApi] = useState<CarouselApi>();
+export const Reader: FC<Props> = ({ container, ctx, data, title }) => {
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
 
   const readerContext = useReaderContext();
 
@@ -87,15 +95,50 @@ export const Reader: FC<Props> = ({ container, ctx, data, slug }) => {
     console.log(readerContext.state.imagesLoading);
   }, [readerContext.state.imagesLoading]);
 
+  useEffect(() => {
+    if (!carouselApi) return;
+
+    const handleScroll = () => {
+      const isLastImage = !carouselApi.canScrollNext();
+
+      if (isLastImage && !readerContext.state.imagesLoading) {
+        const currentChapterIndex =
+          readerContext.state.mangaData.chapters.findIndex(
+            (chapter) => chapter.id === readerContext.state.currentChapter?.id,
+          );
+        const nextChapter =
+          readerContext.state.mangaData.chapters[currentChapterIndex + 1];
+
+        if (nextChapter) {
+          readerContext.setState((prevState) => ({
+            ...prevState,
+            currentChapter: nextChapter,
+            chapterImages: [],
+            imagesLoading: true,
+          }));
+
+          carouselApi.scrollTo(0);
+        }
+      }
+    };
+
+    carouselApi.on('scroll', handleScroll);
+
+    return () => {
+      carouselApi.off('scroll', handleScroll);
+    };
+  }, [carouselApi, readerContext]);
+
   return (
     <Card
       className={cn(
         'relative z-10 flex size-full overflow-hidden rounded-none sm:max-w-[1280px] sm:rounded-lg',
       )}
     >
-      <ReaderMobileToolbar ctx={ctx} container={container} slug={slug} />
+      <ReaderMobileToolbar ctx={ctx} container={container} title={title} />
 
-      <ReaderNavbar container={container} ctx={ctx} data={data} slug={slug} />
+      <ReaderNavbar container={container} ctx={ctx} data={data} title={title} />
+      <PageIndicator carouselApi={carouselApi} />
 
       <div className="flex flex-1 flex-col">
         <CardContent className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 p-0">
@@ -105,40 +148,38 @@ export const Reader: FC<Props> = ({ container, ctx, data, slug }) => {
             }}
             plugins={[WheelGesturesPlugin()]}
             orientation="vertical"
-            setApi={setApi}
+            setApi={setCarouselApi}
             className="flex h-full gap-4"
           >
             <CarouselContent className="!m-0 h-full">
-              {/* {readerContext.state.imagesLoading && (
-                <div className="absolute top-0 h-full animate-pulse items-center justify-center bg-accent/90" />
-              )} */}
+              {readerContext.state.imagesLoading && (
+                <CarouselItem className="size-full animate-pulse bg-accent" />
+              )}
               {readerContext.state.chapterImages.map((img_url) => {
-                // const [image] = createResource<string>(() => loadImage(img_url));
                 return (
                   <CarouselItem key={img_url} className="h-full py-2">
                     <div className="flex h-full items-center justify-center">
-                      {/* <Show
-                      when={image()}
-                      fallback={
-                        <div class="reader-image-skeleton animate-pulse rounded-md bg-white" />
-                      }
-                    > */}
                       <img
                         src={img_url}
                         alt="Chapter page"
                         loading="lazy"
                         className="h-full object-contain"
                       />
-                      {/* </Show> */}
                     </div>
                   </CarouselItem>
                 );
               })}
+              <ReaderNextPages />
             </CarouselContent>
           </Carousel>
         </CardContent>
       </div>
-      <ReaderSidebar container={container} ctx={ctx} slug={slug} />
+      <ReaderSidebar
+        container={container}
+        ctx={ctx}
+        title={title}
+        carouselApi={carouselApi}
+      />
     </Card>
   );
 };

@@ -1,3 +1,7 @@
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { Eye, Link, MoreHorizontal } from 'lucide-react';
+import { FC } from 'react';
+import { CarouselApi } from '@/components/ui/carousel';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,16 +17,14 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { useVirtualizer } from '@tanstack/react-virtual';
-import { Eye, Link, MoreHorizontal } from 'lucide-react';
-import { FC } from 'react';
 import { getRead, useReaderContext } from '../context/reader-context';
 
 interface Props {
   container: HTMLElement;
+  carouselApi: CarouselApi;
 }
 
-const ChapterList: FC<Props> = ({ container }) => {
+const ChapterList: FC<Props> = ({ container, carouselApi }) => {
   const { open } = useSidebar();
   const readerContext = useReaderContext();
   const [isScrolled, setIsScrolled] = useState({ top: false, bottom: false });
@@ -30,6 +32,8 @@ const ChapterList: FC<Props> = ({ container }) => {
 
   const handleSelectChapter = (value: API.ChapterData) => {
     readerContext.setState((prev) => ({ ...prev, currentChapter: value }));
+
+    carouselApi?.scrollTo(0, true);
   };
 
   const currentChapterRef = useRef<HTMLButtonElement>(null);

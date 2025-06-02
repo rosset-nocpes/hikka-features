@@ -36,13 +36,13 @@ const getInitialReaderState = (
 
 interface ReaderProviderProps extends PropsWithChildren {
   data: API.ReadData;
-  slug: string;
+  title: string;
 }
 
 export const ReaderProvider: FC<ReaderProviderProps> = ({
   children,
   data,
-  slug,
+  title,
 }) => {
   const currentChapter = data.chapters[0];
 
@@ -52,7 +52,7 @@ export const ReaderProvider: FC<ReaderProviderProps> = ({
 
   // Call useReadChapterData at the top level
   const { data: chapterImagesData, isLoading } = useReadChapterData(
-    slug,
+    title,
     readerState.currentChapter?.chapter,
   );
 

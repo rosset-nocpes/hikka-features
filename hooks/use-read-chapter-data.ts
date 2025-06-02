@@ -1,22 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
+import { get_miu_chapter_pages } from '@/utils/miu';
 
-const useReadChapterData = (slug: string, chapterId: string) => {
+const useReadChapterData = (title: string, chapterNumber: number) => {
   return useQuery({
-    queryKey: ['read-chapter-data', `${slug}-${chapterId}`],
+    queryKey: ['read-chapter-data', `${title}-${chapterNumber}`],
     queryFn: async () => {
-      const r = await fetch(
-        `${BACKEND_BRANCHES[await backendBranch.getValue()]}/read/${slug}/${chapterId}`,
-      );
+      const r = await get_miu_chapter_pages(title, chapterNumber);
 
-      if (!r.ok) {
-        throw new Error('Not found');
-      }
-
-      return (await r.json()) as API.ReadChapterData;
+      return { images: r } as API.ReadChapterData;
     },
     retry: false,
-    staleTime: 0,
-    gcTime: 0,
   });
 };
 

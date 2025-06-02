@@ -79,10 +79,6 @@ export default defineContentScript({
 
     browser.runtime.onMessage.addListener(async function (request: any) {
       if ((request as any).type === 'page-rendered') {
-        // TODO: make something with this removing
-        const features = document.querySelectorAll('.hikka-features');
-        features.forEach((e) => e.remove());
-
         getComputedStyle(document.documentElement).colorScheme === 'dark'
           ? darkMode.setValue(true)
           : darkMode.setValue(false);
@@ -107,10 +103,6 @@ export default defineContentScript({
             if (split_path.length === 3) {
               const anime_slug = split_path[2];
 
-              // queryClient.refetchQueries({
-              //   queryKey: ['notion-data', 'watch-data'],
-              // });
-              
               const anime_data = await (
                 await fetch(`https://api.hikka.io/anime/${anime_slug}`)
               ).json();
@@ -151,7 +143,7 @@ export default defineContentScript({
               (await devButtons(ctx, data))?.mount();
 
               // readerButton
-              (await readButton(ctx, slug))!.mount();
+              (await readButton(ctx, data.title_original))!.mount();
 
               // aniButtons
               (await aniButtons(ctx, data))!.mount();

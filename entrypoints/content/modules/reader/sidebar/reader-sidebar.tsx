@@ -1,14 +1,13 @@
 import { FC } from 'react';
 import { ContentScriptContext } from '#imports';
 import { Button } from '@/components/ui/button';
+import { CarouselApi } from '@/components/ui/carousel';
 import {
   Sidebar,
   SidebarFooter,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,
-  SidebarSeparator,
-  SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
 import { cn } from '@/utils/cn';
@@ -21,10 +20,11 @@ import ReaderSettings from './reader-settings';
 interface Props {
   container: HTMLElement;
   ctx: ContentScriptContext;
-  slug: string;
+  carouselApi: CarouselApi;
+  title: string;
 }
 
-const ReaderSidebar: FC<Props> = ({ container, ctx, slug }) => {
+const ReaderSidebar: FC<Props> = ({ container, ctx, title, carouselApi }) => {
   const { open } = useSidebar();
 
   const readerContext = useReaderContext();
@@ -53,7 +53,7 @@ const ReaderSidebar: FC<Props> = ({ container, ctx, slug }) => {
                   !open && '-ml-2',
                 )}
                 onClick={() =>
-                  reader(ctx, readerContext.state.mangaData, slug)!.then((x) =>
+                  reader(ctx, readerContext.state.mangaData, title)!.then((x) =>
                     x!.remove(),
                   )
                 }
@@ -68,7 +68,7 @@ const ReaderSidebar: FC<Props> = ({ container, ctx, slug }) => {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      <ChapterList container={container} />
+      <ChapterList container={container} carouselApi={carouselApi} />
       <SidebarFooter>
         <ReaderSettings container={container} />
       </SidebarFooter>

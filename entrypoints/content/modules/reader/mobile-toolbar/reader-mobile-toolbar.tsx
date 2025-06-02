@@ -29,10 +29,10 @@ import reader from '../reader';
 interface Props {
   ctx: ContentScriptContext;
   container: HTMLElement;
-  slug: string;
+  title: string;
 }
 
-const ReaderMobileToolbar: FC<Props> = ({ ctx, container, slug }) => {
+const ReaderMobileToolbar: FC<Props> = ({ ctx, container, title }) => {
   const readerContext = useReaderContext();
   const { open, setOpen } = useSidebar();
 
@@ -79,7 +79,7 @@ const ReaderMobileToolbar: FC<Props> = ({ ctx, container, slug }) => {
           variant="secondary"
           size="md"
           onClick={() =>
-            reader(ctx, readerContext.state.mangaData, slug)!.then((x) =>
+            reader(ctx, readerContext.state.mangaData, title)!.then((x) =>
               x!.remove(),
             )
           }

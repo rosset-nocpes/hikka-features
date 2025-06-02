@@ -11,7 +11,7 @@ import reader from './reader';
 
 const readButton = async (
   ctx: ContentScriptContext,
-  slug: string,
+  title: string,
   location?: Element,
 ) => {
   if (document.body.querySelectorAll('read-button').length !== 0) {
@@ -36,7 +36,7 @@ const readButton = async (
       const root = createRoot(wrapper);
       root.render(
         <QueryClientProvider client={queryClient}>
-          <ReadButton ctx={ctx} slug={slug} />
+          <ReadButton ctx={ctx} title={title} />
         </QueryClientProvider>,
       );
 
@@ -47,13 +47,13 @@ const readButton = async (
 
 interface Props {
   ctx: ContentScriptContext;
-  slug: string;
+  title: string;
 }
 
-const ReadButton: FC<Props> = ({ ctx, slug }) => {
+const ReadButton: FC<Props> = ({ ctx, title }) => {
   const [buttonState, setButtonState] = useState<boolean>();
 
-  const { data, isLoading, isError } = useReadData(slug);
+  const { data, isLoading, isError } = useReadData(title);
 
   readerButtonState.watch((state) => setButtonState(state));
 
@@ -91,7 +91,7 @@ const ReadButton: FC<Props> = ({ ctx, slug }) => {
             onClick={() => {
               document.body.classList.toggle('h-full');
               document.body.classList.toggle('overflow-hidden');
-              reader(ctx, data!, slug).then((ui) => ui.mount());
+              reader(ctx, data!, title).then((ui) => ui.mount());
             }}
           >
             <img src={HikkaLogoMono} className={!dark ? 'invert' : ''} />

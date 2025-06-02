@@ -17,7 +17,7 @@ interface Props {
   container: HTMLElement;
   ctx: ContentScriptContext;
   data: any;
-  slug: string;
+  title: string;
   showControls?: boolean;
 }
 
@@ -25,7 +25,7 @@ const ReaderNavbar: FC<Props> = ({
   container,
   ctx,
   data,
-  slug,
+  title,
   showControls = true,
 }) => {
   const readerContext = useReaderContext();
@@ -44,13 +44,12 @@ const ReaderNavbar: FC<Props> = ({
           variant="ghost"
           size="icon-sm"
           className="bg-sidebar"
-          onClick={() => reader(ctx, data!, slug)!.then((x) => x!.remove())}
+          onClick={() => reader(ctx, data!, title)!.then((x) => x!.remove())}
         >
           <MaterialSymbolsCloseRounded />
         </Button>
         <span className="flex h-8 cursor-default items-center rounded-md bg-sidebar px-2 font-medium font-unitysans">
-          Розділ {readerContext.state.currentChapter.chapter}:{' '}
-          {readerContext.state.currentChapter.title}
+          {`Розділ ${readerContext.state.currentChapter.chapter}: ${readerContext.state.currentChapter.title}`}
         </span>
       </div>
       <div
