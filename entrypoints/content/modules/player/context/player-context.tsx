@@ -44,7 +44,7 @@ export const getAvailablePlayers = (data: API.WatchData): PlayerSource[] =>
 export const playersAvaliable = getAvailablePlayers;
 
 export const getWatched = (): number => {
-  const selector = 'div.rounded-lg.border:nth-child(2) h3';
+  const selector = 'div.rounded-lg.border:nth-child(2) span';
   const element = document.querySelector(selector);
   return element?.firstChild?.nodeValue
     ? parseInt(element.firstChild.nodeValue, 10)
