@@ -1,11 +1,11 @@
-import { ContentScriptContext } from '#imports';
-import useAmanogawaUrl from '@/hooks/use-amanogawa-url';
-import useMUUrl from '@/hooks/use-mu-url';
-import HikkaFLogoSmall from '@/public/hikka-features-small.svg';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { FC, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { ContentScriptContext } from '#imports';
+import useAmanogawaUrl from '@/hooks/use-amanogawa-url';
+import useMUUrl from '@/hooks/use-mu-url';
+import HikkaFLogoSmall from '@/public/hikka-features-small.svg';
 import { queryClient } from '..';
 
 interface Website {
@@ -34,7 +34,8 @@ const aniButtons = async (
     name: 'ani-buttons',
     position: 'inline',
     append: 'last',
-    anchor: location || document.querySelector('.order-1 > div:nth-child(1)')!,
+    anchor:
+      location || document.querySelector('.order-1 > section:nth-child(1)')!,
     css: ':host(ani-buttons) { margin-bottom: -2rem; }',
     async onMount(container) {
       const wrapper = document.createElement('div');
