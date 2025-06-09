@@ -1,4 +1,3 @@
-import { MediaPlayerInstance } from '@vidstack/react';
 import { FC } from 'react';
 import { ContentScriptContext } from '#imports';
 import { Button } from '@/components/ui/button';
@@ -62,7 +61,7 @@ const ReaderNavbar: FC<Props> = ({
             : 'opacity-100',
         )}
       >
-        <ContextMenu>
+        <ContextMenu modal={false}>
           <ContextMenuTrigger asChild>
             <SidebarTrigger
               variant="ghost"
