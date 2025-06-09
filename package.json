@@ -2,7 +2,7 @@
   "name": "hikka-features",
   "description": "Універсальне розширення для hikka.io",
   "private": true,
-  "version": "2.90.0",
+  "version": "2.95.0",
   "type": "module",
   "scripts": {
     "dev": "wxt",
@@ -80,6 +80,6 @@
     "rollup-plugin-visualizer": "^5.14.0",
     "typescript": "^5.8.3",
     "unplugin-icons": "^22.1.0",
-    "wxt": "^0.20.6"
+    "wxt": "^0.20.7"
   }
 }

@@ -3,17 +3,14 @@ import { WheelGesturesPlugin } from 'embla-carousel-wheel-gestures';
 import { FC, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ContentScriptContext } from '#imports';
-
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   Carousel,
   CarouselApi,
   CarouselContent,
   CarouselItem,
-  CarouselPrevious,
 } from '@/components/ui/carousel';
-import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
 import { queryClient } from '../..';
 import { ReaderProvider, useReaderContext } from './context/reader-context';
@@ -32,6 +29,7 @@ export default function reader(
     name: 'reader-ui',
     position: 'modal',
     zIndex: 100,
+    inheritStyles: true,
     async onMount(container) {
       const wrapper = document.createElement('div');
       container.append(wrapper);
@@ -92,10 +90,6 @@ export const Reader: FC<Props> = ({ container, ctx, data, title }) => {
   const readerContext = useReaderContext();
 
   useEffect(() => {
-    console.log(readerContext.state.imagesLoading);
-  }, [readerContext.state.imagesLoading]);
-
-  useEffect(() => {
     if (!carouselApi) return;
 
     const handleScroll = () => {
@@ -128,6 +122,28 @@ export const Reader: FC<Props> = ({ container, ctx, data, title }) => {
       carouselApi.off('scroll', handleScroll);
     };
   }, [carouselApi, readerContext]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.defaultPrevented) {
+        return;
+      }
+
+      switch (e.key) {
+        case 'ArrowUp':
+          carouselApi?.scrollPrev();
+          break;
+        case 'ArrowDown':
+          carouselApi?.scrollNext();
+          break;
+      }
+
+      e.preventDefault();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [carouselApi]);
 
   return (
     <Card

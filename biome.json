@@ -31,7 +31,8 @@
       "correctness": {
         "noInvalidUseBeforeDeclaration": "off",
         "useExhaustiveDependencies": "off",
-        "useHookAtTopLevel": "error"
+        "useHookAtTopLevel": "error",
+        "noUnusedImports": "error"
       },
       "style": {
         "noParameterAssign": "off",
