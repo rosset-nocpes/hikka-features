@@ -22,7 +22,7 @@ declare global {
 
   type PlayerData = PlayerSource | 'type';
 
-  type BackendBranches = 'stable' | 'beta' | 'localhost';
+  type BackendBranches = 'stable' | 'localhost';
 
   type UserDataV1 = {
     username: string;

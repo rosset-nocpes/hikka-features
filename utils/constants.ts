@@ -106,7 +106,6 @@ export const STUDIO_CORRECTED_NAMES: Record<string, string> = {
 
 export const BACKEND_BRANCHES: Record<BackendBranches, string> = {
   stable: 'https://api.hikka-features.pp.ua',
-  beta: 'https://beta.hikka-features.pp.ua',
   localhost: import.meta.env.WXT_BACKEND_BASE_URL,
 };
 
