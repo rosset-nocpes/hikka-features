@@ -2,7 +2,10 @@
   "extends": "./.wxt/tsconfig.json",
   "compilerOptions": {
     "jsx": "react-jsx",
-    "types": ["unplugin-icons/types/react"]
-  },
-  "baseUrl": "."
+    "types": ["unplugin-icons/types/react"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    }
+  }
 }
