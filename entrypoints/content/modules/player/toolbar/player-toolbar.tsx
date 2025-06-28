@@ -13,7 +13,6 @@ import WatchTogetherControls from '../watch-together-controls';
 import ShareLinkButton from './share-link-button';
 
 interface Props {
-  container: HTMLElement;
   time: number;
   isTimecodeLink: boolean;
   timecodeLink: number;
@@ -25,7 +24,6 @@ interface Props {
 }
 
 const PlayerToolbar: FC<Props> = ({
-  container,
   time,
   isTimecodeLink,
   timecodeLink,
@@ -58,10 +56,7 @@ const PlayerToolbar: FC<Props> = ({
       )}
     >
       {getUserData && (
-        <WatchTogetherControls
-          container={container}
-          animeSlug={playerContext.state.animeData.slug}
-        />
+        <WatchTogetherControls animeSlug={playerContext.state.animeData.slug} />
       )}
       <div className="flex items-center">
         <Tooltip>
@@ -70,7 +65,7 @@ const PlayerToolbar: FC<Props> = ({
               <MaterialSymbolsFullscreen className="flex-1" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Fullscreen (custom)</TooltipContent>
+          <TooltipContent>Повноекранний режим (custom)</TooltipContent>
         </Tooltip>
         <Tooltip>
           <TooltipTrigger>
@@ -84,10 +79,9 @@ const PlayerToolbar: FC<Props> = ({
               <MaterialSymbolsWidthFullOutlineSharp className="flex-1" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Theater Mode</TooltipContent>
+          <TooltipContent>Режим театру</TooltipContent>
         </Tooltip>
         <ShareLinkButton
-          container={container}
           time={time}
           isTimecodeLink={isTimecodeLink}
           timecodeLink={timecodeLink}

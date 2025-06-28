@@ -1,3 +1,8 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Copy, Link, MessageCircle, UserPlus, Users, X } from 'lucide-react';
+import { FC, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -21,15 +26,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Copy, Link, MessageCircle, UserPlus, Users, X } from 'lucide-react';
-import { FC, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
 import { usePlayerContext } from './context/player-context';
 
 interface Props {
-  container: HTMLElement;
   animeSlug: string;
 }
 
@@ -37,7 +36,7 @@ const formSchema = z.object({
   roomId: z.string().min(7).max(7),
 });
 
-const WatchTogetherControls: FC<Props> = ({ container, animeSlug }) => {
+const WatchTogetherControls: FC<Props> = ({ animeSlug }) => {
   const playerContext = usePlayerContext();
 
   const [isHost, setIsHost] = useState(false);
@@ -193,7 +192,10 @@ const WatchTogetherControls: FC<Props> = ({ container, animeSlug }) => {
                 Join Room
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]" container={container}>
+            <DialogContent
+              className="sm:max-w-[425px]"
+              container={playerContext.state.container}
+            >
               <DialogHeader>
                 <DialogTitle>Join Watch Party</DialogTitle>
               </DialogHeader>
@@ -253,7 +255,7 @@ const WatchTogetherControls: FC<Props> = ({ container, animeSlug }) => {
             <PopoverContent
               className="w-80 p-0"
               align="start"
-              container={container}
+              container={playerContext.state.container}
             >
               <div className="flex h-[300px] flex-col">
                 <div className="flex items-center justify-between border-b p-2">

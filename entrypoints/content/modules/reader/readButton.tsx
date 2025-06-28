@@ -27,6 +27,7 @@ const readButton = async (
       document.querySelector(
         'main > div > div.flex.flex-col.gap-4 > div.flex.w-full.flex-col.gap-4 > div > div',
       )!,
+    inheritStyles: true,
     async onMount(container) {
       const wrapper = document.createElement('div');
       container.append(wrapper);
@@ -36,7 +37,7 @@ const readButton = async (
       const root = createRoot(wrapper);
       root.render(
         <QueryClientProvider client={queryClient}>
-          <ReadButton ctx={ctx} title={title} />
+          <ReadButton ctx={ctx} container={container} title={title} />
         </QueryClientProvider>,
       );
 
@@ -47,21 +48,27 @@ const readButton = async (
 
 interface Props {
   ctx: ContentScriptContext;
+  container: HTMLElement;
   title: string;
 }
 
-const ReadButton: FC<Props> = ({ ctx, title }) => {
+const ReadButton: FC<Props> = ({ ctx, container, title }) => {
   const [buttonState, setButtonState] = useState<boolean>();
 
   const { data, isLoading, isError } = useReadData(title);
 
+  const openReader = () => {
+    document.body.classList.toggle('h-full');
+    document.body.classList.toggle('overflow-hidden');
+    reader(ctx, data!, title).then((ui) => ui.mount());
+  };
+
   readerButtonState.watch((state) => setButtonState(state));
 
-  let dark = true;
+  const dark = container.classList.contains('dark');
   useEffect(() => {
     const initializeAsync = async () => {
       setButtonState(await readerButtonState.getValue());
-      dark = await darkMode.getValue();
     };
 
     initializeAsync();
@@ -85,14 +92,9 @@ const ReadButton: FC<Props> = ({ ctx, title }) => {
         >
           <Button
             variant="outline"
-            id="player-button"
-            className={cn('w-full gap-2', dark ? 'dark' : '')}
+            className="w-full gap-2"
             disabled={isLoading || isError}
-            onClick={() => {
-              document.body.classList.toggle('h-full');
-              document.body.classList.toggle('overflow-hidden');
-              reader(ctx, data!, title).then((ui) => ui.mount());
-            }}
+            onClick={openReader}
           >
             <img src={HikkaLogoMono} className={!dark ? 'invert' : ''} />
             <AnimatePresence mode="wait" initial={false}>

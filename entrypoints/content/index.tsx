@@ -200,12 +200,12 @@ export default defineContentScript({
 
               // ani-buttons on edit page
               const info_block = document.querySelector(
-                `div.gap-12:nth-child(2) > div:nth-child(${
+                `div.gap-12:nth-child(2) > section:nth-child(${
                   creatingEdit ? 1 : 2
                 })`,
               )!;
 
-              (await aniButtons(ctx, data, true, info_block))?.mount();
+              (await aniButtons(ctx, data, 'last', true, info_block))?.mount();
 
               // aniBackground
               switch (content_type) {

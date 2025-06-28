@@ -2,7 +2,6 @@ import { Check, ClipboardCopy } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { FC, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { boolean } from 'zod';
 import { ContentScriptContext } from '#imports';
 import { Button } from '@/components/ui/button';
 
@@ -19,6 +18,7 @@ const devButtons = async (ctx: ContentScriptContext, data: any) => {
       'main > div > div.flex.flex-col.gap-12 > div.flex.flex-col.gap-4',
     )!,
     css: ':host(dev-buttons) { margin-bottom: -1rem; }',
+    inheritStyles: true,
     async onMount(container) {
       const wrapper = document.createElement('div');
       container.append(wrapper);

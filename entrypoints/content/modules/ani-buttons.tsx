@@ -23,6 +23,7 @@ enum MediaEnum {
 const aniButtons = async (
   ctx: ContentScriptContext,
   anime_data: any,
+  append: ContentScriptAppendMode = 'before',
   smallerTitle?: boolean,
   location?: Element,
 ) => {
@@ -33,10 +34,10 @@ const aniButtons = async (
   return createShadowRootUi(ctx, {
     name: 'ani-buttons',
     position: 'inline',
-    append: 'last',
-    anchor:
-      location || document.querySelector('.order-1 > section:nth-child(1)')!,
-    css: ':host(ani-buttons) { margin-bottom: -2rem; }',
+    append,
+    anchor: location || document.querySelector('.order-1 > div:nth-child(2)')!,
+    css: ':host(ani-buttons) { margin-bottom: -3rem; }',
+    inheritStyles: true,
     async onMount(container) {
       const wrapper = document.createElement('div');
       container.append(wrapper);
@@ -204,7 +205,7 @@ const AniButtons: FC<Props> = ({ data, smallerTitle }) => {
     <AnimatePresence>
       {blockState && (
         <motion.div
-          className="mb-8 flex flex-col gap-4"
+          className="mb-12 flex flex-col gap-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

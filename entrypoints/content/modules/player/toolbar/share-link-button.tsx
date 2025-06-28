@@ -18,7 +18,6 @@ import MaterialSymbolsShareOutline from '~icons/material-symbols/share-outline';
 import { usePlayerContext } from '../context/player-context';
 
 interface Props {
-  container: HTMLElement;
   time: number;
   isTimecodeLink: boolean;
   timecodeLink: number;
@@ -27,24 +26,23 @@ interface Props {
 }
 
 const ShareLinkButton: FC<Props> = ({
-  container,
   time,
   isTimecodeLink,
   timecodeLink,
   setTimecodeLink,
   toggleTimestampLink,
 }) => {
-  const player = usePlayerContext();
+  const playerContext = usePlayerContext();
 
   const [showTooltip, setShowTooltip] = useState(false);
 
   const handleCopyShareLink = () => {
     const query_params = new URLSearchParams();
-    query_params.append('playerProvider', player.state.provider);
-    query_params.append('playerTeam', player.state.team);
+    query_params.append('playerProvider', playerContext.state.provider);
+    query_params.append('playerTeam', playerContext.state.team);
     query_params.append(
       'playerEpisode',
-      player.state.currentEpisode.episode.toString(),
+      playerContext.state.currentEpisode.episode.toString(),
     );
 
     if (isTimecodeLink) {
@@ -75,7 +73,10 @@ const ShareLinkButton: FC<Props> = ({
           <TooltipContent>Поділитися</TooltipContent>
         </Tooltip>
       </PopoverTrigger>
-      <PopoverContent className="flex flex-col gap-2" container={container}>
+      <PopoverContent
+        className="flex flex-col gap-2"
+        container={playerContext.state.container}
+      >
         <div className="flex items-center gap-2 rounded-md bg-muted py-1 pr-1 pl-2">
           <Link className="size-3.5 shrink-0 text-muted-foreground" />
           <span className="gradient-mask-r-90 cursor-default overflow-hidden text-nowrap font-medium text-xs">

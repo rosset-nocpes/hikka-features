@@ -47,9 +47,14 @@ export default function reader(
             <ReaderProvider data={data} title={title}>
               <div
                 className="fixed z-0 size-full"
-                onClick={() =>
-                  reader(ctx, data!, title)!.then((x) => x!.remove())
-                }
+                onClick={() => {
+                  const radixFocusGuards = document.querySelectorAll(
+                    '[data-radix-focus-guard]',
+                  );
+                  radixFocusGuards.forEach((guard) => guard.remove());
+
+                  reader(ctx, data!, title)!.then((x) => x!.remove());
+                }}
               />
               <Reader
                 container={container}
@@ -86,6 +91,7 @@ interface Props {
 
 export const Reader: FC<Props> = ({ container, ctx, data, title }) => {
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
+  // const [selectedPageIndex, setSelectedPageIndex] = useState(0);
 
   const readerContext = useReaderContext();
 
@@ -124,6 +130,8 @@ export const Reader: FC<Props> = ({ container, ctx, data, title }) => {
   }, [carouselApi, readerContext]);
 
   useEffect(() => {
+    if (!carouselApi) return;
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.defaultPrevented) {
         return;
@@ -131,18 +139,27 @@ export const Reader: FC<Props> = ({ container, ctx, data, title }) => {
 
       switch (e.key) {
         case 'ArrowUp':
-          carouselApi?.scrollPrev();
+          carouselApi.scrollPrev();
           break;
         case 'ArrowDown':
-          carouselApi?.scrollNext();
+          carouselApi.scrollNext();
           break;
       }
 
       e.preventDefault();
     };
 
+    // const handleScroll = () => {
+    //   if (carouselApi && carouselApi.selectedScrollSnap() !== selectedPageIndex)
+    //     setSelectedPageIndex(carouselApi.selectedScrollSnap());
+    // };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    // carouselApi.on('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      // carouselApi.off('scroll', handleScroll);
+    };
   }, [carouselApi]);
 
   return (
@@ -171,7 +188,7 @@ export const Reader: FC<Props> = ({ container, ctx, data, title }) => {
               {readerContext.state.imagesLoading && (
                 <CarouselItem className="size-full animate-pulse bg-accent" />
               )}
-              {readerContext.state.chapterImages.map((img_url) => {
+              {readerContext.state.chapterImages.map((img_url, index) => {
                 return (
                   <CarouselItem key={img_url} className="h-full py-2">
                     <div className="flex h-full items-center justify-center">
@@ -179,6 +196,10 @@ export const Reader: FC<Props> = ({ container, ctx, data, title }) => {
                         src={img_url}
                         alt="Chapter page"
                         loading="lazy"
+                        // className={cn(
+                        //   'h-full object-contain duration-300',
+                        //   index > selectedPageIndex && 'blur-sm',
+                        // )}
                         className="h-full object-contain"
                       />
                     </div>

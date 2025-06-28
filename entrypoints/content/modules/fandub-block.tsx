@@ -1,3 +1,7 @@
+import { QueryClientProvider } from '@tanstack/react-query';
+import { AnimatePresence, motion } from 'motion/react';
+import { FC, Fragment, useEffect, useState } from 'react';
+import { createRoot } from 'react-dom/client';
 import { ContentScriptContext } from '#imports';
 import BlockEntry from '@/components/block-entry';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -9,10 +13,6 @@ import {
 } from '@/components/ui/collapsible';
 import useNotionData from '@/hooks/use-notion-data';
 import HFxCPRBadge from '@/public/hf-x-cpr.svg';
-import { QueryClientProvider } from '@tanstack/react-query';
-import { AnimatePresence, motion } from 'motion/react';
-import { FC, Fragment, useEffect, useState } from 'react';
-import { createRoot } from 'react-dom/client';
 import MaterialSymbolsSadTabRounded from '~icons/material-symbols/sad-tab-rounded';
 import { queryClient } from '..';
 
@@ -35,6 +35,7 @@ const fandubBlock = async (
       document.querySelector(
         'main > div > div.flex.flex-col.gap-4 > div.flex.w-full.flex-col.gap-4 > div',
       )!,
+    inheritStyles: true,
     async onMount(container) {
       const wrapper = document.createElement('div');
       container.append(wrapper);
@@ -74,7 +75,6 @@ const FandubBlock: FC<Props> = ({ anime_data, smallerTitle }) => {
 
   fandubBlockState.watch((state) => setBlockState(state));
 
-  //   todo: add animation
   return (
     <AnimatePresence>
       {blockState && (
@@ -179,7 +179,11 @@ const FandubBlock: FC<Props> = ({ anime_data, smallerTitle }) => {
                     </CollapsibleContent>
                     <div className="footer">
                       <CollapsibleTrigger asChild>
-                        <Button variant="link" size="sm" className="p-0">
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="p-0 text-muted-foreground"
+                        >
                           {isOpen ? 'Згорнути...' : 'Показати більше...'}
                         </Button>
                       </CollapsibleTrigger>

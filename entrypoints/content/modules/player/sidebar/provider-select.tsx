@@ -21,11 +21,10 @@ import {
 } from '../context/player-context';
 
 interface Props {
-  container: HTMLElement;
   toggleWatchedState: (state: boolean) => void;
 }
 
-const ProviderSelect: FC<Props> = ({ container, toggleWatchedState }) => {
+const ProviderSelect: FC<Props> = ({ toggleWatchedState }) => {
   const playerContext = usePlayerContext();
   const { data } = useWatchData(playerContext.state.animeData);
 
@@ -78,7 +77,7 @@ const ProviderSelect: FC<Props> = ({ container, toggleWatchedState }) => {
           align={open ? 'end' : 'start'}
           side={open ? 'bottom' : 'left'}
           sideOffset={open ? 0 : 12}
-          container={container}
+          container={playerContext.state.container}
         >
           {/* <DropdownMenuLabel className="text-muted-foreground text-xs">
             Провайдери

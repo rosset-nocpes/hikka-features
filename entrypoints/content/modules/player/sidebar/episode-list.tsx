@@ -1,3 +1,4 @@
+import { FC } from 'react';
 import {
   SidebarGroup,
   SidebarMenu,
@@ -5,8 +6,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { Eye } from 'lucide-react';
-import { FC } from 'react';
 import { getWatched, usePlayerContext } from '../context/player-context';
 
 interface Props {
@@ -55,16 +54,15 @@ const EpisodeList: FC<Props> = ({ toggleWatchedState }) => {
                 <span className="block leading-4">{ep.episode}</span>
               </div>
               <div className="grid flex-1 truncate text-left leading-tight">
-                <span>Епізод #{ep.episode}</span>
-              </div>
-              {ep.episode <= getWatched() && (
-                <Eye
+                <span
                   className={cn(
-                    'ml-auto transition-transform duration-200',
-                    // !open && 'hidden',
+                    'duration-300',
+                    ep.episode <= getWatched() && 'text-muted-foreground',
                   )}
-                />
-              )}
+                >
+                  Епізод #{ep.episode}
+                </span>
+              </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
         ))}

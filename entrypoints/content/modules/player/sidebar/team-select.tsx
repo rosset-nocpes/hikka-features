@@ -16,11 +16,10 @@ import {
 import { getWatched, usePlayerContext } from '../context/player-context';
 
 interface Props {
-  container: HTMLElement;
   toggleWatchedState: (state: boolean) => void;
 }
 
-const TeamSelect: FC<Props> = ({ container, toggleWatchedState }) => {
+const TeamSelect: FC<Props> = ({ toggleWatchedState }) => {
   const playerContext = usePlayerContext();
   const { data } = useWatchData(playerContext.state.animeData);
 
@@ -50,7 +49,7 @@ const TeamSelect: FC<Props> = ({ container, toggleWatchedState }) => {
           <SidebarMenuButton
             size="lg"
             tooltip={STUDIO_CORRECTED_NAMES[playerContext.state.team]}
-            tooltipContainer={container}
+            tooltipContainer={playerContext.state.container}
           >
             <Avatar className="size-8 rounded-md">
               <AvatarImage
@@ -89,7 +88,7 @@ const TeamSelect: FC<Props> = ({ container, toggleWatchedState }) => {
           align={open ? 'end' : 'start'}
           side={open ? 'bottom' : 'left'}
           sideOffset={open ? 0 : 12}
-          container={container}
+          container={playerContext.state.container}
         >
           <DropdownMenuLabel className="text-muted-foreground text-xs">
             Команди

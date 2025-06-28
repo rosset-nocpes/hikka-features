@@ -3,11 +3,10 @@ import { AnimatePresence, motion } from 'motion/react';
 import { FC } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ContentScriptContext } from '#imports';
+import BlockButton from '@/components/hikka/block-button';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
-import { Button } from '@/components/ui/button';
 import useRecommendation from '@/hooks/use-recommendation';
 import HikkaFLogoSmall from '@/public/hikka-features-small.svg';
-import MaterialSymbolsArrowRightAltRounded from '~icons/material-symbols/arrow-right-alt-rounded';
 import MaterialSymbolsSadTabRounded from '~icons/material-symbols/sad-tab-rounded';
 import { queryClient } from '..';
 
@@ -29,6 +28,7 @@ const recommendationBlock = async (
       document.querySelector(
         'main > div > div.flex.flex-col.gap-12 > div.grid.grid-cols-1.gap-12 > div.relative.order-2.flex.flex-col.gap-12',
       )!,
+    inheritStyles: true,
     async onMount(container) {
       const wrapper = document.createElement('div');
       container.append(wrapper);
@@ -85,18 +85,10 @@ const RecommendationBlock: FC<Props> = ({ anime_data }) => {
                 style={{ width: '21px', height: '20px' }}
               />
             </h3>
-            <Button
-              size="icon-sm"
-              variant="outline"
+            <BlockButton
+              href={`https://myanimelist.net/anime/${mal_id}`}
               disabled={isLoading || data?.recommendations.length === 0}
-            >
-              <a
-                href={`https://myanimelist.net/anime/${mal_id}`}
-                target="_blank"
-              >
-                <MaterialSymbolsArrowRightAltRounded className="text-sm" />
-              </a>
-            </Button>
+            />
           </div>
           <div className="-my-4 no-scrollbar -mx-4 gradient-mask-r-90-d md:gradient-mask-none relative grid auto-cols-scroll grid-flow-col grid-cols-scroll gap-4 overflow-auto px-4 py-4 md:grid-cols-4 lg:gap-8">
             {isLoading &&

@@ -17,7 +17,6 @@ import {
 import PlayerNavbar from './player-navbar';
 import PlayerSidebar from './sidebar/player-sidebar';
 import PlayerToolbar from './toolbar/player-toolbar';
-import VidStackPlayer from './vidstack-player';
 
 export default function player(
   ctx: ContentScriptContext,
@@ -28,6 +27,7 @@ export default function player(
     name: 'player-ui',
     position: 'modal',
     zIndex: 100,
+    inheritStyles: true,
     async onMount(container) {
       const wrapper = document.createElement('div');
       container.append(wrapper);
@@ -42,7 +42,12 @@ export default function player(
       root.render(
         <QueryClientProvider client={queryClient}>
           <SidebarProvider className="h-full w-full">
-            <PlayerProvider data={data!} anime_data={anime_data}>
+            <PlayerProvider
+              ctx={ctx}
+              container={container}
+              data={data!}
+              anime_data={anime_data}
+            >
               <div
                 className="fixed z-0 size-full"
                 onClick={() => {
@@ -209,7 +214,7 @@ export const Player: FC<Props> = ({ container, ctx }) => {
             ) {
               (
                 document.body.querySelector(
-                  'div.inline-flex:nth-child(2) button:nth-child(2)',
+                  'div.rounded-lg.border:nth-child(2) button',
                 ) as HTMLButtonElement
               )?.click();
               toggleWatchedState(true);
@@ -305,12 +310,7 @@ export const Player: FC<Props> = ({ container, ctx }) => {
         getTheatreState && 'sm:max-h-full sm:max-w-full',
       )}
     >
-      <PlayerNavbar
-        container={container}
-        ctx={ctx}
-        data={data}
-        showControls={showControls}
-      />
+      <PlayerNavbar data={data} showControls={showControls} />
       <div className="flex flex-1 flex-col">
         <CardContent
           className={cn(
@@ -320,9 +320,10 @@ export const Player: FC<Props> = ({ container, ctx }) => {
         >
           <div
             className={cn(
-              'duration-300',
+              'relative aspect-video w-full duration-300',
               isFullscreen ? 'fixed inset-0 z-20 size-full' : 'flex border-b',
-              (!open || getTheatreState) && 'flex-1 border-b-0',
+              (!open || getTheatreState) && 'aspect-auto h-full',
+              !open && 'border-0',
             )}
           >
             {/* Will be used in future */}
@@ -331,10 +332,7 @@ export const Player: FC<Props> = ({ container, ctx }) => {
                 id="player-iframe"
                 src={`${playerContext.state.currentEpisode.video_url}?site=hikka.io?v2=1`} // todo: move params to backend
                 loading="lazy"
-                className={cn(
-                  'z-[2] aspect-video size-full',
-                  getTheatreState && !open && 'aspect-auto',
-                )}
+                className="z-[2] size-full"
                 allow="fullscreen; accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
                 allowFullScreen
               ></iframe>
@@ -350,16 +348,12 @@ export const Player: FC<Props> = ({ container, ctx }) => {
               id="player-iframe"
               src={`${playerContext.state.currentEpisode.video_url}?site=hikka.io?v2=1`} // todo: move params to backend
               loading="lazy"
-              className={cn(
-                'z-[2] aspect-video size-full',
-                getTheatreState && 'aspect-auto',
-              )}
+              className="z-[2] size-full"
               allow="fullscreen; accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
               allowFullScreen
             ></iframe>
           </div>
           <PlayerToolbar
-            container={container}
             time={time}
             isTimecodeLink={isTimecodeLink}
             timecodeLink={timecodeLink}
@@ -371,11 +365,7 @@ export const Player: FC<Props> = ({ container, ctx }) => {
           />
         </CardContent>
       </div>
-      <PlayerSidebar
-        container={container}
-        ctx={ctx}
-        toggleWatchedState={toggleWatchedState}
-      />
+      <PlayerSidebar toggleWatchedState={toggleWatchedState} />
     </Card>
   );
 };

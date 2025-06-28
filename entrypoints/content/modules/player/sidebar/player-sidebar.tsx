@@ -1,12 +1,5 @@
 import { FC, useEffect, useRef, useState } from 'react';
-import { ContentScriptContext } from '#imports';
 import { Button } from '@/components/ui/button';
-import {
-  ContextMenu,
-  ContextMenuCheckboxItem,
-  ContextMenuContent,
-  ContextMenuTrigger,
-} from '@/components/ui/context-menu';
 import {
   Sidebar,
   SidebarContent,
@@ -14,7 +7,6 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarSeparator,
-  SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
 import { cn } from '@/utils/cn';
@@ -26,12 +18,10 @@ import ProviderSelect from './provider-select';
 import TeamSelect from './team-select';
 
 interface Props {
-  container: HTMLElement;
-  ctx: ContentScriptContext;
   toggleWatchedState: (state: boolean) => void;
 }
 
-const PlayerSidebar: FC<Props> = ({ container, ctx, toggleWatchedState }) => {
+const PlayerSidebar: FC<Props> = ({ toggleWatchedState }) => {
   const [isScrolled, setIsScrolled] = useState({ top: false, bottom: false });
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -82,9 +72,11 @@ const PlayerSidebar: FC<Props> = ({ container, ctx, toggleWatchedState }) => {
                   !open && '-ml-2',
                 )}
                 onClick={() =>
-                  player(ctx, data!, playerContext.state.animeData)!.then((x) =>
-                    x!.remove(),
-                  )
+                  player(
+                    playerContext.state.ctx,
+                    data!,
+                    playerContext.state.animeData,
+                  )!.then((x) => x!.remove())
                 }
               >
                 <MaterialSymbolsCloseRounded />
@@ -97,14 +89,8 @@ const PlayerSidebar: FC<Props> = ({ container, ctx, toggleWatchedState }) => {
           </SidebarMenuItem>
         </SidebarMenu>
         <SidebarMenu>
-          <ProviderSelect
-            container={container}
-            toggleWatchedState={toggleWatchedState}
-          />
-          <TeamSelect
-            container={container}
-            toggleWatchedState={toggleWatchedState}
-          />
+          <ProviderSelect toggleWatchedState={toggleWatchedState} />
+          <TeamSelect toggleWatchedState={toggleWatchedState} />
         </SidebarMenu>
       </SidebarHeader>
       <SidebarSeparator className="mx-0" />

@@ -1,5 +1,4 @@
 import { FC } from 'react';
-import { ContentScriptContext } from '#imports';
 import { Button } from '@/components/ui/button';
 import {
   ContextMenu,
@@ -13,13 +12,11 @@ import { usePlayerContext } from './context/player-context';
 import player from './player';
 
 interface Props {
-  container: HTMLElement;
-  ctx: ContentScriptContext;
   data: any;
   showControls: boolean;
 }
 
-const PlayerNavbar: FC<Props> = ({ container, ctx, data, showControls }) => {
+const PlayerNavbar: FC<Props> = ({ data, showControls }) => {
   const playerContext = usePlayerContext();
   const { open } = useSidebar();
 
@@ -37,9 +34,11 @@ const PlayerNavbar: FC<Props> = ({ container, ctx, data, showControls }) => {
           size="icon-sm"
           className="bg-sidebar"
           onClick={() =>
-            player(ctx, data!, playerContext.state.animeData)!.then((x) =>
-              x!.remove(),
-            )
+            player(
+              playerContext.state.ctx,
+              data!,
+              playerContext.state.animeData,
+            )!.then((x) => x!.remove())
           }
         >
           <MaterialSymbolsCloseRounded />
@@ -66,7 +65,7 @@ const PlayerNavbar: FC<Props> = ({ container, ctx, data, showControls }) => {
               className="bg-sidebar"
             />
           </ContextMenuTrigger>
-          <ContextMenuContent container={container}>
+          <ContextMenuContent container={playerContext.state.container}>
             <ContextMenuCheckboxItem
               checked={playerContext.state.sidebarMode === 'offcanvas'}
               onCheckedChange={(value) =>
