@@ -12,6 +12,13 @@ export default {
       },
     },
     extend: {
+      gridAutoColumns: {
+        scroll: 'minmax(var(--grid-min, 7rem), var(--grid-max, 1fr))',
+      },
+      gridTemplateColumns: {
+        scroll:
+          'repeat(auto-fill, minmax(var(--grid-min, 7rem), var(--grid-max, 1fr)))',
+      },
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
