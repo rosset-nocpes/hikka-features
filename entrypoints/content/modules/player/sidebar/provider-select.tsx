@@ -76,7 +76,7 @@ const ProviderSelect: FC<Props> = ({ toggleWatchedState }) => {
           className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
           align={open ? 'end' : 'start'}
           side={open ? 'bottom' : 'left'}
-          sideOffset={open ? 0 : 12}
+          sideOffset={open ? 4 : 12}
           container={playerContext.state.container}
         >
           {/* <DropdownMenuLabel className="text-muted-foreground text-xs">

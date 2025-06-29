@@ -51,7 +51,14 @@ const EpisodeList: FC<Props> = ({ toggleWatchedState }) => {
                   open ? '-ml-6 text-transparent' : 'ml-0',
                 )}
               >
-                <span className="block leading-4">{ep.episode}</span>
+                <span
+                  className={cn(
+                    'block leading-4 duration-300',
+                    ep.episode <= getWatched() && 'text-muted-foreground',
+                  )}
+                >
+                  {ep.episode}
+                </span>
               </div>
               <div className="grid flex-1 truncate text-left leading-tight">
                 <span
