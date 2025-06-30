@@ -1,6 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { MediaPlayerInstance } from '@vidstack/react';
-import { FC, useEffect, useState } from 'react';
+import { FC } from 'react';
 import { createRoot } from 'react-dom/client';
 import { toast } from 'sonner';
 import { ContentScriptContext } from '#imports';
@@ -320,9 +320,9 @@ export const Player: FC<Props> = ({ container, ctx }) => {
         >
           <div
             className={cn(
-              'relative aspect-video w-full duration-300',
+              'relative h-5/6 w-full duration-300',
               isFullscreen ? 'fixed inset-0 z-20 size-full' : 'flex border-b',
-              (!open || getTheatreState) && 'aspect-auto h-full',
+              (!open || getTheatreState) && 'h-full',
               !open && 'border-0',
             )}
           >
