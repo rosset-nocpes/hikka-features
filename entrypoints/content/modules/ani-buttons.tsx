@@ -153,6 +153,7 @@ const AniButtons: FC<Props> = ({ data, smallerTitle }) => {
     mu: {
       title: 'MU',
       host: hosts.mu,
+      url: `https://www.mangaupdates.com/series?search=${title}&perpage=25`,
     },
   };
 
@@ -188,11 +189,6 @@ const AniButtons: FC<Props> = ({ data, smallerTitle }) => {
     searchUrls.wiki,
   ];
 
-  const {
-    data: muUrl,
-    isLoading: muUrlLoading,
-    isError: muUrlError,
-  } = useMUUrl(title);
   const {
     data: agawaUrl,
     isLoading: agawaUrlLoading,
@@ -233,23 +229,10 @@ const AniButtons: FC<Props> = ({ data, smallerTitle }) => {
             ).map((elem) => (
               <a
                 key={elem.title}
-                href={
-                  elem.title === 'MU'
-                    ? muUrl
-                    : elem.title === 'Amanogawa'
-                      ? agawaUrl
-                      : elem.url
-                }
+                href={elem.title === 'Amanogawa' ? agawaUrl : elem.url}
                 target="_blank"
                 className={cn(
                   'flex items-center gap-2 rounded-sm p-1 font-medium text-sm transition hover:bg-secondary/60',
-                  elem.title === 'MU'
-                    ? muUrlLoading
-                      ? 'animate-pulse'
-                      : agawaUrlError
-                        ? 'pointer-events-none opacity-50'
-                        : ''
-                    : '',
                   elem.title === 'Amanogawa'
                     ? agawaUrlLoading
                       ? 'animate-pulse'
