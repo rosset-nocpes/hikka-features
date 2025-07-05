@@ -1,5 +1,4 @@
 import { FC } from 'react';
-import { ContentScriptContext } from '#imports';
 import { Button } from '@/components/ui/button';
 import {
   ContextMenu,
@@ -13,25 +12,16 @@ import { useReaderContext } from './context/reader-context';
 import reader from './reader';
 
 interface Props {
-  container: HTMLElement;
-  ctx: ContentScriptContext;
-  data: any;
-  title: string;
   showControls?: boolean;
 }
 
-const ReaderNavbar: FC<Props> = ({
-  container,
-  ctx,
-  data,
-  title,
-  showControls = true,
-}) => {
-  const readerContext = useReaderContext();
+const ReaderNavbar: FC<Props> = ({ showControls = true }) => {
   const { open } = useSidebar();
+  const { container, currentChapter, sidebarMode, setSidebarMode } =
+    useReaderContext();
 
   return (
-    <>
+    <div className="hidden sm:flex">
       <div
         className={cn(
           'absolute top-2 left-2 z-20 flex gap-2 duration-300',
@@ -43,20 +33,19 @@ const ReaderNavbar: FC<Props> = ({
           variant="ghost"
           size="icon-sm"
           className="bg-sidebar"
-          onClick={() => reader(ctx, data!, title)!.then((x) => x!.remove())}
+          onClick={() => reader().then((x) => x.remove())}
         >
           <MaterialSymbolsCloseRounded />
         </Button>
         <span className="flex h-8 cursor-default items-center rounded-md bg-sidebar px-2 font-medium font-unitysans">
-          {`Розділ ${readerContext.state.currentChapter.chapter}: ${readerContext.state.currentChapter.title}`}
+          {`Розділ ${currentChapter?.chapter}`}
+          {currentChapter?.title ? `: ${currentChapter?.title}` : ''}
         </span>
       </div>
       <div
         className={cn(
           'absolute top-2 right-2 z-20 duration-300',
-          !showControls &&
-            readerContext.state.sidebarMode === 'offcanvas' &&
-            !open
+          !showControls && sidebarMode === 'offcanvas' && !open
             ? 'opacity-0'
             : 'opacity-100',
         )}
@@ -71,12 +60,9 @@ const ReaderNavbar: FC<Props> = ({
           </ContextMenuTrigger>
           <ContextMenuContent container={container}>
             <ContextMenuCheckboxItem
-              checked={readerContext.state.sidebarMode === 'offcanvas'}
+              checked={sidebarMode === 'offcanvas'}
               onCheckedChange={(value) =>
-                readerContext.setState((prev) => ({
-                  ...prev,
-                  sidebarMode: value ? 'offcanvas' : 'icon',
-                }))
+                setSidebarMode(value ? 'offcanvas' : 'icon')
               }
             >
               Компактний режим
@@ -84,7 +70,7 @@ const ReaderNavbar: FC<Props> = ({
           </ContextMenuContent>
         </ContextMenu>
       </div>
-    </>
+    </div>
   );
 };
 

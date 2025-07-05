@@ -1,16 +1,16 @@
+import { QueryClientProvider } from '@tanstack/react-query';
 import { Check, ClipboardCopy } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { FC, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ContentScriptContext } from '#imports';
 import { Button } from '@/components/ui/button';
+import { queryClient } from '..';
 
-const devButtons = async (ctx: ContentScriptContext, data: any) => {
+const devButtons = async () => {
   if (document.body.querySelectorAll('dev-buttons').length !== 0) {
     return;
   }
 
-  return createShadowRootUi(ctx, {
+  return createShadowRootUi(usePageStore.getState().ctx!, {
     name: 'dev-buttons',
     position: 'inline',
     append: 'last',
@@ -26,20 +26,31 @@ const devButtons = async (ctx: ContentScriptContext, data: any) => {
       container.classList.toggle('dark', await darkMode.getValue());
 
       const root = createRoot(wrapper);
-      root.render(<DevButtons anime_data={data} />);
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <DevButtons />
+        </QueryClientProvider>,
+      );
 
       return { root, wrapper };
     },
   });
 };
 
-interface Props {
-  anime_data: any;
-}
-
-const DevButtons: FC<Props> = ({ anime_data }) => {
+const DevButtons = () => {
   const [show, toggleShow] = useState<boolean | null>(null);
   const [copiedButton, setCopiedButton] = useState<string | null>(null);
+
+  const { contentType: path } = usePageStore();
+
+  let queryFunc = useHikkaAnime;
+  switch (path) {
+    case 'manga':
+    case 'novel':
+      queryFunc = useHikkaManga;
+  }
+
+  const data = queryFunc().data;
 
   const handleCopy = async (text: string, buttonId: string) => {
     await navigator.clipboard.writeText(text);
@@ -49,8 +60,8 @@ const DevButtons: FC<Props> = ({ anime_data }) => {
     }, 1000);
   };
 
-  const slug = anime_data.slug;
-  const mal_id = anime_data.mal_id;
+  const slug = data.slug;
+  const mal_id = data.mal_id;
 
   useEffect(() => {
     const initializeAsync = async () => {

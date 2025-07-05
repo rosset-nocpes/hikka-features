@@ -65,19 +65,11 @@ declare global {
   };
 
   interface PlayerState {
-    animeData: any;
     provider: PlayerSource;
     team: string;
     episodeData: API.EpisodeData[];
     currentEpisode: API.EpisodeData;
     sidebarMode: 'offcanvas' | 'icon';
-  }
-
-  interface ReaderState {
-    mangaData: API.ReadData;
-    currentChapter: API.ChapterData;
-    chapterImages: string[];
-    imagesLoading: boolean;
-    sidebarMode: 'offcanvas' | 'icon';
+    container: HTMLElement;
   }
 }

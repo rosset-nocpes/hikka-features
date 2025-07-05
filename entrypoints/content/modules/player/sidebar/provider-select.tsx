@@ -26,7 +26,7 @@ interface Props {
 
 const ProviderSelect: FC<Props> = ({ toggleWatchedState }) => {
   const playerContext = usePlayerContext();
-  const { data } = useWatchData(playerContext.state.animeData);
+  const { data } = useWatchData();
 
   const { open } = useSidebar();
 

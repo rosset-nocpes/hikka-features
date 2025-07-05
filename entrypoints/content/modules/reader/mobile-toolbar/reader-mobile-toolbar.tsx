@@ -1,43 +1,36 @@
-import { BarChart, Eye, Minus, Plus } from 'lucide-react';
 import { FC } from 'react';
-import { ContentScriptContext } from '#imports';
 import { Button } from '@/components/ui/button';
+import { CarouselApi } from '@/components/ui/carousel';
 import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from '@/components/ui/drawer';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from '@/components/ui/select';
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import { useSidebar } from '@/components/ui/sidebar';
 import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
 import MaterialSymbolsRightPanelCloseRounded from '~icons/material-symbols/right-panel-close-rounded';
 import MaterialSymbolsRightPanelOpenOutlineRounded from '~icons/material-symbols/right-panel-open-outline-rounded';
-import { getRead, useReaderContext } from '../context/reader-context';
+import { useReaderContext } from '../context/reader-context';
 import reader from '../reader';
 
 interface Props {
-  ctx: ContentScriptContext;
-  container: HTMLElement;
-  title: string;
+  carouselApi: CarouselApi;
 }
 
-const ReaderMobileToolbar: FC<Props> = ({ ctx, container, title }) => {
-  const readerContext = useReaderContext();
+const ReaderMobileToolbar: FC<Props> = ({ carouselApi }) => {
+  const [sheetOpen, setSheetOpen] = useState(false);
+
   const { open, setOpen } = useSidebar();
+  const { data: mangaData } = useReadData();
+  const { container, currentChapter, setChapter } = useReaderContext();
 
   const handleSelectChapter = (value: API.ChapterData) => {
-    readerContext.setState((prev) => ({ ...prev, currentChapter: value }));
+    setChapter(value);
+    setSheetOpen(false);
+
+    carouselApi?.scrollTo(0, true);
   };
 
   return (
@@ -51,38 +44,62 @@ const ReaderMobileToolbar: FC<Props> = ({ ctx, container, title }) => {
           )}
           <span className="sr-only">Toggle Sidebar</span>
         </Button>
-        <Select
-          onValueChange={(value) =>
-            handleSelectChapter(
-              readerContext.state.mangaData.chapters.find(
-                (chap) => chap.id === value,
-              )!,
-            )
-          }
-        >
-          <SelectTrigger className="inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-secondary bg-secondary px-3 font-medium text-secondary-foreground text-sm ring-offset-background transition-colors hover:bg-secondary/80 focus-visible:outline-none">
-            {`Том ${readerContext.state.currentChapter.volume} Розділ ${readerContext.state.currentChapter.chapter}`}
-          </SelectTrigger>
-          <SelectContent
+        <Sheet modal={false} open={sheetOpen} onOpenChange={setSheetOpen}>
+          <SheetTrigger
+            className="inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-secondary bg-secondary px-3 font-medium text-secondary-foreground text-sm ring-offset-background transition-colors hover:bg-secondary/80 focus-visible:outline-none"
+            onClick={() => setSheetOpen(true)}
+          >{`Том ${currentChapter?.volume} Розділ ${currentChapter?.chapter}`}</SheetTrigger>
+          <SheetContent
             container={container}
-            align="center"
-            className="w-full"
+            side="bottom"
+            className="flex h-full flex-col gap-2"
           >
-            {readerContext.state.mangaData.chapters.map((chapter) => (
-              <SelectItem key={chapter.id} value={chapter.id}>
-                {`Том ${chapter.volume} Розділ ${chapter.chapter}`}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+            <SheetHeader>
+              <SheetTitle>Оберіть розділ</SheetTitle>
+            </SheetHeader>
+            <div className="flex h-full flex-col gap-1 overflow-y-auto">
+              {mangaData?.chapters.map((chapter) => (
+                <Button
+                  key={chapter.id}
+                  variant="ghost"
+                  onClick={() => handleSelectChapter(chapter)}
+                  className="w-full shrink-0"
+                >
+                  {`Том ${chapter.volume} Розділ ${chapter.chapter}`}
+                </Button>
+              ))}
+            </div>
+          </SheetContent>
+        </Sheet>
+        {/* <Drawer container={container}>
+          <DrawerTrigger className="inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-secondary bg-secondary px-3 font-medium text-secondary-foreground text-sm ring-offset-background transition-colors hover:bg-secondary/80 focus-visible:outline-none">{`Том ${readerContext.state.currentChapter.volume} Розділ ${readerContext.state.currentChapter.chapter}`}</DrawerTrigger>
+          <DrawerContent className="flex h-full flex-col gap-2">
+            <DrawerHeader>
+              <DrawerTitle>Сало</DrawerTitle>
+            </DrawerHeader>
+            <div className="flex h-full flex-col gap-1 overflow-y-auto">
+              {chapters.map((chapter) => (
+                <Button
+                  key={chapter.id}
+                  variant="ghost"
+                  onClick={() => handleSelectChapter(chapter)}
+                  className="w-full shrink-0"
+                >
+                  {`Том ${chapter.volume} Розділ ${chapter.chapter}`}
+                </Button>
+              ))}
+            </div>
+            <DrawerFooter>
+              <DrawerClose>
+                <Button variant="outline">Зачинити</Button>
+              </DrawerClose>
+            </DrawerFooter>
+          </DrawerContent>
+        </Drawer> */}
         <Button
           variant="secondary"
           size="md"
-          onClick={() =>
-            reader(ctx, readerContext.state.mangaData, title)!.then((x) =>
-              x!.remove(),
-            )
-          }
+          onClick={() => reader().then((x) => x.remove())}
         >
           <MaterialSymbolsCloseRounded />
         </Button>

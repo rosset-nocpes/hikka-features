@@ -303,8 +303,6 @@ export async function get_miu_chapters(
       throw new Error(`Failed to search for manga "${title}"`);
     });
 
-  console.log(searchResponse.data);
-
   const $search = cheerio.load(searchResponse.data);
   // Assuming the first result is the correct one.
   // The Kotlin code uses "article.item" or "div.owl-carousel div.card--big"
@@ -391,9 +389,7 @@ export async function get_miu_chapters(
       );
       const chapterVolume = chapterMatch ? chapterMatch[1] : 'N/A';
       const chapterNumber = chapterMatch ? chapterMatch[2] : 'N/A';
-      const chapterTitle = chapterMatch
-        ? chapterMatch[3] || ''
-        : chapterTitleText;
+      const chapterTitle = chapterMatch?.[3] || '';
 
       const chapterId = chapterHref
         ? chapterHref.split('/').pop()?.split('-')[0] || chapterNumber

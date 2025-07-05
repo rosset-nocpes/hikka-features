@@ -19,9 +19,35 @@ interface Props {
   toggleWatchedState: (state: boolean) => void;
 }
 
+const getEpisodeRanges = (episodes: { episode: number }[]) => {
+  if (!episodes.length) return '';
+
+  const episodeNumbers = [...new Set(episodes.map((e) => e.episode))].sort(
+    (a, b) => a - b,
+  );
+
+  const ranges = [];
+  let start = episodeNumbers[0];
+  let end = episodeNumbers[0];
+
+  for (let i = 1; i < episodeNumbers.length; i++) {
+    if (episodeNumbers[i] === end + 1) {
+      end = episodeNumbers[i];
+    } else {
+      ranges.push(start === end ? `${start}` : `${start}-${end}`);
+      start = episodeNumbers[i];
+      end = episodeNumbers[i];
+    }
+  }
+
+  ranges.push(start === end ? `${start}` : `${start}-${end}`);
+
+  return ranges.join(', ');
+};
+
 const TeamSelect: FC<Props> = ({ toggleWatchedState }) => {
   const playerContext = usePlayerContext();
-  const { data } = useWatchData(playerContext.state.animeData);
+  const { data } = useWatchData();
 
   const { open } = useSidebar();
 
@@ -72,12 +98,7 @@ const TeamSelect: FC<Props> = ({ toggleWatchedState }) => {
                 {playerContext.state.team}
               </span>
               <span className="truncate text-xs">
-                {
-                  new Set(
-                    playerContext.state.episodeData.map((item) => item.episode),
-                  ).size
-                }
-                /{playerContext.state.animeData.episodes_total}
+                {getEpisodeRanges(playerContext.state.episodeData)}
               </span>
             </div>
             <ChevronsUpDown className="ml-auto" />
@@ -118,14 +139,9 @@ const TeamSelect: FC<Props> = ({ toggleWatchedState }) => {
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">{team}</span>
                   <span className="truncate text-xs">
-                    {
-                      new Set(
-                        data![playerContext.state.provider][team].map(
-                          (item) => item.episode,
-                        ),
-                      ).size
-                    }
-                    /{playerContext.state.animeData.episodes_total}
+                    {getEpisodeRanges(
+                      data![playerContext.state.provider][team],
+                    )}
                   </span>
                 </div>
               </div>

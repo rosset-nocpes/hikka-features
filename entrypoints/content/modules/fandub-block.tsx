@@ -1,8 +1,7 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { FC, Fragment, useEffect, useState } from 'react';
+import { FC, Fragment } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ContentScriptContext } from '#imports';
 import BlockEntry from '@/components/block-entry';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -11,22 +10,16 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import useNotionData from '@/hooks/use-notion-data';
 import HFxCPRBadge from '@/public/hf-x-cpr.svg';
 import MaterialSymbolsSadTabRounded from '~icons/material-symbols/sad-tab-rounded';
 import { queryClient } from '..';
 
-const fandubBlock = async (
-  ctx: ContentScriptContext,
-  anime_data: any,
-  smallerTitle?: boolean,
-  location?: Element,
-) => {
+const fandubBlock = async (smallerTitle?: boolean, location?: Element) => {
   if (document.body.querySelectorAll('fandub-block').length !== 0) {
     return;
   }
 
-  return createShadowRootUi(ctx, {
+  return createShadowRootUi(usePageStore.getState().ctx, {
     name: 'fandub-block',
     position: 'inline',
     append: 'last',
@@ -45,7 +38,7 @@ const fandubBlock = async (
       const root = createRoot(wrapper);
       root.render(
         <QueryClientProvider client={queryClient}>
-          <FandubBlock anime_data={anime_data} smallerTitle={smallerTitle} />
+          <FandubBlock smallerTitle={smallerTitle} />
         </QueryClientProvider>,
       );
 
@@ -55,12 +48,11 @@ const fandubBlock = async (
 };
 
 interface Props {
-  anime_data: any;
   smallerTitle?: boolean;
 }
 
-const FandubBlock: FC<Props> = ({ anime_data, smallerTitle }) => {
-  const { data, isLoading, isError } = useNotionData(anime_data.slug);
+const FandubBlock: FC<Props> = ({ smallerTitle }) => {
+  const { data, isLoading, isError } = useNotionData();
 
   const [isOpen, setIsOpen] = useState(false);
   const [blockState, setBlockState] = useState<boolean>();

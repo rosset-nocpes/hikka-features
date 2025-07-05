@@ -1,10 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery } from '@tanstack/react-query';
+import useHikkaAnime from './use-hikka-anime';
 
-const useRecommendation = (anime_data: any) => {
+const useRecommendation = () => {
+  const { data } = useHikkaAnime();
+
   return useQuery({
-    queryKey: ["recommendation-data", anime_data.slug],
+    queryKey: ['recommendation-data', data.slug],
     queryFn: async () => {
-      const mal_id = anime_data["mal_id"];
+      const mal_id = data['mal_id'];
       let maxSingleVotes = 0;
 
       const url = `https://corsproxy.io/?url=https://api.jikan.moe/v4/anime/${mal_id}/recommendations`;
@@ -12,7 +15,7 @@ const useRecommendation = (anime_data: any) => {
       const r = await fetch(url);
 
       if (!r.ok) {
-        throw new Error("Not found");
+        throw new Error('Not found');
       }
 
       const recommendation_data = await r.json();
@@ -28,7 +31,7 @@ const useRecommendation = (anime_data: any) => {
             if (element.votes > maxSingleVotes) maxSingleVotes = element.votes;
             return { ...hikkaData, mal: { ...element } };
           }
-        })
+        }),
       );
 
       // if (recommendation_data === null) {
@@ -46,7 +49,7 @@ const useRecommendation = (anime_data: any) => {
 const fetchDetailedData = async (content: any) => {
   const malId = content.entry.mal_id;
   const response = await fetch(
-    `https://api.hikka.io/integrations/mal/anime/${malId}`
+    `https://api.hikka.io/integrations/mal/anime/${malId}`,
   );
   if (!response.ok)
     throw new Error(`API request failed with status code ${response.status}`);

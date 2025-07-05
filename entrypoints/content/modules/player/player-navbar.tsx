@@ -12,11 +12,10 @@ import { usePlayerContext } from './context/player-context';
 import player from './player';
 
 interface Props {
-  data: any;
   showControls: boolean;
 }
 
-const PlayerNavbar: FC<Props> = ({ data, showControls }) => {
+const PlayerNavbar: FC<Props> = ({ showControls }) => {
   const playerContext = usePlayerContext();
   const { open } = useSidebar();
 
@@ -33,13 +32,7 @@ const PlayerNavbar: FC<Props> = ({ data, showControls }) => {
           variant="ghost"
           size="icon-sm"
           className="bg-sidebar"
-          onClick={() =>
-            player(
-              playerContext.state.ctx,
-              data!,
-              playerContext.state.animeData,
-            )!.then((x) => x!.remove())
-          }
+          onClick={() => player()!.then((x) => x!.remove())}
         >
           <MaterialSymbolsCloseRounded />
         </Button>

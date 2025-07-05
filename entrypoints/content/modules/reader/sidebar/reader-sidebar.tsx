@@ -1,5 +1,4 @@
 import { FC } from 'react';
-import { ContentScriptContext } from '#imports';
 import { Button } from '@/components/ui/button';
 import { CarouselApi } from '@/components/ui/carousel';
 import {
@@ -18,20 +17,17 @@ import ChapterList from './chapter-list';
 import ReaderSettings from './reader-settings';
 
 interface Props {
-  container: HTMLElement;
-  ctx: ContentScriptContext;
   carouselApi: CarouselApi;
-  title: string;
 }
 
-const ReaderSidebar: FC<Props> = ({ container, ctx, title, carouselApi }) => {
+const ReaderSidebar: FC<Props> = ({ carouselApi }) => {
   const { open } = useSidebar();
 
-  const readerContext = useReaderContext();
+  const { sidebarMode } = useReaderContext();
 
   return (
     <Sidebar
-      collapsible={readerContext.state.sidebarMode}
+      collapsible={sidebarMode}
       side="right"
       className="flex overflow-hidden"
       // onMouseLeave={toggleSidebar}
@@ -52,11 +48,7 @@ const ReaderSidebar: FC<Props> = ({ container, ctx, title, carouselApi }) => {
                   'transition-[margin] duration-300',
                   !open && '-ml-2',
                 )}
-                onClick={() =>
-                  reader(ctx, readerContext.state.mangaData, title)!.then((x) =>
-                    x!.remove(),
-                  )
-                }
+                onClick={() => reader()!.then((x) => x!.remove())}
               >
                 <MaterialSymbolsCloseRounded />
               </Button>
@@ -68,9 +60,9 @@ const ReaderSidebar: FC<Props> = ({ container, ctx, title, carouselApi }) => {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      <ChapterList container={container} carouselApi={carouselApi} />
+      <ChapterList carouselApi={carouselApi} />
       <SidebarFooter>
-        <ReaderSettings container={container} />
+        <ReaderSettings />
       </SidebarFooter>
     </Sidebar>
   );

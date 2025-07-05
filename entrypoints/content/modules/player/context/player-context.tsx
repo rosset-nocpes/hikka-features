@@ -1,11 +1,4 @@
-import {
-  createContext,
-  FC,
-  PropsWithChildren,
-  useContext,
-  useState,
-} from 'react';
-import { ContentScriptContext } from '#imports';
+import { createContext, FC, PropsWithChildren } from 'react';
 
 interface SharedPlayerParams {
   provider: string | null;
@@ -53,10 +46,8 @@ export const getWatched = (): number => {
 };
 
 const getInitialPlayerState = (
-  ctx: ContentScriptContext,
-  container: HTMLElement,
   data: API.WatchData,
-  anime_data: any,
+  container: HTMLElement,
   sharedParams: SharedPlayerParams,
   isShared: boolean,
 ): PlayerState => {
@@ -83,42 +74,28 @@ const getInitialPlayerState = (
     : episodes?.find((ep) => ep.episode === getWatched() + 1);
 
   return {
-    animeData: anime_data,
     provider,
     team,
     episodeData,
     currentEpisode: targetEpisode ?? episodes[0],
     sidebarMode: 'offcanvas',
-    ctx,
     container,
   };
 };
 
 interface PlayerProviderProps extends PropsWithChildren {
-  ctx: ContentScriptContext;
   container: HTMLElement;
-  data: API.WatchData;
-  anime_data: any;
 }
 
 export const PlayerProvider: FC<PlayerProviderProps> = ({
   children,
-  ctx,
   container,
-  data,
-  anime_data,
 }) => {
   const [sharedParams, isShared] = useSharedPlayerParams();
+  const { data } = useWatchData();
 
   const [playerState, setPlayerState] = useState<PlayerState>(() =>
-    getInitialPlayerState(
-      ctx,
-      container,
-      data,
-      anime_data,
-      sharedParams,
-      isShared,
-    ),
+    getInitialPlayerState(data!, container, sharedParams, isShared),
   );
 
   return (

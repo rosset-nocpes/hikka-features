@@ -1,24 +1,18 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { FC, useEffect, useState } from 'react';
+import { FC } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ContentScriptContext } from '#imports';
 import { Button } from '@/components/ui/button';
-import useWatchData from '@/hooks/use-watch-data';
 import HikkaLogoMono from '@/public/hikka-features-mono.svg';
 import { queryClient } from '../..';
 import player from './player';
 
-export default async function watchButton(
-  ctx: ContentScriptContext,
-  anime_data: any,
-  location?: Element,
-) {
+export default async function watchButton(location?: Element) {
   if (document.body.querySelectorAll('watch-button').length !== 0) {
     return;
   }
 
-  return createShadowRootUi(ctx, {
+  return createShadowRootUi(usePageStore.getState().ctx!, {
     name: 'watch-button',
     position: 'inline',
     append: 'last',
@@ -37,11 +31,7 @@ export default async function watchButton(
       const root = createRoot(wrapper);
       root.render(
         <QueryClientProvider client={queryClient}>
-          <WatchButton
-            container={container}
-            ctx={ctx}
-            anime_data={anime_data}
-          />
+          <WatchButton container={container} />
         </QueryClientProvider>,
       );
 
@@ -52,19 +42,17 @@ export default async function watchButton(
 
 interface Props {
   container: HTMLElement;
-  ctx: ContentScriptContext;
-  anime_data: any;
 }
 
-const WatchButton: FC<Props> = ({ container, ctx, anime_data }) => {
+const WatchButton: FC<Props> = ({ container }) => {
   const [buttonState, setButtonState] = useState<boolean>();
 
-  const { data, isLoading, isError } = useWatchData(anime_data);
+  const { data, isLoading, isError } = useWatchData();
 
   const openPlayer = () => {
     document.body.classList.toggle('h-full');
     document.body.classList.toggle('overflow-hidden');
-    player(ctx, data!, anime_data).then((ui) => ui.mount());
+    player().then((ui) => ui.mount());
   };
 
   useEffect(() => {
@@ -80,7 +68,7 @@ const WatchButton: FC<Props> = ({ container, ctx, anime_data }) => {
     ) {
       document.body.classList.toggle('h-full');
       document.body.classList.toggle('overflow-hidden');
-      player(ctx, data!, anime_data).then((ui) => ui.mount());
+      player().then((ui) => ui.mount());
     }
   }, [data]);
 

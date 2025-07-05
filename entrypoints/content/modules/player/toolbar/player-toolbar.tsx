@@ -8,7 +8,6 @@ import {
 } from '@/components/ui/tooltip';
 import MaterialSymbolsFullscreen from '~icons/material-symbols/fullscreen';
 import MaterialSymbolsWidthFullOutlineSharp from '~icons/material-symbols/width-full-outline-sharp';
-import { usePlayerContext } from '../context/player-context';
 import WatchTogetherControls from '../watch-together-controls';
 import ShareLinkButton from './share-link-button';
 
@@ -33,7 +32,6 @@ const PlayerToolbar: FC<Props> = ({
   toggleTheatreState,
   getTheatreState,
 }) => {
-  const playerContext = usePlayerContext();
   const { open } = useSidebar();
 
   const [getUserData, setUserData] = useState<UserDataV2 | null>();
@@ -55,9 +53,7 @@ const PlayerToolbar: FC<Props> = ({
         !open && '-mt-8 opacity-0',
       )}
     >
-      {getUserData && (
-        <WatchTogetherControls animeSlug={playerContext.state.animeData.slug} />
-      )}
+      {getUserData && <WatchTogetherControls />}
       <div className="flex items-center">
         <Tooltip>
           <TooltipTrigger>

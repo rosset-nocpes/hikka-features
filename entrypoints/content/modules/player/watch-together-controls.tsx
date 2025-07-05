@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Copy, Link, MessageCircle, UserPlus, Users, X } from 'lucide-react';
-import { FC, useState } from 'react';
+import { FC } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -28,15 +28,14 @@ import {
 } from '@/components/ui/popover';
 import { usePlayerContext } from './context/player-context';
 
-interface Props {
-  animeSlug: string;
-}
+interface Props {}
 
 const formSchema = z.object({
   roomId: z.string().min(7).max(7),
 });
 
-const WatchTogetherControls: FC<Props> = ({ animeSlug }) => {
+const WatchTogetherControls: FC<Props> = ({}) => {
+  const { data: animeData } = useHikkaAnime();
   const playerContext = usePlayerContext();
 
   const [isHost, setIsHost] = useState(false);
@@ -97,7 +96,7 @@ const WatchTogetherControls: FC<Props> = ({ animeSlug }) => {
     browser.runtime.sendMessage(undefined, {
       type: 'watch-together',
       action: 'create',
-      animeSlug,
+      animeSlug: animeData.slug,
       playerInfo: {
         playerProvider: playerContext.state.provider,
         teamName: playerContext.state.team,

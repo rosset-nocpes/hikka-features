@@ -1,13 +1,8 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { FC, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ContentScriptContext } from '#imports';
 
-const aniBackground = async (
-  ctx: ContentScriptContext,
-  mal_id: number,
-  type: MediaType,
-) => {
+const aniBackground = async (mal_id: number, type: MediaType) => {
   if (document.body.querySelectorAll('ani-background').length !== 0) {
     return;
   }
@@ -48,7 +43,7 @@ const aniBackground = async (
     return null;
   }
 
-  return createShadowRootUi(ctx, {
+  return createShadowRootUi(usePageStore.getState().ctx, {
     name: 'ani-background',
     position: 'inline',
     append: 'last',

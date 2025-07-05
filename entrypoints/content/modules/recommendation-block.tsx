@@ -1,25 +1,18 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { FC } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ContentScriptContext } from '#imports';
 import BlockButton from '@/components/hikka/block-button';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
-import useRecommendation from '@/hooks/use-recommendation';
 import HikkaFLogoSmall from '@/public/hikka-features-small.svg';
 import MaterialSymbolsSadTabRounded from '~icons/material-symbols/sad-tab-rounded';
 import { queryClient } from '..';
 
-const recommendationBlock = async (
-  ctx: ContentScriptContext,
-  anime_data: any,
-  location?: Element,
-) => {
+const recommendationBlock = async (location?: Element) => {
   if (document.body.querySelectorAll('recommendation-block').length !== 0) {
     return;
   }
 
-  return createShadowRootUi(ctx, {
+  return createShadowRootUi(usePageStore.getState().ctx, {
     name: 'recommendation-block',
     position: 'inline',
     append: 'last',
@@ -38,7 +31,7 @@ const recommendationBlock = async (
       const root = createRoot(wrapper);
       root.render(
         <QueryClientProvider client={queryClient}>
-          <RecommendationBlock anime_data={anime_data} />
+          <RecommendationBlock />
         </QueryClientProvider>,
       );
 
@@ -47,14 +40,11 @@ const recommendationBlock = async (
   });
 };
 
-interface Props {
-  anime_data: any;
-}
-
-const RecommendationBlock: FC<Props> = ({ anime_data }) => {
+const RecommendationBlock = () => {
   const [blockState, setBlockState] = useState<boolean>();
 
-  const { data, isLoading, isError } = useRecommendation(anime_data);
+  const { data: anime_data } = useHikkaAnime();
+  const { data, isLoading, isError } = useRecommendation();
 
   const mal_id = anime_data.mal_id;
 

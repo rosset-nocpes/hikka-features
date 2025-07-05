@@ -2,9 +2,6 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { FC, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ContentScriptContext } from '#imports';
-import useAmanogawaUrl from '@/hooks/use-amanogawa-url';
-import useMUUrl from '@/hooks/use-mu-url';
 import HikkaFLogoSmall from '@/public/hikka-features-small.svg';
 import { queryClient } from '..';
 
@@ -21,17 +18,16 @@ enum MediaEnum {
 }
 
 const aniButtons = async (
-  ctx: ContentScriptContext,
-  anime_data: any,
   append: ContentScriptAppendMode = 'before',
   smallerTitle?: boolean,
   location?: Element,
+  data?: any,
 ) => {
   if (document.body.querySelectorAll('ani-buttons').length !== 0) {
     return;
   }
 
-  return createShadowRootUi(ctx, {
+  return createShadowRootUi(usePageStore.getState().ctx, {
     name: 'ani-buttons',
     position: 'inline',
     append,
@@ -47,7 +43,7 @@ const aniButtons = async (
       const root = createRoot(wrapper);
       root.render(
         <QueryClientProvider client={queryClient}>
-          <AniButtons data={anime_data} smallerTitle={smallerTitle} />
+          <AniButtons data={data} smallerTitle={smallerTitle} />
         </QueryClientProvider>,
       );
 
@@ -57,12 +53,25 @@ const aniButtons = async (
 };
 
 interface Props {
-  data: any;
+  data?: any;
   smallerTitle?: boolean;
 }
 
 const AniButtons: FC<Props> = ({ data, smallerTitle }) => {
   const [blockState, setBlockState] = useState<boolean>();
+
+  const { contentType: path } = usePageStore();
+
+  if (!data) {
+    let queryFunc = useHikkaAnime;
+    switch (path) {
+      case 'manga':
+      case 'novel':
+        queryFunc = useHikkaManga;
+    }
+
+    data = queryFunc().data;
+  }
 
   useEffect(() => {
     const initializeAsync = async () => {

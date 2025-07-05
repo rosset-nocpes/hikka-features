@@ -1,7 +1,6 @@
-import { ContentScriptContext } from '#imports';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { FC, useEffect, useState } from 'react';
+import { FC } from 'react';
 import { createRoot } from 'react-dom/client';
 import { queryClient } from '../..';
 
@@ -17,18 +16,14 @@ export const posterState = {
   },
 };
 
-const localizedPoster = async (
-  ctx: ContentScriptContext,
-  slug: string,
-  initialPosterState: boolean,
-) => {
+const localizedPoster = async (initialPosterState: boolean) => {
   posterState.isVisible = initialPosterState;
 
   if (document.body.querySelectorAll('localized-poster').length !== 0) {
     return;
   }
 
-  return createShadowRootUi(ctx, {
+  return createShadowRootUi(usePageStore.getState().ctx, {
     name: 'localized-poster',
     position: 'inline',
     append: 'first',
@@ -52,7 +47,7 @@ const localizedPoster = async (
 
       root.render(
         <QueryClientProvider client={queryClient}>
-          <LocalizedPoster slug={slug} initialState={initialPosterState} />
+          <LocalizedPoster initialState={initialPosterState} />
         </QueryClientProvider>,
       );
 
@@ -62,12 +57,11 @@ const localizedPoster = async (
 };
 
 interface Props {
-  slug: string;
   initialState: boolean;
 }
 
-const LocalizedPoster: FC<Props> = ({ slug, initialState }) => {
-  const { data } = useNotionData(slug);
+const LocalizedPoster: FC<Props> = ({ initialState }) => {
+  const { data } = useNotionData();
 
   const [isLoaded, setIsLoaded] = useState(false);
   const [showPoster, setShowPoster] = useState(initialState);

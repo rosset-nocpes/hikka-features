@@ -1,8 +1,7 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { FC, useEffect, useState } from 'react';
+import { FC } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ContentScriptContext } from '#imports';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -11,21 +10,17 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import useNotionData from '@/hooks/use-notion-data';
 import MaterialSymbolsPlannerBannerAdPtOutlineRounded from '~icons/material-symbols/planner-banner-ad-pt-outline-rounded';
 import MaterialSymbolsPlannerBannerAdPtRounded from '~icons/material-symbols/planner-banner-ad-pt-rounded';
 import { queryClient } from '../..';
 import localizedPoster, { posterState } from './localized-poster';
 
-const localizedPosterButton = async (
-  ctx: ContentScriptContext,
-  anime_data: any,
-) => {
+const localizedPosterButton = async () => {
   if (document.body.querySelectorAll('localized-poster-button').length !== 0) {
     return;
   }
 
-  return createShadowRootUi(ctx, {
+  return createShadowRootUi(usePageStore.getState().ctx, {
     name: 'localized-poster-button',
     position: 'inline',
     append: 'first',
@@ -40,11 +35,7 @@ const localizedPosterButton = async (
       const root = createRoot(wrapper);
       root.render(
         <QueryClientProvider client={queryClient}>
-          <LocalizedPosterButton
-            ctx={ctx}
-            container={container}
-            anime_data={anime_data}
-          />
+          <LocalizedPosterButton container={container} />
         </QueryClientProvider>,
       );
 
@@ -54,13 +45,11 @@ const localizedPosterButton = async (
 };
 
 interface Props {
-  ctx: ContentScriptContext;
   container: HTMLElement;
-  anime_data: any;
 }
 
-const LocalizedPosterButton: FC<Props> = ({ ctx, container, anime_data }) => {
-  const { data } = useNotionData(anime_data.slug);
+const LocalizedPosterButton: FC<Props> = ({ container }) => {
+  const { data } = useNotionData();
 
   const [isPosterVisible, setIsPosterVisible] = useState<boolean>(false);
   const [showButton, setShowButton] = useState<boolean>(false);
@@ -88,9 +77,7 @@ const LocalizedPosterButton: FC<Props> = ({ ctx, container, anime_data }) => {
 
   useEffect(() => {
     if (initalized && data?.poster)
-      localizedPoster(ctx, anime_data.slug, isPosterVisible).then((ui) =>
-        ui?.mount(),
-      );
+      localizedPoster(isPosterVisible).then((ui) => ui?.mount());
   }, [data, initalized, isPosterVisible]);
 
   const togglePoster = () => {

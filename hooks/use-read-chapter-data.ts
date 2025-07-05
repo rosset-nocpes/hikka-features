@@ -1,7 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { get_miu_chapter_pages } from '@/utils/miu';
+import useHikkaManga from './use-hikka-manga';
 
-const useReadChapterData = (title: string, chapterNumber: number) => {
+const useReadChapterData = (chapterNumber: number) => {
+  const title: string = useHikkaManga().data.title_original;
+
   return useQuery({
     queryKey: ['read-chapter-data', `${title}-${chapterNumber}`],
     queryFn: async () => {
@@ -10,6 +13,7 @@ const useReadChapterData = (title: string, chapterNumber: number) => {
       return { images: r } as API.ReadChapterData;
     },
     retry: false,
+    staleTime: Infinity,
   });
 };
 

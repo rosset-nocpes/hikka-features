@@ -1,9 +1,9 @@
+import { ChevronsUpDown } from 'lucide-react';
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { ChevronsUpDown } from 'lucide-react';
 
 const WatchTogetherButton = () => {
   return (

@@ -1,4 +1,4 @@
-import { FC, useEffect, useRef, useState } from 'react';
+import { FC } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -26,7 +26,6 @@ const PlayerSidebar: FC<Props> = ({ toggleWatchedState }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const playerContext = usePlayerContext();
-  const { data } = useWatchData(playerContext.state.animeData);
   const { open } = useSidebar();
 
   useEffect(() => {
@@ -71,13 +70,7 @@ const PlayerSidebar: FC<Props> = ({ toggleWatchedState }) => {
                   'transition-[margin] duration-300',
                   !open && '-ml-2',
                 )}
-                onClick={() =>
-                  player(
-                    playerContext.state.ctx,
-                    data!,
-                    playerContext.state.animeData,
-                  )!.then((x) => x!.remove())
-                }
+                onClick={() => player().then((x) => x.remove())}
               >
                 <MaterialSymbolsCloseRounded />
               </Button>

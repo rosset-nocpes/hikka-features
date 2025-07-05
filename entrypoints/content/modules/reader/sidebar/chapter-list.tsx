@@ -20,18 +20,19 @@ import {
 import { getRead, useReaderContext } from '../context/reader-context';
 
 interface Props {
-  container: HTMLElement;
   carouselApi: CarouselApi;
 }
 
-const ChapterList: FC<Props> = ({ container, carouselApi }) => {
-  const { open } = useSidebar();
-  const readerContext = useReaderContext();
+const ChapterList: FC<Props> = ({ carouselApi }) => {
   const [isScrolled, setIsScrolled] = useState({ top: false, bottom: false });
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const { open } = useSidebar();
+  const { data: mangaData } = useReadData();
+  const { container, currentChapter, setChapter } = useReaderContext();
+
   const handleSelectChapter = (value: API.ChapterData) => {
-    readerContext.setState((prev) => ({ ...prev, currentChapter: value }));
+    setChapter(value);
 
     carouselApi?.scrollTo(0, true);
   };
@@ -62,7 +63,7 @@ const ChapterList: FC<Props> = ({ container, carouselApi }) => {
   }, []);
 
   const rowVirtualizer = useVirtualizer({
-    count: readerContext.state.mangaData.chapters.length,
+    count: mangaData?.chapters.length || 0,
     getScrollElement: () => scrollRef.current,
     estimateSize: () => 36,
     overscan: 5,
@@ -93,13 +94,11 @@ const ChapterList: FC<Props> = ({ container, carouselApi }) => {
               <SidebarMenuItem key={virtualItem.index}>
                 <SidebarMenuButton
                   onClick={() =>
-                    handleSelectChapter(
-                      readerContext.state.mangaData.chapters[virtualItem.index],
-                    )
+                    handleSelectChapter(mangaData!.chapters[virtualItem.index])
                   }
                   isActive={
-                    readerContext.state.mangaData.chapters[virtualItem.index]
-                      .id == readerContext.state.currentChapter.id
+                    mangaData!.chapters[virtualItem.index].id ==
+                    currentChapter!.id
                   }
                   style={{
                     position: 'absolute',
@@ -116,31 +115,17 @@ const ChapterList: FC<Props> = ({ container, carouselApi }) => {
                     )}
                   >
                     <span className="block leading-4">
-                      {
-                        readerContext.state.mangaData.chapters[
-                          virtualItem.index
-                        ].chapter
-                      }
+                      {mangaData?.chapters[virtualItem.index].chapter}
                     </span>
                   </div>
                   <div className="grid flex-1 truncate text-left leading-tight">
                     <span>
-                      Том{' '}
-                      {
-                        readerContext.state.mangaData.chapters[
-                          virtualItem.index
-                        ].volume
-                      }{' '}
-                      Розділ{' '}
-                      {
-                        readerContext.state.mangaData.chapters[
-                          virtualItem.index
-                        ].chapter
-                      }
+                      Том {mangaData?.chapters[virtualItem.index].volume} Розділ{' '}
+                      {mangaData?.chapters[virtualItem.index].chapter}
                     </span>
                   </div>
-                  {readerContext.state.mangaData.chapters[virtualItem.index]
-                    .chapter <= getRead() && (
+                  {mangaData!.chapters[virtualItem.index].chapter <=
+                    getRead() && (
                     <Eye
                       className={cn(
                         'ml-auto transition-transform duration-200',

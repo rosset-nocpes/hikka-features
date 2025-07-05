@@ -1,5 +1,7 @@
 import { QueryClient } from '@tanstack/react-query';
 import '../app.css';
+import { prefetchHikkaAnime } from '@/hooks/use-hikka-anime';
+import { usePageStore } from '@/hooks/use-page-store';
 import aniBackground from './modules/ani-background';
 // import UCharURL from "@/utils/u-char-url";
 import aniButtons from './modules/ani-buttons';
@@ -18,6 +20,8 @@ export default defineContentScript({
   matches: ['https://hikka.io/*'],
   cssInjectionMode: 'ui',
   async main(ctx) {
+    usePageStore.getState().setCTX(ctx);
+
     const [getPreviousCreatingEdit, setPreviousCreatingEdit] = [
       () =>
         (
@@ -83,12 +87,8 @@ export default defineContentScript({
           ? darkMode.setValue(true)
           : darkMode.setValue(false);
 
-        const split_path = document.location.pathname.split('/');
-        const path_params = new URLSearchParams(document.location.search);
-        const path = split_path[1];
-        const isHomepage = document.location.pathname == '/';
-
-        // path == "anime" ? setPreviousAnimeSlug(split_path[2]) : null;
+        usePageStore.getState().updateFromUrl(new URL(document.location.href));
+        const { path, contentType, slug } = usePageStore.getState();
 
         const mal_id = parseInt(
           (
@@ -98,33 +98,29 @@ export default defineContentScript({
           )?.content,
         );
 
-        switch (path) {
+        switch (contentType) {
           case 'anime':
-            if (split_path.length === 3) {
-              const anime_slug = split_path[2];
+            if (path?.length === 2) {
+              await prefetchHikkaAnime();
 
-              const anime_data = await (
-                await fetch(`https://api.hikka.io/anime/${anime_slug}`)
-              ).json();
-
-              (await devButtons(ctx, anime_data))?.mount();
+              (await devButtons())?.mount();
 
               // Watch button
-              (await watchButton(ctx, anime_data))?.mount();
+              (await watchButton())?.mount();
 
               // aniButtons
-              (await aniButtons(ctx, anime_data))?.mount();
+              (await aniButtons())?.mount();
 
               // recommendationBlock
-              (await recommendationBlock(ctx, anime_data))?.mount();
+              (await recommendationBlock())?.mount();
 
-              (await fandubBlock(ctx, anime_data))?.mount();
-              (await localizedPosterButton(ctx, anime_data))?.mount();
+              (await fandubBlock())?.mount();
+              (await localizedPosterButton())?.mount();
             }
 
             // aniBackground
-            if (split_path.length >= 3) {
-              (await aniBackground(ctx, mal_id, 'anime'))?.mount();
+            if (path?.length! >= 2) {
+              (await aniBackground(mal_id, 'anime'))?.mount();
               setSavedMalId(mal_id);
             } else {
               setSavedMalId(-1);
@@ -133,25 +129,21 @@ export default defineContentScript({
             break;
           case 'manga':
           case 'novel':
-            if (split_path.length === 3) {
-              const slug = split_path[2];
+            if (path?.length === 2) {
+              await prefetchHikkaManga();
 
-              const data = await (
-                await fetch(`https://api.hikka.io/${path}/${slug}`)
-              ).json();
-
-              (await devButtons(ctx, data))?.mount();
+              (await devButtons())?.mount();
 
               // readerButton
-              (await readButton(ctx, data.title_original))!.mount();
+              (await readButton())?.mount();
 
               // aniButtons
-              (await aniButtons(ctx, data))!.mount();
+              (await aniButtons())?.mount();
             }
 
             // aniBackground
-            if (split_path.length >= 3) {
-              (await aniBackground(ctx, mal_id, 'manga'))!.mount();
+            if (path?.length! >= 2) {
+              (await aniBackground(mal_id, 'manga'))?.mount();
               setSavedMalId(mal_id);
             } else {
               setSavedMalId(-1);
@@ -161,191 +153,195 @@ export default defineContentScript({
 
             break;
           case 'edit':
-            if (
-              split_path.length === 3 ||
-              (split_path.length === 4 && split_path[3] === 'update')
-            ) {
-              const creatingEdit = isNaN(parseInt(split_path[2]));
+            {
+              const split_path = document.location.pathname.split('/'); // still needed for edit logic
+              if (
+                split_path.length === 3 ||
+                (split_path.length === 4 && split_path[3] === 'update')
+              ) {
+                const creatingEdit = isNaN(parseInt(split_path[2]));
 
-              const edit_info = creatingEdit
-                ? new URLSearchParams(document.location.search)
-                : await (
+                const edit_info = creatingEdit
+                  ? new URLSearchParams(document.location.search)
+                  : await (
+                      await fetch(`https://api.hikka.io/edit/${split_path[2]}`)
+                    ).json();
+
+                const getEditInfo = async () =>
+                  await (
                     await fetch(`https://api.hikka.io/edit/${split_path[2]}`)
                   ).json();
 
-              const getEditInfo = async () =>
-                await (
-                  await fetch(`https://api.hikka.io/edit/${split_path[2]}`)
+                const content_type = creatingEdit
+                  ? edit_info.get('content_type')
+                  : edit_info.content.data_type;
+
+                const editSlug = creatingEdit // 'slug' is already defined from the store
+                  ? edit_info.get('slug')
+                  : edit_info.content.slug;
+
+                const data = await (
+                  await fetch(
+                    `https://api.hikka.io/${
+                      content_type === 'character'
+                        ? 'characters'
+                        : content_type === 'person'
+                          ? 'people'
+                          : content_type
+                    }/${editSlug}`,
+                  )
                 ).json();
 
-              const content_type = creatingEdit
-                ? edit_info.get('content_type')
-                : edit_info.content.data_type;
+                // ani-buttons on edit page
+                const info_block = document.querySelector(
+                  `div.gap-12:nth-child(2) > section:nth-child(${
+                    creatingEdit ? 1 : 2
+                  })`,
+                )!;
 
-              const slug = creatingEdit
-                ? edit_info.get('slug')
-                : edit_info.content.slug;
+                (await aniButtons('last', true, info_block, data))?.mount();
 
-              const data = await (
-                await fetch(
-                  `https://api.hikka.io/${
-                    content_type === 'character'
-                      ? 'characters'
-                      : content_type === 'person'
-                        ? 'people'
-                        : content_type
-                  }/${slug}`,
-                )
-              ).json();
+                // aniBackground
+                switch (content_type) {
+                  case 'anime':
+                    (await aniBackground(data.mal_id, 'anime'))?.mount();
+                    break;
+                  case 'manga':
+                  case 'novel':
+                    (await aniBackground(data.mal_id, 'manga'))?.mount();
+                    break;
+                  case 'character':
+                    {
+                      const haveAnime = data.anime_count !== 0;
 
-              // ani-buttons on edit page
-              const info_block = document.querySelector(
-                `div.gap-12:nth-child(2) > section:nth-child(${
-                  creatingEdit ? 1 : 2
-                })`,
-              )!;
+                      (
+                        await aniBackground(
+                          getSavedMalId() !== -1 &&
+                            !Number.isNaN(getSavedMalId())
+                            ? getSavedMalId()
+                            : await (
+                                await (
+                                  await fetch(
+                                    `https://api.hikka.io/${
+                                      haveAnime ? 'anime' : 'manga'
+                                    }/${
+                                      (
+                                        await (
+                                          await fetch(
+                                            `https://api.hikka.io/characters/${editSlug}/${
+                                              haveAnime ? 'anime' : 'manga'
+                                            }`,
+                                          )
+                                        ).json()
+                                      ).list[0][haveAnime ? 'anime' : 'manga']
+                                        .slug
+                                    }`,
+                                  )
+                                ).json()
+                              ).mal_id,
+                          haveAnime ? 'anime' : 'manga',
+                        )
+                      )?.mount();
+                    }
+                    break;
+                }
 
-              (await aniButtons(ctx, data, 'last', true, info_block))?.mount();
+                // next-edit-button;
+                // if (
+                //   !creatingEdit &&
+                //   (await getEditInfo()).status === "pending" &&
+                //   (getPreviousCreatingEdit() === undefined ||
+                //     getPreviousCreatingEdit() === "false") &&
+                //   isModerator()
+                // ) {
+                //   if (
+                //     document.body.querySelectorAll("#next-edit-button").length ===
+                //     0
+                //   ) {
+                //     const [getNextEditButton, toggleNextEditButton] =
+                //       createSignal(true);
 
-              // aniBackground
-              switch (content_type) {
-                case 'anime':
-                  (await aniBackground(ctx, data.mal_id, 'anime'))?.mount();
-                  break;
-                case 'manga':
-                case 'novel':
-                  (await aniBackground(ctx, data.mal_id, 'manga'))?.mount();
-                  break;
-                case 'character':
-                  const haveAnime = data.anime_count !== 0;
+                //     render(
+                //       () => (
+                //         <button
+                //           id="next-edit-button"
+                //           class="inline-flex gap-2 items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-50 border border-secondary/60 bg-secondary/30 hover:bg-secondary/60 hover:text-secondary-foreground h-12 px-4 py-2 hikka-features"
+                //           disabled={getNextEditButton()}
+                //           onClick={() => {
+                //             window.open(url, "_self");
+                //           }}
+                //         >
+                //           <span class="tabler--circle-arrow-right-filled"></span>
+                //         </button>
+                //       ),
+                //       document.querySelector("#breadcrumbs")!
+                //     );
 
-                  (
-                    await aniBackground(
-                      ctx,
-                      getSavedMalId() !== -1 && !Number.isNaN(getSavedMalId())
-                        ? getSavedMalId()
-                        : await (
-                            await (
-                              await fetch(
-                                `https://api.hikka.io/${
-                                  haveAnime ? 'anime' : 'manga'
-                                }/${
-                                  (
-                                    await (
-                                      await fetch(
-                                        `https://api.hikka.io/characters/${slug}/${
-                                          haveAnime ? 'anime' : 'manga'
-                                        }`,
-                                      )
-                                    ).json()
-                                  ).list[0][haveAnime ? 'anime' : 'manga'].slug
-                                }`,
-                              )
-                            ).json()
-                          ).mal_id,
-                      haveAnime ? 'anime' : 'manga',
-                    )
-                  )?.mount();
-                  break;
+                //     const url = await NextEditURL(edit_info.edit_id);
+
+                //     url ? toggleNextEditButton(!getNextEditButton()) : null;
+                //   }
+                // }
+
+                // u-char-button
+                //   if (
+                //     !creatingEdit &&
+                //     getPreviousCreatingEdit() &&
+                //     (content_type === "character" || content_type === "person")
+                //   ) {
+                //     const [uCharDisabled, toggleUCharDisabled] = createSignal(true);
+                //     render(
+                //       () => (
+                //         <button
+                //           id="u-char-button"
+                //           class="features-button hikka-features"
+                //           disabled={uCharDisabled()}
+                //           onClick={() => window.open(url, "_self")}
+                //         >
+                //           <span class="tabler--circle-arrow-right-filled"></span>
+                //         </button>
+                //       ),
+                //       document.querySelector("#breadcrumbs")!
+                //     );
+
+                //     !getPreviousCreatingEdit()
+                //       ? (url = await UCharURL(
+                //           slug,
+                //           content_type,
+                //           await getPreviousAnimeSlug()
+                //         ))
+                //       : null;
+                //     url ? toggleUCharDisabled(!uCharDisabled()) : null;
+                //   } else if (
+                //     creatingEdit &&
+                //     (content_type === "character" || content_type === "person")
+                //   ) {
+                //     url = await UCharURL(
+                //       slug,
+                //       content_type,
+                //       await getPreviousAnimeSlug()
+                //     );
+                //   }
+
+                setPreviousCreatingEdit(creatingEdit);
+                // } else if (
+                //   (split_path.length == 3 &&
+                //     path !== "edit" &&
+                //     path !== "characters" &&
+                //     path !== "people" &&
+                //     !getPreviousCreatingEdit()) ||
+                //   (split_path.length == 2 && path === "edit") ||
+                //   isHomepage
+                // ) {
+                //   setPreviousAnimeSlug("");
+                // }
+              } else {
+                document.head
+                  .querySelectorAll('[name=previous-creating-edit][content]')
+                  .forEach((e) => e.remove());
+
+                setSavedMalId(-1);
               }
-
-              // next-edit-button;
-              // if (
-              //   !creatingEdit &&
-              //   (await getEditInfo()).status === "pending" &&
-              //   (getPreviousCreatingEdit() === undefined ||
-              //     getPreviousCreatingEdit() === "false") &&
-              //   isModerator()
-              // ) {
-              //   if (
-              //     document.body.querySelectorAll("#next-edit-button").length ===
-              //     0
-              //   ) {
-              //     const [getNextEditButton, toggleNextEditButton] =
-              //       createSignal(true);
-
-              //     render(
-              //       () => (
-              //         <button
-              //           id="next-edit-button"
-              //           class="inline-flex gap-2 items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-50 border border-secondary/60 bg-secondary/30 hover:bg-secondary/60 hover:text-secondary-foreground h-12 px-4 py-2 hikka-features"
-              //           disabled={getNextEditButton()}
-              //           onClick={() => {
-              //             window.open(url, "_self");
-              //           }}
-              //         >
-              //           <span class="tabler--circle-arrow-right-filled"></span>
-              //         </button>
-              //       ),
-              //       document.querySelector("#breadcrumbs")!
-              //     );
-
-              //     const url = await NextEditURL(edit_info.edit_id);
-
-              //     url ? toggleNextEditButton(!getNextEditButton()) : null;
-              //   }
-              // }
-
-              // u-char-button
-              //   if (
-              //     !creatingEdit &&
-              //     getPreviousCreatingEdit() &&
-              //     (content_type === "character" || content_type === "person")
-              //   ) {
-              //     const [uCharDisabled, toggleUCharDisabled] = createSignal(true);
-              //     render(
-              //       () => (
-              //         <button
-              //           id="u-char-button"
-              //           class="features-button hikka-features"
-              //           disabled={uCharDisabled()}
-              //           onClick={() => window.open(url, "_self")}
-              //         >
-              //           <span class="tabler--circle-arrow-right-filled"></span>
-              //         </button>
-              //       ),
-              //       document.querySelector("#breadcrumbs")!
-              //     );
-
-              //     !getPreviousCreatingEdit()
-              //       ? (url = await UCharURL(
-              //           slug,
-              //           content_type,
-              //           await getPreviousAnimeSlug()
-              //         ))
-              //       : null;
-              //     url ? toggleUCharDisabled(!uCharDisabled()) : null;
-              //   } else if (
-              //     creatingEdit &&
-              //     (content_type === "character" || content_type === "person")
-              //   ) {
-              //     url = await UCharURL(
-              //       slug,
-              //       content_type,
-              //       await getPreviousAnimeSlug()
-              //     );
-              //   }
-
-              setPreviousCreatingEdit(creatingEdit);
-              // } else if (
-              //   (split_path.length == 3 &&
-              //     path !== "edit" &&
-              //     path !== "characters" &&
-              //     path !== "people" &&
-              //     !getPreviousCreatingEdit()) ||
-              //   (split_path.length == 2 && path === "edit") ||
-              //   isHomepage
-              // ) {
-              //   setPreviousAnimeSlug("");
-              // }
-            } else {
-              document.head.querySelectorAll(
-                '[name=previous-creating-edit][content]',
-              ).length !== 0
-                ? setPreviousCreatingEdit(false)
-                : null;
-
-              setSavedMalId(-1);
             }
 
             // actionRichPresence("remove");
@@ -365,17 +361,13 @@ export default defineContentScript({
               ).json();
 
               (
-                await aniBackground(
-                  ctx,
-                  first_source_mal_id['mal_id'],
-                  source_type,
-                )
+                await aniBackground(first_source_mal_id['mal_id'], source_type)
               )?.mount();
             }
 
             if (getSavedMalId() !== -1 && !Number.isNaN(getSavedMalId())) {
-              (await aniBackground(ctx, getSavedMalId(), 'anime'))?.mount() ??
-                (await aniBackground(ctx, getSavedMalId(), 'manga'))?.mount();
+              (await aniBackground(getSavedMalId(), 'anime'))?.mount() ??
+                (await aniBackground(getSavedMalId(), 'manga'))?.mount();
             } else {
               first_aniBackground();
             }
@@ -384,11 +376,9 @@ export default defineContentScript({
 
             break;
           default:
-            document.head.querySelectorAll(
-              '[name=previous-creating-edit][content]',
-            ).length !== 0
-              ? setPreviousCreatingEdit(false)
-              : null;
+            document.head
+              .querySelectorAll('[name=previous-creating-edit][content]')
+              .forEach((e) => e.remove());
 
             if (
               (await richPresence.getValue()) &&

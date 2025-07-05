@@ -1,9 +1,7 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { MediaPlayerInstance } from '@vidstack/react';
-import { FC } from 'react';
 import { createRoot } from 'react-dom/client';
 import { toast } from 'sonner';
-import { ContentScriptContext } from '#imports';
 import { Card, CardContent } from '@/components/ui/card';
 import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
@@ -18,12 +16,8 @@ import PlayerNavbar from './player-navbar';
 import PlayerSidebar from './sidebar/player-sidebar';
 import PlayerToolbar from './toolbar/player-toolbar';
 
-export default function player(
-  ctx: ContentScriptContext,
-  data: API.WatchData,
-  anime_data: any,
-) {
-  return createShadowRootUi(ctx, {
+export default function player() {
+  return createShadowRootUi(usePageStore.getState().ctx, {
     name: 'player-ui',
     position: 'modal',
     zIndex: 100,
@@ -42,12 +36,7 @@ export default function player(
       root.render(
         <QueryClientProvider client={queryClient}>
           <SidebarProvider className="h-full w-full">
-            <PlayerProvider
-              ctx={ctx}
-              container={container}
-              data={data!}
-              anime_data={anime_data}
-            >
+            <PlayerProvider container={container}>
               <div
                 className="fixed z-0 size-full"
                 onClick={() => {
@@ -56,10 +45,10 @@ export default function player(
                   );
                   radixFocusGuards.forEach((guard) => guard.remove());
 
-                  player(ctx, data!, anime_data)!.then((x) => x!.remove());
+                  player()!.then((x) => x!.remove());
                 }}
               />
-              <Player container={container} ctx={ctx} />
+              <Player />
               <Toaster position="top-center" />
             </PlayerProvider>
           </SidebarProvider>
@@ -80,18 +69,9 @@ export default function player(
   });
 }
 
-interface AnimeData {
-  slug: string;
-}
-
-interface Props {
-  container: HTMLElement;
-  ctx: ContentScriptContext;
-}
-
-export const Player: FC<Props> = ({ container, ctx }) => {
+export const Player = () => {
   const playerContext = usePlayerContext();
-  const { data } = useWatchData(playerContext.state.animeData);
+  const { data } = useWatchData();
 
   const { open } = useSidebar();
 
@@ -110,7 +90,7 @@ export const Player: FC<Props> = ({ container, ctx }) => {
     };
   });
 
-  const playerIframe = container.querySelector(
+  const playerIframe = playerContext.state.container.querySelector(
     '#player-iframe',
   ) as HTMLIFrameElement;
 
@@ -310,7 +290,7 @@ export const Player: FC<Props> = ({ container, ctx }) => {
         getTheatreState && 'sm:max-h-full sm:max-w-full',
       )}
     >
-      <PlayerNavbar data={data} showControls={showControls} />
+      <PlayerNavbar showControls={showControls} />
       <div className="flex flex-1 flex-col">
         <CardContent
           className={cn(
@@ -320,7 +300,7 @@ export const Player: FC<Props> = ({ container, ctx }) => {
         >
           <div
             className={cn(
-              'relative h-5/6 w-full duration-300',
+              'relative h-[81.1%] w-full duration-300',
               isFullscreen ? 'fixed inset-0 z-20 size-full' : 'flex border-b',
               (!open || getTheatreState) && 'h-full',
               !open && 'border-0',
