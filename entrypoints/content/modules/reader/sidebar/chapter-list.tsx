@@ -1,18 +1,10 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { Eye, Link, MoreHorizontal } from 'lucide-react';
 import { FC } from 'react';
 import { CarouselApi } from '@/components/ui/carousel';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   SidebarContent,
   SidebarGroup,
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
@@ -114,53 +106,29 @@ const ChapterList: FC<Props> = ({ carouselApi }) => {
                       open ? '-ml-6 text-transparent' : 'ml-0',
                     )}
                   >
-                    <span className="block leading-4">
+                    <span
+                      className={cn(
+                        'block leading-4 duration-300',
+                        mangaData!.chapters[virtualItem.index].chapter <=
+                          getRead() && 'text-muted-foreground',
+                      )}
+                    >
                       {mangaData?.chapters[virtualItem.index].chapter}
                     </span>
                   </div>
                   <div className="grid flex-1 truncate text-left leading-tight">
-                    <span>
+                    <span
+                      className={cn(
+                        'duration-300',
+                        mangaData!.chapters[virtualItem.index].chapter <=
+                          getRead() && 'text-muted-foreground',
+                      )}
+                    >
                       Том {mangaData?.chapters[virtualItem.index].volume} Розділ{' '}
                       {mangaData?.chapters[virtualItem.index].chapter}
                     </span>
                   </div>
-                  {mangaData!.chapters[virtualItem.index].chapter <=
-                    getRead() && (
-                    <Eye
-                      className={cn(
-                        'ml-auto transition-transform duration-200',
-                        // !open && 'hidden',
-                      )}
-                    />
-                  )}
                 </SidebarMenuButton>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <SidebarMenuAction
-                      showOnHover
-                      style={{
-                        position: 'absolute',
-                        transform: `translateY(${virtualItem.start}px)`,
-                      }}
-                    >
-                      <MoreHorizontal />
-                      <span className="sr-only">More</span>
-                    </SidebarMenuAction>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    className="w-60 rounded-lg"
-                    container={container}
-                    // side={isMobile ? "bottom" : "right"}
-                    align="end"
-                    sideOffset={8}
-                    alignOffset={-4}
-                  >
-                    <DropdownMenuItem>
-                      <Link className="text-muted-foreground" />
-                      <span>Copy Link</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
               </SidebarMenuItem>
             ))}
           </div>
