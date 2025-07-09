@@ -1,5 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query';
-import { MediaPlayerInstance } from '@vidstack/react';
+import type { MediaPlayerInstance } from '@vidstack/react';
 import { createRoot } from 'react-dom/client';
 import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,9 +7,9 @@ import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
 import { queryClient } from '../..';
 import {
+  getAvailablePlayers,
   getWatched,
   PlayerProvider,
-  playersAvaliable,
   usePlayerContext,
 } from './context/player-context';
 import PlayerNavbar from './player-navbar';
@@ -39,14 +39,7 @@ export default function player() {
             <PlayerProvider container={container}>
               <div
                 className="fixed z-0 size-full"
-                onClick={() => {
-                  const radixFocusGuards = document.querySelectorAll(
-                    '[data-radix-focus-guard]',
-                  );
-                  radixFocusGuards.forEach((guard) => guard.remove());
-
-                  player()!.then((x) => x!.remove());
-                }}
+                onClick={() => player().then((x) => x.remove())}
               />
               <Player />
               <Toaster position="top-center" />
@@ -112,13 +105,15 @@ export const Player = () => {
   };
 
   const handleSelectPlayer = (value: PlayerSource) => {
-    const newTeamName = Object.keys(data![value])[0];
-    const newEpisode =
-      data![value][newTeamName].find(
-        (episode: API.EpisodeData) => episode.episode === getWatched() + 1,
-      ) || data![value][newTeamName][0];
+    if (!data) return;
 
-    const newEpisodeData = data![value][newTeamName];
+    const newTeamName = Object.keys(data[value])[0];
+    const newEpisode =
+      data[value][newTeamName].find(
+        (episode: API.EpisodeData) => episode.episode === getWatched() + 1,
+      ) || data[value][newTeamName][0];
+
+    const newEpisodeData = data[value][newTeamName];
 
     playerContext.setState((prev) => ({
       ...prev,
@@ -240,16 +235,18 @@ export const Player = () => {
 
   // Handle async initialization
   useEffect(() => {
+    if (!data) return;
+
+    const providers_avaliable = getAvailablePlayers(data);
+
     const initializeAsync = async () => {
       const defaultPlayerValue = await defaultPlayer.getValue();
 
       if (!urlParams.sharedCheck) {
         handleSelectPlayer(
-          playersAvaliable(data!).includes(defaultPlayerValue)
+          providers_avaliable.includes(defaultPlayerValue)
             ? defaultPlayerValue
-            : defaultPlayerValue === 'moon'
-              ? 'ashdi'
-              : 'moon',
+            : providers_avaliable[0],
         );
       }
     };
@@ -282,6 +279,22 @@ export const Player = () => {
       player.removeEventListener('controls-change', handleControlsChange);
     };
   }, [VidStackPlayerRef.current]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      switch (e.key) {
+        case 'Escape':
+          e.preventDefault();
+          player().then((x) => x.remove());
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   return (
     <Card
@@ -325,6 +338,7 @@ export const Player = () => {
               />
             )} */}
             <iframe
+              title="player-iframe"
               id="player-iframe"
               src={`${playerContext.state.currentEpisode.video_url}?site=hikka.io?v2=1`} // todo: move params to backend
               loading="lazy"

@@ -1,7 +1,7 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { createRoot } from 'react-dom/client';
 import { Card, CardContent } from '@/components/ui/card';
-import { CarouselApi } from '@/components/ui/carousel';
+import type { CarouselApi } from '@/components/ui/carousel';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
 import { queryClient } from '../..';
@@ -36,14 +36,7 @@ export default function reader() {
             <ReaderProvider container={container}>
               <div
                 className="fixed z-0 size-full"
-                onClick={() => {
-                  const radixFocusGuards = document.querySelectorAll(
-                    '[data-radix-focus-guard]',
-                  );
-                  radixFocusGuards.forEach((guard) => guard.remove());
-
-                  reader()!.then((x) => x!.remove());
-                }}
+                onClick={() => reader().then((x) => x.remove())}
               />
               <Reader />
               <Toaster position="top-center" />
@@ -108,10 +101,6 @@ export const Reader = () => {
     if (!carouselApi) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.defaultPrevented) {
-        return;
-      }
-
       switch (e.key) {
         case 'ArrowUp':
           e.preventDefault();
@@ -120,6 +109,10 @@ export const Reader = () => {
         case 'ArrowDown':
           e.preventDefault();
           carouselApi.scrollNext();
+          break;
+        case 'Escape':
+          e.preventDefault();
+          reader().then((x) => x.remove());
           break;
       }
     };
