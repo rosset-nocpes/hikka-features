@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.0.0-beta.2/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.1.0/schema.json",
   "vcs": { "enabled": false, "clientKind": "git", "useIgnoreFile": false },
   "files": {
     "ignoreUnknown": false,
@@ -25,9 +25,16 @@
   },
   "linter": {
     "enabled": true,
+    "domains": {
+      "react": "recommended"
+    },
     "rules": {
-      "recommended": false,
-      "a11y": { "useKeyWithClickEvents": "off" },
+      "a11y": {
+        "useKeyWithClickEvents": "off",
+        "useFocusableInteractive": "off",
+        "noStaticElementInteractions": "off",
+        "useAltText": "off"
+      },
       "correctness": {
         "noInvalidUseBeforeDeclaration": "off",
         "useExhaustiveDependencies": "off",

@@ -1,7 +1,8 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { FC } from 'react';
+import type { FC } from 'react';
 import { createRoot } from 'react-dom/client';
+import { RotatingText } from '@/components/animate-ui/text/rotating';
 import { Button } from '@/components/ui/button';
 import HikkaLogoMono from '@/public/hikka-features-mono.svg';
 import { queryClient } from '../..';
@@ -20,7 +21,7 @@ const readButton = async (location?: Element) => {
       location ||
       document.querySelector(
         'main > div > div.flex.flex-col.gap-4 > div.flex.w-full.flex-col.gap-4 > div > div',
-      )!,
+      ),
     inheritStyles: true,
     async onMount(container) {
       const wrapper = document.createElement('div');
@@ -66,12 +67,13 @@ const ReadButton: FC<Props> = ({ container }) => {
     initializeAsync();
   }, []);
 
-  const transitionVariants = {
-    initial: { y: -10, opacity: 0 },
-    animate: { y: 0, opacity: 1 },
-    exit: { y: 10, opacity: 0 },
-    transition: { duration: 0.2, ease: 'easeInOut', type: 'spring' },
-  };
+  const statusMessage = isLoading
+    ? 'Шукаю'
+    : isError
+      ? 'Немає'
+      : data
+        ? 'Читати'
+        : '';
 
   return (
     <AnimatePresence>
@@ -88,45 +90,12 @@ const ReadButton: FC<Props> = ({ container }) => {
             disabled={isLoading || isError}
             onClick={openReader}
           >
-            <img src={HikkaLogoMono} className={!dark ? 'invert' : ''} />
-            <AnimatePresence mode="wait" initial={false}>
-              {isLoading && (
-                <motion.a
-                  key="searching"
-                  variants={transitionVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  transition={transitionVariants.transition}
-                >
-                  Шукаю
-                </motion.a>
-              )}
-              {isError && (
-                <motion.a
-                  key="none"
-                  variants={transitionVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  transition={transitionVariants.transition}
-                >
-                  Немає
-                </motion.a>
-              )}
-              {data && (
-                <motion.a
-                  key="read"
-                  variants={transitionVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  transition={transitionVariants.transition}
-                >
-                  Читати
-                </motion.a>
-              )}
-            </AnimatePresence>
+            <motion.img
+              src={HikkaLogoMono}
+              className={!dark ? 'invert' : ''}
+              layout
+            />
+            <RotatingText text={statusMessage} />
           </Button>
         </motion.div>
       )}
