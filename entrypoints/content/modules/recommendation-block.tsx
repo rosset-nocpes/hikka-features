@@ -20,7 +20,7 @@ const recommendationBlock = async (location?: Element) => {
       location ||
       document.querySelector(
         'main > div > div.flex.flex-col.gap-12 > div.grid.grid-cols-1.gap-12 > div.relative.order-2.flex.flex-col.gap-12',
-      )!,
+      ),
     inheritStyles: true,
     async onMount(container) {
       const wrapper = document.createElement('div');
@@ -44,7 +44,7 @@ const RecommendationBlock = () => {
   const [blockState, setBlockState] = useState<boolean>();
 
   const { data: anime_data } = useHikkaAnime();
-  const { data, isLoading, isError } = useRecommendation();
+  const { data, isLoading } = useRecommendation();
 
   const mal_id = anime_data.mal_id;
 
@@ -123,23 +123,6 @@ const RecommendationBlock = () => {
                       alt={item.title_ua || item.title_en || item.title_ja}
                       loading="lazy"
                     />
-                    <p
-                      className={`absolute top-2 left-2 rounded-md bg-secondary/80 px-2 py-1 text-sm ${
-                        Math.round(
-                          (item?.mal.votes / data.maxSingleVotes) * 100,
-                        ) > 90
-                          ? 'text-success'
-                          : Math.round(
-                                (item?.mal.votes / data.maxSingleVotes) * 100,
-                              ) > 50
-                            ? 'text-warning'
-                            : 'text-destructive'
-                      }`}
-                    >
-                      {Math.round(
-                        (item?.mal.votes / data.maxSingleVotes) * 100,
-                      )}
-                    </p>
                   </AspectRatio>
                   <span className="line-clamp-2 font-medium text-sm leading-5">
                     {item?.title_ua || item?.title_en || item?.title_ja}
