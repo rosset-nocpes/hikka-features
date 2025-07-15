@@ -10,13 +10,13 @@ const devButtons = async () => {
     return;
   }
 
-  return createShadowRootUi(usePageStore.getState().ctx!, {
+  return createShadowRootUi(usePageStore.getState().ctx, {
     name: 'dev-buttons',
     position: 'inline',
     append: 'last',
     anchor: document.querySelector(
       'main > div > div.flex.flex-col.gap-12 > div.flex.flex-col.gap-4',
-    )!,
+    ),
     css: ':host(dev-buttons) { margin-bottom: -1rem; }',
     inheritStyles: true,
     async onMount(container) {

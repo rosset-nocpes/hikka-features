@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import type { FC } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   ContextMenu,
@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/context-menu';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
-import { usePlayerContext } from './context/player-context';
+import { usePlayer } from './context/player-context';
 import player from './player';
 
 interface Props {
@@ -16,7 +16,8 @@ interface Props {
 }
 
 const PlayerNavbar: FC<Props> = ({ showControls }) => {
-  const playerContext = usePlayerContext();
+  const { container, sidebarMode, setSidebarMode, currentEpisode } =
+    usePlayer();
   const { open } = useSidebar();
 
   return (
@@ -32,20 +33,18 @@ const PlayerNavbar: FC<Props> = ({ showControls }) => {
           variant="ghost"
           size="icon-sm"
           className="bg-sidebar"
-          onClick={() => player()!.then((x) => x!.remove())}
+          onClick={() => player().then((x) => x.remove())}
         >
           <MaterialSymbolsCloseRounded />
         </Button>
         <span className="flex h-8 cursor-default items-center rounded-md bg-sidebar px-2 font-medium font-unitysans">
-          Епізод {playerContext.state.currentEpisode.episode}
+          Епізод {currentEpisode?.episode}
         </span>
       </div>
       <div
         className={cn(
           'absolute top-2 right-2 z-20 duration-300',
-          !showControls &&
-            playerContext.state.sidebarMode === 'offcanvas' &&
-            !open
+          !showControls && sidebarMode === 'offcanvas' && !open
             ? 'opacity-0'
             : 'opacity-100',
         )}
@@ -58,14 +57,11 @@ const PlayerNavbar: FC<Props> = ({ showControls }) => {
               className="bg-sidebar"
             />
           </ContextMenuTrigger>
-          <ContextMenuContent container={playerContext.state.container}>
+          <ContextMenuContent container={container}>
             <ContextMenuCheckboxItem
-              checked={playerContext.state.sidebarMode === 'offcanvas'}
+              checked={sidebarMode === 'offcanvas'}
               onCheckedChange={(value) =>
-                playerContext.setState((prev) => ({
-                  ...prev,
-                  sidebarMode: value ? 'offcanvas' : 'icon',
-                }))
+                setSidebarMode(value ? 'offcanvas' : 'icon')
               }
             >
               Компактний режим

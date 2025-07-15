@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import type { FC } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/sidebar';
 import { cn } from '@/utils/cn';
 import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
-import { usePlayerContext } from '../context/player-context';
+import { usePlayer } from '../context/player-context';
 import player from '../player';
 import EpisodeList from './episode-list';
 import ProviderSelect from './provider-select';
@@ -25,7 +25,7 @@ const PlayerSidebar: FC<Props> = ({ toggleWatchedState }) => {
   const [isScrolled, setIsScrolled] = useState({ top: false, bottom: false });
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const playerContext = usePlayerContext();
+  const { sidebarMode } = usePlayer();
   const { open } = useSidebar();
 
   useEffect(() => {
@@ -49,7 +49,7 @@ const PlayerSidebar: FC<Props> = ({ toggleWatchedState }) => {
 
   return (
     <Sidebar
-      collapsible={playerContext.state.sidebarMode}
+      collapsible={sidebarMode}
       side="right"
       className="flex overflow-hidden"
       // onMouseLeave={toggleSidebar}

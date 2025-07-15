@@ -10,7 +10,7 @@ import {
   getAvailablePlayers,
   getWatched,
   PlayerProvider,
-  usePlayerContext,
+  usePlayer,
 } from './context/player-context';
 import PlayerNavbar from './player-navbar';
 import PlayerSidebar from './sidebar/player-sidebar';
@@ -63,7 +63,8 @@ export default function player() {
 }
 
 export const Player = () => {
-  const playerContext = usePlayerContext();
+  const { container, provider, setProvider, team, currentEpisode, setEpisode } =
+    usePlayer();
   const { data } = useWatchData();
 
   const { open } = useSidebar();
@@ -83,10 +84,6 @@ export const Player = () => {
     };
   });
 
-  const playerIframe = playerContext.state.container.querySelector(
-    '#player-iframe',
-  ) as HTMLIFrameElement;
-
   const [isPlayerReady, togglePlayerReady] = useState(false);
   const [getNextEpState, setNextEpState] = useState(false);
   const [getWatchedState, toggleWatchedState] = useState(false);
@@ -99,29 +96,13 @@ export const Player = () => {
   const [showControls, setShowControls] = useState(true);
 
   const handleSelectEpisode = (value: API.EpisodeData) => {
-    playerContext.setState((prev) => ({ ...prev, currentEpisode: value }));
+    setEpisode(value);
     toggleWatchedState(false);
     togglePlayerReady(false);
   };
 
-  const handleSelectPlayer = (value: PlayerSource) => {
-    if (!data) return;
-
-    const newTeamName = Object.keys(data[value])[0];
-    const newEpisode =
-      data[value][newTeamName].find(
-        (episode: API.EpisodeData) => episode.episode === getWatched() + 1,
-      ) || data[value][newTeamName][0];
-
-    const newEpisodeData = data[value][newTeamName];
-
-    playerContext.setState((prev) => ({
-      ...prev,
-      provider: value,
-      team: newTeamName,
-      episodeData: newEpisodeData,
-      currentEpisode: newEpisode,
-    }));
+  const handleSelectProvider = (value: PlayerSource) => {
+    setProvider(value);
     toggleWatchedState(false);
   };
 
@@ -144,14 +125,19 @@ export const Player = () => {
   };
 
   const [seekToSharedTime, toggleSeekToSharedTime] = useState(false);
-  let duration = 0;
   const [time, setTime] = useState(0);
   const isHandlingNext = useRef(false);
 
   useEffect(() => {
+    if (!container) return;
+
+    const playerIframe = container.querySelector(
+      '#player-iframe',
+    ) as HTMLIFrameElement;
+
     const messageHandler = (event: MessageEvent) => {
       switch (event.data.event) {
-        case 'init':
+        case 'init': {
           togglePlayerReady(true);
 
           if (getNextEpState && !isHandlingNext.current) {
@@ -172,10 +158,10 @@ export const Player = () => {
             );
           }
           break;
+        }
 
-        case 'time':
+        case 'time': {
           const message = event.data;
-          duration = message.duration;
           setTime(message.time);
 
           if (
@@ -183,10 +169,7 @@ export const Player = () => {
             !getWatchedState &&
             isPlayerReady
           ) {
-            if (
-              getWatched() + 1 ===
-              playerContext.state.currentEpisode.episode
-            ) {
+            if (getWatched() + 1 === currentEpisode!.episode) {
               (
                 document.body.querySelector(
                   'div.rounded-lg.border:nth-child(2) button',
@@ -196,14 +179,12 @@ export const Player = () => {
             }
           }
           break;
+        }
 
-        case 'end':
-          const nextEpisode = data![playerContext.state.provider][
-            playerContext.state.team
-          ].find(
+        case 'end': {
+          const nextEpisode = data![provider!][team!].find(
             (episode: API.EpisodeData) =>
-              episode.episode ===
-              playerContext.state.currentEpisode.episode + 1,
+              episode.episode === currentEpisode!.episode + 1,
           );
 
           if (!getNextEpState && nextEpisode) {
@@ -211,10 +192,11 @@ export const Player = () => {
             handleSelectEpisode(nextEpisode);
 
             toast(
-              `Зараз ви переглядаєте ${nextEpisode.episode} епізод в озвучці ${playerContext.state.team}`,
+              `Зараз ви переглядаєте ${nextEpisode.episode} епізод в озвучці ${team}`,
             );
           }
           break;
+        }
 
         case 'ui':
           setShowControls(Boolean(event.data.data));
@@ -224,9 +206,12 @@ export const Player = () => {
     window.addEventListener('message', messageHandler);
     return () => window.removeEventListener('message', messageHandler);
   }, [
+    container,
     getNextEpState,
     isPlayerReady,
-    playerContext.state,
+    provider,
+    team,
+    currentEpisode,
     data,
     getWatchedState,
     seekToSharedTime,
@@ -243,7 +228,7 @@ export const Player = () => {
       const defaultPlayerValue = await defaultPlayer.getValue();
 
       if (!urlParams.sharedCheck) {
-        handleSelectPlayer(
+        handleSelectProvider(
           providers_avaliable.includes(defaultPlayerValue)
             ? defaultPlayerValue
             : providers_avaliable[0],
@@ -340,7 +325,7 @@ export const Player = () => {
             <iframe
               title="player-iframe"
               id="player-iframe"
-              src={`${playerContext.state.currentEpisode.video_url}?site=hikka.io?v2=1`} // todo: move params to backend
+              src={`${currentEpisode?.video_url}?site=hikka.io?v2=1`} // todo: move params to backend
               loading="lazy"
               className="z-[2] size-full"
               allow="fullscreen; accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"

@@ -1,4 +1,105 @@
-import { createContext, FC, PropsWithChildren } from 'react';
+import type { FC, PropsWithChildren } from 'react';
+import { create } from 'zustand';
+
+interface PlayerState {
+  /* Base */
+  container?: HTMLElement;
+  /* Player-related  */
+  watchData?: API.WatchData; // todo: remove it from there
+  provider?: PlayerSource;
+  team?: string;
+  episodeData?: API.EpisodeData[];
+  currentEpisode?: API.EpisodeData;
+  sidebarMode: 'offcanvas' | 'icon';
+}
+
+interface PlayerActions {
+  initialize: (data: API.WatchData, container: HTMLElement) => void;
+  setProvider: (provider: PlayerSource) => void;
+  setTeam: (team: string) => void; // todo
+  setEpisode: (episode: API.EpisodeData) => void;
+  setSidebarMode: (mode: PlayerState['sidebarMode']) => void;
+}
+
+export const usePlayer = create<PlayerState & PlayerActions>((set, get) => ({
+  container: undefined,
+  watchData: undefined,
+  provider: undefined,
+  team: undefined,
+  episodeData: undefined,
+  currentEpisode: undefined,
+  sidebarMode: 'offcanvas',
+
+  initialize: (data, container) => {
+    const availablePlayers = getAvailablePlayers(data);
+    const [sharedParams, isShared] = getSharedPlayerParams();
+
+    // Determine provider
+    const provider =
+      isShared &&
+      availablePlayers.includes(sharedParams.provider as PlayerSource)
+        ? (sharedParams.provider as PlayerSource)
+        : availablePlayers[0];
+
+    // Determine team
+    const team =
+      isShared && data[provider]?.[sharedParams.team!]
+        ? sharedParams.team!
+        : Object.keys(data[provider])[0];
+
+    const episodeData = data[provider][team];
+
+    // Find episode
+    const episodes = data[provider][team];
+    const targetEpisode = isShared
+      ? episodes?.find((ep) => ep.episode === Number(sharedParams.episode))
+      : episodes?.find((ep) => ep.episode === getWatched() + 1);
+
+    set({
+      watchData: data,
+      container,
+      provider,
+      team,
+      episodeData,
+      currentEpisode: targetEpisode ?? episodes[0],
+      sidebarMode: 'offcanvas',
+    });
+  },
+  setProvider: (provider) => {
+    const { watchData } = get();
+    if (!watchData) return;
+
+    const newTeamName = Object.keys(watchData[provider])[0];
+    const newEpisode =
+      watchData[provider][newTeamName].find(
+        (ep) => ep.episode === getWatched() + 1,
+      ) || watchData[provider][newTeamName][0];
+
+    const newEpisodeData = watchData[provider][newTeamName];
+
+    set({
+      provider,
+      team: newTeamName,
+      episodeData: newEpisodeData,
+      currentEpisode: newEpisode,
+    });
+  },
+  setTeam: (team) => {
+    const { watchData, provider } = get();
+    if (!watchData || !provider) return;
+
+    const newEpisodeData = watchData[provider][team];
+
+    const newEpisode =
+      watchData[provider][team].find(
+        (episode) => episode.episode === getWatched() + 1,
+      ) || watchData[provider][team][0];
+
+    set({ team, episodeData: newEpisodeData, currentEpisode: newEpisode });
+  },
+  setEpisode: (episode) => set({ currentEpisode: episode }),
+  setSidebarMode: (mode) => set({ sidebarMode: mode }),
+}));
 
 interface SharedPlayerParams {
   provider: string | null;
@@ -7,14 +108,7 @@ interface SharedPlayerParams {
   time: string | null;
 }
 
-interface PlayerContextType {
-  state: PlayerState;
-  setState: (state: PlayerState | ((prev: PlayerState) => PlayerState)) => void;
-}
-
-const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
-
-const useSharedPlayerParams = (): [SharedPlayerParams, boolean] => {
+const getSharedPlayerParams = (): [SharedPlayerParams, boolean] => {
   const params = new URLSearchParams(window.location.search);
   const sharedParams: SharedPlayerParams = {
     provider: params.get('playerProvider'),
@@ -34,53 +128,12 @@ const useSharedPlayerParams = (): [SharedPlayerParams, boolean] => {
 export const getAvailablePlayers = (data: API.WatchData): PlayerSource[] =>
   Object.keys(data).filter((key) => key !== 'type') as PlayerSource[];
 
-// Backward compatibility
-export const playersAvaliable = getAvailablePlayers;
-
 export const getWatched = (): number => {
   const selector = 'div.rounded-lg.border:nth-child(2) span';
   const element = document.querySelector(selector);
   return element?.firstChild?.nodeValue
     ? parseInt(element.firstChild.nodeValue, 10)
     : 0;
-};
-
-const getInitialPlayerState = (
-  data: API.WatchData,
-  container: HTMLElement,
-  sharedParams: SharedPlayerParams,
-  isShared: boolean,
-): PlayerState => {
-  const availablePlayers = getAvailablePlayers(data);
-
-  // Determine provider
-  const provider =
-    isShared && availablePlayers.includes(sharedParams.provider as PlayerSource)
-      ? (sharedParams.provider as PlayerSource)
-      : availablePlayers[0];
-
-  // Determine team
-  const team =
-    isShared && data[provider]?.[sharedParams.team!]
-      ? sharedParams.team!
-      : Object.keys(data[provider])[0];
-
-  const episodeData = data[provider][team];
-
-  // Find episode
-  const episodes = data[provider][team];
-  const targetEpisode = isShared
-    ? episodes?.find((ep) => ep.episode === Number(sharedParams.episode))
-    : episodes?.find((ep) => ep.episode === getWatched() + 1);
-
-  return {
-    provider,
-    team,
-    episodeData,
-    currentEpisode: targetEpisode ?? episodes[0],
-    sidebarMode: 'offcanvas',
-    container,
-  };
 };
 
 interface PlayerProviderProps extends PropsWithChildren {
@@ -91,26 +144,14 @@ export const PlayerProvider: FC<PlayerProviderProps> = ({
   children,
   container,
 }) => {
-  const [sharedParams, isShared] = useSharedPlayerParams();
+  const { initialize } = usePlayer();
   const { data } = useWatchData();
 
-  const [playerState, setPlayerState] = useState<PlayerState>(() =>
-    getInitialPlayerState(data!, container, sharedParams, isShared),
-  );
+  useEffect(() => {
+    if (!data) return;
 
-  return (
-    <PlayerContext.Provider
-      value={{ state: playerState, setState: setPlayerState }}
-    >
-      {children}
-    </PlayerContext.Provider>
-  );
-};
+    initialize(data, container);
+  }, [data, container]);
 
-export const usePlayerContext = () => {
-  const context = useContext(PlayerContext);
-  if (!context) {
-    throw new Error('usePlayerContext must be used within a PlayerProvider');
-  }
-  return context;
+  return <>{children}</>;
 };

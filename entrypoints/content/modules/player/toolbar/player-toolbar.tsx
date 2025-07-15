@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import type { FC } from 'react';
 import { Button } from '@/components/ui/button';
 import { useSidebar } from '@/components/ui/sidebar';
 import {
@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/tooltip';
 import MaterialSymbolsFullscreen from '~icons/material-symbols/fullscreen';
 import MaterialSymbolsWidthFullOutlineSharp from '~icons/material-symbols/width-full-outline-sharp';
-import WatchTogetherControls from '../watch-together-controls';
+// import WatchTogetherControls from '../watch-together-controls';
 import ShareLinkButton from './share-link-button';
 
 interface Props {
@@ -53,7 +53,7 @@ const PlayerToolbar: FC<Props> = ({
         !open && '-mt-8 opacity-0',
       )}
     >
-      {getUserData && <WatchTogetherControls />}
+      {/* {getUserData && <WatchTogetherControls />} */}
       <div className="flex items-center">
         <Tooltip>
           <TooltipTrigger>

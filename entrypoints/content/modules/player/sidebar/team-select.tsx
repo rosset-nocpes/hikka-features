@@ -1,5 +1,5 @@
 import { ChevronsUpDown } from 'lucide-react';
-import { FC } from 'react';
+import type { FC } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -13,7 +13,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { getWatched, usePlayerContext } from '../context/player-context';
+import { usePlayer } from '../context/player-context';
 
 interface Props {
   toggleWatchedState: (state: boolean) => void;
@@ -46,25 +46,15 @@ const getEpisodeRanges = (episodes: { episode: number }[]) => {
 };
 
 const TeamSelect: FC<Props> = ({ toggleWatchedState }) => {
-  const playerContext = usePlayerContext();
+  const { container, provider, team, setTeam, episodeData } = usePlayer();
   const { data } = useWatchData();
 
   const { open } = useSidebar();
 
+  if (!data || !provider || !team) return;
+
   const handleSelectTeam = (value: string) => {
-    const newEpisodeData = data![playerContext.state.provider][value];
-
-    const newEpisode =
-      data![playerContext.state.provider][value].find(
-        (episode: API.EpisodeData) => episode.episode === getWatched() + 1,
-      ) || data![playerContext.state.provider][value][0];
-
-    playerContext.setState((prev) => ({
-      ...prev,
-      team: value,
-      episodeData: newEpisodeData,
-      currentEpisode: newEpisode,
-    }));
+    setTeam(value);
     toggleWatchedState(false);
   };
 
@@ -74,31 +64,27 @@ const TeamSelect: FC<Props> = ({ toggleWatchedState }) => {
         <DropdownMenuTrigger asChild>
           <SidebarMenuButton
             size="lg"
-            tooltip={STUDIO_CORRECTED_NAMES[playerContext.state.team]}
-            tooltipContainer={playerContext.state.container}
+            tooltip={STUDIO_CORRECTED_NAMES[team]}
+            tooltipContainer={container}
           >
             <Avatar className="size-8 rounded-md">
               <AvatarImage
                 src={
                   STUDIO_LOGOS[
-                    STUDIO_CORRECTED_NAMES[playerContext.state.team]
-                      ? STUDIO_CORRECTED_NAMES[playerContext.state.team]
+                    STUDIO_CORRECTED_NAMES[team]
+                      ? STUDIO_CORRECTED_NAMES[team]
                           .replaceAll(' ', '')
                           .toLowerCase()
-                      : playerContext.state.team
-                          .replaceAll(' ', '')
-                          .toLowerCase()
+                      : team.replaceAll(' ', '').toLowerCase()
                   ]
                 }
               />
-              <AvatarFallback>{playerContext.state.team[0]}</AvatarFallback>
+              <AvatarFallback>{team[0]}</AvatarFallback>
             </Avatar>
             <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-semibold">
-                {playerContext.state.team}
-              </span>
+              <span className="truncate font-semibold">{team}</span>
               <span className="truncate text-xs">
-                {getEpisodeRanges(playerContext.state.episodeData)}
+                {episodeData && getEpisodeRanges(episodeData)}
               </span>
             </div>
             <ChevronsUpDown className="ml-auto" />
@@ -109,15 +95,15 @@ const TeamSelect: FC<Props> = ({ toggleWatchedState }) => {
           align={open ? 'end' : 'start'}
           side={open ? 'bottom' : 'left'}
           sideOffset={open ? 4 : 12}
-          container={playerContext.state.container}
+          container={container}
         >
           <DropdownMenuLabel className="text-muted-foreground text-xs">
             Команди
           </DropdownMenuLabel>
-          {Object.keys(data![playerContext.state.provider]).map((team) => (
+          {Object.keys(data[provider]).map((team_name) => (
             <DropdownMenuItem
-              key={team}
-              onClick={() => handleSelectTeam(team)}
+              key={team_name}
+              onClick={() => handleSelectTeam(team_name)}
               className="p-0 font-normal"
             >
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
@@ -125,23 +111,21 @@ const TeamSelect: FC<Props> = ({ toggleWatchedState }) => {
                   <AvatarImage
                     src={
                       STUDIO_LOGOS[
-                        STUDIO_CORRECTED_NAMES[team]
-                          ? STUDIO_CORRECTED_NAMES[team]
+                        STUDIO_CORRECTED_NAMES[team_name]
+                          ? STUDIO_CORRECTED_NAMES[team_name]
                               .replaceAll(' ', '')
                               .toLowerCase()
-                          : team.replaceAll(' ', '').toLowerCase()
+                          : team_name.replaceAll(' ', '').toLowerCase()
                       ]
                     }
-                    alt={team}
+                    alt={team_name}
                   />
-                  <AvatarFallback>{team[0]}</AvatarFallback>
+                  <AvatarFallback>{team_name[0]}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">{team}</span>
+                  <span className="truncate font-semibold">{team_name}</span>
                   <span className="truncate text-xs">
-                    {getEpisodeRanges(
-                      data![playerContext.state.provider][team],
-                    )}
+                    {getEpisodeRanges(data[provider][team_name])}
                   </span>
                 </div>
               </div>

@@ -1,5 +1,5 @@
 import { Copy, CopyCheck, Link } from 'lucide-react';
-import { FC } from 'react';
+import type { FC } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -15,7 +15,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import MaterialSymbolsShareOutline from '~icons/material-symbols/share-outline';
-import { usePlayerContext } from '../context/player-context';
+import { usePlayer } from '../context/player-context';
 
 interface Props {
   time: number;
@@ -32,18 +32,15 @@ const ShareLinkButton: FC<Props> = ({
   setTimecodeLink,
   toggleTimestampLink,
 }) => {
-  const playerContext = usePlayerContext();
+  const { container, provider, team, currentEpisode } = usePlayer();
 
   const [showTooltip, setShowTooltip] = useState(false);
 
   const handleCopyShareLink = () => {
     const query_params = new URLSearchParams();
-    query_params.append('playerProvider', playerContext.state.provider);
-    query_params.append('playerTeam', playerContext.state.team);
-    query_params.append(
-      'playerEpisode',
-      playerContext.state.currentEpisode.episode.toString(),
-    );
+    query_params.append('playerProvider', provider!);
+    query_params.append('playerTeam', team!);
+    query_params.append('playerEpisode', currentEpisode!.episode.toString());
 
     if (isTimecodeLink) {
       query_params.append('time', timecodeLink.toString());
@@ -73,10 +70,7 @@ const ShareLinkButton: FC<Props> = ({
           <TooltipContent>Поділитися</TooltipContent>
         </Tooltip>
       </PopoverTrigger>
-      <PopoverContent
-        className="flex flex-col gap-2"
-        container={playerContext.state.container}
-      >
+      <PopoverContent className="flex flex-col gap-2" container={container}>
         <div className="flex items-center gap-2 rounded-md bg-muted py-1 pr-1 pl-2">
           <Link className="size-3.5 shrink-0 text-muted-foreground" />
           <span className="gradient-mask-r-90 cursor-default overflow-hidden text-nowrap font-medium text-xs">
@@ -113,7 +107,7 @@ const ShareLinkButton: FC<Props> = ({
             checked={isTimecodeLink}
             onCheckedChange={() => toggleTimestampLink(!isTimecodeLink)}
           />
-          <label
+          <div
             className={cn(
               'flex items-center gap-2',
               !isTimecodeLink && 'cursor-not-allowed opacity-70',
@@ -134,7 +128,7 @@ const ShareLinkButton: FC<Props> = ({
               placeholder="00:00:00"
               className="h-6 w-24 text-xs focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0"
             />
-          </label>
+          </div>
         </div>
       </PopoverContent>
     </Popover>
