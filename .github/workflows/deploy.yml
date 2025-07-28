@@ -3,7 +3,7 @@ name: Build and Publish extension
 on:
   push:
     tags:
-      - "*.*.*"
+      - "v*.*.*"
   workflow_dispatch:
 
 permissions:
@@ -17,28 +17,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Prepare pnpm
-        uses: pnpm/action-setup@v3
+      - name: Prepare bun
+        uses: oven-sh/setup-bun@v2
         with:
-          version: 9
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-          cache: "pnpm"
+          bun-version: latest
 
       - name: Install dependencies
-        run: pnpm i
+        run: bun i
 
       - name: Zip extensions
         run: |
-          pnpm run zip
-          pnpm run zip:firefox
+          bun run zip
+          bun run zip:firefox
 
       - name: Submit to stores
         run: |
-          pnpm wxt submit \
+          bun wxt submit \
             --chrome-zip .output/*-chrome.zip \
             --firefox-zip .output/*-firefox.zip --firefox-sources-zip .output/*-sources.zip
         env:
