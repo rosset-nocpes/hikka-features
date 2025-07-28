@@ -11,6 +11,7 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import HFxCPRBadge from '@/public/hf-x-cpr.svg';
+import HFxCPRBadgeDark from '@/public/hf-x-cpr-dark.svg';
 import MaterialSymbolsSadTabRounded from '~icons/material-symbols/sad-tab-rounded';
 import { queryClient } from '..';
 
@@ -38,7 +39,7 @@ const fandubBlock = async (smallerTitle?: boolean, location?: Element) => {
       const root = createRoot(wrapper);
       root.render(
         <QueryClientProvider client={queryClient}>
-          <FandubBlock smallerTitle={smallerTitle} />
+          <FandubBlock container={container} smallerTitle={smallerTitle} />
         </QueryClientProvider>,
       );
 
@@ -48,10 +49,11 @@ const fandubBlock = async (smallerTitle?: boolean, location?: Element) => {
 };
 
 interface Props {
+  container: HTMLElement;
   smallerTitle?: boolean;
 }
 
-const FandubBlock: FC<Props> = ({ smallerTitle }) => {
+const FandubBlock: FC<Props> = ({ container, smallerTitle }) => {
   const { data, isLoading, isError } = useNotionData();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -88,7 +90,14 @@ const FandubBlock: FC<Props> = ({ smallerTitle }) => {
               target="_blank"
               rel="noopener"
             >
-              <img src={HFxCPRBadge} style={{ height: '20px' }} />
+              <img
+                src={
+                  container.classList.contains('dark')
+                    ? HFxCPRBadge
+                    : HFxCPRBadgeDark
+                }
+                style={{ height: '20px' }}
+              />
             </a>
           </h3>
           <div className="flex flex-col gap-2">
