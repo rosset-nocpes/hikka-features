@@ -19,7 +19,7 @@ import MdiBeta from '~icons/mdi/beta';
 const UserOptions = () => {
   const [getRichPresence, toggleRichPresence] = useState<boolean | null>(null);
 
-  const [getUserData, setUserData] = useState<any | null>(null);
+  const [getUserData, setUserData] = useState<any>(null);
 
   useEffect(() => {
     Promise.all([richPresence.getValue(), userData.getValue()]).then(
@@ -36,11 +36,12 @@ const UserOptions = () => {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Avatar className="cursor-pointer">
-          <AvatarImage src={getUserData?.['avatar']} />
+      <DropdownMenuTrigger asChild disabled>
+        <Avatar className="pointer-events-none">
+          <AvatarImage src={getUserData?.avatar} />
           <AvatarFallback>
-            <MaterialSymbolsPersonRounded className="size-5" />
+            {/* <MaterialSymbolsPersonRounded className="size-5" /> */}
+            WIP
           </AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
@@ -54,7 +55,7 @@ const UserOptions = () => {
         {getUserData && (
           <>
             <DropdownMenuLabel className="-m-1 line-clamp-1 bg-secondary/30 p-2">
-              {getUserData!['username']}
+              {getUserData?.username}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={Logout} className="items-center gap-2">

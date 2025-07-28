@@ -54,9 +54,9 @@ export const userData = storage.defineItem<UserDataV2>('local:userData', {
       });
 
       return {
-        hikkaId: r['reference'],
-        username: r['username'],
-        avatar: r['avatar'],
+        hikkaId: r.reference,
+        username: r.username,
+        avatar: r.avatar,
       };
     },
   },
