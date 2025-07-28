@@ -87,7 +87,7 @@ const AniButtons: FC<Props> = ({ container, data, smallerTitle }) => {
     initializeAsync();
   }, []);
 
-  const content_type: MediaType | InfoType = data.data_type;
+  const content_type: MediaType | InfoType = data?.data_type;
 
   const contentTypeMap: Record<string, Record<string, string>> = {
     character: {
@@ -100,7 +100,7 @@ const AniButtons: FC<Props> = ({ container, data, smallerTitle }) => {
   const isMedia = Object.keys(MediaEnum).includes(content_type);
   const isAnime = content_type === 'anime';
   const title =
-    data.title_ja || data.title_en || data.title_original || data.name_en;
+    data?.title_ja || data?.title_en || data?.title_original || data?.name_en;
 
   const hosts: Record<SourcesType, string> = {
     mal: 'myanimelist.net',
@@ -114,7 +114,8 @@ const AniButtons: FC<Props> = ({ container, data, smallerTitle }) => {
 
   const getUrl = (website: SourcesType) =>
     isMedia
-      ? data.external.find((obj: any) => obj.url?.includes(hosts[website]))?.url
+      ? data?.external.find((obj: any) => obj.url?.includes(hosts[website]))
+          ?.url
       : null;
 
   const searchUrls: Record<SourcesType, Website> = {
@@ -123,7 +124,7 @@ const AniButtons: FC<Props> = ({ container, data, smallerTitle }) => {
       host: hosts.mal,
       url: `https://myanimelist.net/${
         contentTypeMap[content_type]?.mal || content_type
-      }${data.mal_id ? `/${data.mal_id}` : `.php?q=${title}`}`,
+      }${data?.mal_id ? `/${data?.mal_id}` : `.php?q=${title}`}`,
     },
     anilist: {
       title: 'AniList',

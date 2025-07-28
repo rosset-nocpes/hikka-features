@@ -43,6 +43,16 @@ const DevButtons = () => {
 
   const { contentType: path } = usePageStore();
 
+  useEffect(() => {
+    const initializeAsync = async () => {
+      toggleShow(await devMode.getValue());
+    };
+
+    initializeAsync();
+  }, []);
+
+  devMode.watch((state) => toggleShow(state));
+
   let queryFunc = useHikkaAnime;
   switch (path) {
     case 'manga':
@@ -51,6 +61,7 @@ const DevButtons = () => {
   }
 
   const data = queryFunc().data;
+  if (!data) return;
 
   const handleCopy = async (text: string, buttonId: string) => {
     await navigator.clipboard.writeText(text);
@@ -62,16 +73,6 @@ const DevButtons = () => {
 
   const slug = data.slug;
   const mal_id = data.mal_id;
-
-  useEffect(() => {
-    const initializeAsync = async () => {
-      toggleShow(await devMode.getValue());
-    };
-
-    initializeAsync();
-  }, []);
-
-  devMode.watch((state) => toggleShow(state));
 
   return (
     <AnimatePresence>

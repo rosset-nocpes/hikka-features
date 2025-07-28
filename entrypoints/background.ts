@@ -217,7 +217,7 @@ export default defineBackground(() => {
 
     // Event: Error occurred
     ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
+      console.warn('WebSocket error:', error);
     };
   }
 });
