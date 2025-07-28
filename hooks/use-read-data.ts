@@ -6,9 +6,9 @@ const useReadData = () => {
   const { data } = useHikkaManga();
 
   return useQuery({
-    queryKey: ['read-data', data.title_original],
+    queryKey: ['read-data', `${data.title_original}-${data.year}`],
     queryFn: async () => {
-      const r = await get_miu_chapters(data.title_original);
+      const r = await get_miu_chapters(data);
 
       return { chapters: r } as API.ReadData;
     },

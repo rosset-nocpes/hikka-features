@@ -1,11 +1,14 @@
-import { FC } from 'react';
+import { ChevronsUpDown, Settings } from 'lucide-react';
+import type { FC } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CarouselApi } from '@/components/ui/carousel';
+import type { CarouselApi } from '@/components/ui/carousel';
 import {
   Sidebar,
   SidebarFooter,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
@@ -18,9 +21,10 @@ import ReaderSettings from './reader-settings';
 
 interface Props {
   carouselApi: CarouselApi;
+  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
 }
 
-const ReaderSidebar: FC<Props> = ({ carouselApi }) => {
+const ReaderSidebar: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
   const { open } = useSidebar();
 
   const { sidebarMode } = useReaderContext();
@@ -48,19 +52,28 @@ const ReaderSidebar: FC<Props> = ({ carouselApi }) => {
                   'transition-[margin] duration-300',
                   !open && '-ml-2',
                 )}
-                onClick={() => reader()!.then((x) => x!.remove())}
+                onClick={() => reader().then((x) => x.remove())}
               >
                 <MaterialSymbolsCloseRounded />
               </Button>
               <span className="cursor-default font-medium font-unitysans">
                 Читалка
               </span>
+              <Badge
+                variant="outline"
+                className="cursor-default bg-yellow-500 text-primary-foreground"
+              >
+                Beta
+              </Badge>
             </div>
             <div className="h-8 w-8" />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      <ChapterList carouselApi={carouselApi} />
+      <ChapterList
+        carouselApi={carouselApi}
+        scrollContainerRef={scrollContainerRef}
+      />
       <SidebarFooter>
         <ReaderSettings />
       </SidebarFooter>

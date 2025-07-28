@@ -65,9 +65,6 @@ const ProviderSelect: FC<Props> = ({ toggleWatchedState }) => {
           sideOffset={open ? 4 : 12}
           container={container}
         >
-          {/* <DropdownMenuLabel className="text-muted-foreground text-xs">
-            Провайдери
-          </DropdownMenuLabel> */}
           <div className="flex flex-col">
             {avaliable_players.filter((elem) =>
               UkrainianPlayerSource.includes(elem),

@@ -1,6 +1,6 @@
-import { FC } from 'react';
+import type { FC } from 'react';
 import { Button } from '@/components/ui/button';
-import { CarouselApi } from '@/components/ui/carousel';
+import type { CarouselApi } from '@/components/ui/carousel';
 import {
   Sheet,
   SheetContent,
@@ -12,7 +12,7 @@ import { useSidebar } from '@/components/ui/sidebar';
 import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
 import MaterialSymbolsRightPanelCloseRounded from '~icons/material-symbols/right-panel-close-rounded';
 import MaterialSymbolsRightPanelOpenOutlineRounded from '~icons/material-symbols/right-panel-open-outline-rounded';
-import { useReaderContext } from '../context/reader-context';
+import { getRead, useReaderContext } from '../context/reader-context';
 import reader from '../reader';
 
 interface Props {
@@ -34,16 +34,16 @@ const ReaderMobileToolbar: FC<Props> = ({ carouselApi }) => {
   };
 
   return (
-    <div className="absolute bottom-2 z-10 flex w-full justify-center px-2 sm:hidden">
+    <div className="absolute bottom-2 z-20 flex w-full justify-center px-2 sm:hidden">
       <div className="flex gap-2 rounded-lg bg-background/60 p-2 backdrop-blur-xl">
-        <Button variant="secondary" size="md" onClick={() => setOpen(!open)}>
+        {/* <Button variant="secondary" size="md" onClick={() => setOpen(!open)}>
           {open ? (
             <MaterialSymbolsRightPanelCloseRounded />
           ) : (
             <MaterialSymbolsRightPanelOpenOutlineRounded />
           )}
           <span className="sr-only">Toggle Sidebar</span>
-        </Button>
+        </Button> */}
         <Sheet modal={false} open={sheetOpen} onOpenChange={setSheetOpen}>
           <SheetTrigger
             className="inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-secondary bg-secondary px-3 font-medium text-secondary-foreground text-sm ring-offset-background transition-colors hover:bg-secondary/80 focus-visible:outline-none"
@@ -58,12 +58,15 @@ const ReaderMobileToolbar: FC<Props> = ({ carouselApi }) => {
               <SheetTitle>Оберіть розділ</SheetTitle>
             </SheetHeader>
             <div className="flex h-full flex-col gap-1 overflow-y-auto">
-              {mangaData?.chapters.map((chapter) => (
+              {mangaData?.chapters.map((chapter, index) => (
                 <Button
                   key={chapter.id}
                   variant="ghost"
                   onClick={() => handleSelectChapter(chapter)}
-                  className="w-full shrink-0"
+                  className={cn(
+                    'w-full shrink-0',
+                    index + 1 <= getRead() && 'text-muted-foreground',
+                  )}
                 >
                   {`Том ${chapter.volume} Розділ ${chapter.chapter}`}
                 </Button>

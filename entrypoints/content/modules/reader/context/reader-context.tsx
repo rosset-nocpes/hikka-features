@@ -1,5 +1,5 @@
-import { FC, PropsWithChildren, useEffect } from "react";
-import { create } from "zustand";
+import { type FC, type PropsWithChildren, useEffect } from 'react';
+import { create } from 'zustand';
 
 interface ReaderState {
   /* Base */
@@ -8,9 +8,9 @@ interface ReaderState {
   currentChapter?: API.ChapterData;
   chapterImages: string[];
   imagesLoading: boolean;
-  sidebarMode: "offcanvas" | "icon";
+  sidebarMode: 'offcanvas' | 'icon';
   scrollMode: boolean;
-  orientation: "vertical" | "horizontal";
+  orientation: string | 'vertical' | 'horizontal';
   scale: number;
 }
 
@@ -18,26 +18,29 @@ interface ReaderActions {
   initialize: (data: API.ReadData, container: HTMLElement) => void;
   setChapter: (chapter: API.ChapterData) => void;
   setChapterImages: (images: string[], loading: boolean) => void;
-  setSidebarMode: (mode: ReaderState["sidebarMode"]) => void;
+  setSidebarMode: (mode: ReaderState['sidebarMode']) => void;
   setScrollMode: (enabled: boolean) => void;
   setOrientation: (orientation: string) => void;
   setScale: (scale: number) => void;
   setState: (
     state: Partial<ReaderState> | ((prev: ReaderState) => Partial<ReaderState>),
   ) => void;
+  reset: () => void;
 }
 
 export const useReaderContext = create<ReaderState & ReaderActions>((set) => ({
   chapterImages: [],
   imagesLoading: true,
-  sidebarMode: "offcanvas", // todo: move to local storage
+  sidebarMode: 'offcanvas', // todo: move to local storage
   scrollMode: false,
-  orientation: "vertical",
+  orientation: 'vertical',
   scale: 1,
 
   initialize: (data, container) => {
+    const targetChapter = data.chapters[getRead()];
+
     set({
-      currentChapter: data.chapters[0],
+      currentChapter: targetChapter ?? data.chapters[0],
       imagesLoading: true,
       container,
     });
@@ -50,10 +53,22 @@ export const useReaderContext = create<ReaderState & ReaderActions>((set) => ({
   setOrientation: (orientation) => set({ orientation }),
   setScale: (scale) => set({ scale }),
   setState: (state) => set(state),
+  reset: () => {
+    set({
+      chapterImages: [],
+      imagesLoading: true,
+      sidebarMode: 'offcanvas',
+      scrollMode: false,
+      orientation: 'vertical',
+      scale: 1,
+      currentChapter: undefined,
+      container: undefined,
+    });
+  },
 }));
 
 export const getRead = (): number => {
-  const selector = "div.rounded-lg.border:nth-child(2) h3";
+  const selector = 'div.rounded-lg.border:nth-child(2) span';
   const element = document.querySelector(selector);
   return element?.firstChild?.nodeValue
     ? parseInt(element.firstChild.nodeValue, 10)
@@ -75,16 +90,34 @@ export const ReaderProvider: FC<ReaderProviderProps> = ({
     if (!data) return;
 
     initialize(data, container);
-  }, [data, initialize]);
+  }, [data]);
 
-  // Call useReadChapterData at the top level
   const { data: chapterImagesData, isLoading } = useReadChapterData(
-    currentChapter?.chapter!,
+    currentChapter?.id!,
+    currentChapter?.url!,
   );
 
-  // useEffect to update state when chapterImagesData changes
   useEffect(() => {
-    setChapterImages(chapterImagesData?.images || [], isLoading);
+    const images = chapterImagesData?.images || [];
+    let allImagesLoaded = !isLoading;
+
+    if (!isLoading && images.length > 0) {
+      allImagesLoaded = false;
+      let loadedCount = 0;
+
+      images.slice(0, 5).forEach((imgSrc) => {
+        const img = new Image();
+        img.onload = () => {
+          loadedCount++;
+          if (loadedCount === images.slice(0, 5).length) {
+            setChapterImages(images, false);
+          }
+        };
+        img.src = imgSrc;
+      });
+    }
+
+    setChapterImages(images, !allImagesLoaded);
   }, [chapterImagesData, isLoading, setChapterImages]);
 
   return <>{children}</>;

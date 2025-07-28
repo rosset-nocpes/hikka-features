@@ -1,9 +1,9 @@
 import { WheelGesturesPlugin } from 'embla-carousel-wheel-gestures';
 import { AnimatePresence, motion } from 'framer-motion';
-import { FC, useLayoutEffect } from 'react';
+import { type FC, useLayoutEffect } from 'react';
 import {
   Carousel,
-  CarouselApi,
+  type CarouselApi,
   CarouselContent,
   CarouselItem,
 } from '@/components/ui/carousel';
@@ -14,11 +14,12 @@ interface Props {
   setCarouselApi?: React.Dispatch<
     React.SetStateAction<CarouselApi | undefined>
   >;
+  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
 }
 
 const MotionCarousel = motion.create(Carousel);
 
-const ChapterPages: FC<Props> = ({ setCarouselApi }) => {
+const ChapterPages: FC<Props> = ({ setCarouselApi, scrollContainerRef }) => {
   const {
     chapterImages,
     imagesLoading,
@@ -28,19 +29,18 @@ const ChapterPages: FC<Props> = ({ setCarouselApi }) => {
     scale,
   } = useReaderContext();
   const imageRefs = useRef<(HTMLImageElement | null)[]>([]);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const prevScaleRef = useRef(scale);
 
   useEffect(() => {
     if (chapterImages.length === 0) return;
 
     let isManhwaDetected = false;
-    const imagesToLoad = chapterImages.map((img_url, index) => {
+    const imagesToLoad = chapterImages.slice(0, 3).map((img_url) => {
       return new Promise<void>((resolve) => {
         const img = new Image();
         img.onload = () => {
           const aspectRatio = img.naturalHeight / img.naturalWidth;
-          if (aspectRatio > 2.5) {
+          if (aspectRatio > 3.5) {
             isManhwaDetected = true;
           }
           resolve();
@@ -99,6 +99,7 @@ const ChapterPages: FC<Props> = ({ setCarouselApi }) => {
         >
           {chapterImages.map((img_url, index) => (
             <img
+              key={index}
               ref={(el) => {
                 imageRefs.current[index] = el;
               }}
@@ -125,7 +126,7 @@ const ChapterPages: FC<Props> = ({ setCarouselApi }) => {
             {chapterImages.map((img_url, index) => {
               return (
                 <CarouselItem
-                  key={img_url}
+                  key={index}
                   className={cn(
                     'h-full duration-300',
                     scrollMode && 'h-auto p-0',
@@ -138,7 +139,6 @@ const ChapterPages: FC<Props> = ({ setCarouselApi }) => {
                       }}
                       src={img_url}
                       alt="Chapter page"
-                      loading="lazy"
                       className="h-full object-contain duration-300"
                     />
                   </div>

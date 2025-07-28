@@ -85,132 +85,12 @@ function parseUserHashQuery(html: string, endpoint: string): string | null {
   return userHashQuery;
 }
 
-export async function get_miu_chapter_pages(
-  mangaTitle: string,
-  chapterNumber: number,
-): Promise<string[]> {
-  // 1. Search for the manga
-  const searchFormData = new URLSearchParams();
-  searchFormData.append('do', 'search');
-  searchFormData.append('subaction', 'search');
-  searchFormData.append('story', mangaTitle);
-  searchFormData.append('search_start', '1'); // page 1
-
-  const searchResponse = await axios
-    .post(`${BASE_URL}/index.php?do=search`, searchFormData)
-    .catch((error) => {
-      console.error('Error searching for manga:', error);
-      throw new Error(`Failed to search for manga "${mangaTitle}"`);
-    });
-
-  const $search = cheerio.load(searchResponse.data);
-  const mangaLinkElement = $search(
-    'main.main article.item h3.card__title a',
-  ).first();
-  if (!mangaLinkElement.length) {
-    console.error('Manga not found from search.');
-    throw new Error(`Manga "${mangaTitle}" not found.`);
-  }
-  const mangaPageUrl = mangaLinkElement.attr('href');
-  if (!mangaPageUrl) {
-    console.error('Manga URL not found from search result.');
-    throw new Error('Could not extract manga URL from search result.');
-  }
-  console.log(`Found manga page URL: ${mangaPageUrl}`);
-
-  // 2. Go to manga page to get details for chapter list request
-  const mangaPageResponse = await axios
-    .get(`https://corsproxy.io/?url=${mangaPageUrl}`)
-    .catch((error) => {
-      console.error('Error fetching manga page:', error);
-      throw new Error(`Failed to fetch manga page at ${mangaPageUrl}`);
-    });
-  const mangaPageHtml = mangaPageResponse.data;
-  const $mangaPage = cheerio.load(mangaPageHtml);
-
-  const userHashMangaPage = parseUserHash(mangaPageHtml);
-  if (!userHashMangaPage) {
-    throw new Error('Could not parse user_hash from manga page.');
-  }
-
-  const chapterListEndpoint = 'engine/ajax/controller.php?mod=load_chapters';
-  const userHashQueryMangaPage = parseUserHashQuery(
-    mangaPageHtml,
-    chapterListEndpoint,
-  );
-  if (!userHashQueryMangaPage) {
-    throw new Error('Could not parse user_hash_query from manga page.');
-  }
-
-  const linkstocomicsElement = $mangaPage('div#linkstocomics');
-  if (!linkstocomicsElement.length) {
-    throw new Error('Could not find "linkstocomics" element on manga page.');
-  }
-  const newsId = linkstocomicsElement.attr('data-news_id');
-  const newsCategory = linkstocomicsElement.attr('data-news_category');
-  // const thisLink = linkstocomicsElement.attr("data-this_link");
-
-  if (!newsId || !newsCategory) {
-    throw new Error('Missing data attributes from "linkstocomics" element.');
-  }
-
-  // 3. Fetch chapter list
-  console.log('Fetching chapter list...');
-  const chapterListFormData = new URLSearchParams();
-  chapterListFormData.append('action', 'show');
-  chapterListFormData.append('news_id', newsId);
-  chapterListFormData.append('news_category', newsCategory);
-  // chapterListFormData.append("this_link", thisLink);
-  chapterListFormData.append(userHashQueryMangaPage, userHashMangaPage);
-
-  const chapterListResponse = await axios
-    .post(`${BASE_URL}/${chapterListEndpoint}`, chapterListFormData)
-    .catch((error) => {
-      console.error('Error fetching chapter list:', error);
-      throw new Error('Failed to fetch chapter list.');
-    });
-
-  const $chapterList = cheerio.load(chapterListResponse.data);
-  let targetChapterUrl: string | undefined;
-
-  $chapterList('body')
-    .children()
-    .each((_i, el) => {
-      const $chapterElement = $chapterList(el);
-      const linkElement = $chapterElement.find('a').first();
-      const chapterHref = linkElement.attr('href');
-      const chapterTitleText = linkElement.text().trim();
-
-      // Or "Розділ 1"
-      const chapterNumberString = String(chapterNumber).toLowerCase();
-      const normalizedChapterTitle = chapterTitleText.toLowerCase();
-
-      // Try to extract number from "Розділ XXX"
-      const titleNumMatch = normalizedChapterTitle.match(/розділ\s*([\d\.]+)/);
-      const titleNum = titleNumMatch ? titleNumMatch[1] : null;
-
-      if (
-        normalizedChapterTitle.includes(chapterNumberString) ||
-        (titleNum && titleNum === chapterNumberString)
-      ) {
-        targetChapterUrl = chapterHref;
-        return false;
-      }
-    });
-
-  if (!targetChapterUrl) {
-    throw new Error(
-      `Chapter "${chapterNumber}" not found for manga "${mangaTitle}".`,
-    );
-  }
-  console.log(`Found target chapter URL: ${targetChapterUrl}`);
-
-  // 4. Go to target chapter page
+export async function get_miu_chapter_pages(url: string): Promise<string[]> {
   const chapterPageResponse = await axios
-    .get(`https://corsproxy.io/?url=${targetChapterUrl}`)
+    .get(`https://corsproxy.io/?url=${url}`)
     .catch((error) => {
       console.error('Error fetching chapter page:', error);
-      throw new Error(`Failed to fetch chapter page at ${targetChapterUrl}`);
+      throw new Error(`Failed to fetch chapter page at ${url}`);
     });
   const chapterPageHtml = chapterPageResponse.data;
   const $chapterPage = cheerio.load(chapterPageHtml);
@@ -285,48 +165,48 @@ export async function get_miu_chapter_pages(
   return images;
 }
 
-export async function get_miu_chapters(
-  title: string,
-): Promise<API.ChapterData[]> {
-  // 1. Search for the manga
-  console.log(`Searching for manga: ${title}`);
-  const searchFormData = new URLSearchParams();
-  searchFormData.append('do', 'search');
-  searchFormData.append('subaction', 'search');
-  searchFormData.append('story', title);
-  searchFormData.append('search_start', '1'); // page 1
+export async function get_miu_chapters(data: any): Promise<API.ChapterData[]> {
+  let manga_url: string | undefined = data.external.find(
+    (link: any) => link.text === 'Manga.in.ua',
+  ).url;
 
-  const searchResponse = await axios
-    .post(`${BASE_URL}/index.php?do=search`, searchFormData)
-    .catch((error) => {
-      console.error('Error searching for manga:', error);
-      throw new Error(`Failed to search for manga "${title}"`);
-    });
+  if (!manga_url) {
+    console.log(`Searching for manga: ${data.title}`);
+    const searchFormData = new URLSearchParams();
+    searchFormData.append('do', 'search');
+    searchFormData.append('subaction', 'search');
+    searchFormData.append('story', `${data.title} ${data.year}`);
+    searchFormData.append('search_start', '1'); // page 1
 
-  const $search = cheerio.load(searchResponse.data);
-  // Assuming the first result is the correct one.
-  // The Kotlin code uses "article.item" or "div.owl-carousel div.card--big"
-  // For search, it's "main.main article.item"
-  const mangaLinkElement = $search(
-    'main.main article.item h3.card__title a',
-  ).first();
-  if (!mangaLinkElement.length) {
-    console.error('Manga not found from search.');
-    throw new Error(`Manga "${title}" not found.`);
+    const searchResponse = await axios
+      .post(`${BASE_URL}/index.php?do=search`, searchFormData)
+      .catch((error) => {
+        console.error('Error searching for manga:', error);
+        throw new Error(`Failed to search for manga "${data.title}"`);
+      });
+
+    const $search = cheerio.load(searchResponse.data);
+    const mangaLinkElement = $search(
+      'main.main article.item h3.card__title a',
+    ).first();
+    if (!mangaLinkElement.length) {
+      console.error('Manga not found from search.');
+      throw new Error(`Manga "${data.title}" not found.`);
+    }
+    manga_url = mangaLinkElement.attr('href');
+    if (!manga_url) {
+      console.error('Manga URL not found from search result.');
+      throw new Error('Could not extract manga URL from search result.');
+    }
   }
-  const mangaPageUrl = mangaLinkElement.attr('href');
-  if (!mangaPageUrl) {
-    console.error('Manga URL not found from search result.');
-    throw new Error('Could not extract manga URL from search result.');
-  }
-  console.log(`Found manga page URL: ${mangaPageUrl}`);
+  console.log(`Found manga page URL: ${manga_url}`);
 
   // 2. Go to manga page to get details for chapter list request
   const mangaPageResponse = await axios
-    .get(`https://corsproxy.io/?url=${mangaPageUrl}`)
+    .get(`https://corsproxy.io/?url=${manga_url}`)
     .catch((error) => {
       console.error('Error fetching manga page:', error);
-      throw new Error(`Failed to fetch manga page at ${mangaPageUrl}`);
+      throw new Error(`Failed to fetch manga page at ${manga_url}`);
     });
   const mangaPageHtml = mangaPageResponse.data;
   const $mangaPage = cheerio.load(mangaPageHtml);
@@ -385,7 +265,7 @@ export async function get_miu_chapters(
       const chapterTitleText = linkElement.text().trim(); // "Розділ X: Назва розділу" or "Розділ X"
 
       const chapterMatch = chapterTitleText.match(
-        /Том\s*(\d+)\.\s*Розділ\s*([\d\.]+)\s*(?:-\s*(.*))?/i,
+        /Том\s*(\d+)\.\s*Розділ\s*([\d.]+)\s*(?:-\s*(.*))?/i,
       );
       const chapterVolume = chapterMatch ? chapterMatch[1] : 'N/A';
       const chapterNumber = chapterMatch ? chapterMatch[2] : 'N/A';
@@ -400,6 +280,7 @@ export async function get_miu_chapters(
         volume: Number(chapterVolume),
         chapter: Number(chapterNumber),
         title: chapterTitle,
+        url: chapterHref || '',
       });
     });
 

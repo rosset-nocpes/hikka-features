@@ -37,6 +37,7 @@ declare global {
       volume: number;
       chapter: number;
       title: string;
+      url: string;
     };
 
     type ReadChapterData = {

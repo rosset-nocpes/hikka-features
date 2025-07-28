@@ -1,6 +1,5 @@
-import { version } from '@/package.json';
-
 import { useEffect, useState } from 'react';
+import { version } from '@/package.json';
 import MdiGithub from '~icons/mdi/github';
 import MdiTelegram from '~icons/mdi/telegram';
 import '../app.css';
@@ -33,7 +32,7 @@ function App() {
   return (
     <div data-vaul-drawer-wrapper>
       <style>
-        {`:root { background-color: black; } 
+        {`:root { background-color: black; }
         .slide-fade-enter-active {
           transition: all 0.3s ease;
         }
@@ -74,31 +73,34 @@ function App() {
           <AniBackgroundSettings />
           <LocalizedPosterSettings />
         </div>
-        <div className="flex items-center justify-between gap-1 text-[#5C5C5C] text-xs">
+        <div className="flex items-center justify-center gap-3 text-[#5C5C5C] text-xs">
           <a
             href="https://github.com/rosset-nocpes/hikka-features"
-            className="flex items-center gap-1 font-bold"
+            className="flex flex-1 items-center justify-center gap-1 font-bold"
           >
             <MdiGithub />
             GitHub
           </a>
-          <a className="cursor-default">/</a>
-          <button
-            onClick={() => {
-              devClicked++;
-              if (devClicked === 5) {
-                devOptionsState.setValue(!showDevOptions);
-                toggleDevOptions(!showDevOptions);
-                devClicked = 0;
-              }
-            }}
-          >
-            v{version}
-          </button>
-          <a className="cursor-default">/</a>
+          <div className="flex flex-1 items-center justify-between gap-3">
+            <div className="size-1 rounded-full bg-[#5C5C5C]" />
+            <button
+              type="button"
+              onClick={() => {
+                devClicked++;
+                if (devClicked === 5) {
+                  devOptionsState.setValue(!showDevOptions);
+                  toggleDevOptions(!showDevOptions);
+                  devClicked = 0;
+                }
+              }}
+            >
+              v{version}
+            </button>
+            <div className="size-1 rounded-full bg-[#5C5C5C]" />
+          </div>
           <a
             href="https://t.me/hikka_features"
-            className="flex items-center gap-1 font-bold"
+            className="flex flex-1 items-center justify-center gap-1 font-bold"
           >
             <MdiTelegram />
             TG канал

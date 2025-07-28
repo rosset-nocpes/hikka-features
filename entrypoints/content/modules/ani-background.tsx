@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react';
-import { FC, useEffect, useState } from 'react';
+import type { FC } from 'react';
 import { createRoot } from 'react-dom/client';
 
 const aniBackground = async (mal_id: number, type: MediaType) => {
@@ -47,7 +47,7 @@ const aniBackground = async (mal_id: number, type: MediaType) => {
     name: 'ani-background',
     position: 'inline',
     append: 'last',
-    anchor: document.querySelector('body main > .grid')!,
+    anchor: document.querySelector('body main > .grid'),
     async onMount(container) {
       const wrapper = document.createElement('div');
       container.append(wrapper);

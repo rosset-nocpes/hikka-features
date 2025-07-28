@@ -13,7 +13,7 @@ import readButton from './modules/reader/readButton';
 import recommendationBlock from './modules/recommendation-block';
 
 export const queryClient = new QueryClient({
-  // defaultOptions: { queries: { gcTime: Infinity, staleTime: Infinity } },
+  defaultOptions: { queries: { refetchOnWindowFocus: false } },
 });
 
 export default defineContentScript({
@@ -81,7 +81,7 @@ export default defineContentScript({
 
     // (await getPreviousAnimeSlug()) == "" ? setPreviousAnimeSlug("") : "";
 
-    browser.runtime.onMessage.addListener(async function (request: any) {
+    browser.runtime.onMessage.addListener(async (request: any) => {
       if ((request as any).type === 'page-rendered') {
         getComputedStyle(document.documentElement).colorScheme === 'dark'
           ? darkMode.setValue(true)
@@ -347,7 +347,7 @@ export default defineContentScript({
             // actionRichPresence("remove");
 
             break;
-          case 'characters':
+          case 'characters': {
             async function first_aniBackground() {
               const source = (document.body.querySelector(
                 'a.mt-1.truncate',
@@ -375,6 +375,7 @@ export default defineContentScript({
             // actionRichPresence("remove");
 
             break;
+          }
           default:
             document.head
               .querySelectorAll('[name=previous-creating-edit][content]')

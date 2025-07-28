@@ -45,7 +45,7 @@ export default defineBackground(() => {
 
       const typedRequest = request as MessageRequest;
       switch (typedRequest.type) {
-        case 'login':
+        case 'login': {
           const auth_url = `https://hikka.io/oauth/?reference=${CLIENT_REFERENCE}&scope=${encodeURIComponent(
             NEEDED_SCOPES.join(','),
           )}`;
@@ -74,6 +74,7 @@ export default defineBackground(() => {
             });
 
           return true;
+        }
 
         case 'rich-presence-check':
           browser.tabs
@@ -88,11 +89,11 @@ export default defineBackground(() => {
 
           return true;
 
-        case 'watch-together':
+        case 'watch-together': {
           const userDataValue = await userData.getValue();
 
           switch (typedRequest.action) {
-            case 'create':
+            case 'create': {
               const { animeSlug, playerInfo } =
                 typedRequest as WatchTogetherRequestHost;
 
@@ -117,6 +118,7 @@ export default defineBackground(() => {
               });
 
               return true;
+            }
 
             case 'join':
               ws.send(
@@ -164,6 +166,7 @@ export default defineBackground(() => {
             default:
               return undefined;
           }
+        }
         default:
           return undefined;
       }

@@ -1,11 +1,8 @@
 import { Minus, Plus } from 'lucide-react';
-import { FC } from 'react';
 import { Button } from '@/components/ui/button';
 import { useReaderContext } from './context/reader-context';
 
-interface Props {}
-
-const ScaleIndicator: FC<Props> = ({}) => {
+const ScaleIndicator = () => {
   const { scrollMode, scale, setScale } = useReaderContext();
 
   const handleZoomIn = () => {

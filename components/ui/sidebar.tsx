@@ -1,6 +1,6 @@
 'use client';
 
-import { cva, VariantProps } from 'class-variance-authority';
+import { cva, type VariantProps } from 'class-variance-authority';
 import { Slot as SlotPrimitive } from 'radix-ui';
 import * as React from 'react';
 import { useIsMobile } from '@/components/hooks/use-mobile';

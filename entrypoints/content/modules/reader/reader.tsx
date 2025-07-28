@@ -1,4 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query';
+import { AnimatePresence, motion } from 'motion/react';
 import { createRoot } from 'react-dom/client';
 import { Card, CardContent } from '@/components/ui/card';
 import type { CarouselApi } from '@/components/ui/carousel';
@@ -6,11 +7,17 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
 import { queryClient } from '../..';
 import ChapterPages from './chapter-pages';
-import { ReaderProvider, useReaderContext } from './context/reader-context';
+import {
+  getRead,
+  ReaderProvider,
+  useReaderContext,
+} from './context/reader-context';
 import ReaderMobileToolbar from './mobile-toolbar/reader-mobile-toolbar';
 import PageIndicator from './page-indicator';
+import PageSwitcher from './page-switcher';
 import ReaderNavbar from './reader-navbar';
 import ScaleIndicator from './scale-indicator';
+import ReaderSettings from './sidebar/reader-settings';
 import ReaderSidebar from './sidebar/reader-sidebar';
 
 export default function reader() {
@@ -52,20 +59,25 @@ export default function reader() {
         x?.root.unmount();
         x?.wrapper.remove();
       });
+
       document.body.removeChild(document.getElementsByTagName('reader-ui')[0]);
       document.body.classList.toggle('h-full');
       document.body.classList.toggle('overflow-hidden');
+
+      useReaderContext.getState().reset();
     },
   });
 }
 
 export const Reader = () => {
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
+  // const [isOpenSettings, setIsOpenSettings] = useState(false);
   // const [selectedPageIndex, setSelectedPageIndex] = useState(0);
 
   const { data: mangaData } = useReadData();
-  const { currentChapter, setChapter, setChapterImages, imagesLoading } =
-    useReaderContext();
+  const { currentChapter, setChapter, imagesLoading } = useReaderContext();
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!carouselApi) return;
@@ -73,9 +85,12 @@ export const Reader = () => {
     if (!currentChapter) return;
 
     const handleScroll = () => {
-      const isLastImage = !carouselApi.canScrollNext();
+      const isTransitionPage = !carouselApi.canScrollNext();
+      const isLastImage =
+        carouselApi.selectedScrollSnap() ===
+        carouselApi.scrollSnapList().length - 2;
 
-      if (isLastImage && !imagesLoading) {
+      if (isTransitionPage && !imagesLoading) {
         const currentChapterIndex = mangaData.chapters.findIndex(
           (chapter) => chapter.id === currentChapter.id,
         );
@@ -83,11 +98,27 @@ export const Reader = () => {
 
         if (nextChapter) {
           setChapter(nextChapter);
-          setChapterImages([], true);
 
           carouselApi.scrollTo(0);
         }
       }
+
+      // if (isLastImage) {
+      //   const current = mangaData.chapters.findIndex(
+      //     (chap) => chap.id === currentChapter.id,
+      //   );
+      //   const lastRead = getRead() - 1;
+
+      //   if (current === -1) return;
+
+      //   if (lastRead - current) {
+      //     (
+      //       document.body.querySelector(
+      //         'div.rounded-lg.border:nth-child(2) button',
+      //       ) as HTMLButtonElement
+      //     )?.click();
+      //   }
+      // }
     };
 
     carouselApi.on('scroll', handleScroll);
@@ -103,10 +134,12 @@ export const Reader = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
         case 'ArrowUp':
+        case 'ArrowLeft':
           e.preventDefault();
           carouselApi.scrollPrev();
           break;
         case 'ArrowDown':
+        case 'ArrowRight':
           e.preventDefault();
           carouselApi.scrollNext();
           break;
@@ -133,7 +166,7 @@ export const Reader = () => {
   return (
     <Card
       className={cn(
-        'relative z-10 flex size-full overflow-hidden rounded-none sm:max-w-[1280px] sm:rounded-lg',
+        'relative z-10 flex size-full overflow-hidden rounded-none sm:max-w-[1282px] sm:rounded-lg',
       )}
     >
       <ReaderMobileToolbar carouselApi={carouselApi} />
@@ -143,13 +176,31 @@ export const Reader = () => {
       <CardContent className="relative flex min-h-0 min-w-0 flex-1 flex-col gap-2 p-0">
         <PageIndicator carouselApi={carouselApi} />
         <ScaleIndicator />
+        <PageSwitcher carouselApi={carouselApi} />
 
-        {imagesLoading && (
-          <div className="absolute z-10 size-full animate-pulse bg-accent" />
-        )}
-        <ChapterPages setCarouselApi={setCarouselApi} />
+        <AnimatePresence>
+          {imagesLoading && (
+            <motion.div
+              initial={{ opacity: 0, backdropFilter: 'blur(0px)' }}
+              animate={{ opacity: 1, backdropFilter: 'blur(64px)' }}
+              exit={{ opacity: 0, backdropFilter: 'blur(0px)' }}
+              className="absolute z-10 size-full"
+            >
+              <div className="size-full animate-pulse bg-accent/60" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <ChapterPages
+          setCarouselApi={setCarouselApi}
+          scrollContainerRef={scrollContainerRef}
+        />
       </CardContent>
-      <ReaderSidebar carouselApi={carouselApi} />
+      <ReaderSidebar
+        carouselApi={carouselApi}
+        scrollContainerRef={scrollContainerRef}
+        // isOpenSettings={isOpenSettings}
+        // setIsOpenSettings={setIsOpenSettings}
+      />
     </Card>
   );
 };

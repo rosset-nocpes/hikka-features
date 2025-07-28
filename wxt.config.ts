@@ -4,7 +4,7 @@ import { loadEnv } from 'vite';
 import { defineConfig } from 'wxt';
 
 const env = loadEnv('', process.cwd(), '');
-const isPersistent = JSON.parse(env.WXT_PERSIST_BROWSER_DATA);
+const isPersistent = JSON.parse(env.WXT_PERSIST_BROWSER_DATA) || false;
 const isWindows = process.platform === 'win32';
 
 export default defineConfig({

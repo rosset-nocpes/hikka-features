@@ -1,9 +1,11 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
+import type { FC } from 'react';
 import { createRoot } from 'react-dom/client';
 import BlockButton from '@/components/hikka/block-button';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
-import HikkaFLogoSmall from '@/public/hikka-features-small.svg';
+import HFLogoSmall from '@/public/hikka-features-small.svg';
+import HFLogoSmallDark from '@/public/hikka-features-small-dark.svg';
 import MaterialSymbolsSadTabRounded from '~icons/material-symbols/sad-tab-rounded';
 import { queryClient } from '..';
 
@@ -31,7 +33,7 @@ const recommendationBlock = async (location?: Element) => {
       const root = createRoot(wrapper);
       root.render(
         <QueryClientProvider client={queryClient}>
-          <RecommendationBlock />
+          <RecommendationBlock container={container} />
         </QueryClientProvider>,
       );
 
@@ -40,7 +42,11 @@ const recommendationBlock = async (location?: Element) => {
   });
 };
 
-const RecommendationBlock = () => {
+interface Props {
+  container: HTMLElement;
+}
+
+const RecommendationBlock: FC<Props> = ({ container }) => {
   const [blockState, setBlockState] = useState<boolean>();
 
   const { data: anime_data } = useHikkaAnime();
@@ -71,7 +77,11 @@ const RecommendationBlock = () => {
             <h3 className="flex scroll-m-20 items-center justify-between gap-2 font-bold font-unitysans text-xl tracking-normal">
               Схожий контент
               <img
-                src={HikkaFLogoSmall}
+                src={
+                  container.classList.contains('dark')
+                    ? HFLogoSmall
+                    : HFLogoSmallDark
+                }
                 style={{ width: '21px', height: '20px' }}
               />
             </h3>

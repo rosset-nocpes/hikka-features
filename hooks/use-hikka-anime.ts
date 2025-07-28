@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { queryClient } from '@/entrypoints/content';
 import { usePageStore } from './use-page-store';
 
-const hikkaAnimeFetcher = async (slug: string) => {
+export const hikkaAnimeFetcher = async (slug: string) => {
   const r = await fetch(`https://api.hikka.io/anime/${slug}`);
 
   if (!r.ok) {

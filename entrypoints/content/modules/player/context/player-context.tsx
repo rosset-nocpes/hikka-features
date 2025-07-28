@@ -11,14 +11,20 @@ interface PlayerState {
   episodeData?: API.EpisodeData[];
   currentEpisode?: API.EpisodeData;
   sidebarMode: 'offcanvas' | 'icon';
+  /* Temporary */
+  sharedParams?: SharedPlayerParams;
+  isShared?: boolean;
 }
 
 interface PlayerActions {
-  initialize: (data: API.WatchData, container: HTMLElement) => void;
+  initialize: (data: API.WatchData) => void;
   setProvider: (provider: PlayerSource) => void;
   setTeam: (team: string) => void; // todo
   setEpisode: (episode: API.EpisodeData) => void;
   setSidebarMode: (mode: PlayerState['sidebarMode']) => void;
+  setSharedStatus: (status: boolean) => void;
+  setContainer: (container: HTMLElement) => void;
+  reset: () => void;
 }
 
 export const usePlayer = create<PlayerState & PlayerActions>((set, get) => ({
@@ -30,16 +36,40 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => ({
   currentEpisode: undefined,
   sidebarMode: 'offcanvas',
 
-  initialize: (data, container) => {
-    const availablePlayers = getAvailablePlayers(data);
-    const [sharedParams, isShared] = getSharedPlayerParams();
+  initialize: async (data) => {
+    const providers_avaliable = getAvailablePlayers(data);
+    const defaultPlayerValue = await defaultPlayer.getValue();
+
+    const params = new URLSearchParams(window.location.search);
+    const sharedParams: SharedPlayerParams = {
+      provider: params.get('playerProvider'),
+      team: params.get('playerTeam'),
+      episode: params.get('playerEpisode'),
+      time: params.get('time'),
+    };
+
+    const isShared = !!(
+      sharedParams.provider &&
+      sharedParams.team &&
+      sharedParams.episode
+    );
+
+    // cleanup url
+    const url = new URL(window.location.href);
+    ['playerProvider', 'playerTeam', 'playerEpisode', 'time'].forEach((param) =>
+      url.searchParams.delete(param),
+    );
+
+    history.replaceState(history.state, '', url.href);
 
     // Determine provider
     const provider =
       isShared &&
-      availablePlayers.includes(sharedParams.provider as PlayerSource)
+      providers_avaliable.includes(sharedParams.provider as PlayerSource)
         ? (sharedParams.provider as PlayerSource)
-        : availablePlayers[0];
+        : providers_avaliable.includes(defaultPlayerValue)
+          ? defaultPlayerValue
+          : providers_avaliable[0];
 
     // Determine team
     const team =
@@ -57,12 +87,13 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => ({
 
     set({
       watchData: data,
-      container,
       provider,
       team,
       episodeData,
       currentEpisode: targetEpisode ?? episodes[0],
       sidebarMode: 'offcanvas',
+      sharedParams,
+      isShared,
     });
   },
   setProvider: (provider) => {
@@ -99,6 +130,23 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => ({
   },
   setEpisode: (episode) => set({ currentEpisode: episode }),
   setSidebarMode: (mode) => set({ sidebarMode: mode }),
+  setSharedStatus: (status) => set({ isShared: status }),
+  setContainer: (container) => set({ container }),
+  reset: () => {
+    set({
+      container: undefined,
+      /* Player-related  */
+      watchData: undefined,
+      provider: undefined,
+      team: undefined,
+      episodeData: undefined,
+      currentEpisode: undefined,
+      sidebarMode: 'offcanvas',
+      /* Temporary */
+      sharedParams: undefined,
+      isShared: undefined,
+    });
+  },
 }));
 
 interface SharedPlayerParams {
@@ -107,23 +155,6 @@ interface SharedPlayerParams {
   episode: string | null;
   time: string | null;
 }
-
-const getSharedPlayerParams = (): [SharedPlayerParams, boolean] => {
-  const params = new URLSearchParams(window.location.search);
-  const sharedParams: SharedPlayerParams = {
-    provider: params.get('playerProvider'),
-    team: params.get('playerTeam'),
-    episode: params.get('playerEpisode'),
-    time: params.get('time'),
-  };
-
-  const isShared = !!(
-    sharedParams.provider &&
-    sharedParams.team &&
-    sharedParams.episode
-  );
-  return [sharedParams, isShared];
-};
 
 export const getAvailablePlayers = (data: API.WatchData): PlayerSource[] =>
   Object.keys(data).filter((key) => key !== 'type') as PlayerSource[];
@@ -140,18 +171,15 @@ interface PlayerProviderProps extends PropsWithChildren {
   container: HTMLElement;
 }
 
-export const PlayerProvider: FC<PlayerProviderProps> = ({
-  children,
-  container,
-}) => {
+export const PlayerProvider: FC<PlayerProviderProps> = ({ children }) => {
   const { initialize } = usePlayer();
   const { data } = useWatchData();
 
   useEffect(() => {
     if (!data) return;
 
-    initialize(data, container);
-  }, [data, container]);
+    initialize(data);
+  }, [data]);
 
   return <>{children}</>;
 };

@@ -1,8 +1,9 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { FC, useEffect, useState } from 'react';
+import { type FC, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import HikkaFLogoSmall from '@/public/hikka-features-small.svg';
+import HFLogoSmall from '@/public/hikka-features-small.svg';
+import HFLogoSmallDark from '@/public/hikka-features-small-dark.svg';
 import { queryClient } from '..';
 
 interface Website {
@@ -31,7 +32,7 @@ const aniButtons = async (
     name: 'ani-buttons',
     position: 'inline',
     append,
-    anchor: location || document.querySelector('.order-1 > div:nth-child(2)')!,
+    anchor: location || document.querySelector('.order-1 > div:nth-child(2)'),
     css: ':host(ani-buttons) { margin-bottom: -3rem; }',
     inheritStyles: true,
     async onMount(container) {
@@ -43,7 +44,11 @@ const aniButtons = async (
       const root = createRoot(wrapper);
       root.render(
         <QueryClientProvider client={queryClient}>
-          <AniButtons data={data} smallerTitle={smallerTitle} />
+          <AniButtons
+            container={container}
+            data={data}
+            smallerTitle={smallerTitle}
+          />
         </QueryClientProvider>,
       );
 
@@ -53,11 +58,12 @@ const aniButtons = async (
 };
 
 interface Props {
+  container: HTMLElement;
   data?: any;
   smallerTitle?: boolean;
 }
 
-const AniButtons: FC<Props> = ({ data, smallerTitle }) => {
+const AniButtons: FC<Props> = ({ container, data, smallerTitle }) => {
   const [blockState, setBlockState] = useState<boolean>();
 
   const { contentType: path } = usePageStore();
@@ -175,7 +181,7 @@ const AniButtons: FC<Props> = ({ data, smallerTitle }) => {
     searchUrls.amanogawa,
   ];
 
-  let manga_links: Website[] = [
+  const manga_links: Website[] = [
     searchUrls.mal,
     searchUrls.anilist,
     searchUrls.wiki,
@@ -223,7 +229,11 @@ const AniButtons: FC<Props> = ({ data, smallerTitle }) => {
           >
             Інші джерела
             <img
-              src={HikkaFLogoSmall}
+              src={
+                container.classList.contains('dark')
+                  ? HFLogoSmall
+                  : HFLogoSmallDark
+              }
               style={{ width: '21px', height: '20px' }}
             />
           </h3>

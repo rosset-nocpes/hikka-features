@@ -1,5 +1,5 @@
-import { FC } from 'react';
-import { CarouselApi } from '@/components/ui/carousel';
+import type { FC } from 'react';
+import type { CarouselApi } from '@/components/ui/carousel';
 import { useReaderContext } from './context/reader-context';
 
 interface Props {
@@ -7,7 +7,7 @@ interface Props {
 }
 
 const PageIndicator: FC<Props> = ({ carouselApi }) => {
-  const { chapterImages } = useReaderContext();
+  const { scrollMode, chapterImages } = useReaderContext();
   const [currentPage, setCurrentPage] = useState(0);
 
   useEffect(() => {
@@ -29,7 +29,12 @@ const PageIndicator: FC<Props> = ({ carouselApi }) => {
   }, [carouselApi, chapterImages.length]);
 
   return (
-    <div className="absolute bottom-2 left-2 z-20 flex h-8 cursor-default items-center gap-2 rounded-md bg-sidebar px-2 font-medium">
+    <div
+      className={cn(
+        'absolute bottom-2 left-2 z-20 flex h-8 cursor-default items-center gap-2 rounded-md bg-sidebar px-2 font-medium duration-300',
+        scrollMode && '-bottom-8',
+      )}
+    >
       <div>{currentPage + 1}</div>
       <div className="h-full w-[2px] bg-muted" />
       <div>{chapterImages.length}</div>

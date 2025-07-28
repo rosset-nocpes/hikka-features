@@ -1,4 +1,4 @@
-import { FC, PropsWithChildren } from 'react';
+import type { FC, PropsWithChildren } from 'react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 
@@ -6,10 +6,15 @@ interface Props extends PropsWithChildren {
   label: string;
   description?: string;
   checked: boolean;
-  onClick?: () => void;
+  onCheckedChange?: (checked: boolean) => void;
 }
 
-const SwitchOption: FC<Props> = ({ label, description, checked, onClick }) => {
+const SwitchOption: FC<Props> = ({
+  label,
+  description,
+  checked,
+  onCheckedChange,
+}) => {
   return (
     <div className="flex items-center justify-between">
       <div className="mr-10 flex flex-col gap-1">
@@ -20,7 +25,7 @@ const SwitchOption: FC<Props> = ({ label, description, checked, onClick }) => {
       </div>
       <Switch
         checked={checked}
-        onClick={onClick}
+        onCheckedChange={onCheckedChange}
         className="flex items-center justify-between"
       />
     </div>

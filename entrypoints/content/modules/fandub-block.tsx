@@ -1,6 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { FC, Fragment } from 'react';
+import { type FC, Fragment } from 'react';
 import { createRoot } from 'react-dom/client';
 import BlockEntry from '@/components/block-entry';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -27,7 +27,7 @@ const fandubBlock = async (smallerTitle?: boolean, location?: Element) => {
       location ||
       document.querySelector(
         'main > div > div.flex.flex-col.gap-4 > div.flex.w-full.flex-col.gap-4 > div',
-      )!,
+      ),
     inheritStyles: true,
     async onMount(container) {
       const wrapper = document.createElement('div');
@@ -86,6 +86,7 @@ const FandubBlock: FC<Props> = ({ smallerTitle }) => {
             <a
               href="https://drbryanman.github.io/CPRcatalog/#/"
               target="_blank"
+              rel="noopener"
             >
               <img src={HFxCPRBadge} style={{ height: '20px' }} />
             </a>
@@ -108,7 +109,7 @@ const FandubBlock: FC<Props> = ({ smallerTitle }) => {
                 Немає даних
               </BlockEntry>
             )}
-            {data && data.fandub && (
+            {data?.fandub && (
               <Fragment>
                 {data.fandub.length > 3 && (
                   <Collapsible

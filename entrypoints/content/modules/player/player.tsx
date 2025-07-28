@@ -7,7 +7,6 @@ import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
 import { queryClient } from '../..';
 import {
-  getAvailablePlayers,
   getWatched,
   PlayerProvider,
   usePlayer,
@@ -23,6 +22,8 @@ export default function player() {
     zIndex: 100,
     inheritStyles: true,
     async onMount(container) {
+      usePlayer.getState().setContainer(container);
+
       const wrapper = document.createElement('div');
       container.append(wrapper);
 
@@ -55,34 +56,31 @@ export default function player() {
         x?.root.unmount();
         x?.wrapper.remove();
       });
+
       document.body.removeChild(document.getElementsByTagName('player-ui')[0]);
       document.body.classList.toggle('h-full');
       document.body.classList.toggle('overflow-hidden');
+
+      usePlayer.getState().reset();
     },
   });
 }
 
 export const Player = () => {
-  const { container, provider, setProvider, team, currentEpisode, setEpisode } =
-    usePlayer();
+  const {
+    container,
+    sharedParams,
+    isShared,
+    setSharedStatus,
+    provider,
+    team,
+    currentEpisode,
+    setEpisode,
+  } = usePlayer();
   const { data } = useWatchData();
 
-  const { open } = useSidebar();
-
-  const [urlParams] = useState(() => {
-    const path_params = new URLSearchParams(window.location.search);
-    return {
-      sharedPlayerProvider: path_params.get('playerProvider'),
-      sharedPlayerTeam: path_params.get('playerTeam'),
-      sharedPlayerEpisode: path_params.get('playerEpisode'),
-      sharedPlayerTime: path_params.get('time'),
-      sharedCheck: !!(
-        path_params.get('playerProvider') &&
-        path_params.get('playerTeam') &&
-        path_params.get('playerEpisode')
-      ),
-    };
-  });
+  const { open, setOpen } = useSidebar();
+  if (isShared) setOpen(false);
 
   const [isPlayerReady, togglePlayerReady] = useState(false);
   const [getNextEpState, setNextEpState] = useState(false);
@@ -99,11 +97,6 @@ export const Player = () => {
     setEpisode(value);
     toggleWatchedState(false);
     togglePlayerReady(false);
-  };
-
-  const handleSelectProvider = (value: PlayerSource) => {
-    setProvider(value);
-    toggleWatchedState(false);
   };
 
   const handleFullscreenChange = () => {
@@ -124,7 +117,6 @@ export const Player = () => {
     document.removeEventListener('fullscreenchange', handleFullscreenChange);
   };
 
-  const [seekToSharedTime, toggleSeekToSharedTime] = useState(false);
   const [time, setTime] = useState(0);
   const isHandlingNext = useRef(false);
 
@@ -150,10 +142,10 @@ export const Player = () => {
             }, 1000);
           }
 
-          if (seekToSharedTime) {
-            toggleSeekToSharedTime(false);
+          if (isShared) {
+            setSharedStatus(false);
             playerIframe.contentWindow?.postMessage(
-              { api: 'play', set: `[seek:${urlParams.sharedPlayerTime}]` },
+              { api: 'play', set: `[seek:${sharedParams?.time}]` },
               '*',
             );
           }
@@ -209,44 +201,14 @@ export const Player = () => {
     container,
     getNextEpState,
     isPlayerReady,
+    sharedParams,
+    isShared,
     provider,
     team,
     currentEpisode,
     data,
     getWatchedState,
-    seekToSharedTime,
-    urlParams.sharedPlayerTime,
   ]);
-
-  // Handle async initialization
-  useEffect(() => {
-    if (!data) return;
-
-    const providers_avaliable = getAvailablePlayers(data);
-
-    const initializeAsync = async () => {
-      const defaultPlayerValue = await defaultPlayer.getValue();
-
-      if (!urlParams.sharedCheck) {
-        handleSelectProvider(
-          providers_avaliable.includes(defaultPlayerValue)
-            ? defaultPlayerValue
-            : providers_avaliable[0],
-        );
-      }
-    };
-
-    initializeAsync();
-
-    toggleSeekToSharedTime(!!urlParams.sharedPlayerTime);
-
-    const url = new URL(window.location.href);
-    ['playerProvider', 'playerTeam', 'playerEpisode', 'time'].forEach((param) =>
-      url.searchParams.delete(param),
-    );
-
-    history.replaceState(history.state, '', url.href);
-  }, []);
 
   useEffect(() => {
     const player = VidStackPlayerRef.current;
@@ -284,28 +246,27 @@ export const Player = () => {
   return (
     <Card
       className={cn(
-        'relative z-10 flex size-full overflow-hidden rounded-none duration-300 sm:max-h-[720px] sm:max-w-[1280px] sm:rounded-lg',
+        'relative z-10 flex size-full overflow-hidden rounded-none duration-300 sm:max-h-[722px] sm:max-w-[1282px] sm:rounded-lg',
         getTheatreState && 'sm:max-h-full sm:max-w-full',
       )}
     >
       <PlayerNavbar showControls={showControls} />
-      <div className="flex flex-1 flex-col">
-        <CardContent
+      <CardContent
+        className={cn(
+          'flex min-h-0 min-w-0 flex-1 flex-col gap-2 p-0 pb-2 duration-300',
+          !open && 'gap-0 pb-0',
+        )}
+      >
+        <div
           className={cn(
-            'flex min-h-0 min-w-0 flex-1 flex-col gap-2 p-0 pb-2 duration-300',
-            !open && 'gap-0 pb-0',
+            'relative h-[81.1%] w-full duration-300',
+            isFullscreen ? 'fixed inset-0 z-20 size-full' : 'flex border-b',
+            (!open || getTheatreState) && 'h-full',
+            !open && 'border-0',
           )}
         >
-          <div
-            className={cn(
-              'relative h-[81.1%] w-full duration-300',
-              isFullscreen ? 'fixed inset-0 z-20 size-full' : 'flex border-b',
-              (!open || getTheatreState) && 'h-full',
-              !open && 'border-0',
-            )}
-          >
-            {/* Will be used in future */}
-            {/* {['ashdi', 'moon'].includes(playerContext.state.provider) ? (
+          {/* Will be used in future */}
+          {/* {['ashdi', 'moon'].includes(playerContext.state.provider) ? (
               <iframe
                 id="player-iframe"
                 src={`${playerContext.state.currentEpisode.video_url}?site=hikka.io?v2=1`} // todo: move params to backend
@@ -322,28 +283,27 @@ export const Player = () => {
                 ref={VidStackPlayerRef}
               />
             )} */}
-            <iframe
-              title="player-iframe"
-              id="player-iframe"
-              src={`${currentEpisode?.video_url}?site=hikka.io?v2=1`} // todo: move params to backend
-              loading="lazy"
-              className="z-[2] size-full"
-              allow="fullscreen; accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
-              allowFullScreen
-            ></iframe>
-          </div>
-          <PlayerToolbar
-            time={time}
-            isTimecodeLink={isTimecodeLink}
-            timecodeLink={timecodeLink}
-            setTimecodeLink={setTimecodeLink}
-            toggleTimestampLink={toggleTimestampLink}
-            toggleTheatreState={toggleTheatreState}
-            getTheatreState={getTheatreState}
-            handleEnterFullscreen={handleEnterFullscreen}
-          />
-        </CardContent>
-      </div>
+          <iframe
+            title="player-iframe"
+            id="player-iframe"
+            src={`${currentEpisode?.video_url}?site=hikka.io?v2=1`} // todo: move params to backend
+            loading="lazy"
+            className="z-[2] size-full"
+            allow="fullscreen; accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+            allowFullScreen
+          ></iframe>
+        </div>
+        <PlayerToolbar
+          time={time}
+          isTimecodeLink={isTimecodeLink}
+          timecodeLink={timecodeLink}
+          setTimecodeLink={setTimecodeLink}
+          toggleTimestampLink={toggleTimestampLink}
+          toggleTheatreState={toggleTheatreState}
+          getTheatreState={getTheatreState}
+          handleEnterFullscreen={handleEnterFullscreen}
+        />
+      </CardContent>
       <PlayerSidebar toggleWatchedState={toggleWatchedState} />
     </Card>
   );

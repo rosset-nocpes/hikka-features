@@ -1,6 +1,6 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { FC } from 'react';
-import { CarouselApi } from '@/components/ui/carousel';
+import type { FC } from 'react';
+import type { CarouselApi } from '@/components/ui/carousel';
 import {
   SidebarContent,
   SidebarGroup,
@@ -13,27 +13,35 @@ import { getRead, useReaderContext } from '../context/reader-context';
 
 interface Props {
   carouselApi: CarouselApi;
+  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
 }
 
-const ChapterList: FC<Props> = ({ carouselApi }) => {
+const ChapterList: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
   const [isScrolled, setIsScrolled] = useState({ top: false, bottom: false });
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const { open } = useSidebar();
   const { data: mangaData } = useReadData();
-  const { container, currentChapter, setChapter } = useReaderContext();
+  const { scrollMode, currentChapter, setChapter } = useReaderContext();
 
   const handleSelectChapter = (value: API.ChapterData) => {
     setChapter(value);
 
-    carouselApi?.scrollTo(0, true);
+    if (scrollMode) {
+      scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'instant' });
+    } else {
+      carouselApi?.scrollTo(0, true);
+    }
   };
 
   const currentChapterRef = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
-    currentChapterRef.current?.scrollIntoView({ behavior: 'instant' });
-  }, []);
+  const rowVirtualizer = useVirtualizer({
+    count: mangaData?.chapters.length || 0,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 36,
+    overscan: 5,
+  });
 
   useEffect(() => {
     const element = scrollRef.current;
@@ -54,12 +62,20 @@ const ChapterList: FC<Props> = ({ carouselApi }) => {
     };
   }, []);
 
-  const rowVirtualizer = useVirtualizer({
-    count: mangaData?.chapters.length || 0,
-    getScrollElement: () => scrollRef.current,
-    estimateSize: () => 36,
-    overscan: 5,
-  });
+  useEffect(() => {
+    if (!currentChapter || !mangaData) return;
+
+    const currentIndex = mangaData.chapters.findIndex(
+      (chapter) => chapter.id === currentChapter.id,
+    );
+
+    if (currentIndex !== -1) {
+      rowVirtualizer.scrollToIndex(currentIndex, {
+        align: 'center',
+        behavior: 'auto',
+      });
+    }
+  }, [!!currentChapter]);
 
   return (
     <SidebarContent
@@ -89,8 +105,8 @@ const ChapterList: FC<Props> = ({ carouselApi }) => {
                     handleSelectChapter(mangaData!.chapters[virtualItem.index])
                   }
                   isActive={
-                    mangaData!.chapters[virtualItem.index].id ==
-                    currentChapter!.id
+                    mangaData?.chapters[virtualItem.index].id ==
+                    currentChapter?.id
                   }
                   style={{
                     position: 'absolute',
@@ -99,18 +115,25 @@ const ChapterList: FC<Props> = ({ carouselApi }) => {
                     width: '100%',
                     transform: `translateY(${virtualItem.start}px)`,
                   }}
+                  ref={
+                    mangaData?.chapters[virtualItem.index].id ===
+                    currentChapter?.id
+                      ? currentChapterRef
+                      : null
+                  }
                 >
                   <div
                     className={cn(
                       'size-4 shrink-0 text-center duration-300',
-                      open ? '-ml-6 text-transparent' : 'ml-0',
+                      open ? '-ml-6' : 'ml-0',
                     )}
                   >
                     <span
                       className={cn(
                         'block leading-4 duration-300',
-                        mangaData!.chapters[virtualItem.index].chapter <=
-                          getRead() && 'text-muted-foreground',
+                        open && '!text-transparent',
+                        virtualItem.index + 1 <= getRead() &&
+                          'text-muted-foreground',
                       )}
                     >
                       {mangaData?.chapters[virtualItem.index].chapter}
@@ -120,8 +143,8 @@ const ChapterList: FC<Props> = ({ carouselApi }) => {
                     <span
                       className={cn(
                         'duration-300',
-                        mangaData!.chapters[virtualItem.index].chapter <=
-                          getRead() && 'text-muted-foreground',
+                        virtualItem.index + 1 <= getRead() &&
+                          'text-muted-foreground',
                       )}
                     >
                       Том {mangaData?.chapters[virtualItem.index].volume} Розділ{' '}
