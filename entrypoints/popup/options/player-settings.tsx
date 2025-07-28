@@ -42,7 +42,7 @@ const PlayerSettings = () => {
             Налаштування програвача
           </div>
         </div>
-        <DrawerTrigger>
+        <DrawerTrigger asChild>
           <Button size="icon-sm">
             <MaterialSymbolsExpandAllRounded />
           </Button>
@@ -67,24 +67,41 @@ const PlayerSettings = () => {
               <label className="font-medium text-sm">
                 Програвач за замовчуванням
               </label>
-              <Select
-                value={defaultPlayerProvider!}
-                onValueChange={(value) => {
-                  defaultPlayer.setValue(value as PlayerSource);
-                  setDefaultPlayerProvider(value as PlayerSource);
-                }}
-              >
-                <SelectTrigger className="w-24">
-                  <SelectValue placeholder="Оберіть програвач за замовчуванням" />
-                </SelectTrigger>
-                <SelectContent>
+              {navigator.userAgent.toLowerCase().includes('firefox') ? (
+                <select
+                  className="flex h-10 w-24 cursor-pointer items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1"
+                  value={defaultPlayerProvider!}
+                  onChange={(e) => {
+                    defaultPlayer.setValue(e.target.value as PlayerSource);
+                    setDefaultPlayerProvider(e.target.value as PlayerSource);
+                  }}
+                >
                   {['moon', 'ashdi'].map((elem) => (
-                    <SelectItem key={elem} value={elem}>
+                    <option key={elem} value={elem}>
                       {elem.toUpperCase()}
-                    </SelectItem>
+                    </option>
                   ))}
-                </SelectContent>
-              </Select>
+                </select>
+              ) : (
+                <Select
+                  value={defaultPlayerProvider!}
+                  onValueChange={(value) => {
+                    defaultPlayer.setValue(value as PlayerSource);
+                    setDefaultPlayerProvider(value as PlayerSource);
+                  }}
+                >
+                  <SelectTrigger className="w-24">
+                    <SelectValue placeholder="Оберіть програвач за замовчуванням" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {['moon', 'ashdi'].map((elem) => (
+                      <SelectItem key={elem} value={elem}>
+                        {elem.toUpperCase()}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           </div>
           <DrawerFooter>

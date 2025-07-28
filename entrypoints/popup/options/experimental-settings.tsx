@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react';
-import { FC } from 'react';
+import type { FC } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Drawer,
@@ -85,25 +85,43 @@ const ExperimentalSettings: FC<Props> = ({
                 />
                 <div className="flex items-center justify-between">
                   <label className="font-medium text-sm">Гілка бекенду</label>
-                  <Select
-                    value={getBackendBranch!}
-                    onValueChange={(value) => {
-                      const target = value as BackendBranches;
-                      backendBranch.setValue(target);
-                      setBackendBranch(target);
-                    }}
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder="Оберіть гілку бекенду" />
-                    </SelectTrigger>
-                    <SelectContent>
+                  {navigator.userAgent.toLowerCase().includes('firefox') ? (
+                    <select
+                      className="flex h-10 w-24 cursor-pointer items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1"
+                      value={getBackendBranch!}
+                      onChange={(e) => {
+                        const value = e.target.value as BackendBranches;
+                        backendBranch.setValue(value);
+                        setBackendBranch(value);
+                      }}
+                    >
                       {Object.keys(BACKEND_BRANCHES).map((elem) => (
-                        <SelectItem key={elem} value={elem}>
+                        <option key={elem} value={elem}>
                           {elem}
-                        </SelectItem>
+                        </option>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </select>
+                  ) : (
+                    <Select
+                      value={getBackendBranch!}
+                      onValueChange={(value) => {
+                        const target = value as BackendBranches;
+                        backendBranch.setValue(target);
+                        setBackendBranch(target);
+                      }}
+                    >
+                      <SelectTrigger className="w-32">
+                        <SelectValue placeholder="Оберіть гілку бекенду" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.keys(BACKEND_BRANCHES).map((elem) => (
+                          <SelectItem key={elem} value={elem}>
+                            {elem}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
               </div>
               <DrawerFooter>
