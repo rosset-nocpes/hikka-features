@@ -142,12 +142,11 @@ export async function get_miu_chapter_pages(url: string): Promise<string[]> {
 
   const $imageList = cheerio.load(imageListHtmlResponse.data);
   const images: string[] = [];
+  const backend_url = BACKEND_BRANCHES[await backendBranch.getValue()];
   $imageList('img').each((_, imgElement) => {
     const imageUrl = $imageList(imgElement).attr('data-src');
     if (imageUrl) {
-      images.push(
-        `${import.meta.env.WXT_BACKEND_BASE_URL}/proxy?r=${imageUrl}`,
-      );
+      images.push(`${backend_url}/proxy?r=${imageUrl}`);
     }
   });
 
