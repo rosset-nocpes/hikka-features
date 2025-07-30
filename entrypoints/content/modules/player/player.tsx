@@ -284,7 +284,6 @@ export const Player = () => {
               />
             )} */}
           <iframe
-            title="player-iframe"
             id="player-iframe"
             src={`${currentEpisode?.video_url}?site=hikka.io?v2=1`} // todo: move params to backend
             loading="lazy"

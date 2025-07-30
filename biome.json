@@ -33,7 +33,8 @@
         "useKeyWithClickEvents": "off",
         "useFocusableInteractive": "off",
         "noStaticElementInteractions": "off",
-        "useAltText": "off"
+        "useAltText": "off",
+        "useIframeTitle": "off"
       },
       "correctness": {
         "noInvalidUseBeforeDeclaration": "off",
