@@ -51,6 +51,7 @@ jobs:
         with:
           draft: false
           prerelease: false
+          generate_release_notes: true
           files: |
             .output/*-chrome.zip
             .output/*-firefox.zip
