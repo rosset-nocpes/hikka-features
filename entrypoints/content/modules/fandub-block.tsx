@@ -129,23 +129,12 @@ const FandubBlock: FC<Props> = ({ container, smallerTitle }) => {
                     {data.fandub.slice(0, 3).map((team) => (
                       <BlockEntry key={team.title} href={team.link}>
                         <Avatar className="size-8 rounded-sm">
-                          <AvatarImage
-                            loading="lazy"
-                            src={
-                              STUDIO_LOGOS[
-                                STUDIO_CORRECTED_NAMES[team.title]
-                                  ? STUDIO_CORRECTED_NAMES[team.title]
-                                      .replaceAll(' ', '')
-                                      .toLowerCase()
-                                  : team.title.replaceAll(' ', '').toLowerCase()
-                              ]
-                            }
-                          />
+                          <AvatarImage loading="lazy" src={team.logo} />
                           <AvatarFallback>
                             {team.title[0].toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        {STUDIO_CORRECTED_NAMES[team.title] || team.title}
+                        {team.title}
                       </BlockEntry>
                     ))}
                     <CollapsibleContent
@@ -156,25 +145,12 @@ const FandubBlock: FC<Props> = ({ container, smallerTitle }) => {
                         {data.fandub.slice(3).map((team) => (
                           <BlockEntry key={team.title} href={team.link}>
                             <Avatar className="size-8 rounded-sm">
-                              <AvatarImage
-                                loading="lazy"
-                                src={
-                                  STUDIO_LOGOS[
-                                    STUDIO_CORRECTED_NAMES[team.title]
-                                      ? STUDIO_CORRECTED_NAMES[team.title]
-                                          .replaceAll(' ', '')
-                                          .toLowerCase()
-                                      : team.title
-                                          .replaceAll(' ', '')
-                                          .toLowerCase()
-                                  ]
-                                }
-                              />
+                              <AvatarImage loading="lazy" src={team.logo} />
                               <AvatarFallback>
                                 {team.title[0].toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
-                            {STUDIO_CORRECTED_NAMES[team.title] || team.title}
+                            {team.title}
                           </BlockEntry>
                         ))}
                       </div>
@@ -196,23 +172,12 @@ const FandubBlock: FC<Props> = ({ container, smallerTitle }) => {
                   data.fandub.map((team) => (
                     <BlockEntry key={team.title} href={team.link}>
                       <Avatar className="size-8 rounded-sm">
-                        <AvatarImage
-                          loading="lazy"
-                          src={
-                            STUDIO_LOGOS[
-                              STUDIO_CORRECTED_NAMES[team.title]
-                                ? STUDIO_CORRECTED_NAMES[team.title]
-                                    .replaceAll(' ', '')
-                                    .toLowerCase()
-                                : team.title.replaceAll(' ', '').toLowerCase()
-                            ]
-                          }
-                        />
+                        <AvatarImage loading="lazy" src={team.logo} />
                         <AvatarFallback>
                           {team.title[0].toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
-                      {STUDIO_CORRECTED_NAMES[team.title] || team.title}
+                      {team.title}
                     </BlockEntry>
                   ))}
               </Fragment>

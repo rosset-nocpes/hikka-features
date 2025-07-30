@@ -1,7 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
 import '../app.css';
-import { prefetchHikkaAnime } from '@/hooks/use-hikka-anime';
-import { usePageStore } from '@/hooks/use-page-store';
 import aniBackground from './modules/ani-background';
 // import UCharURL from "@/utils/u-char-url";
 import aniButtons from './modules/ani-buttons';

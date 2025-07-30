@@ -1,5 +1,6 @@
 import type { FC, PropsWithChildren } from 'react';
 import { create } from 'zustand';
+import { ProviderTeamIFrame } from '@/utils/provider_classes';
 
 interface PlayerState {
   /* Base */
@@ -7,7 +8,7 @@ interface PlayerState {
   /* Player-related  */
   watchData?: API.WatchData; // todo: remove it from there
   provider?: PlayerSource;
-  team?: string;
+  team?: API.TeamData;
   episodeData?: API.EpisodeData[];
   currentEpisode?: API.EpisodeData;
   sidebarMode: 'offcanvas' | 'icon';
@@ -19,7 +20,7 @@ interface PlayerState {
 interface PlayerActions {
   initialize: (data: API.WatchData) => void;
   setProvider: (provider: PlayerSource) => void;
-  setTeam: (team: string) => void; // todo
+  setTeam: (team: API.TeamData) => void; // todo
   setEpisode: (episode: API.EpisodeData) => void;
   setSidebarMode: (mode: PlayerState['sidebarMode']) => void;
   setSharedStatus: (status: boolean) => void;
@@ -72,25 +73,36 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => ({
           : providers_avaliable[0];
 
     // Determine team
-    const team =
-      isShared && data[provider]?.[sharedParams.team!]
-        ? sharedParams.team!
-        : Object.keys(data[provider])[0];
+    let team: API.TeamData = {
+      title: '',
+      logo: '',
+    };
+    if (data[provider] instanceof ProviderTeamIFrame) {
+      const first_team = data[provider].getTeams()[0];
 
-    const episodeData = data[provider][team];
+      team =
+        isShared && data[provider].teams[sharedParams.team!]
+          ? data[provider].getTeam(sharedParams.team!)
+          : first_team;
+    }
 
-    // Find episode
-    const episodes = data[provider][team];
+    const episodeData =
+      data[provider] instanceof ProviderTeamIFrame
+        ? data[provider].teams[team.title].episodes
+        : data[provider].episodes;
+
     const targetEpisode = isShared
-      ? episodes?.find((ep) => ep.episode === Number(sharedParams.episode))
-      : episodes?.find((ep) => ep.episode === getWatched() + 1);
+      ? episodeData?.find((ep) => ep.episode === Number(sharedParams.episode))
+      : episodeData?.find((ep) => ep.episode === getWatched() + 1);
+
+    console.log(data);
 
     set({
       watchData: data,
       provider,
       team,
       episodeData,
-      currentEpisode: targetEpisode ?? episodes[0],
+      currentEpisode: targetEpisode ?? episodeData[0],
       sidebarMode: 'offcanvas',
       sharedParams,
       isShared,
@@ -100,13 +112,28 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => ({
     const { watchData } = get();
     if (!watchData) return;
 
-    const newTeamName = Object.keys(watchData[provider])[0];
+    const newTeamName =
+      watchData[provider] instanceof ProviderTeamIFrame
+        ? {
+            title: Object.keys(watchData[provider].teams)[0],
+            logo: watchData[provider].teams[
+              Object.keys(watchData[provider].teams)[0]
+            ].logo,
+          }
+        : { title: '', logo: '' };
     const newEpisode =
-      watchData[provider][newTeamName].find(
-        (ep) => ep.episode === getWatched() + 1,
-      ) || watchData[provider][newTeamName][0];
+      watchData[provider] instanceof ProviderTeamIFrame
+        ? watchData[provider].teams[newTeamName.title].episodes.find(
+            (ep) => ep.episode === getWatched() + 1,
+          ) || watchData[provider].teams[newTeamName.title].episodes[0]
+        : watchData[provider].episodes.find(
+            (ep) => ep.episode === getWatched() + 1,
+          ) || watchData[provider].episodes[0];
 
-    const newEpisodeData = watchData[provider][newTeamName];
+    const newEpisodeData =
+      watchData[provider] instanceof ProviderTeamIFrame
+        ? watchData[provider].teams[newTeamName.title].episodes
+        : watchData[provider].episodes;
 
     set({
       provider,
@@ -118,13 +145,13 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => ({
   setTeam: (team) => {
     const { watchData, provider } = get();
     if (!watchData || !provider) return;
+    if (!(watchData[provider] instanceof ProviderTeamIFrame)) return;
 
-    const newEpisodeData = watchData[provider][team];
+    const newEpisodeData = watchData[provider].teams[team.title].episodes;
 
     const newEpisode =
-      watchData[provider][team].find(
-        (episode) => episode.episode === getWatched() + 1,
-      ) || watchData[provider][team][0];
+      newEpisodeData.find((episode) => episode.episode === getWatched() + 1) ||
+      newEpisodeData[0];
 
     set({ team, episodeData: newEpisodeData, currentEpisode: newEpisode });
   },

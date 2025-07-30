@@ -1,11 +1,11 @@
-export {};
+import { ProviderIFrame, ProviderTeamIFrame } from './provider_classes';
 
 declare global {
   namespace API {
     /* Anime */
     type WatchData = {
       type: 'tv' | 'movie' | 'ona';
-      [key: string]: ProviderData;
+      [key: string]: ProviderTeamIFrame | ProviderIFrame;
     };
 
     type NotionData = {
@@ -15,6 +15,7 @@ declare global {
 
     type FandubTeam = {
       title: string;
+      logo: string;
       link: string;
     };
 
@@ -54,6 +55,19 @@ declare global {
     type ChapterUser = {
       id: string;
       username: string;
+    };
+
+    /* New WatchData (need refactor, for now just fast hotfix for smaller bundle size) */
+    type ProviderType = 'team-iframe' | 'team-hls' | 'iframe' | 'hls' | 'id';
+
+    type TeamData = {
+      title: string;
+      logo: string;
+    };
+
+    type EpisodeDataIFrame = {
+      episode: number;
+      video_url: string;
     };
   }
 }

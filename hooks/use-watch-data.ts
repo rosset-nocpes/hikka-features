@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { ProviderIFrame, ProviderTeamIFrame } from '@/utils/provider_classes';
 import useHikkaAnime from './use-hikka-anime';
 
 // TODO: add types for api
@@ -9,7 +10,7 @@ const useWatchData = () => {
     queryKey: ['watch-data', anime_data.slug],
     queryFn: async () => {
       const r = await fetch(
-        `${BACKEND_BRANCHES[await backendBranch.getValue()]}/watch/${
+        `${BACKEND_BRANCHES[await backendBranch.getValue()]}/watch/v2/${
           anime_data.slug
         }`,
       );
@@ -18,7 +19,22 @@ const useWatchData = () => {
         throw new Error('Not found');
       }
 
-      return (await r.json()) as API.WatchData;
+      const data: API.WatchData = await r.json();
+      const out = data;
+      for (const [key, elem] of Object.entries(data)) {
+        if (typeof elem === 'string') continue;
+
+        if (elem.type === 'team-iframe') {
+          out[key] = new ProviderTeamIFrame();
+          out[key].teams = (elem as ProviderTeamIFrame).teams || {};
+          out[key].sortTeams();
+        } else if (elem.type === 'iframe') {
+          out[key] = new ProviderIFrame();
+          out[key].episodes = (elem as ProviderIFrame).episodes || [];
+        }
+      }
+
+      return out as API.WatchData;
     },
     retry: false,
     staleTime: Infinity,
