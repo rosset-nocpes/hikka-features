@@ -56,8 +56,7 @@ export default defineBackground(() => {
               url: auth_url,
             })
             .then((response_url) => {
-              console.log(response_url);
-              const params = new URLSearchParams(response_url.split('?')[1]);
+              const params = new URLSearchParams(response_url?.split('?')[1]);
 
               hikkaSecret.setValue(params.get('secret')!);
               hikkaSecret.setMeta({
@@ -187,7 +186,7 @@ export default defineBackground(() => {
 
   function connectWebSocket() {
     // Replace with your WebSocket server URL
-    ws = new WebSocket(import.meta.env.WXT_BACKEND_WS_ENDPOINT);
+    ws = new WebSocket(BACKEND_WS_URL);
 
     // Event: Connection opened
     ws.onopen = () => {

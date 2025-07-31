@@ -1,7 +1,9 @@
 export const BACKEND_BRANCHES: Record<BackendBranches, string> = {
   stable: 'https://api.hikka-features.pp.ua',
-  localhost: import.meta.env.WXT_BACKEND_BASE_URL,
+  localhost: import.meta.env.WXT_BACKEND_BASE_URL || 'http://localhost:8000',
 };
+
+export const BACKEND_WS_URL = 'wss://api.hikka-features.pp.ua/ws';
 
 export const UkrainianPlayerSource = ['moon', 'ashdi'];
 export const SubPlayerSource = ['vidsrc', 'hikari'];
