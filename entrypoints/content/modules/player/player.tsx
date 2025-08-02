@@ -174,17 +174,28 @@ export const Player = () => {
         }
 
         case 'end': {
-          const nextEpisode = data![provider!][team!].find(
-            (episode: API.EpisodeData) =>
-              episode.episode === currentEpisode!.episode + 1,
-          );
+          const providerData = data![provider!];
+          let nextEpisode: API.EpisodeData | undefined;
+
+          if (providerData instanceof ProviderTeamIFrame) {
+            const teamEpisodes = providerData.teams[team!.title].episodes;
+            nextEpisode = teamEpisodes.find(
+              (episode: API.EpisodeData) =>
+                episode.episode === currentEpisode!.episode + 1,
+            );
+          } else if (providerData instanceof ProviderIFrame) {
+            nextEpisode = providerData.episodes.find(
+              (episode: API.EpisodeData) =>
+                episode.episode === currentEpisode!.episode + 1,
+            );
+          }
 
           if (!getNextEpState && nextEpisode) {
             setNextEpState(true);
             handleSelectEpisode(nextEpisode);
 
             toast(
-              `Зараз ви переглядаєте ${nextEpisode.episode} епізод в озвучці ${team}`,
+              `Зараз ви переглядаєте ${nextEpisode.episode} епізод в озвучці ${team?.title}`,
             );
           }
           break;
