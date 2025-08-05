@@ -10,7 +10,7 @@ const isPersistent = env.WXT_PERSIST_BROWSER_DATA
 const isWindows = process.platform === 'win32';
 
 export default defineConfig({
-  modules: ['@wxt-dev/module-react'],
+  modules: ['@wxt-dev/module-react', '@wxt-dev/auto-icons'],
   vite: () => ({
     plugins: [Icons({ compiler: 'jsx', jsx: 'react' })],
     optimizeDeps: {
