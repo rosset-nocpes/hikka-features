@@ -7,17 +7,12 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
 import { queryClient } from '../..';
 import ChapterPages from './chapter-pages';
-import {
-  getRead,
-  ReaderProvider,
-  useReaderContext,
-} from './context/reader-context';
+import { ReaderProvider, useReaderContext } from './context/reader-context';
 import ReaderMobileToolbar from './mobile-toolbar/reader-mobile-toolbar';
 import PageIndicator from './page-indicator';
 import PageSwitcher from './page-switcher';
 import ReaderNavbar from './reader-navbar';
 import ScaleIndicator from './scale-indicator';
-import ReaderSettings from './sidebar/reader-settings';
 import ReaderSidebar from './sidebar/reader-sidebar';
 
 export default function reader() {
@@ -31,7 +26,7 @@ export default function reader() {
       container.append(wrapper);
 
       wrapper.className =
-        'size-full sm:backdrop-blur-sm bg-black/60 flex items-center justify-center sm:p-8';
+        'size-full sm:backdrop-blur-sm bg-black/60 flex items-center justify-center sm:p-8 duration-300';
 
       container.className = 'h-full';
       container.classList.toggle('dark', await darkMode.getValue());
@@ -55,6 +50,8 @@ export default function reader() {
       return { root, wrapper };
     },
     onRemove: (elements) => {
+      useReaderContext.getState().setFullscreen(false);
+
       elements?.then((x) => {
         x?.root.unmount();
         x?.wrapper.remove();
@@ -75,7 +72,8 @@ export const Reader = () => {
   // const [selectedPageIndex, setSelectedPageIndex] = useState(0);
 
   const { data: mangaData } = useReadData();
-  const { currentChapter, setChapter, imagesLoading } = useReaderContext();
+  const { fullscreen, currentChapter, setChapter, imagesLoading } =
+    useReaderContext();
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -166,12 +164,13 @@ export const Reader = () => {
   return (
     <Card
       className={cn(
-        'relative z-10 flex size-full overflow-hidden rounded-none sm:max-w-[1282px] sm:rounded-lg',
+        'relative z-10 flex size-full overflow-hidden rounded-none border-none duration-300 sm:max-w-[1282px] sm:rounded-lg sm:border',
+        fullscreen && '!max-w-full !rounded-none !border-none',
       )}
     >
       <ReaderMobileToolbar carouselApi={carouselApi} />
 
-      <ReaderNavbar />
+      <ReaderNavbar carouselApi={carouselApi} />
 
       <CardContent className="relative flex min-h-0 min-w-0 flex-1 flex-col gap-2 p-0">
         <PageIndicator carouselApi={carouselApi} />

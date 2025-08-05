@@ -1,7 +1,7 @@
 import { type FC, type PropsWithChildren, useEffect } from 'react';
 import { create } from 'zustand';
 
-interface ReaderState {
+export interface ReaderState {
   /* Base */
   container?: HTMLElement;
   /* Reader-related */
@@ -10,8 +10,9 @@ interface ReaderState {
   imagesLoading: boolean;
   sidebarMode: 'offcanvas' | 'icon';
   scrollMode: boolean;
-  orientation: string | 'vertical' | 'horizontal';
+  orientation: 'vertical' | 'horizontal';
   scale: number;
+  fullscreen: boolean;
 }
 
 interface ReaderActions {
@@ -20,8 +21,9 @@ interface ReaderActions {
   setChapterImages: (images: string[], loading: boolean) => void;
   setSidebarMode: (mode: ReaderState['sidebarMode']) => void;
   setScrollMode: (enabled: boolean) => void;
-  setOrientation: (orientation: string) => void;
+  setOrientation: (orientation: ReaderState['orientation']) => void;
   setScale: (scale: number) => void;
+  setFullscreen: (fullscreen: boolean) => void;
   setState: (
     state: Partial<ReaderState> | ((prev: ReaderState) => Partial<ReaderState>),
   ) => void;
@@ -35,6 +37,7 @@ export const useReaderContext = create<ReaderState & ReaderActions>((set) => ({
   scrollMode: false,
   orientation: 'vertical',
   scale: 1,
+  fullscreen: false,
 
   initialize: (data, container) => {
     const targetChapter = data.chapters[getRead()];
@@ -52,6 +55,7 @@ export const useReaderContext = create<ReaderState & ReaderActions>((set) => ({
   setScrollMode: (enabled) => set({ scrollMode: enabled }),
   setOrientation: (orientation) => set({ orientation }),
   setScale: (scale) => set({ scale }),
+  setFullscreen: (fullscreen) => set({ fullscreen }),
   setState: (state) => set(state),
   reset: () => {
     set({

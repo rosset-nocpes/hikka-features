@@ -16,7 +16,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MaterialSymbolsViewAgendaOutline from '~icons/material-symbols/view-agenda-outline';
 import MaterialSymbolsViewColumn2Outline from '~icons/material-symbols/view-column-2-outline';
-import { useReaderContext } from '../context/reader-context';
+import { type ReaderState, useReaderContext } from '../context/reader-context';
 import SwitchOption from './_base/switch-option';
 
 const ReaderSettings = () => {
@@ -25,7 +25,7 @@ const ReaderSettings = () => {
   const { open } = useSidebar();
 
   const handleOrientationChange = (value: string) => {
-    setOrientation(value);
+    setOrientation(value as ReaderState['orientation']);
   };
 
   return (

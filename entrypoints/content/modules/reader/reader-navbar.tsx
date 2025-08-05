@@ -1,5 +1,6 @@
-import { FC } from 'react';
+import type { FC } from 'react';
 import { Button } from '@/components/ui/button';
+import type { CarouselApi } from '@/components/ui/carousel';
 import {
   ContextMenu,
   ContextMenuCheckboxItem,
@@ -8,17 +9,58 @@ import {
 } from '@/components/ui/context-menu';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
+import MaterialSymbolsFullscreenExitRounded from '~icons/material-symbols/fullscreen-exit-rounded';
+import MaterialSymbolsFullscreenRounded from '~icons/material-symbols/fullscreen-rounded';
 import { useReaderContext } from './context/reader-context';
 import reader from './reader';
 
 interface Props {
+  carouselApi: CarouselApi;
   showControls?: boolean;
 }
 
-const ReaderNavbar: FC<Props> = ({ showControls = true }) => {
+const ReaderNavbar: FC<Props> = ({ carouselApi, showControls = true }) => {
   const { open } = useSidebar();
-  const { container, currentChapter, sidebarMode, setSidebarMode } =
-    useReaderContext();
+  const {
+    container,
+    fullscreen,
+    setFullscreen,
+    sidebarMode,
+    setSidebarMode,
+    currentChapter,
+  } = useReaderContext();
+
+  const handleFullscreenChange = () => {
+    if (!document.fullscreenElement) {
+      handleFullscreen();
+    }
+  };
+
+  const handleFullscreen = () => {
+    setFullscreen(!fullscreen);
+  };
+
+  // todo: move to context
+  const wrapper = container?.querySelector('div');
+  useEffect(() => {
+    if (fullscreen) {
+      document.documentElement.requestFullscreen();
+      document.addEventListener('fullscreenchange', handleFullscreenChange);
+      wrapper?.classList.add('!p-0');
+    } else {
+      document.exitFullscreen();
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      wrapper?.classList.remove('!p-0');
+    }
+
+    const re_init_carousel = setTimeout(() => carouselApi?.reInit(), 300);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      wrapper?.classList.remove('!p-0');
+      clearTimeout(re_init_carousel);
+    };
+  }, [fullscreen]);
 
   return (
     <div className="hidden sm:flex">
@@ -44,12 +86,25 @@ const ReaderNavbar: FC<Props> = ({ showControls = true }) => {
       </div>
       <div
         className={cn(
-          'absolute top-2 right-2 z-20 duration-300',
+          'absolute top-2 right-2 z-20 flex gap-2 duration-300',
           !showControls && sidebarMode === 'offcanvas' && !open
             ? 'opacity-0'
             : 'opacity-100',
+          open && 'gap-0',
         )}
       >
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="bg-sidebar"
+          onClick={handleFullscreen}
+        >
+          {fullscreen ? (
+            <MaterialSymbolsFullscreenExitRounded />
+          ) : (
+            <MaterialSymbolsFullscreenRounded />
+          )}
+        </Button>
         <ContextMenu modal={false}>
           <ContextMenuTrigger asChild>
             <SidebarTrigger
