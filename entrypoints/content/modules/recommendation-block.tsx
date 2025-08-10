@@ -49,10 +49,11 @@ interface Props {
 const RecommendationBlock: FC<Props> = ({ container }) => {
   const [blockState, setBlockState] = useState<boolean>();
 
-  const { data: anime_data } = useHikkaAnime();
+  const { contentType } = usePageStore();
+  const content_data = useHikka().data;
   const { data, isLoading } = useRecommendation();
 
-  const mal_id = anime_data.mal_id;
+  const mal_id = content_data.mal_id;
 
   useEffect(() => {
     const initializeAsync = async () => {
@@ -86,7 +87,7 @@ const RecommendationBlock: FC<Props> = ({ container }) => {
               />
             </h3>
             <BlockButton
-              href={`https://myanimelist.net/anime/${mal_id}`}
+              href={`https://myanimelist.net/${contentType === 'novel' ? 'manga' : contentType}/${mal_id}`}
               disabled={isLoading || data?.recommendations.length === 0}
             />
           </div>
@@ -118,7 +119,7 @@ const RecommendationBlock: FC<Props> = ({ container }) => {
               data.recommendations.map((item) => (
                 <a
                   key={item.slug}
-                  href={`https://hikka.io/anime/${item.slug}`}
+                  href={`https://hikka.io/${item.data_type}/${item.slug}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex flex-col gap-2"
@@ -130,12 +131,20 @@ const RecommendationBlock: FC<Props> = ({ container }) => {
                     <img
                       className="absolute inset-0 h-full w-full bg-secondary/30 object-cover"
                       src={item.image}
-                      alt={item.title_ua || item.title_en || item.title_ja}
+                      alt={
+                        item.title_ua ||
+                        item.title_en ||
+                        item.title_ja ||
+                        item.title_original
+                      }
                       loading="lazy"
                     />
                   </AspectRatio>
                   <span className="line-clamp-2 font-medium text-sm leading-5">
-                    {item?.title_ua || item?.title_en || item?.title_ja}
+                    {item?.title_ua ||
+                      item?.title_en ||
+                      item?.title_ja ||
+                      item?.title_original}
                   </span>
                 </a>
               ))}
