@@ -3,12 +3,9 @@ import '../app.css';
 import aniBackground from './modules/ani-background';
 // import UCharURL from "@/utils/u-char-url";
 import aniButtons from './modules/ani-buttons';
-import devButtons from './modules/dev-buttons';
-import fandubBlock from './modules/fandub-block';
-import localizedPosterButton from './modules/localized-poster/localized-poster-button';
-import watchButton from './modules/player/watchButton';
-import readButton from './modules/reader/readButton';
-import recommendationBlock from './modules/recommendation-block';
+import anime_page from './pages/anime-page';
+import manga_page from './pages/manga-page';
+import novel_page from './pages/novel-page';
 
 export const queryClient = new QueryClient({
   defaultOptions: { queries: { refetchOnWindowFocus: false } },
@@ -38,27 +35,6 @@ export default defineContentScript({
                 '[name=previous-creating-edit][content]',
               ) as HTMLMetaElement)!.content = 'true')
             : null;
-      },
-    ];
-
-    const [getSavedMalId, setSavedMalId] = [
-      () =>
-        parseInt(
-          (
-            document.head.querySelector(
-              '[name=saved-mal-id][content]',
-            ) as HTMLMetaElement
-          )?.content,
-        ),
-      (input: number) => {
-        Number.isNaN(getSavedMalId())
-          ? document.head.insertAdjacentHTML(
-              'beforeend',
-              `<meta name="saved-mal-id" content="${input}">`,
-            )
-          : ((document.head.querySelector(
-              '[name=saved-mal-id][content]',
-            ) as HTMLMetaElement)!.content = input.toString());
       },
     ];
 
@@ -98,57 +74,13 @@ export default defineContentScript({
 
         switch (contentType) {
           case 'anime':
-            if (path?.length === 2) {
-              await prefetchHikkaAnime();
-
-              (await devButtons())?.mount();
-
-              // Watch button
-              (await watchButton())?.mount();
-
-              // aniButtons
-              (await aniButtons())?.mount();
-
-              // recommendationBlock
-              (await recommendationBlock())?.mount();
-
-              (await fandubBlock())?.mount();
-              (await localizedPosterButton())?.mount();
-            }
-
-            // aniBackground
-            if (path?.length! >= 2) {
-              (await aniBackground(mal_id, 'anime'))?.mount();
-              setSavedMalId(mal_id);
-            } else {
-              setSavedMalId(-1);
-            }
-
+            anime_page();
             break;
           case 'manga':
+            manga_page();
+            break;
           case 'novel':
-            if (path?.length === 2) {
-              await prefetchHikkaManga();
-
-              (await devButtons())?.mount();
-
-              // readerButton
-              (await readButton())?.mount();
-
-              // aniButtons
-              (await aniButtons())?.mount();
-            }
-
-            // aniBackground
-            if (path?.length! >= 2) {
-              (await aniBackground(mal_id, 'manga'))?.mount();
-              setSavedMalId(mal_id);
-            } else {
-              setSavedMalId(-1);
-            }
-
-            // actionRichPresence("remove");
-
+            novel_page();
             break;
           case 'edit':
             {
@@ -214,9 +146,8 @@ export default defineContentScript({
 
                       (
                         await aniBackground(
-                          getSavedMalId() !== -1 &&
-                            !Number.isNaN(getSavedMalId())
-                            ? getSavedMalId()
+                          usePageStore.getState().saved_mal_id
+                            ? usePageStore.getState().saved_mal_id
                             : await (
                                 await (
                                   await fetch(
@@ -338,7 +269,7 @@ export default defineContentScript({
                   .querySelectorAll('[name=previous-creating-edit][content]')
                   .forEach((e) => e.remove());
 
-                setSavedMalId(-1);
+                usePageStore.getState().clearMALId();
               }
             }
 
@@ -359,13 +290,23 @@ export default defineContentScript({
               ).json();
 
               (
-                await aniBackground(first_source_mal_id['mal_id'], source_type)
+                await aniBackground(first_source_mal_id.mal_id, source_type)
               )?.mount();
             }
 
-            if (getSavedMalId() !== -1 && !Number.isNaN(getSavedMalId())) {
-              (await aniBackground(getSavedMalId(), 'anime'))?.mount() ??
-                (await aniBackground(getSavedMalId(), 'manga'))?.mount();
+            if (usePageStore.getState().saved_mal_id) {
+              (
+                await aniBackground(
+                  usePageStore.getState().saved_mal_id!,
+                  'anime',
+                )
+              )?.mount() ??
+                (
+                  await aniBackground(
+                    usePageStore.getState().saved_mal_id!,
+                    'manga',
+                  )
+                )?.mount();
             } else {
               first_aniBackground();
             }
@@ -381,14 +322,14 @@ export default defineContentScript({
 
             if (
               (await richPresence.getValue()) &&
-              (await userData.getValue())?.['description']
+              (await userData.getValue())?.description
             ) {
               browser.runtime.sendMessage(undefined, {
                 type: 'rich-presence-check',
               });
             }
 
-            setSavedMalId(-1);
+            usePageStore.getState().clearMALId();
             actionRichPresence('remove');
 
             break;

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import { ContentScriptContext } from '#imports';
+import type { ContentScriptContext } from '#imports';
 
-type ContentType =
+export type ContentType =
   | 'anime'
   | 'manga'
   | 'novel'
@@ -11,6 +11,7 @@ type ContentType =
 
 interface PageState {
   ctx: ContentScriptContext;
+  saved_mal_id?: number;
   path?: string[];
   contentType?: ContentType;
   slug?: string;
@@ -19,10 +20,13 @@ interface PageState {
 interface PageActions {
   updateFromUrl: (url: URL) => void;
   setCTX: (ctx: ContentScriptContext) => void;
+  setMALId: (mal_id: number) => void;
+  clearMALId: () => void;
 }
 
 export const usePageStore = create<PageState & PageActions>((set) => ({
   ctx: {} as ContentScriptContext,
+  saved_mal_id: undefined,
   contentType: undefined,
   slug: undefined,
   updateFromUrl: (url: URL) => {
@@ -37,4 +41,6 @@ export const usePageStore = create<PageState & PageActions>((set) => ({
     });
   },
   setCTX: (ctx) => set({ ctx }),
+  setMALId: (mal_id) => set({ saved_mal_id: mal_id }),
+  clearMALId: () => set({ saved_mal_id: undefined }),
 }));
