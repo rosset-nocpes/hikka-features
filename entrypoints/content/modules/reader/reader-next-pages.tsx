@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import type { FC } from 'react';
 import { CarouselItem } from '@/components/ui/carousel';
 import { useReaderContext } from './context/reader-context';
 
@@ -31,7 +31,7 @@ const ReaderNextPages: FC = () => {
           )}
         </div>
       </CarouselItem>
-      <CarouselItem className="size-full" />
+      {nextChapter && <CarouselItem className="size-full" />}
     </>
   );
 };
