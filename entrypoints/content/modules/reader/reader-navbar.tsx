@@ -48,7 +48,7 @@ const ReaderNavbar: FC<Props> = ({ carouselApi, showControls = true }) => {
       document.addEventListener('fullscreenchange', handleFullscreenChange);
       wrapper?.classList.add('!p-0');
     } else {
-      document.exitFullscreen();
+      if (document.fullscreenElement) document.exitFullscreen();
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       wrapper?.classList.remove('!p-0');
     }
