@@ -125,13 +125,7 @@ const ChapterPages: FC<Props> = ({ setCarouselApi, scrollContainerRef }) => {
             {imagesLoading && <CarouselItem className="size-full" />}
             {chapterImages.map((img_url, index) => {
               return (
-                <CarouselItem
-                  key={index}
-                  className={cn(
-                    'h-full duration-300',
-                    scrollMode && 'h-auto p-0',
-                  )}
-                >
+                <CarouselItem key={index} className="h-full">
                   <div className="flex h-full items-center justify-center">
                     <img
                       ref={(el) => {
@@ -139,7 +133,7 @@ const ChapterPages: FC<Props> = ({ setCarouselApi, scrollContainerRef }) => {
                       }}
                       src={img_url}
                       alt="Chapter page"
-                      className="h-full object-contain duration-300"
+                      className="h-full object-contain"
                     />
                   </div>
                 </CarouselItem>

@@ -1,33 +1,24 @@
 import aniBackground from '../modules/ani-background';
 import aniButtons from '../modules/ani-buttons';
 import devButtons from '../modules/dev-buttons';
-import readButton from '../modules/reader/readButton';
+import readButton from '../modules/reader/read-button';
 import recommendationBlock from '../modules/recommendation-block';
 
 const manga_page = async () => {
   const path = usePageStore.getState().path;
 
-  const mal_id = parseInt(
-    (document.head.querySelector('[name=mal-id][content]') as HTMLMetaElement)
-      ?.content,
-  );
+  const mal_id = getLocalMALId();
 
   if (path?.length === 2) {
     await prefetchHikkaManga();
 
-    (await devButtons())?.mount();
-
-    // readerButton
-    (await readButton())?.mount();
-
-    // aniButtons
-    (await aniButtons())?.mount();
-
-    // recommendationBlock
-    (await recommendationBlock())?.mount();
+    await Promise.allSettled(
+      [devButtons, readButton, aniButtons, recommendationBlock].map(
+        async (elem) => (await elem())?.mount(),
+      ),
+    );
   }
 
-  // aniBackground
   if (path?.length! >= 2) {
     (await aniBackground(mal_id, 'manga'))?.mount();
     usePageStore.getState().setMALId(mal_id);

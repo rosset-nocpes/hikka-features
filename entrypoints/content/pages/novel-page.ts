@@ -6,19 +6,16 @@ import recommendationBlock from '../modules/recommendation-block';
 const novel_page = async () => {
   const path = usePageStore.getState().path;
 
-  const mal_id = parseInt(
-    (document.head.querySelector('[name=mal-id][content]') as HTMLMetaElement)
-      ?.content,
-  );
+  const mal_id = getLocalMALId();
 
   if (path?.length === 2) {
     await prefetchHikkaNovel();
 
-    (await devButtons())?.mount();
-
-    (await aniButtons())?.mount();
-
-    (await recommendationBlock())?.mount();
+    await Promise.allSettled(
+      [devButtons, aniButtons, recommendationBlock].map(async (elem) =>
+        (await elem())?.mount(),
+      ),
+    );
   }
 
   // aniBackground
