@@ -66,18 +66,8 @@ interface Props {
 const AniButtons: FC<Props> = ({ container, data, smallerTitle }) => {
   const [blockState, setBlockState] = useState<boolean>();
 
-  const { contentType: path } = usePageStore();
-
-  if (!data) {
-    let queryFunc = useHikkaAnime;
-    switch (path) {
-      case 'manga':
-      case 'novel':
-        queryFunc = useHikkaManga;
-    }
-
-    data = queryFunc().data;
-  }
+  const hikka = useHikka();
+  if (!data) data = hikka.data;
 
   useEffect(() => {
     const initializeAsync = async () => {

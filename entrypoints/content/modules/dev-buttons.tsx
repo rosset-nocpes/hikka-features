@@ -53,14 +53,7 @@ const DevButtons = () => {
 
   devMode.watch((state) => toggleShow(state));
 
-  let queryFunc = useHikkaAnime;
-  switch (path) {
-    case 'manga':
-    case 'novel':
-      queryFunc = useHikkaManga;
-  }
-
-  const data = queryFunc().data;
+  const data = useHikka().data;
   if (!data) return;
 
   const handleCopy = async (text: string, buttonId: string) => {
