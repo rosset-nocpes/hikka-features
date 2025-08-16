@@ -1,5 +1,5 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
-import type { FC } from 'react';
+import { type FC, useEffect, useRef, useState } from 'react';
 import type { CarouselApi } from '@/components/ui/carousel';
 import {
   SidebarContent,
@@ -105,7 +105,7 @@ const ChapterList: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
                     handleSelectChapter(mangaData!.chapters[virtualItem.index])
                   }
                   isActive={
-                    mangaData?.chapters[virtualItem.index].id ==
+                    mangaData?.chapters[virtualItem.index].id ===
                     currentChapter?.id
                   }
                   style={{

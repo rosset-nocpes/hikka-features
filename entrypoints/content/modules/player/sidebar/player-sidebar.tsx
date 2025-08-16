@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+import { type FC, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,

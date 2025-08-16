@@ -1,6 +1,6 @@
+import type { FC, PropsWithChildren } from 'react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { FC, PropsWithChildren } from 'react';
 
 interface Props extends PropsWithChildren {
   label: string;

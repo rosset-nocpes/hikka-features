@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import HikkaLogo from '@/assets/hikka_logo.svg';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';

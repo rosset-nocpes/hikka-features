@@ -1,6 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { FC } from 'react';
+import { type FC, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { queryClient } from '../..';
 
@@ -29,7 +29,7 @@ const localizedPoster = async (initialPosterState: boolean) => {
     append: 'first',
     anchor: document.querySelector(
       'div.absolute.left-0.top-0.flex.size-full.items-center.justify-center.rounded-md',
-    )!,
+    ),
     async onMount(container) {
       const wrapper = document.createElement('div');
       container.append(wrapper);
@@ -67,7 +67,7 @@ const LocalizedPoster: FC<Props> = ({ initialState }) => {
   const [showPoster, setShowPoster] = useState(initialState);
 
   useEffect(() => {
-    if (data && data.poster) {
+    if (data?.poster) {
       const img = new Image();
       img.src = data.poster;
       img.onload = () => setIsLoaded(true);

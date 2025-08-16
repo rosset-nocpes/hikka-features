@@ -1,6 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { FC } from 'react';
+import { type FC, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,7 +24,7 @@ const localizedPosterButton = async () => {
     name: 'localized-poster-button',
     position: 'inline',
     append: 'first',
-    anchor: document.querySelector('div.absolute.bottom-2.right-2')!,
+    anchor: document.querySelector('div.absolute.bottom-2.right-2'),
     inheritStyles: true,
     async onMount(container) {
       const wrapper = document.createElement('div');

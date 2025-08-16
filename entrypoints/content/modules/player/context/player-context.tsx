@@ -1,4 +1,4 @@
-import type { FC, PropsWithChildren } from 'react';
+import { type FC, type PropsWithChildren, useEffect } from 'react';
 import { create } from 'zustand';
 import { ProviderTeamIFrame } from '@/utils/provider_classes';
 

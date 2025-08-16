@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+import { type FC, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import type { CarouselApi } from '@/components/ui/carousel';
 import {

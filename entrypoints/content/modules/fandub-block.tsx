@@ -1,6 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { type FC, Fragment } from 'react';
+import { type FC, Fragment, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import BlockEntry from '@/components/block-entry';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';

@@ -6,6 +6,7 @@ import {
   motion,
   type Transition,
 } from 'motion/react';
+import { useEffect, useState } from 'react';
 
 type RotatingTextProps = {
   text: string | string[];

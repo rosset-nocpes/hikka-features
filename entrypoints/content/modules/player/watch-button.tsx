@@ -1,6 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import type { FC } from 'react';
+import { type FC, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { RotatingText } from '@/components/animate-ui/text/rotating';
 import { Button } from '@/components/ui/button';

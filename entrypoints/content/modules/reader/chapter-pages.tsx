@@ -1,6 +1,6 @@
 import { WheelGesturesPlugin } from 'embla-carousel-wheel-gestures';
 import { AnimatePresence, motion } from 'framer-motion';
-import { type FC, useLayoutEffect } from 'react';
+import { type FC, useEffect, useLayoutEffect, useRef } from 'react';
 import {
   Carousel,
   type CarouselApi,

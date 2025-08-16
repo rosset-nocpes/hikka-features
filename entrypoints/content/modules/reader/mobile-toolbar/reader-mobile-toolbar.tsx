@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+import { type FC, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import type { CarouselApi } from '@/components/ui/carousel';
 import {
@@ -8,10 +8,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { useSidebar } from '@/components/ui/sidebar';
 import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
-import MaterialSymbolsRightPanelCloseRounded from '~icons/material-symbols/right-panel-close-rounded';
-import MaterialSymbolsRightPanelOpenOutlineRounded from '~icons/material-symbols/right-panel-open-outline-rounded';
 import { getRead, useReaderContext } from '../context/reader-context';
 import reader from '../reader';
 
@@ -22,7 +19,6 @@ interface Props {
 const ReaderMobileToolbar: FC<Props> = ({ carouselApi }) => {
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  const { open, setOpen } = useSidebar();
   const { data: mangaData } = useReadData();
   const { container, currentChapter, setChapter } = useReaderContext();
 

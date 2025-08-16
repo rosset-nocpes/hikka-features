@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react';
-import type { FC } from 'react';
+import { type FC, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
 const aniBackground = async (mal_id: number, type: MediaType) => {

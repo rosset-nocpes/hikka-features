@@ -1,5 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import type { MediaPlayerInstance } from '@vidstack/react';
+import { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';

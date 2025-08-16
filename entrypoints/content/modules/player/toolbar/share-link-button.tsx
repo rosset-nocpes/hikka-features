@@ -1,5 +1,5 @@
 import { Copy, CopyCheck, Link } from 'lucide-react';
-import type { FC } from 'react';
+import { type FC, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';

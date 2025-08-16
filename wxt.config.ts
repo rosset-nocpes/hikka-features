@@ -1,4 +1,5 @@
 import { resolve } from 'node:path';
+import react from '@vitejs/plugin-react';
 import Icons from 'unplugin-icons/vite';
 import { loadEnv } from 'vite';
 import { defineConfig } from 'wxt';
@@ -10,9 +11,9 @@ const isPersistent = env.WXT_PERSIST_BROWSER_DATA
 const isWindows = process.platform === 'win32';
 
 export default defineConfig({
-  modules: ['@wxt-dev/module-react', '@wxt-dev/auto-icons'],
+  modules: ['@wxt-dev/auto-icons'],
   vite: () => ({
-    plugins: [Icons({ compiler: 'jsx', jsx: 'react' })],
+    plugins: [react(), Icons({ compiler: 'jsx', jsx: 'react' })],
     optimizeDeps: {
       entries: ['entrypoints/content/**/*.tsx'],
       include: ['react', 'react-dom'],
@@ -39,5 +40,8 @@ export default defineConfig({
       !isWindows && isPersistent ? ['--user-data-dir=./.wxt/chrome-data'] : [],
     chromiumProfile: isWindows && isPersistent && resolve('.wxt/chrome-data'),
     keepProfileChanges: isWindows && isPersistent,
+  },
+  autoIcons: {
+    developmentIndicator: 'overlay',
   },
 });

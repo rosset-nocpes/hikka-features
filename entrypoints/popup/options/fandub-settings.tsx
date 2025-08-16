@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import SwitchOption from '../_base/switch-option';
 
 const FandubSettings = () => {

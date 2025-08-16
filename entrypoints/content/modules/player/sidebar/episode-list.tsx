@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+import { type FC, useEffect, useRef } from 'react';
 import {
   SidebarGroup,
   SidebarMenu,
