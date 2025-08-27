@@ -93,14 +93,16 @@ const WatchButton: FC<Props> = ({ container }) => {
     <AnimatePresence>
       {buttonState && (
         <motion.div
-          initial={{ opacity: 0, width: 0, scale: 0.93 }}
-          animate={{ opacity: 1, width: 'auto', scale: 1 }}
-          exit={{ opacity: 0, width: 0, scale: 0.93 }}
+          initial={{ opacity: 0, width: 0, scale: 0.93, marginRight: 0 }}
+          animate={{
+            opacity: 1,
+            width: 'auto',
+            scale: 1,
+            marginRight: '0.5rem',
+          }}
+          exit={{ opacity: 0, width: 0, scale: 0.93, marginRight: 0 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
-          className={cn(
-            'flex gap-2 overflow-hidden',
-            buttonState ? 'mr-2' : 'mr-0',
-          )}
+          className="flex gap-2 overflow-hidden"
         >
           <Button
             variant="ghost"
