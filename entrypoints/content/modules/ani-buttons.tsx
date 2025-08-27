@@ -213,11 +213,16 @@ const AniButtons: FC<Props> = ({ container, data, smallerTitle }) => {
     <AnimatePresence>
       {blockState && (
         <motion.div
-          className="mb-12 flex flex-col gap-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
+          className="flex flex-col gap-4"
+          initial={{ opacity: 0, height: 0, scale: 0.93, marginBottom: 0 }}
+          animate={{
+            opacity: 1,
+            height: 'auto',
+            scale: 1,
+            marginBottom: '3rem',
+          }}
+          exit={{ opacity: 0, height: 0, scale: 0.93, marginBottom: 0 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
         >
           <h3
             className={cn(

@@ -73,10 +73,10 @@ const FandubBlock: FC<Props> = ({ container, smallerTitle }) => {
     <AnimatePresence>
       {blockState && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
+          initial={{ opacity: 0, height: 0, scale: 0.93 }}
+          animate={{ opacity: 1, height: 'auto', scale: 1 }}
+          exit={{ opacity: 0, height: 0, scale: 0.93 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
           className="flex flex-col gap-4"
         >
           <h3

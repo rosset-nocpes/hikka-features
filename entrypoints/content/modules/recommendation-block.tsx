@@ -19,6 +19,7 @@ const recommendationBlock = async (location?: Element) => {
     position: 'inline',
     append: 'last',
     anchor: location || document.querySelector('.grid > div:nth-of-type(2)'),
+    css: ':host(recommendation-block) { margin-top: -3rem; }',
     inheritStyles: true,
     async onMount(container) {
       const wrapper = document.createElement('div');
@@ -46,7 +47,7 @@ const RecommendationBlock: FC<Props> = ({ container }) => {
   const [blockState, setBlockState] = useState<boolean>();
 
   const { contentType } = usePageStore();
-  const content_data = useHikka().data;
+  const content_data = useHikka()?.data;
   const { data, isLoading } = useRecommendation();
 
   const mal_id = content_data.mal_id;
@@ -64,10 +65,15 @@ const RecommendationBlock: FC<Props> = ({ container }) => {
     <AnimatePresence>
       {blockState && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
+          initial={{ opacity: 0, height: 0, scale: 0.93, marginTop: 0 }}
+          animate={{
+            opacity: 1,
+            height: 'auto',
+            scale: 1,
+            marginTop: '3rem',
+          }}
+          exit={{ opacity: 0, height: 0, scale: 0.93, marginTop: 0 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
           className="flex flex-col gap-4 lg:gap-8"
         >
           <div className="flex items-center justify-between gap-2">
