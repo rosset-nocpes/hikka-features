@@ -30,6 +30,7 @@
     "cmdk": "^1.1.1",
     "embla-carousel-react": "^8.6.0",
     "embla-carousel-wheel-gestures": "^8.1.0",
+    "geist": "^1.4.2",
     "hls.js": "^1.6.5",
     "lucide-react": "^0.525.0",
     "motion": "^12.23.1",
@@ -50,7 +51,7 @@
     "zustand": "^5.0.6"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.1.4",
+    "@biomejs/biome": "2.2.2",
     "@iconify-json/material-symbols": "^1.2.28",
     "@iconify-json/mdi": "^1.2.3",
     "@svgr/core": "^8.1.0",

@@ -54,9 +54,7 @@ const ReaderSidebar: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
               >
                 <MaterialSymbolsCloseRounded />
               </Button>
-              <span className="cursor-default font-medium font-unitysans">
-                Читалка
-              </span>
+              <span className="cursor-default font-medium">Читалка</span>
               <Badge
                 variant="outline"
                 className="cursor-default bg-yellow-500 text-primary-foreground"

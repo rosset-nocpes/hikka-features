@@ -18,11 +18,7 @@ const recommendationBlock = async (location?: Element) => {
     name: 'recommendation-block',
     position: 'inline',
     append: 'last',
-    anchor:
-      location ||
-      document.querySelector(
-        'main > div > div.flex.flex-col.gap-12 > div.grid.grid-cols-1.gap-12 > div.relative.order-2.flex.flex-col.gap-12',
-      ),
+    anchor: location || document.querySelector('.grid > div:nth-of-type(2)'),
     inheritStyles: true,
     async onMount(container) {
       const wrapper = document.createElement('div');
@@ -75,7 +71,7 @@ const RecommendationBlock: FC<Props> = ({ container }) => {
           className="flex flex-col gap-4 lg:gap-8"
         >
           <div className="flex items-center justify-between gap-2">
-            <h3 className="flex scroll-m-20 items-center justify-between gap-2 font-bold font-unitysans text-xl tracking-normal">
+            <h3 className="flex scroll-m-20 items-center justify-between gap-2 font-bold text-xl tracking-normal">
               Схожий контент
               <img
                 src={

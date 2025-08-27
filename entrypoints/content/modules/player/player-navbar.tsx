@@ -37,7 +37,7 @@ const PlayerNavbar: FC<Props> = ({ showControls }) => {
         >
           <MaterialSymbolsCloseRounded />
         </Button>
-        <span className="flex h-8 cursor-default items-center rounded-md bg-sidebar px-2 font-medium font-unitysans">
+        <span className="flex h-8 cursor-default items-center rounded-md bg-sidebar px-2 font-medium">
           Епізод {currentEpisode?.episode}
         </span>
       </div>

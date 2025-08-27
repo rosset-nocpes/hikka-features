@@ -74,9 +74,7 @@ const PlayerSidebar: FC<Props> = ({ toggleWatchedState }) => {
               >
                 <MaterialSymbolsCloseRounded />
               </Button>
-              <span className="cursor-default font-medium font-unitysans">
-                Програвач
-              </span>
+              <span className="cursor-default font-medium">Програвач</span>
             </div>
             <div className="h-8 w-8" />
           </SidebarMenuItem>

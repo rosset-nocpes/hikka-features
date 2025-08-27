@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import type { FC } from 'react';
 import MaterialSymbolsArrowRightAltRounded from '~icons/material-symbols/arrow-right-alt-rounded';
 import { Button } from '../ui/button';
 
@@ -16,13 +16,12 @@ const BlockButton: FC<Props> = ({ href, onClick, linkProps, disabled }) => {
 
   if (href) {
     return (
-      <Button size="md" variant="ghost" disabled={disabled} asChild>
+      <Button size="icon-md" variant="ghost" disabled={disabled} asChild>
         <a
           href={href}
           className="flex items-center gap-2 text-muted-foreground"
           {...linkProps}
         >
-          Більше
           <MaterialSymbolsArrowRightAltRounded className="text-sm" />
         </a>
       </Button>
@@ -32,12 +31,11 @@ const BlockButton: FC<Props> = ({ href, onClick, linkProps, disabled }) => {
   return (
     <Button
       onClick={onClick}
-      size="md"
+      size="icon-md"
       className="flex items-center gap-2 text-muted-foreground"
       variant="ghost"
       disabled={disabled}
     >
-      Більше
       <MaterialSymbolsArrowRightAltRounded className="text-sm" />
     </Button>
   );

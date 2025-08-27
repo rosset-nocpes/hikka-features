@@ -89,18 +89,13 @@ export default defineContentScript({
                 split_path.length === 3 ||
                 (split_path.length === 4 && split_path[3] === 'update')
               ) {
-                const creatingEdit = isNaN(parseInt(split_path[2]));
+                const creatingEdit = Number.isNaN(parseInt(split_path[2], 10));
 
                 const edit_info = creatingEdit
                   ? new URLSearchParams(document.location.search)
                   : await (
                       await fetch(`https://api.hikka.io/edit/${split_path[2]}`)
                     ).json();
-
-                const getEditInfo = async () =>
-                  await (
-                    await fetch(`https://api.hikka.io/edit/${split_path[2]}`)
-                  ).json();
 
                 const content_type = creatingEdit
                   ? edit_info.get('content_type')

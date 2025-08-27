@@ -8,6 +8,7 @@ const contentTypeToHook: Record<string, () => UseQueryResult<any, Error>> = {
 
 const useHikka = () => {
   const { contentType } = usePageStore.getState();
+  if (contentType === 'edit') return;
 
   return contentTypeToHook[contentType!]();
 };

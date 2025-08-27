@@ -165,7 +165,7 @@ export const Player = () => {
             if (getWatched() + 1 === currentEpisode!.episode) {
               (
                 document.body.querySelector(
-                  'div.rounded-lg.border:nth-child(2) button',
+                  '.grid > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) button',
                 ) as HTMLButtonElement
               )?.click();
               toggleWatchedState(true);

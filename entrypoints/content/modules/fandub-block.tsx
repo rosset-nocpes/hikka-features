@@ -80,7 +80,7 @@ const FandubBlock: FC<Props> = ({ container, smallerTitle }) => {
           className="flex flex-col gap-4"
         >
           <h3
-            className={`flex scroll-m-20 items-center justify-between font-unitysans ${
+            className={`flex scroll-m-20 items-center justify-between ${
               smallerTitle ? 'text-lg' : 'text-xl'
             } font-bold tracking-normal`}
           >

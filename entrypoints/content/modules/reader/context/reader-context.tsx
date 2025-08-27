@@ -72,7 +72,8 @@ export const useReaderContext = create<ReaderState & ReaderActions>((set) => ({
 }));
 
 export const getRead = (): number => {
-  const selector = 'div.rounded-lg.border:nth-child(2) span';
+  const selector =
+    '.grid > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(2) > div:nth-of-type(2) span';
   const element = document.querySelector(selector);
   return element?.firstChild?.nodeValue
     ? parseInt(element.firstChild.nodeValue, 10)

@@ -79,7 +79,7 @@ const ReaderNavbar: FC<Props> = ({ carouselApi, showControls = true }) => {
         >
           <MaterialSymbolsCloseRounded />
         </Button>
-        <span className="flex h-8 cursor-default items-center rounded-md bg-sidebar px-2 font-medium font-unitysans">
+        <span className="flex h-8 cursor-default items-center rounded-md bg-sidebar px-2 font-medium">
           {`Розділ ${currentChapter?.chapter}`}
           {currentChapter?.title ? `: ${currentChapter?.title}` : ''}
         </span>

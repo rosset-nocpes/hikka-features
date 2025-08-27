@@ -4,7 +4,7 @@ import { type FC, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { RotatingText } from '@/components/animate-ui/text/rotating';
 import { Button } from '@/components/ui/button';
-import HikkaLogoMono from '@/public/hikka-features-mono.svg';
+import MaterialSymbolsSubscriptionsOutlineRounded from '~icons/material-symbols/subscriptions-outline-rounded';
 import { queryClient } from '../..';
 import player from './player';
 
@@ -16,12 +16,11 @@ export default async function watchButton(location?: Element) {
   return createShadowRootUi(usePageStore.getState().ctx, {
     name: 'watch-button',
     position: 'inline',
-    append: 'last',
+    append: 'first',
     anchor:
       location ||
-      document.querySelector(
-        'main > div > div.flex.flex-col.gap-4 > div.flex.w-full.flex-col.gap-4 > div > div',
-      ),
+      document.querySelector('div.sticky.bottom-4.z-10.mt-12 > div'),
+    css: ':host(watch-button) { margin-right: -0.5rem; }',
     inheritStyles: true,
     async onMount(container) {
       const wrapper = document.createElement('div');
@@ -75,7 +74,6 @@ const WatchButton: FC<Props> = ({ container }) => {
 
   watchButtonState.watch((state) => setButtonState(state));
 
-  const dark = container.classList.contains('dark');
   useEffect(() => {
     const initializeAsync = async () => {
       setButtonState(await watchButtonState.getValue());
@@ -95,24 +93,26 @@ const WatchButton: FC<Props> = ({ container }) => {
     <AnimatePresence>
       {buttonState && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
+          initial={{ opacity: 0, width: 0, scale: 0.93 }}
+          animate={{ opacity: 1, width: 'auto', scale: 1 }}
+          exit={{ opacity: 0, width: 0, scale: 0.93 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+          className={cn(
+            'flex gap-2 overflow-hidden',
+            buttonState ? 'mr-2' : 'mr-0',
+          )}
         >
           <Button
-            variant="outline"
-            className="w-full gap-2"
+            variant="ghost"
+            size="md"
+            className="gap-2"
             disabled={isLoading || isError}
             onClick={openPlayer}
           >
-            <motion.img
-              src={HikkaLogoMono}
-              className={!dark ? 'invert' : ''}
-              layout
-            />
+            <MaterialSymbolsSubscriptionsOutlineRounded className="!size-5" />
             <RotatingText text={statusMessage} />
           </Button>
+          <div className="w-px bg-secondary" />
         </motion.div>
       )}
     </AnimatePresence>

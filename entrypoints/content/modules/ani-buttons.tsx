@@ -19,7 +19,7 @@ enum MediaEnum {
 }
 
 const aniButtons = async (
-  append: ContentScriptAppendMode = 'before',
+  append: ContentScriptAppendMode = 'after',
   smallerTitle?: boolean,
   location?: Element,
   data?: any,
@@ -32,7 +32,11 @@ const aniButtons = async (
     name: 'ani-buttons',
     position: 'inline',
     append,
-    anchor: location || document.querySelector('.order-1 > div:nth-child(2)'),
+    anchor:
+      location ||
+      document.querySelector(
+        '.grid > div.flex.flex-col.gap-12.lg\\:col-span-1 > div',
+      ),
     css: ':host(ani-buttons) { margin-bottom: -3rem; }',
     inheritStyles: true,
     async onMount(container) {
@@ -67,7 +71,7 @@ const AniButtons: FC<Props> = ({ container, data, smallerTitle }) => {
   const [blockState, setBlockState] = useState<boolean>();
 
   const hikka = useHikka();
-  if (!data) data = hikka.data;
+  if (!data) data = hikka?.data;
 
   useEffect(() => {
     const initializeAsync = async () => {
@@ -203,6 +207,8 @@ const AniButtons: FC<Props> = ({ container, data, smallerTitle }) => {
 
   aniButtonsState.watch((state) => setBlockState(state));
 
+  const compact = false;
+
   return (
     <AnimatePresence>
       {blockState && (
@@ -214,9 +220,11 @@ const AniButtons: FC<Props> = ({ container, data, smallerTitle }) => {
           transition={{ duration: 0.2 }}
         >
           <h3
-            className={`flex scroll-m-20 items-center justify-between font-unitysans ${
-              smallerTitle ? 'text-lg' : 'text-xl'
-            } font-bold tracking-normal`}
+            className={cn(
+              'flex scroll-m-20 items-center justify-between font-bold tracking-normal',
+              smallerTitle ? 'text-lg' : 'text-xl',
+              compact && 'hidden',
+            )}
           >
             Інші джерела
             <img
@@ -228,7 +236,11 @@ const AniButtons: FC<Props> = ({ container, data, smallerTitle }) => {
               style={{ width: '21px', height: '20px' }}
             />
           </h3>
-          <div className="grid grid-cols-2 gap-2">
+          <div
+            className={cn(
+              compact ? 'flex justify-between' : 'grid grid-cols-2 gap-2',
+            )}
+          >
             {(isAnime
               ? anime_links
               : content_type === 'character'
@@ -250,15 +262,21 @@ const AniButtons: FC<Props> = ({ container, data, smallerTitle }) => {
                         ? 'pointer-events-none opacity-50'
                         : ''
                     : '',
+                  compact && '!size-10',
                 )}
               >
-                <span className="size-5 overflow-hidden rounded-sm border border-secondary/60 p-px">
+                <span
+                  className={cn(
+                    'size-5 overflow-hidden rounded-sm border border-secondary/60 p-px',
+                    compact && '!size-full',
+                  )}
+                >
                   <img
-                    className="mr-0.5 size-4"
+                    className="size-full"
                     src={`https://www.google.com/s2/favicons?domain=${elem.host}`}
                   />
                 </span>
-                {elem.title}
+                {!compact && elem.title}
               </a>
             ))}
           </div>

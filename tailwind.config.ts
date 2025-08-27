@@ -133,7 +133,8 @@ export default {
       },
       fontFamily: {
         inter: ['Inter', 'sans-serif'],
-        unitysans: ['UnitySans', 'sans-serif'],
+        sans: ['var(--font-geist-sans)'],
+        mono: ['var(--font-geist-mono)'],
       },
     },
   },

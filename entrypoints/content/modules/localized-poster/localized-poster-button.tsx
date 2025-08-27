@@ -24,11 +24,18 @@ const localizedPosterButton = async () => {
     name: 'localized-poster-button',
     position: 'inline',
     append: 'first',
-    anchor: document.querySelector('div.absolute.bottom-2.right-2'),
+    anchor: document.querySelector(
+      '.grid > div.flex.flex-col.gap-4.lg\\:col-span-1 > div.z-0.flex.items-center.px-16.md\\:px-48.lg\\:px-0 > div > div > div',
+    ),
     inheritStyles: true,
     async onMount(container) {
       const wrapper = document.createElement('div');
       container.append(wrapper);
+
+      container.style.position = 'absolute';
+      container.style.bottom = '0.5rem';
+      container.style.right = '0.5rem';
+      container.style.zIndex = '10';
 
       container.classList.toggle('dark', await darkMode.getValue());
 
