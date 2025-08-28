@@ -19,7 +19,7 @@ const readButton = async (location?: Element) => {
     append: 'first',
     anchor:
       location ||
-      document.querySelector('div.sticky.bottom-4.z-10.mt-12 > div'),
+      document.querySelector('div.sticky.bottom-3.z-10.mt-12 > div'),
     css: ':host(read-button) { margin-right: -0.5rem; }',
     inheritStyles: true,
     async onMount(container) {
