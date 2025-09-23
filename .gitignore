@@ -18,6 +18,7 @@ web-ext.config.ts
 .vscode/*
 !.vscode/extensions.json
 .idea
+.zed
 .DS_Store
 *.suo
 *.ntvs*
