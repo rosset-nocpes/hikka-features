@@ -52,7 +52,7 @@ const DevButtons = () => {
 
   devMode.watch((state) => toggleShow(state));
 
-  const data = useHikka().data;
+  const data = useHikka()?.data;
   if (!data) return;
 
   const handleCopy = async (text: string, buttonId: string) => {
@@ -81,11 +81,7 @@ const DevButtons = () => {
             size="sm"
             onClick={() => handleCopy(slug, 'slug')}
           >
-            {copiedButton === 'slug' ? (
-              <Check className="size-4" />
-            ) : (
-              <ClipboardCopy className="size-4" />
-            )}
+            <Indicator isCopied={copiedButton === 'slug'} />
             {slug}
           </Button>
           <Button
@@ -93,16 +89,43 @@ const DevButtons = () => {
             size="sm"
             onClick={() => handleCopy(mal_id, 'mal_id')}
           >
-            {copiedButton === 'mal_id' ? (
-              <Check className="size-4" />
-            ) : (
-              <ClipboardCopy className="size-4" />
-            )}
+            <Indicator isCopied={copiedButton === 'mal_id'} />
             {mal_id}
           </Button>
         </motion.div>
       )}
     </AnimatePresence>
+  );
+};
+
+interface IndicatorProps {
+  isCopied: boolean;
+}
+
+const Indicator = ({ isCopied }: IndicatorProps) => {
+  return (
+    <div className="relative">
+      <div
+        className={cn(
+          'absolute inset-0 flex items-center justify-center transition-[transform,opacity,filter] duration-200 ease-in-out will-change-[transform,opacity,filter]',
+          isCopied
+            ? 'scale-100 opacity-100 blur-0'
+            : 'scale-[0.25] opacity-0 blur-sm',
+        )}
+      >
+        <Check className="size-4" />
+      </div>
+      <div
+        className={cn(
+          'transition-[transform,opacity,filter] duration-200 ease-in-out will-change-[transform,opacity,filter]',
+          isCopied
+            ? 'scale-[0.25] opacity-0 blur-sm'
+            : 'scale-100 opacity-100 blur-0',
+        )}
+      >
+        <ClipboardCopy className="size-4" />
+      </div>
+    </div>
   );
 };
 
