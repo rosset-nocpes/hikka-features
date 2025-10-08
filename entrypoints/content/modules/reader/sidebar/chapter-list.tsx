@@ -39,7 +39,7 @@ const ChapterList: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
   const rowVirtualizer = useVirtualizer({
     count: mangaData?.chapters.length || 0,
     getScrollElement: () => scrollRef.current,
-    estimateSize: () => 36,
+    estimateSize: () => 52,
     overscan: 5,
   });
 
@@ -108,6 +108,7 @@ const ChapterList: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
                     mangaData?.chapters[virtualItem.index].id ===
                     currentChapter?.id
                   }
+                  size="lg"
                   style={{
                     position: 'absolute',
                     top: 0,
@@ -125,7 +126,7 @@ const ChapterList: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
                   <div
                     className={cn(
                       'size-4 shrink-0 text-center duration-300',
-                      open ? '-ml-6' : 'ml-0',
+                      open ? '-ml-6' : 'ml-0 w-full',
                     )}
                   >
                     <span
@@ -139,10 +140,9 @@ const ChapterList: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
                       {mangaData?.chapters[virtualItem.index].chapter}
                     </span>
                   </div>
-                  <div className="grid flex-1 truncate text-left leading-tight">
+                  <div className="flex flex-1 flex-col gap-1 truncate text-left leading-tight">
                     <span
                       className={cn(
-                        'duration-300',
                         virtualItem.index + 1 <= getRead() &&
                           'text-muted-foreground',
                       )}
@@ -150,6 +150,15 @@ const ChapterList: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
                       Том {mangaData?.chapters[virtualItem.index].volume} Розділ{' '}
                       {mangaData?.chapters[virtualItem.index].chapter}
                     </span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-muted-foreground text-xs">
+                        {mangaData?.chapters[virtualItem.index].date_upload}
+                      </span>
+                      <div className="size-1 shrink-0 rounded-full bg-muted-foreground" />
+                      <span className="truncate text-muted-foreground text-xs">
+                        {mangaData?.chapters[virtualItem.index].scanlator}
+                      </span>
+                    </div>
                   </div>
                 </SidebarMenuButton>
               </SidebarMenuItem>
