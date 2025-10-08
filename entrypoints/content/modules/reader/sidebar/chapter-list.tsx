@@ -1,5 +1,5 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { type FC, useEffect, useRef, useState } from 'react';
+import { type FC, useEffect, useMemo, useRef, useState } from 'react';
 import type { CarouselApi } from '@/components/ui/carousel';
 import {
   SidebarContent,
@@ -22,7 +22,7 @@ const ChapterList: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
 
   const { open } = useSidebar();
   const { data: mangaData } = useReadData();
-  const { scrollMode, currentChapter, setChapter } = useReaderContext();
+  const { scrollMode, currentChapter, setChapter, sortBy } = useReaderContext();
 
   const handleSelectChapter = (value: API.ChapterData) => {
     setChapter(value);
@@ -77,6 +77,17 @@ const ChapterList: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
     }
   }, [!!currentChapter]);
 
+  const sorted = useMemo(() => {
+    if (!mangaData) return [];
+    return [...mangaData.chapters].sort((a, b) => {
+      if (sortBy === 'asc') {
+        return a.chapter - b.chapter;
+      } else {
+        return b.chapter - a.chapter;
+      }
+    });
+  }, [mangaData, sortBy]);
+
   return (
     <SidebarContent
       ref={scrollRef}
@@ -101,13 +112,8 @@ const ChapterList: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
             {rowVirtualizer.getVirtualItems().map((virtualItem) => (
               <SidebarMenuItem key={virtualItem.index}>
                 <SidebarMenuButton
-                  onClick={() =>
-                    handleSelectChapter(mangaData!.chapters[virtualItem.index])
-                  }
-                  isActive={
-                    mangaData?.chapters[virtualItem.index].id ===
-                    currentChapter?.id
-                  }
+                  onClick={() => handleSelectChapter(sorted[virtualItem.index])}
+                  isActive={sorted[virtualItem.index].id === currentChapter?.id}
                   size="lg"
                   style={{
                     position: 'absolute',
@@ -117,8 +123,7 @@ const ChapterList: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
                     transform: `translateY(${virtualItem.start}px)`,
                   }}
                   ref={
-                    mangaData?.chapters[virtualItem.index].id ===
-                    currentChapter?.id
+                    sorted[virtualItem.index].id === currentChapter?.id
                       ? currentChapterRef
                       : null
                   }
@@ -137,7 +142,7 @@ const ChapterList: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
                           'text-muted-foreground',
                       )}
                     >
-                      {mangaData?.chapters[virtualItem.index].chapter}
+                      {sorted[virtualItem.index].chapter}
                     </span>
                   </div>
                   <div className="flex flex-1 flex-col gap-1 truncate text-left leading-tight">
@@ -147,16 +152,16 @@ const ChapterList: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
                           'text-muted-foreground',
                       )}
                     >
-                      Том {mangaData?.chapters[virtualItem.index].volume} Розділ{' '}
-                      {mangaData?.chapters[virtualItem.index].chapter}
+                      Том {sorted[virtualItem.index].volume} Розділ{' '}
+                      {sorted[virtualItem.index].chapter}
                     </span>
                     <div className="flex items-center gap-1">
                       <span className="text-muted-foreground text-xs">
-                        {mangaData?.chapters[virtualItem.index].date_upload}
+                        {sorted[virtualItem.index].date_upload}
                       </span>
                       <div className="size-1 shrink-0 rounded-full bg-muted-foreground" />
                       <span className="truncate text-muted-foreground text-xs">
-                        {mangaData?.chapters[virtualItem.index].scanlator}
+                        {sorted[virtualItem.index].scanlator}
                       </span>
                     </div>
                   </div>

@@ -1,6 +1,10 @@
 import type { FC } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  ButtonGroup,
+  ButtonGroupSeparator,
+} from '@/components/ui/button-group';
 import type { CarouselApi } from '@/components/ui/carousel';
 import {
   Sidebar,
@@ -8,6 +12,7 @@ import {
   SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,
+  SidebarSeparator,
   useSidebar,
 } from '@/components/ui/sidebar';
 import { cn } from '@/utils/cn';
@@ -16,6 +21,7 @@ import { useReaderContext } from '../context/reader-context';
 import reader from '../reader';
 import ChapterList from './chapter-list';
 import ReaderSettings from './reader-settings';
+import SortOptions from './sort-options';
 
 interface Props {
   carouselApi: CarouselApi;
@@ -35,36 +41,35 @@ const ReaderSidebar: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
       // onMouseLeave={toggleSidebar}
     >
       <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem className="flex items-center justify-end">
-            <div
+        <div className="flex items-center justify-end">
+          <div
+            className={cn(
+              'flex min-w-8 flex-1 items-center gap-2 truncate duration-300',
+              !open && 'text-transparent',
+            )}
+          >
+            <Button
+              variant="ghost"
+              size="icon-sm"
               className={cn(
-                'flex min-w-8 flex-1 items-center gap-2 truncate duration-300',
-                !open && 'text-transparent',
+                'transition-[margin] duration-300',
+                !open && '-ml-2',
               )}
+              onClick={() => reader().then((x) => x.remove())}
             >
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className={cn(
-                  'transition-[margin] duration-300',
-                  !open && '-ml-2',
-                )}
-                onClick={() => reader().then((x) => x.remove())}
-              >
-                <MaterialSymbolsCloseRounded />
-              </Button>
-              <span className="cursor-default font-medium">Читалка</span>
-              <Badge
-                variant="outline"
-                className="cursor-default bg-yellow-500 text-primary-foreground"
-              >
-                Beta
-              </Badge>
-            </div>
-            <div className="h-8 w-8" />
-          </SidebarMenuItem>
-        </SidebarMenu>
+              <MaterialSymbolsCloseRounded />
+            </Button>
+            <span className="cursor-default font-medium">Читалка</span>
+            <Badge
+              variant="outline"
+              className="cursor-default bg-yellow-500 text-primary-foreground"
+            >
+              Beta
+            </Badge>
+          </div>
+          <div className="h-8 w-8" />
+        </div>
+        <SortOptions />
       </SidebarHeader>
       <ChapterList
         carouselApi={carouselApi}

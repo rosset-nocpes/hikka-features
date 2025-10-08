@@ -13,6 +13,7 @@ export interface ReaderState {
   orientation: 'vertical' | 'horizontal';
   scale: number;
   fullscreen: boolean;
+  sortBy: 'asc' | 'desc';
 }
 
 interface ReaderActions {
@@ -24,6 +25,7 @@ interface ReaderActions {
   setOrientation: (orientation: ReaderState['orientation']) => void;
   setScale: (scale: number) => void;
   setFullscreen: (fullscreen: boolean) => void;
+  setSortBy: (sortBy: ReaderState['sortBy']) => void;
   setState: (
     state: Partial<ReaderState> | ((prev: ReaderState) => Partial<ReaderState>),
   ) => void;
@@ -38,6 +40,7 @@ export const useReaderContext = create<ReaderState & ReaderActions>((set) => ({
   orientation: 'vertical',
   scale: 1,
   fullscreen: false,
+  sortBy: 'asc',
 
   initialize: (data, container) => {
     const targetChapter = data.chapters[getRead()];
@@ -56,6 +59,7 @@ export const useReaderContext = create<ReaderState & ReaderActions>((set) => ({
   setOrientation: (orientation) => set({ orientation }),
   setScale: (scale) => set({ scale }),
   setFullscreen: (fullscreen) => set({ fullscreen }),
+  setSortBy: (sortBy) => set({ sortBy }),
   setState: (state) => set(state),
   reset: () => {
     set({
