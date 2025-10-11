@@ -1,4 +1,4 @@
-import { ChevronsUpDown, Settings } from 'lucide-react';
+import { ChevronsUpDown } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +14,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import MaterialSymbolsPageInfoOutlineRounded from '~icons/material-symbols/page-info-outline-rounded';
 import MaterialSymbolsViewAgendaOutline from '~icons/material-symbols/view-agenda-outline';
 import MaterialSymbolsViewColumn2Outline from '~icons/material-symbols/view-column-2-outline';
 import { type ReaderState, useReaderContext } from '../context/reader-context';
@@ -35,7 +36,7 @@ const ReaderSettings = () => {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton size="lg">
               <div className="flex size-8 shrink-0 items-center justify-center">
-                <Settings className="size-5" />
+                <MaterialSymbolsPageInfoOutlineRounded className="size-5" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">Налаштування</span>

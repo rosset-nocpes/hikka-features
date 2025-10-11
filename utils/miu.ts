@@ -263,12 +263,15 @@ export async function get_miu_chapters(data: any): Promise<API.ChapterData[]> {
       const chapterHref = linkElement.attr('href');
       const chapterTitleText = linkElement.text().trim(); // "Розділ X: Назва розділу" or "Розділ X"
 
-      const chapterMatch = chapterTitleText.match(
-        /Том\s*(\d+)\.\s*Розділ\s*([\d.]+)\s*(?:-\s*(.*))?/i,
-      );
-      const chapterVolume = chapterMatch ? chapterMatch[1] : 'N/A';
-      const chapterNumber = chapterMatch ? chapterMatch[2] : 'N/A';
-      const chapterTitle = chapterMatch?.[3] || '';
+      // todo
+      if (chapterTitleText.includes('Альтернативний переклад')) return;
+
+      const chapterTitle = chapterTitleText.split('-')[1].trim() || '';
+      const chapterVolume = $chapterElement.attr('manga-tom') || '0';
+      const chapterNumber = $chapterElement.attr('manga-chappter') || '0';
+
+      const scanlator = $chapterElement.attr('translate') || '';
+      const date_upload = $chapterElement.children().first().text().trim();
 
       const chapterId = chapterHref
         ? chapterHref.split('/').pop()?.split('-')[0] || chapterNumber
@@ -276,6 +279,8 @@ export async function get_miu_chapters(data: any): Promise<API.ChapterData[]> {
 
       chapters.push({
         id: chapterId,
+        scanlator,
+        date_upload,
         volume: Number(chapterVolume),
         chapter: Number(chapterNumber),
         title: chapterTitle,

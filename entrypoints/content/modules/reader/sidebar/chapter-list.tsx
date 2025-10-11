@@ -1,5 +1,5 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { type FC, useEffect, useRef, useState } from 'react';
+import { type FC, useEffect, useMemo, useRef, useState } from 'react';
 import type { CarouselApi } from '@/components/ui/carousel';
 import {
   SidebarContent,
@@ -22,7 +22,7 @@ const ChapterList: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
 
   const { open } = useSidebar();
   const { data: mangaData } = useReadData();
-  const { scrollMode, currentChapter, setChapter } = useReaderContext();
+  const { scrollMode, currentChapter, setChapter, sortBy } = useReaderContext();
 
   const handleSelectChapter = (value: API.ChapterData) => {
     setChapter(value);
@@ -39,7 +39,7 @@ const ChapterList: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
   const rowVirtualizer = useVirtualizer({
     count: mangaData?.chapters.length || 0,
     getScrollElement: () => scrollRef.current,
-    estimateSize: () => 36,
+    estimateSize: () => 52,
     overscan: 5,
   });
 
@@ -77,6 +77,31 @@ const ChapterList: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
     }
   }, [!!currentChapter]);
 
+  const sorted = useMemo(() => {
+    if (!mangaData?.chapters) return [];
+
+    const { field, order } = sortBy;
+    const multiplier = order === 'asc' ? 1 : -1;
+
+    return [...mangaData.chapters].sort((a, b) => {
+      if (field === 'chapter') {
+        return (a.chapter - b.chapter) * multiplier;
+      }
+
+      if (field === 'date_upload') {
+        const dateA = new Date(
+          a.date_upload.split('.').reverse().join('-'),
+        ).getTime();
+        const dateB = new Date(
+          b.date_upload.split('.').reverse().join('-'),
+        ).getTime();
+        return (dateA - dateB) * multiplier;
+      }
+
+      return 0;
+    });
+  }, [mangaData?.chapters, sortBy]);
+
   return (
     <SidebarContent
       ref={scrollRef}
@@ -101,13 +126,9 @@ const ChapterList: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
             {rowVirtualizer.getVirtualItems().map((virtualItem) => (
               <SidebarMenuItem key={virtualItem.index}>
                 <SidebarMenuButton
-                  onClick={() =>
-                    handleSelectChapter(mangaData!.chapters[virtualItem.index])
-                  }
-                  isActive={
-                    mangaData?.chapters[virtualItem.index].id ===
-                    currentChapter?.id
-                  }
+                  onClick={() => handleSelectChapter(sorted[virtualItem.index])}
+                  isActive={sorted[virtualItem.index].id === currentChapter?.id}
+                  size="lg"
                   style={{
                     position: 'absolute',
                     top: 0,
@@ -116,8 +137,7 @@ const ChapterList: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
                     transform: `translateY(${virtualItem.start}px)`,
                   }}
                   ref={
-                    mangaData?.chapters[virtualItem.index].id ===
-                    currentChapter?.id
+                    sorted[virtualItem.index].id === currentChapter?.id
                       ? currentChapterRef
                       : null
                   }
@@ -125,7 +145,7 @@ const ChapterList: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
                   <div
                     className={cn(
                       'size-4 shrink-0 text-center duration-300',
-                      open ? '-ml-6' : 'ml-0',
+                      open ? '-ml-6' : 'ml-0 w-full',
                     )}
                   >
                     <span
@@ -136,20 +156,28 @@ const ChapterList: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
                           'text-muted-foreground',
                       )}
                     >
-                      {mangaData?.chapters[virtualItem.index].chapter}
+                      {sorted[virtualItem.index].chapter}
                     </span>
                   </div>
-                  <div className="grid flex-1 truncate text-left leading-tight">
+                  <div className="flex flex-1 flex-col gap-1 truncate text-left leading-tight">
                     <span
                       className={cn(
-                        'duration-300',
                         virtualItem.index + 1 <= getRead() &&
                           'text-muted-foreground',
                       )}
                     >
-                      Том {mangaData?.chapters[virtualItem.index].volume} Розділ{' '}
-                      {mangaData?.chapters[virtualItem.index].chapter}
+                      Том {sorted[virtualItem.index].volume} Розділ{' '}
+                      {sorted[virtualItem.index].chapter}
                     </span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-muted-foreground text-xs">
+                        {sorted[virtualItem.index].date_upload}
+                      </span>
+                      <div className="size-1 shrink-0 rounded-full bg-muted-foreground" />
+                      <span className="truncate text-muted-foreground text-xs">
+                        {sorted[virtualItem.index].scanlator}
+                      </span>
+                    </div>
                   </div>
                 </SidebarMenuButton>
               </SidebarMenuItem>

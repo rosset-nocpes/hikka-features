@@ -35,6 +35,8 @@ declare global {
 
     type ChapterData = {
       id: string;
+      scanlator: string;
+      date_upload: string;
       volume: number;
       chapter: number;
       title: string;
