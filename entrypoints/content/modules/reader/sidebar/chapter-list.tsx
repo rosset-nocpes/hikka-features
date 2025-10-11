@@ -78,15 +78,29 @@ const ChapterList: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
   }, [!!currentChapter]);
 
   const sorted = useMemo(() => {
-    if (!mangaData) return [];
+    if (!mangaData?.chapters) return [];
+
+    const { field, order } = sortBy;
+    const multiplier = order === 'asc' ? 1 : -1;
+
     return [...mangaData.chapters].sort((a, b) => {
-      if (sortBy === 'asc') {
-        return a.chapter - b.chapter;
-      } else {
-        return b.chapter - a.chapter;
+      if (field === 'chapter') {
+        return (a.chapter - b.chapter) * multiplier;
       }
+
+      if (field === 'date_upload') {
+        const dateA = new Date(
+          a.date_upload.split('.').reverse().join('-'),
+        ).getTime();
+        const dateB = new Date(
+          b.date_upload.split('.').reverse().join('-'),
+        ).getTime();
+        return (dateA - dateB) * multiplier;
+      }
+
+      return 0;
     });
-  }, [mangaData, sortBy]);
+  }, [mangaData?.chapters, sortBy]);
 
   return (
     <SidebarContent

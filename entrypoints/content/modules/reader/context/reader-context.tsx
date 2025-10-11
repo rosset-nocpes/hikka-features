@@ -13,7 +13,10 @@ export interface ReaderState {
   orientation: 'vertical' | 'horizontal';
   scale: number;
   fullscreen: boolean;
-  sortBy: 'asc' | 'desc';
+  sortBy: {
+    field: 'chapter' | 'date_upload' | string;
+    order: 'asc' | 'desc';
+  };
 }
 
 interface ReaderActions {
@@ -40,7 +43,10 @@ export const useReaderContext = create<ReaderState & ReaderActions>((set) => ({
   orientation: 'vertical',
   scale: 1,
   fullscreen: false,
-  sortBy: 'asc',
+  sortBy: {
+    field: 'chapter',
+    order: 'asc',
+  },
 
   initialize: (data, container) => {
     const targetChapter = data.chapters[getRead()];
