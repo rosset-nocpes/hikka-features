@@ -152,7 +152,7 @@ const ChapterList: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
                       className={cn(
                         'block leading-4 duration-300',
                         open && '!text-transparent',
-                        virtualItem.index + 1 <= getRead() &&
+                        sorted[virtualItem.index].chapter <= getRead() &&
                           'text-muted-foreground',
                       )}
                     >
@@ -162,7 +162,7 @@ const ChapterList: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
                   <div className="flex flex-1 flex-col gap-1 truncate text-left leading-tight">
                     <span
                       className={cn(
-                        virtualItem.index + 1 <= getRead() &&
+                        sorted[virtualItem.index].chapter <= getRead() &&
                           'text-muted-foreground',
                       )}
                     >
