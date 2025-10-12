@@ -46,7 +46,7 @@
     "tailwindcss": "3.4.17",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^1.1.2",
-    "vite": "npm:rolldown-vite@latest",
+    "vite": "npm:rolldown-vite@^7.1.16",
     "zod": "^3.25.76",
     "zustand": "^5.0.8"
   },
@@ -67,6 +67,6 @@
     "wxt": "^0.20.11"
   },
   "overrides": {
-    "vite": "npm:rolldown-vite@latest"
+    "vite": "npm:rolldown-vite@^7.1.16"
   }
 }
