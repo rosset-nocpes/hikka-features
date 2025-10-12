@@ -4,7 +4,8 @@ import { type FC, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { RotatingText } from '@/components/animate-ui/text/rotating';
 import { Button } from '@/components/ui/button';
-import MaterialSymbolsSubscriptionsOutlineRounded from '~icons/material-symbols/subscriptions-outline-rounded';
+import { Spinner } from '@/components/ui/spinner';
+import MaterialSymbolsMenuBookOutlineRounded from '~icons/material-symbols/menu-book-outline-rounded';
 import { queryClient } from '../..';
 import reader from './reader';
 
@@ -95,13 +96,44 @@ const ReadButton: FC<Props> = ({ container }) => {
             disabled={isLoading || isError}
             onClick={openReader}
           >
-            <MaterialSymbolsSubscriptionsOutlineRounded className="!size-5" />
+            <Indicator isLoading={isLoading} />
             <RotatingText text={statusMessage} />
           </Button>
           <div className="w-px bg-secondary" />
         </motion.div>
       )}
     </AnimatePresence>
+  );
+};
+
+interface IndicatorProps {
+  isLoading: boolean;
+}
+
+const Indicator = ({ isLoading }: IndicatorProps) => {
+  return (
+    <div className="relative size-5">
+      <div
+        className={cn(
+          'absolute inset-0 flex items-center justify-center transition-[transform,opacity,filter] duration-200 ease-in-out will-change-[transform,opacity,filter]',
+          isLoading
+            ? 'scale-[0.25] opacity-0 blur-sm'
+            : 'scale-100 opacity-100 blur-0',
+        )}
+      >
+        <MaterialSymbolsMenuBookOutlineRounded className="size-full" />
+      </div>
+      <div
+        className={cn(
+          'transition-[transform,opacity,filter] duration-200 ease-in-out will-change-[transform,opacity,filter]',
+          isLoading
+            ? 'scale-100 opacity-100 blur-0'
+            : 'scale-[0.25] opacity-0 blur-sm',
+        )}
+      >
+        <Spinner className="size-full" />
+      </div>
+    </div>
   );
 };
 
