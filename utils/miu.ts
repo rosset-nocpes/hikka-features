@@ -167,21 +167,22 @@ export async function get_miu_chapter_pages(url: string): Promise<string[]> {
 export async function get_miu_chapters(data: any): Promise<API.ChapterData[]> {
   let manga_url: string | undefined = data.external.find(
     (link: any) => link.text === 'Manga.in.ua',
-  ).url;
+  )?.url;
+  const title = data.title_ua || data.title_en;
 
   if (!manga_url) {
-    console.log(`Searching for manga: ${data.title}`);
+    console.log(`Searching for manga: ${title}`);
     const searchFormData = new URLSearchParams();
     searchFormData.append('do', 'search');
     searchFormData.append('subaction', 'search');
-    searchFormData.append('story', `${data.title} ${data.year}`);
+    searchFormData.append('story', `${title} ${data.year}`);
     searchFormData.append('search_start', '1'); // page 1
 
     const searchResponse = await axios
       .post(`${BASE_URL}/index.php?do=search`, searchFormData)
       .catch((error) => {
         console.error('Error searching for manga:', error);
-        throw new Error(`Failed to search for manga "${data.title}"`);
+        throw new Error(`Failed to search for manga "${title}"`);
       });
 
     const $search = cheerio.load(searchResponse.data);
@@ -190,7 +191,7 @@ export async function get_miu_chapters(data: any): Promise<API.ChapterData[]> {
     ).first();
     if (!mangaLinkElement.length) {
       console.error('Manga not found from search.');
-      throw new Error(`Manga "${data.title}" not found.`);
+      throw new Error(`Manga "${title}" not found.`);
     }
     manga_url = mangaLinkElement.attr('href');
     if (!manga_url) {
@@ -230,7 +231,6 @@ export async function get_miu_chapters(data: any): Promise<API.ChapterData[]> {
   }
   const newsId = linkstocomicsElement.attr('data-news_id');
   const newsCategory = linkstocomicsElement.attr('data-news_category');
-  // const thisLink = linkstocomicsElement.attr("data-this_link");
 
   if (!newsId || !newsCategory) {
     throw new Error('Missing data attributes from "linkstocomics" element.');
@@ -266,7 +266,9 @@ export async function get_miu_chapters(data: any): Promise<API.ChapterData[]> {
       // todo
       if (chapterTitleText.includes('Альтернативний переклад')) return;
 
-      const chapterTitle = chapterTitleText.split('-')[1].trim() || '';
+      const chapterTitle = chapterTitleText.includes('-')
+        ? chapterTitleText.split('-')[1].trim()
+        : '';
       const chapterVolume = $chapterElement.attr('manga-tom') || '0';
       const chapterNumber = $chapterElement.attr('manga-chappter') || '0';
 
