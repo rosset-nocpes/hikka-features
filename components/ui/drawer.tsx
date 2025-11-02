@@ -34,21 +34,24 @@ DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName;
 
 const DrawerContent = React.forwardRef<
   React.ComponentRef<typeof DrawerPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content>
->(({ className, children, ...props }, ref) => (
-  <DrawerPortal>
-    <DrawerOverlay />
-    <DrawerPrimitive.Content
-      ref={ref}
-      className={cn(
-        'fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background',
-        className,
-      )}
-      {...props}
-    >
-      <div className="mx-auto mt-4 flex h-2 w-[100px] shrink-0 rounded-full bg-muted" />
-      {children}
-    </DrawerPrimitive.Content>
+  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content> & {
+    container?: HTMLElement;
+  }
+>(({ className, children, container, ...props }, ref) => (
+  <DrawerPortal container={container}>
+    <DrawerOverlay>
+      <DrawerPrimitive.Content
+        ref={ref}
+        className={cn(
+          '!opacity-100 fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background',
+          className,
+        )}
+        {...props}
+      >
+        <div className="mx-auto mt-4 flex h-2 w-[100px] shrink-0 rounded-full bg-muted" />
+        {children}
+      </DrawerPrimitive.Content>
+    </DrawerOverlay>
   </DrawerPortal>
 ));
 DrawerContent.displayName = 'DrawerContent';

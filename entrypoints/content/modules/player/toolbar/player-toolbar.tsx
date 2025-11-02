@@ -1,4 +1,4 @@
-import { type FC, useEffect, useState } from 'react';
+import type { FC } from 'react';
 import { Button } from '@/components/ui/button';
 import { useSidebar } from '@/components/ui/sidebar';
 import {
@@ -34,22 +34,22 @@ const PlayerToolbar: FC<Props> = ({
 }) => {
   const { open } = useSidebar();
 
-  const [getUserData, setUserData] = useState<UserDataV2 | null>();
+  // const [getUserData, setUserData] = useState<UserDataV2 | null>();
 
-  useEffect(() => {
-    const initializeAsync = async () => {
-      const userDataValue = await userData.getValue();
+  // useEffect(() => {
+  //   const initializeAsync = async () => {
+  //     const userDataValue = await userData.getValue();
 
-      setUserData(userDataValue);
-    };
+  //     setUserData(userDataValue);
+  //   };
 
-    initializeAsync();
-  }, []);
+  //   initializeAsync();
+  // }, []);
 
   return (
     <div
       className={cn(
-        'flex items-center justify-end gap-2 px-2 opacity-100 duration-300',
+        'hidden items-center justify-end gap-2 px-2 opacity-100 duration-300 sm:flex',
         !open && '-mt-8 opacity-0',
       )}
     >

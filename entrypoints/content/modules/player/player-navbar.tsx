@@ -54,7 +54,7 @@ const PlayerNavbar: FC<Props> = ({ showControls }) => {
             <SidebarTrigger
               variant="ghost"
               size="icon-sm"
-              className="bg-sidebar"
+              className="hidden bg-sidebar sm:inline-flex"
             />
           </ContextMenuTrigger>
           <ContextMenuContent container={container}>
