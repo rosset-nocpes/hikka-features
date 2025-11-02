@@ -173,16 +173,8 @@ export default defineBackground(() => {
   );
 
   // Initialize WebSocket connection
-  let ws: WebSocket;
-  connectWebSocket();
-
-  // ws!.send(
-  //   JSON.stringify({
-  //     type: "join",
-  //     room: "123",
-  //     message: "Hello from the background script!",
-  //   })
-  // );
+  // let ws: WebSocket;
+  // connectWebSocket();
 
   function connectWebSocket() {
     // Replace with your WebSocket server URL
