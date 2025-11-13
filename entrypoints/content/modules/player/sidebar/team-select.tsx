@@ -67,6 +67,8 @@ const TeamSelect: FC<Props> = ({ toggleWatchedState }) => {
 
   const orderedTeams = useMemo<API.TeamData[]>(() => {
     if (!data || !provider) return [];
+    if (!(data[provider] instanceof ProviderTeamIFrame)) return [];
+
     const teams = (data[provider] as ProviderTeamIFrame).getTeams();
     return teams.slice().sort((a: API.TeamData, b: API.TeamData) => {
       if (a.title === favoriteTeam) return -1;
