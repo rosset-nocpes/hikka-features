@@ -277,27 +277,9 @@ export const Player = () => {
             !open && 'border-0',
           )}
         >
-          {/* Will be used in future */}
-          {/* {['ashdi', 'moon'].includes(playerContext.state.provider) ? (
-              <iframe
-                id="player-iframe"
-                src={`${playerContext.state.currentEpisode.video_url}?site=hikka.io?v2=1`} // todo: move params to backend
-                loading="lazy"
-                className="z-[2] size-full"
-                allow="fullscreen; accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
-                allowFullScreen
-              ></iframe>
-            ) : (
-              <VidStackPlayer
-                url={playerContext.state.currentEpisode.video_url}
-                title=""
-                data={data!}
-                ref={VidStackPlayerRef}
-              />
-            )} */}
           <iframe
             id="player-iframe"
-            src={`${currentEpisode?.video_url}?site=hikka.io?v2=1`} // todo: move params to backend
+            src={`${currentEpisode?.video_url}?site=hikka.io`} // todo: move params to backend
             loading="lazy"
             className="z-[2] size-full"
             allow="fullscreen; accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"

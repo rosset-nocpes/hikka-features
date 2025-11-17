@@ -14,7 +14,7 @@ interface WatchTogetherRequest {
 }
 
 interface PlayerInfo {
-  playerProvider: PlayerSource;
+  playerProvider: string;
   teamName: string;
   episodeNumber: number;
 }

@@ -7,7 +7,7 @@ interface PlayerState {
   container?: HTMLElement;
   /* Player-related  */
   watchData?: API.WatchData; // todo: remove it from there
-  provider?: PlayerSource;
+  provider?: string;
   team?: API.TeamData;
   favoriteTeam?: string;
   episodeData?: API.EpisodeData[];
@@ -20,7 +20,7 @@ interface PlayerState {
 
 interface PlayerActions {
   initialize: (data: API.WatchData) => void;
-  setProvider: (provider: PlayerSource) => void;
+  setProvider: (provider: string) => void;
   setTeam: (team: API.TeamData) => void; // todo
   setFavoriteTeam: (team: string) => void;
   removeFavoriteTeam: () => void;
@@ -42,7 +42,7 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => ({
   sidebarMode: 'offcanvas',
 
   initialize: async (data) => {
-    const providers_avaliable = getAvailablePlayers(data);
+    const providers_avaliable = getAvailablePlayers(data).map((e) => e.title);
     const defaultPlayerValue = await defaultPlayer.getValue();
     const { slug } = usePageStore.getState();
     const favoriteTeam = (await playerAnimeFavoriteTeam.getValue())[slug!];
@@ -71,9 +71,8 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => ({
 
     // Determine provider
     const provider =
-      isShared &&
-      providers_avaliable.includes(sharedParams.provider as PlayerSource)
-        ? (sharedParams.provider as PlayerSource)
+      isShared && providers_avaliable.includes(sharedParams.provider!)
+        ? sharedParams.provider!
         : providers_avaliable.includes(defaultPlayerValue)
           ? defaultPlayerValue
           : providers_avaliable[0];
@@ -86,8 +85,8 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => ({
     if (data[provider] instanceof ProviderTeamIFrame) {
       const first_team = data[provider].getTeams()[0];
 
-      if (isShared && data[provider].teams[sharedParams.team]) {
-        team = data[provider].getTeam(sharedParams.team);
+      if (isShared && data[provider].teams[sharedParams.team!]) {
+        team = data[provider].getTeam(sharedParams.team!);
       } else if (favoriteTeam && data[provider].teams[favoriteTeam]) {
         team = data[provider].getTeam(favoriteTeam);
       } else {
@@ -213,8 +212,13 @@ interface SharedPlayerParams {
   time: string | null;
 }
 
-export const getAvailablePlayers = (data: API.WatchData): PlayerSource[] =>
-  Object.keys(data).filter((key) => key !== 'type') as PlayerSource[];
+export const getAvailablePlayers = (data: API.WatchData) =>
+  Object.entries(data)
+    .filter(([key]) => key !== 'type')
+    .map(([key, entry]: [string, any]) => ({
+      title: key,
+      lang: entry.lang as ProviderLanguage,
+    }));
 
 export const getWatched = (): number => {
   const selector =

@@ -15,13 +15,6 @@ declare global {
     | 'mu';
   // | "dengeki"
 
-  type UkrainianPlayerSource = 'moon' | 'ashdi';
-  type SubPlayerSource = 'vidsrc' | 'hikari';
-
-  type PlayerSource = UkrainianPlayerSource | SubPlayerSource;
-
-  type PlayerData = PlayerSource | 'type';
-
   type BackendBranches = 'stable' | 'localhost';
 
   type UserDataV1 = {
@@ -65,7 +58,7 @@ declare global {
   };
 
   interface PlayerState {
-    provider: PlayerSource;
+    provider: string;
     team: string;
     episodeData: API.EpisodeData[];
     currentEpisode: API.EpisodeData;

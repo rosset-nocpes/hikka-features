@@ -22,8 +22,9 @@ import SwitchOption from '../_base/switch-option';
 const PlayerSettings = () => {
   const [showWatchButton, toggleWatchButton] = useState<boolean | null>(null);
 
-  const [defaultPlayerProvider, setDefaultPlayerProvider] =
-    useState<PlayerSource | null>(null);
+  const [defaultPlayerProvider, setDefaultPlayerProvider] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
     Promise.all([watchButtonState.getValue(), defaultPlayer.getValue()]).then(
@@ -73,8 +74,8 @@ const PlayerSettings = () => {
                   className="flex h-10 w-24 cursor-pointer items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1"
                   value={defaultPlayerProvider!}
                   onChange={(e) => {
-                    defaultPlayer.setValue(e.target.value as PlayerSource);
-                    setDefaultPlayerProvider(e.target.value as PlayerSource);
+                    defaultPlayer.setValue(e.target.value);
+                    setDefaultPlayerProvider(e.target.value);
                   }}
                 >
                   {['moon', 'ashdi'].map((elem) => (
@@ -87,8 +88,8 @@ const PlayerSettings = () => {
                 <Select
                   value={defaultPlayerProvider!}
                   onValueChange={(value) => {
-                    defaultPlayer.setValue(value as PlayerSource);
-                    setDefaultPlayerProvider(value as PlayerSource);
+                    defaultPlayer.setValue(value);
+                    setDefaultPlayerProvider(value);
                   }}
                 >
                   <SelectTrigger className="w-24">

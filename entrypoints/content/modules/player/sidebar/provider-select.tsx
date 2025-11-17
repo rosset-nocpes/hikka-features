@@ -29,8 +29,23 @@ const ProviderSelect: FC<Props> = ({ toggleWatchedState }) => {
   if (!data) return;
 
   const avaliable_players = getAvailablePlayers(data);
+  const grouped_players: Record<ProviderLanguage, string[]> =
+    ALL_LANGUAGES.reduce(
+      (acc, lang) => {
+        const players = avaliable_players
+          .filter((p) => p.lang === lang)
+          .map((p) => p.title);
 
-  const handleSelectPlayer = (value: PlayerSource) => {
+        if (players.length) {
+          acc[lang] = players;
+        }
+
+        return acc;
+      },
+      {} as Record<ProviderLanguage, string[]>,
+    );
+
+  const handleSelectPlayer = (value: string) => {
     setProvider(value);
     toggleWatchedState(false);
   };
@@ -48,11 +63,9 @@ const ProviderSelect: FC<Props> = ({ toggleWatchedState }) => {
                 {provider?.[0].toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-semibold">
-                {provider?.toUpperCase()}
-              </span>
-            </div>
+            <span className="truncate text-left font-semibold text-sm leading-tight">
+              {provider?.toUpperCase()}
+            </span>
             {avaliable_players.length > 1 && (
               <ChevronsUpDown className="ml-auto" />
             )}
@@ -66,61 +79,32 @@ const ProviderSelect: FC<Props> = ({ toggleWatchedState }) => {
           container={container}
         >
           <div className="flex flex-col">
-            {avaliable_players.filter((elem) =>
-              UkrainianPlayerSource.includes(elem),
-            ).length > 0 && (
-              <DropdownMenuGroup>
+            {(
+              Object.entries(grouped_players) as [ProviderLanguage, string[]][]
+            ).map(([locale, players]) => (
+              <DropdownMenuGroup key={locale}>
                 <DropdownMenuLabel className="text-muted-foreground text-xs">
-                  Україномовні
+                  {LANGUAGE_GROUP_NAMES[locale]}
                 </DropdownMenuLabel>
                 <div className="flex flex-wrap">
-                  {avaliable_players
-                    .filter((elem) => UkrainianPlayerSource.includes(elem))
-                    .map((elem: PlayerSource) => (
-                      <DropdownMenuItem
-                        key={elem}
-                        onClick={() => handleSelectPlayer(elem)}
-                        className={cn(
-                          'flex-[1_1_calc(33.33%)] items-center justify-center px-1 py-1.5 font-normal',
-                          provider === elem &&
-                            'bg-accent/60 text-accent-foreground',
-                        )}
-                      >
-                        <span className="flex h-8 items-center justify-center truncate text-center font-semibold">
-                          {elem.toUpperCase()}
-                        </span>
-                      </DropdownMenuItem>
-                    ))}
+                  {players.map((elem) => (
+                    <DropdownMenuItem
+                      key={elem}
+                      onClick={() => handleSelectPlayer(elem)}
+                      className={cn(
+                        'flex-[1_0_50%] items-center justify-center px-1 py-1.5 font-normal',
+                        provider === elem &&
+                          'bg-accent/60 text-accent-foreground',
+                      )}
+                    >
+                      <span className="flex h-8 items-center justify-center truncate text-center font-semibold">
+                        {elem.toUpperCase()}
+                      </span>
+                    </DropdownMenuItem>
+                  ))}
                 </div>
               </DropdownMenuGroup>
-            )}
-            {avaliable_players.filter((elem) => SubPlayerSource.includes(elem))
-              .length > 0 && (
-              <DropdownMenuGroup>
-                <DropdownMenuLabel className="text-muted-foreground text-xs">
-                  Оригінал/Саби
-                </DropdownMenuLabel>
-                <div className="flex flex-wrap">
-                  {avaliable_players
-                    .filter((elem) => SubPlayerSource.includes(elem))
-                    .map((elem: PlayerSource) => (
-                      <DropdownMenuItem
-                        key={elem}
-                        onClick={() => handleSelectPlayer(elem)}
-                        className={cn(
-                          'flex-[1_1_calc(33.33%)] items-center justify-center px-1 py-1.5 font-normal',
-                          provider === elem &&
-                            'bg-accent/60 text-accent-foreground',
-                        )}
-                      >
-                        <span className="flex h-8 items-center justify-center truncate text-center font-semibold">
-                          {elem.toUpperCase()}
-                        </span>
-                      </DropdownMenuItem>
-                    ))}
-                </div>
-              </DropdownMenuGroup>
-            )}
+            ))}
           </div>
         </DropdownMenuContent>
       </DropdownMenu>

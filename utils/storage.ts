@@ -90,12 +90,9 @@ export const recommendationBlockState = storage.defineItem<boolean>(
   },
 );
 
-export const defaultPlayer = storage.defineItem<PlayerSource>(
-  'local:defaultPlayer',
-  {
-    fallback: 'moon',
-  },
-);
+export const defaultPlayer = storage.defineItem<string>('local:defaultPlayer', {
+  fallback: 'moon',
+});
 
 export const devOptionsState = storage.defineItem<boolean>(
   'local:devOptionsState',

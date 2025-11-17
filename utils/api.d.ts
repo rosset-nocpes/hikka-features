@@ -1,4 +1,4 @@
-import { ProviderIFrame, ProviderTeamIFrame } from './provider_classes';
+import type { ProviderIFrame, ProviderTeamIFrame } from './provider_classes';
 
 declare global {
   namespace API {
