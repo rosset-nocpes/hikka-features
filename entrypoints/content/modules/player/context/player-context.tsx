@@ -9,7 +9,7 @@ interface PlayerState {
   watchData?: API.WatchData; // todo: remove it from there
   provider?: string;
   team?: API.TeamData;
-  favoriteTeam?: string;
+  favoriteTeam?: FavoriteTeam;
   episodeData?: API.EpisodeData[];
   currentEpisode?: API.EpisodeData;
   sidebarMode: 'offcanvas' | 'icon';
@@ -73,9 +73,11 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => ({
     const provider =
       isShared && providers_avaliable.includes(sharedParams.provider!)
         ? sharedParams.provider!
-        : providers_avaliable.includes(defaultPlayerValue)
-          ? defaultPlayerValue
-          : providers_avaliable[0];
+        : favoriteTeam
+          ? favoriteTeam.provider
+          : providers_avaliable.includes(defaultPlayerValue)
+            ? defaultPlayerValue
+            : providers_avaliable[0];
 
     // Determine team
     let team: API.TeamData = {
@@ -87,8 +89,15 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => ({
 
       if (isShared && data[provider].teams[sharedParams.team!]) {
         team = data[provider].getTeam(sharedParams.team!);
-      } else if (favoriteTeam && data[provider].teams[favoriteTeam]) {
-        team = data[provider].getTeam(favoriteTeam);
+      } else if (
+        favoriteTeam &&
+        (data[favoriteTeam.provider] as ProviderTeamIFrame).teams[
+          favoriteTeam.team
+        ]
+      ) {
+        team = (data[favoriteTeam.provider] as ProviderTeamIFrame).getTeam(
+          favoriteTeam.team,
+        );
       } else {
         team = first_team;
       }
@@ -164,14 +173,20 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => ({
   },
   setFavoriteTeam: (team) => {
     const { slug } = usePageStore.getState();
+    const provider = get().provider!;
     if (!slug) return;
 
+    const newTeam = {
+      provider,
+      team,
+    };
+
     playerAnimeFavoriteTeam.getValue().then((current) => {
-      const updated = { ...current, [slug]: team };
+      const updated = { ...current, [slug]: newTeam };
       playerAnimeFavoriteTeam.setValue(updated);
     });
 
-    set({ favoriteTeam: team });
+    set({ favoriteTeam: newTeam });
   },
   removeFavoriteTeam: () => {
     const { slug } = usePageStore.getState();
@@ -210,6 +225,11 @@ interface SharedPlayerParams {
   team: string | null;
   episode: string | null;
   time: string | null;
+}
+
+interface FavoriteTeam {
+  provider: string;
+  team: string;
 }
 
 export const getAvailablePlayers = (data: API.WatchData) =>

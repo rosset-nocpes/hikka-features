@@ -23,11 +23,15 @@ export const watchButtonState = storage.defineItem<boolean>(
   },
 );
 
-// key: anime slug, value: team title
+// key: anime slug
 export const playerAnimeFavoriteTeam = storage.defineItem<
-  Record<string, string>
+  Record<string, { provider: string; team: string }>
 >('local:playerAnimeFavoriteTeam', {
   fallback: {},
+  version: 2,
+  migrations: {
+    2: () => ({}), // reset old values
+  },
 });
 
 export const readerButtonState = storage.defineItem<boolean>(
