@@ -67,10 +67,12 @@ const TeamSelect: FC<Props> = ({ toggleWatchedState }) => {
 
   const orderedTeams = useMemo<API.TeamData[]>(() => {
     if (!data || !provider) return [];
+    if (!(data[provider] instanceof ProviderTeamIFrame)) return [];
+
     const teams = (data[provider] as ProviderTeamIFrame).getTeams();
     return teams.slice().sort((a: API.TeamData, b: API.TeamData) => {
-      if (a.title === favoriteTeam) return -1;
-      if (b.title === favoriteTeam) return 1;
+      if (a.title === favoriteTeam?.team) return -1;
+      if (b.title === favoriteTeam?.team) return 1;
       return 0;
     });
   }, [data, provider, favoriteTeam]);
@@ -88,7 +90,10 @@ const TeamSelect: FC<Props> = ({ toggleWatchedState }) => {
   ) => {
     e.stopPropagation();
 
-    if (favoriteTeam === team.title) {
+    if (
+      favoriteTeam?.provider === provider &&
+      favoriteTeam?.team === team.title
+    ) {
       removeFavoriteTeam();
       return;
     }
@@ -166,8 +171,10 @@ const TeamSelect: FC<Props> = ({ toggleWatchedState }) => {
                       size="icon-sm"
                       className={cn(
                         'group',
-                        favoriteTeam !== team.title &&
-                          'hidden group-hover/item:inline-flex',
+                        !(
+                          favoriteTeam?.provider === provider &&
+                          favoriteTeam?.team === team.title
+                        ) && 'hidden group-hover/item:inline-flex',
                       )}
                       onClick={(e) => handleFavorite(e, team)}
                     >
@@ -175,17 +182,19 @@ const TeamSelect: FC<Props> = ({ toggleWatchedState }) => {
                         <div
                           className={cn(
                             'absolute inset-0 flex items-center justify-center transition-all duration-300 ease-in-out will-change-[transform,opacity,filter]',
-                            favoriteTeam === team.title
+                            favoriteTeam?.provider === provider &&
+                              favoriteTeam?.team === team.title
                               ? 'scale-100 opacity-100 blur-0'
                               : 'scale-[0.25] opacity-0 blur-sm',
                           )}
                         >
-                          <MaterialSymbolsStarRounded className="!size-5 text-yellow-300 transition-transform duration-300 group-hover:scale-125" />
+                          <MaterialSymbolsStarRounded className="!size-5 text-yellow-400 transition-transform duration-300 group-hover:scale-125" />
                         </div>
                         <div
                           className={cn(
                             'opacity transition-[transform,filter] duration-300 ease-in-out will-change-[transform,opacity,filter]',
-                            favoriteTeam === team.title
+                            favoriteTeam?.provider === provider &&
+                              favoriteTeam?.team === team.title
                               ? 'scale-[0.25] opacity-0 blur-sm'
                               : 'scale-100 opacity-100 blur-0',
                           )}

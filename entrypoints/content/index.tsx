@@ -55,8 +55,8 @@ export default defineContentScript({
 
     // (await getPreviousAnimeSlug()) == "" ? setPreviousAnimeSlug("") : "";
 
-    browser.runtime.onMessage.addListener(async (request: any) => {
-      if ((request as any).type === 'page-rendered') {
+    browser.runtime.onMessage.addListener(async (request) => {
+      if (request.type === 'page-rendered') {
         getComputedStyle(document.documentElement).colorScheme === 'dark'
           ? darkMode.setValue(true)
           : darkMode.setValue(false);
@@ -310,7 +310,7 @@ export default defineContentScript({
 
             break;
           }
-          default:
+          default: {
             document.head
               .querySelectorAll('[name=previous-creating-edit][content]')
               .forEach((e) => e.remove());
@@ -327,7 +327,12 @@ export default defineContentScript({
             usePageStore.getState().clearMALId();
             actionRichPresence('remove');
 
+            document.body.removeChild(
+              document.getElementsByTagName('ani-background')[0],
+            );
+
             break;
+          }
         }
       }
     });

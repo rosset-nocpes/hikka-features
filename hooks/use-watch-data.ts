@@ -25,11 +25,11 @@ const useWatchData = () => {
         if (typeof elem === 'string') continue;
 
         if (elem.type === 'team-iframe') {
-          out[key] = new ProviderTeamIFrame();
+          out[key] = new ProviderTeamIFrame(out[key].lang);
           out[key].teams = (elem as ProviderTeamIFrame).teams || {};
           out[key].sortTeams();
         } else if (elem.type === 'iframe') {
-          out[key] = new ProviderIFrame();
+          out[key] = new ProviderIFrame(out[key].lang);
           out[key].episodes = (elem as ProviderIFrame).episodes || [];
         }
       }

@@ -1,5 +1,6 @@
 class ProviderBase {
   type!: API.ProviderType;
+  lang!: ProviderLanguage;
 }
 
 export class ProviderTeamIFrame extends ProviderBase {
@@ -10,10 +11,11 @@ export class ProviderTeamIFrame extends ProviderBase {
     };
   };
 
-  constructor() {
+  constructor(lang = ProviderLanguage.UKRAINIAN) {
     super();
 
     this.type = 'team-iframe';
+    this.lang = lang;
     this.teams = {};
   }
 
@@ -53,10 +55,11 @@ export class ProviderTeamIFrame extends ProviderBase {
 export class ProviderIFrame extends ProviderBase {
   episodes: API.EpisodeDataIFrame[];
 
-  constructor() {
+  constructor(lang = ProviderLanguage.UKRAINIAN) {
     super();
 
     this.type = 'iframe';
+    this.lang = lang;
     this.episodes = [];
   }
 
