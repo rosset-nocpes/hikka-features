@@ -1,6 +1,6 @@
 import { ChevronsUpDown } from 'lucide-react';
 import type { FC } from 'react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +14,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
+import type { ProviderTeamIFrame } from '@/utils/provider_classes';
 import { getAvailablePlayers, usePlayer } from '../context/player-context';
 
 interface Props {
@@ -23,7 +24,7 @@ interface Props {
 const ProviderSelect: FC<Props> = ({ toggleWatchedState }) => {
   const { open } = useSidebar();
 
-  const { container, provider, setProvider } = usePlayer();
+  const { container, provider, setProvider, favoriteTeam } = usePlayer();
   const { data } = useWatchData();
 
   if (!data) return;
@@ -92,11 +93,28 @@ const ProviderSelect: FC<Props> = ({ toggleWatchedState }) => {
                       key={elem}
                       onClick={() => handleSelectPlayer(elem)}
                       className={cn(
-                        'flex-[1_0_50%] items-center justify-center px-1 py-1.5 font-normal',
+                        'flex-[1_0_50%] items-center justify-center overflow-hidden px-1 py-1.5 font-normal',
                         provider === elem &&
                           'bg-accent/60 text-accent-foreground',
                       )}
                     >
+                      {favoriteTeam?.provider === elem && (
+                        <Avatar className="!size-5 rounded-sm duration-150">
+                          <AvatarImage
+                            src={
+                              (
+                                data[
+                                  favoriteTeam.provider
+                                ] as ProviderTeamIFrame
+                              ).getTeam(favoriteTeam.team).logo
+                            }
+                            alt={favoriteTeam.team}
+                          />
+                          <AvatarFallback className="bg-muted-foreground/60">
+                            {favoriteTeam.team[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
                       <span className="flex h-8 items-center justify-center truncate text-center font-semibold">
                         {elem.toUpperCase()}
                       </span>
