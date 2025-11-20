@@ -82,10 +82,10 @@ const ProviderSelect: FC<Props> = ({ toggleWatchedState }) => {
           <div className="flex flex-col">
             {(
               Object.entries(grouped_players) as [ProviderLanguage, string[]][]
-            ).map(([locale, players]) => (
-              <DropdownMenuGroup key={locale}>
+            ).map(([lang, players]) => (
+              <DropdownMenuGroup key={lang}>
                 <DropdownMenuLabel className="text-muted-foreground text-xs">
-                  {LANGUAGE_GROUP_NAMES[locale]}
+                  {LANGUAGE_GROUP_NAMES[lang]}
                 </DropdownMenuLabel>
                 <div className="flex flex-wrap">
                   {players.map((elem) => (
