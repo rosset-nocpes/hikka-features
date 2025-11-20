@@ -45,10 +45,12 @@ const MobileTeamSelect = () => {
 
   const orderedTeams = useMemo<API.TeamData[]>(() => {
     if (!data || !provider) return [];
+    if (!(data[provider] instanceof ProviderTeamIFrame)) return [];
+
     const teams = (data[provider] as ProviderTeamIFrame).getTeams();
     return teams.slice().sort((a: API.TeamData, b: API.TeamData) => {
-      if (a.title === favoriteTeam) return -1;
-      if (b.title === favoriteTeam) return 1;
+      if (a.title === favoriteTeam?.team) return -1;
+      if (b.title === favoriteTeam?.team) return 1;
       return 0;
     });
   }, [data, provider, favoriteTeam]);
@@ -66,7 +68,7 @@ const MobileTeamSelect = () => {
   ) => {
     e.stopPropagation();
 
-    if (favoriteTeam === team.title) {
+    if (favoriteTeam?.team === team.title) {
       removeFavoriteTeam();
       return;
     }
@@ -118,7 +120,8 @@ const MobileTeamSelect = () => {
               <div
                 className={cn(
                   'absolute inset-0 flex items-center justify-center transition-all duration-300 ease-in-out will-change-[transform,opacity,filter]',
-                  favoriteTeam === t.title
+                  favoriteTeam?.provider === provider &&
+                    favoriteTeam?.team === t.title
                     ? 'scale-100 opacity-100 blur-0'
                     : 'scale-[0.25] opacity-0 blur-sm',
                 )}
@@ -128,7 +131,8 @@ const MobileTeamSelect = () => {
               <div
                 className={cn(
                   'opacity transition-[transform,filter] duration-300 ease-in-out will-change-[transform,opacity,filter]',
-                  favoriteTeam === t.title
+                  favoriteTeam?.provider === provider &&
+                    favoriteTeam?.team === t.title
                     ? 'scale-[0.25] opacity-0 blur-sm'
                     : 'scale-100 opacity-100 blur-0',
                 )}
