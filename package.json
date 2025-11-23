@@ -68,5 +68,8 @@
   },
   "overrides": {
     "vite": "npm:rolldown-vite@^7.2.5"
+  },
+  "patchedDependencies": {
+    "publish-browser-extension@3.0.2": "patches/publish-browser-extension@3.0.2.patch"
   }
 }
