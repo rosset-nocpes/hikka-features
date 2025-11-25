@@ -55,8 +55,11 @@ const MobileTeamProviderDrawer = () => {
         <DrawerHeader>
           <DrawerTitle>Оберіть програвач та команду</DrawerTitle>
         </DrawerHeader>
-        <motion.div layout className="flex flex-col gap-4 p-4 pt-0">
-          <div className="flex flex-col gap-2 overflow-y-auto">
+        <motion.div
+          layout
+          className="flex flex-col gap-4 overflow-y-auto p-4 pt-0"
+        >
+          <div className="flex flex-col gap-2">
             {(
               Object.entries(grouped_players) as [ProviderLanguage, string[]][]
             ).map(([lang, players]) => (

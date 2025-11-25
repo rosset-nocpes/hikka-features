@@ -36,9 +36,11 @@ const MobileEpisodeDrawer = () => {
         <div className="flex flex-col gap-2 overflow-y-auto p-4 pt-0">
           {episodeData?.map((ep, index) => (
             <Button
-              key={ep.episode}
+              key={ep.video_url}
               variant={
-                ep.episode === currentEpisode?.episode ? 'default' : 'outline'
+                ep.video_url === currentEpisode?.video_url
+                  ? 'default'
+                  : 'outline'
               }
               onClick={() => handleSelectEpisode(ep)}
               className={cn(
@@ -46,7 +48,7 @@ const MobileEpisodeDrawer = () => {
                 index + 1 <= getWatched() && 'text-muted-foreground',
               )}
             >
-              Епізод #{ep.episode}
+              {`Епізод #${ep.episode}${index > 0 && episodeData[index - 1].episode === ep.episode ? ' (Дублікат)' : ''}`}
             </Button>
           ))}
         </div>

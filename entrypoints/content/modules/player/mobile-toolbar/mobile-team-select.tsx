@@ -77,7 +77,7 @@ const MobileTeamSelect = () => {
   };
 
   return (
-    <motion.div layout className="flex flex-col gap-2">
+    <motion.div layout className="flex flex-col gap-2 overflow-y-auto">
       {orderedTeams.map((t) => (
         <motion.div
           key={t.title}
