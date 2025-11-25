@@ -1,0 +1,26 @@
+import type { FC } from 'react';
+import { Button } from '@/components/ui/button';
+import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
+import player from '../player';
+import MobileEpisodeDrawer from './mobile-episode-drawer';
+import MobileTeamProviderDrawer from './mobile-team-provider-drawer';
+
+type Props = {};
+
+const PlayerMobileToolbar: FC<Props> = ({}) => {
+  return (
+    <div className="-translate-x-1/2 absolute bottom-3 left-1/2 z-20 flex gap-2 rounded-2xl bg-secondary/60 p-2 backdrop-blur-xl sm:hidden">
+      <MobileTeamProviderDrawer />
+      <MobileEpisodeDrawer />
+      <Button
+        variant="secondary"
+        size="md"
+        onClick={() => player().then((x) => x.remove())}
+      >
+        <MaterialSymbolsCloseRounded />
+      </Button>
+    </div>
+  );
+};
+
+export default PlayerMobileToolbar;

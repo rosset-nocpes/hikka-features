@@ -1,0 +1,13 @@
+diff --git a/style.css b/style.css
+index 9d7c6bf22013d888051243badb4197301cdffe46..3bddaace06fcb02cd476c73b8f9cbc391f7c5c1f 100644
+--- a/style.css
++++ b/style.css
+@@ -174,7 +174,7 @@
+ }
+ 
+ @media (pointer: fine) {
+-  [data-vaul-handle-hitarea]: {
++  [data-vaul-handle-hitarea] {
+     width: 100%;
+     height: 100%;
+   }

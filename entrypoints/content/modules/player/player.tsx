@@ -6,12 +6,14 @@ import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
+import drawerStyles from '../../../../node_modules/vaul/style.css?inline';
 import { queryClient } from '../..';
 import {
   getWatched,
   PlayerProvider,
   usePlayer,
 } from './context/player-context';
+import PlayerMobileToolbar from './mobile-toolbar/player-mobile-toolbar';
 import PlayerNavbar from './player-navbar';
 import PlayerSidebar from './sidebar/player-sidebar';
 import PlayerToolbar from './toolbar/player-toolbar';
@@ -33,6 +35,10 @@ export default function player() {
 
       container.className = 'h-full';
       container.classList.toggle('dark', await darkMode.getValue());
+
+      const style = document.createElement('style');
+      style.textContent = drawerStyles;
+      container.appendChild(style);
 
       const root = createRoot(wrapper);
       root.render(
@@ -258,10 +264,11 @@ export const Player = () => {
   return (
     <Card
       className={cn(
-        'relative z-10 flex size-full overflow-hidden rounded-none duration-300 sm:max-h-[722px] sm:max-w-[1282px] sm:rounded-lg',
+        'relative z-10 flex size-full overflow-hidden rounded-none border-none duration-300 sm:max-h-[722px] sm:max-w-[1282px] sm:rounded-lg sm:border',
         getTheatreState && 'sm:max-h-full sm:max-w-full',
       )}
     >
+      <PlayerMobileToolbar />
       <PlayerNavbar showControls={showControls} />
       <CardContent
         className={cn(
