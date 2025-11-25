@@ -71,5 +71,6 @@
   },
   "patchedDependencies": {
     "vaul@1.1.2": "patches/vaul@1.1.2.patch"
+    "publish-browser-extension@3.0.2": "patches/publish-browser-extension@3.0.2.patch"
   }
 }

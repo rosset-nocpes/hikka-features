@@ -1,0 +1,24 @@
+diff --git a/dist/index.cjs b/dist/index.cjs
+index e42145abcbb414fa247ad77dc5e71b633eb78b28..c5a17e47d5e85644c2710720ec7edca97df70fe2 100644
+--- a/dist/index.cjs
++++ b/dist/index.cjs
+@@ -3274,6 +3274,7 @@ var AddonsApi = class {
+     } else {
+       form.append("source", "");
+     }
++    form.append("compatibility", ['firefox', 'android']);
+     return await fetch(endpoint.href, {
+       method: "POST",
+       body: form,
+diff --git a/dist/index.js b/dist/index.js
+index 455607d05d0a0beafb09ec45ba83732ab434d4cc..ddb2ec5253f2de66436db7f450ab3da0879e4687 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -3256,6 +3256,7 @@ var AddonsApi = class {
+     } else {
+       form.append("source", "");
+     }
++    form.append("compatibility", ['firefox', 'android']);
+     return await fetch(endpoint.href, {
+       method: "POST",
+       body: form,
