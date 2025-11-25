@@ -2,7 +2,7 @@
   "name": "hikka-features",
   "description": "Універсальне розширення для hikka.io",
   "private": true,
-  "version": "3.0.9",
+  "version": "3.0.10",
   "type": "module",
   "scripts": {
     "dev": "wxt",
@@ -70,7 +70,7 @@
     "vite": "npm:rolldown-vite@^7.2.5"
   },
   "patchedDependencies": {
-    "vaul@1.1.2": "patches/vaul@1.1.2.patch"
+    "vaul@1.1.2": "patches/vaul@1.1.2.patch",
     "publish-browser-extension@3.0.2": "patches/publish-browser-extension@3.0.2.patch"
   }
 }
