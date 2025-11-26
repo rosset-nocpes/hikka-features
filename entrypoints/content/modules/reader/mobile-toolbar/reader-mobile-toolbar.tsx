@@ -30,7 +30,7 @@ const ReaderMobileToolbar: FC<Props> = ({ carouselApi }) => {
   };
 
   return (
-    <div className="absolute bottom-2 z-20 flex w-full justify-center px-2 sm:hidden">
+    <div className="absolute bottom-2 z-20 flex w-full justify-center px-2 md:hidden">
       <div className="flex gap-2 rounded-lg bg-background/60 p-2 backdrop-blur-xl">
         {/* <Button variant="secondary" size="md" onClick={() => setOpen(!open)}>
           {open ? (

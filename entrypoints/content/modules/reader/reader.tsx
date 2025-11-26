@@ -27,7 +27,7 @@ export default function reader() {
       container.append(wrapper);
 
       wrapper.className =
-        'size-full sm:backdrop-blur-sm bg-black/60 flex items-center justify-center sm:p-8 duration-300';
+        'size-full md:backdrop-blur-sm bg-black/60 flex items-center justify-center md:p-8 duration-300';
 
       container.className = 'h-full';
       container.classList.toggle('dark', await darkMode.getValue());
@@ -165,7 +165,7 @@ export const Reader = () => {
   return (
     <Card
       className={cn(
-        'relative z-10 flex size-full overflow-hidden rounded-none border-none duration-300 sm:max-w-[1282px] sm:rounded-lg sm:border',
+        'relative z-10 flex size-full overflow-hidden rounded-none border-none duration-300 md:max-w-[1282px] md:rounded-lg md:border',
         fullscreen && '!max-w-full !rounded-none !border-none',
       )}
     >

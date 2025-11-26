@@ -49,7 +49,7 @@ const PlayerToolbar: FC<Props> = ({
   return (
     <div
       className={cn(
-        'hidden items-center justify-end gap-2 px-2 opacity-100 duration-300 sm:flex',
+        'hidden items-center justify-end gap-2 px-2 opacity-100 duration-300 md:flex',
         !open && '-mt-8 opacity-0',
       )}
     >

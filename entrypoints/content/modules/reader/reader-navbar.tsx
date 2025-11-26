@@ -63,7 +63,7 @@ const ReaderNavbar: FC<Props> = ({ carouselApi, showControls = true }) => {
   }, [fullscreen]);
 
   return (
-    <div className="hidden sm:flex">
+    <div className="hidden md:flex">
       <div
         className={cn(
           'absolute top-2 left-2 z-20 flex gap-2 duration-300',

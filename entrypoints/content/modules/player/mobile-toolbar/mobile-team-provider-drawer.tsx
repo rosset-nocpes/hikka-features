@@ -1,4 +1,5 @@
 import { motion } from 'motion/react';
+import type { FC } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,7 +13,11 @@ import { Separator } from '@/components/ui/separator';
 import { getAvailablePlayers, usePlayer } from '../context/player-context';
 import MobileTeamSelect from './mobile-team-select';
 
-const MobileTeamProviderDrawer = () => {
+interface Props {
+  toggleWatchedState: (state: boolean) => void;
+}
+
+const MobileTeamProviderDrawer: FC<Props> = ({ toggleWatchedState }) => {
   const { container, provider, setProvider, team } = usePlayer();
   const { data } = useWatchData();
 
@@ -37,7 +42,7 @@ const MobileTeamProviderDrawer = () => {
 
   const handleSelectPlayer = (value: string) => {
     setProvider(value);
-    // toggleWatchedState(false);
+    toggleWatchedState(false);
   };
 
   return (

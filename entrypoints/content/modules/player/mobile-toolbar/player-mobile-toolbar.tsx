@@ -5,12 +5,14 @@ import player from '../player';
 import MobileEpisodeDrawer from './mobile-episode-drawer';
 import MobileTeamProviderDrawer from './mobile-team-provider-drawer';
 
-type Props = {};
+interface Props {
+  toggleWatchedState: (state: boolean) => void;
+}
 
-const PlayerMobileToolbar: FC<Props> = ({}) => {
+const PlayerMobileToolbar: FC<Props> = ({ toggleWatchedState }) => {
   return (
-    <div className="-translate-x-1/2 absolute bottom-3 left-1/2 z-20 flex gap-2 rounded-2xl bg-secondary/60 p-2 backdrop-blur-xl sm:hidden">
-      <MobileTeamProviderDrawer />
+    <div className="-translate-x-1/2 absolute bottom-3 left-1/2 z-20 flex gap-2 rounded-2xl bg-secondary/60 p-2 backdrop-blur-xl md:hidden">
+      <MobileTeamProviderDrawer toggleWatchedState={toggleWatchedState} />
       <MobileEpisodeDrawer />
       <Button
         variant="secondary"

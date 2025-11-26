@@ -31,7 +31,7 @@ export default function player() {
       container.append(wrapper);
 
       wrapper.className =
-        'size-full backdrop-blur-sm bg-black/60 flex items-center justify-center sm:p-8';
+        'size-full backdrop-blur-sm bg-black/60 flex items-center justify-center md:p-8';
 
       container.className = 'h-full';
       container.classList.toggle('dark', await darkMode.getValue());
@@ -128,7 +128,7 @@ export const Player = () => {
   const isHandlingNext = useRef(false);
 
   useEffect(() => {
-    if (!container) return;
+    if (!container || !data || !provider || !team || !currentEpisode) return;
 
     const playerIframe = container.querySelector(
       '#player-iframe',
@@ -168,7 +168,7 @@ export const Player = () => {
             !getWatchedState &&
             isPlayerReady
           ) {
-            if (getWatched() + 1 === currentEpisode!.episode) {
+            if (getWatched() + 1 === currentEpisode.episode) {
               (
                 document.body.querySelector(
                   '.grid > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) button',
@@ -181,19 +181,19 @@ export const Player = () => {
         }
 
         case 'end': {
-          const providerData = data![provider!];
+          const providerData = data[provider];
           let nextEpisode: API.EpisodeData | undefined;
 
           if (providerData instanceof ProviderTeamIFrame) {
-            const teamEpisodes = providerData.teams[team!.title].episodes;
+            const teamEpisodes = providerData.teams[team.title].episodes;
             nextEpisode = teamEpisodes.find(
               (episode: API.EpisodeData) =>
-                episode.episode === currentEpisode!.episode + 1,
+                episode.episode === currentEpisode.episode + 1,
             );
           } else if (providerData instanceof ProviderIFrame) {
             nextEpisode = providerData.episodes.find(
               (episode: API.EpisodeData) =>
-                episode.episode === currentEpisode!.episode + 1,
+                episode.episode === currentEpisode.episode + 1,
             );
           }
 
@@ -264,11 +264,11 @@ export const Player = () => {
   return (
     <Card
       className={cn(
-        'relative z-10 flex size-full overflow-hidden rounded-none border-none duration-300 sm:max-h-[722px] sm:max-w-[1282px] sm:rounded-lg sm:border',
-        getTheatreState && 'sm:max-h-full sm:max-w-full',
+        'relative z-10 flex size-full overflow-hidden rounded-none border-none duration-300 md:max-h-[722px] md:max-w-[1282px] md:rounded-lg md:border',
+        getTheatreState && 'md:max-h-full md:max-w-full',
       )}
     >
-      <PlayerMobileToolbar />
+      <PlayerMobileToolbar toggleWatchedState={toggleWatchedState} />
       <PlayerNavbar showControls={showControls} />
       <CardContent
         className={cn(

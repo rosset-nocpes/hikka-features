@@ -23,7 +23,7 @@ const PageSwitcher: FC<Props> = ({ carouselApi }) => {
   return (
     <div
       className={cn(
-        'absolute z-20 hidden w-8 cursor-default flex-col items-center justify-center gap-2 rounded-md bg-sidebar py-1 font-medium duration-300 sm:flex',
+        'absolute z-20 hidden w-8 cursor-default flex-col items-center justify-center gap-2 rounded-md bg-sidebar py-1 font-medium duration-300 md:flex',
         orientation === 'vertical' && 'bottom-1/2 left-2 translate-y-1/2',
         orientation === 'vertical' && scrollMode && '-left-8 opacity-0',
         orientation === 'horizontal' &&
