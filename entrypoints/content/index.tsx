@@ -3,6 +3,7 @@ import '../app.css';
 import aniBackground from './modules/ani-background';
 // import UCharURL from "@/utils/u-char-url";
 import aniButtons from './modules/ani-buttons';
+import editorToolbar from './modules/editor-toolbar';
 import anime_page from './pages/anime-page';
 import manga_page from './pages/manga-page';
 import novel_page from './pages/novel-page';
@@ -42,16 +43,6 @@ export default defineContentScript({
     //   () => storage.getItem("local:previousAnimeSlug"),
     //   (input: string) => storage.setItem("local:previousAnimeSlug", input),
     // ];
-
-    // Only for edit page!
-    const isModerator = () =>
-      document.evaluate(
-        '/html/body/main/div/div[1]/div/div[1]/div[2]',
-        document,
-        null,
-        XPathResult.BOOLEAN_TYPE,
-        null,
-      ).booleanValue;
 
     // (await getPreviousAnimeSlug()) == "" ? setPreviousAnimeSlug("") : "";
 
@@ -126,6 +117,8 @@ export default defineContentScript({
 
                 (await aniButtons('last', true, info_block, data))?.mount();
 
+                (await editorToolbar())?.mount();
+
                 // aniBackground
                 switch (content_type) {
                   case 'anime':
@@ -169,43 +162,6 @@ export default defineContentScript({
                     }
                     break;
                 }
-
-                // next-edit-button;
-                // if (
-                //   !creatingEdit &&
-                //   (await getEditInfo()).status === "pending" &&
-                //   (getPreviousCreatingEdit() === undefined ||
-                //     getPreviousCreatingEdit() === "false") &&
-                //   isModerator()
-                // ) {
-                //   if (
-                //     document.body.querySelectorAll("#next-edit-button").length ===
-                //     0
-                //   ) {
-                //     const [getNextEditButton, toggleNextEditButton] =
-                //       createSignal(true);
-
-                //     render(
-                //       () => (
-                //         <button
-                //           id="next-edit-button"
-                //           class="inline-flex gap-2 items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-50 border border-secondary/60 bg-secondary/30 hover:bg-secondary/60 hover:text-secondary-foreground h-12 px-4 py-2 hikka-features"
-                //           disabled={getNextEditButton()}
-                //           onClick={() => {
-                //             window.open(url, "_self");
-                //           }}
-                //         >
-                //           <span class="tabler--circle-arrow-right-filled"></span>
-                //         </button>
-                //       ),
-                //       document.querySelector("#breadcrumbs")!
-                //     );
-
-                //     const url = await NextEditURL(edit_info.edit_id);
-
-                //     url ? toggleNextEditButton(!getNextEditButton()) : null;
-                //   }
-                // }
 
                 // u-char-button
                 //   if (
