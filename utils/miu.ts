@@ -1,305 +1,183 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 
-const BASE_URL = 'https://corsproxy.io/?url=https://manga.in.ua';
+class MIUScraper {
+  private readonly baseUrl = 'https://manga.in.ua';
+  private readonly endpoints = {
+    search: `${this.baseUrl}/index.php?do=search`,
+    loadChapters: 'engine/ajax/controller.php?mod=load_chapters',
+    loadImages: 'engine/ajax/controller.php?mod=load_chapters_image',
+  };
 
-function parseUserHash(html: string): string | null {
-  const $ = cheerio.load(html);
-  let userHash: string | null = null;
-  $('script').each((_i, el) => {
-    const scriptContent = $(el).html();
-    if (scriptContent?.includes("site_login_hash = '")) {
-      const match = scriptContent.match(/site_login_hash = '([^']+)';/);
-      if (match?.[1]) {
-        userHash = match[1];
-        return false; // break a .each loop in cheerio
-      }
-    }
-  });
-  if (!userHash) {
-    console.warn('Could not find user_hash (site_login_hash).');
+  /**
+   * Resolves the proxy-wrapped URL for requests
+   */
+  private async getProxyUrl(targetUrl: string): Promise<string> {
+    const branch = await backendBranch.getValue();
+    const backendBase = BACKEND_BRANCHES[branch];
+    const absoluteUrl = targetUrl.startsWith('http')
+      ? targetUrl
+      : `${this.baseUrl}/${targetUrl}`;
+
+    return `${backendBase}/proxy?r=${encodeURIComponent(absoluteUrl)}`;
   }
-  return userHash;
-}
 
-function parseUserHashQuery(html: string, endpoint: string): string | null {
-  const $ = cheerio.load(html);
-  let userHashQuery: string | null = null;
+  /**
+   * Generic request helper
+   */
+  private async request(
+    url: string,
+    method: 'GET' | 'POST' = 'GET',
+    data?: any,
+  ) {
+    const proxyUrl = await this.getProxyUrl(url);
+    try {
+      const response = await axios({ method, url: proxyUrl, data });
+      return response.data;
+    } catch (error) {
+      console.error(`[MIUScraper] Error during ${method} ${url}:`, error);
+      throw new Error(`MIUScraper failed to communicate with ${url}`);
+    }
+  }
 
-  $('script').each((_i, el) => {
-    const scriptContent = $(el).html();
-    if (
-      scriptContent?.includes(endpoint) &&
-      scriptContent.includes('site_login_hash')
-    ) {
-      const relevantPart = scriptContent.substring(
-        scriptContent.indexOf(endpoint),
+  /**
+   * Internal parser: Extracts site_login_hash
+   */
+  private extractUserHash(html: string): string {
+    const match = html.match(/site_login_hash\s*=\s*'([^']+)'/);
+    if (!match?.[1]) throw new Error('Could not find site_login_hash.');
+    return match[1];
+  }
+
+  /**
+   * Internal parser: Detects the dynamic key name for the hash query
+   */
+  private extractQueryKey(html: string, endpoint: string): string {
+    const escaped = endpoint.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`${escaped}.*?{(.*?)}`, 's');
+    const match = html.match(regex);
+
+    if (match?.[1]) {
+      const keyMatch = match[1].match(
+        /["']?([a-zA-Z0-9_]+)["']?\s*:\s*["']?(site_login_hash|dle_user_hash)["']?/,
       );
-      const paramsMatch = relevantPart.match(/\{(.*?)\}/s);
-      if (paramsMatch?.[1]) {
-        const paramsString = paramsMatch[1];
-        const hashParamMatch = paramsString.match(
-          /["']?([a-zA-Z0-9_]+)["']?\s*:\s*["']?site_login_hash["']?/,
-        );
-        if (hashParamMatch?.[1] && hashParamMatch[1] !== 'site_login_hash') {
-          userHashQuery = hashParamMatch[1];
-        } else {
-          const fixedHashQueryMatch = paramsString.match(
-            /["']?(dle_user_hash|user_hash)["']?\s*:\s*["']?(site_login_hash|dle_user_hash)["']?/,
-          );
-          if (fixedHashQueryMatch?.[1]) {
-            // Find the key part if value is site_login_hash or dle_user_hash
-            const potentialKey = paramsString
-              .substring(0, paramsString.indexOf(fixedHashQueryMatch[0]))
-              .split(/[,{]/)
-              .pop()
-              ?.trim();
-            const keyMatch = potentialKey?.match(/["']?([a-zA-Z0-9_]+)["']?$/);
-            if (keyMatch?.[1]) {
-              userHashQuery = keyMatch[1];
-            } else if (
-              fixedHashQueryMatch[1] &&
-              !['site_login_hash', 'dle_user_hash'].includes(
-                fixedHashQueryMatch[1],
-              )
-            ) {
-              userHashQuery = fixedHashQueryMatch[1];
-            }
-          }
-        }
-
-        if (userHashQuery) return false; // break
+      if (
+        keyMatch?.[1] &&
+        !['site_login_hash', 'dle_user_hash'].includes(keyMatch[1])
+      ) {
+        return keyMatch[1];
       }
     }
-  });
-  if (!userHashQuery && html.includes('dle_user_hash')) {
-    userHashQuery = 'dle_user_hash';
+    return html.includes('dle_user_hash') ? 'dle_user_hash' : 'user_hash';
   }
 
-  if (!userHashQuery) {
-    console.warn(
-      `Could not find user_hash_query for endpoint: ${endpoint}. Trying common 'user_hash'.`,
-    );
-    userHashQuery = 'user_hash';
-  }
-  return userHashQuery;
-}
+  /**
+   * Public API: Fetches all chapters for a manga
+   */
+  public async getChapters(data: any): Promise<API.ChapterData[]> {
+    const title = data.title_ua || data.title_en;
+    let mangaUrl = data.external.find(
+      (link: any) => link.text === 'Manga.in.ua',
+    )?.url;
 
-export async function get_miu_chapter_pages(url: string): Promise<string[]> {
-  const chapterPageResponse = await axios
-    .get(`https://corsproxy.io/?url=${url}`)
-    .catch((error) => {
-      console.error('Error fetching chapter page:', error);
-      throw new Error(`Failed to fetch chapter page at ${url}`);
-    });
-  const chapterPageHtml = chapterPageResponse.data;
-  const $chapterPage = cheerio.load(chapterPageHtml);
-
-  // 5. Extract details for image list request from chapter page
-  const userHashChapterPage = parseUserHash(chapterPageHtml);
-  if (!userHashChapterPage) {
-    throw new Error('Could not parse user_hash from chapter page.');
-  }
-
-  const imageListEndpoint =
-    'engine/ajax/controller.php?mod=load_chapters_image';
-  const userHashQueryChapterPage = parseUserHashQuery(
-    chapterPageHtml,
-    imageListEndpoint,
-  );
-  if (!userHashQueryChapterPage) {
-    throw new Error(
-      'Could not parse user_hash_query from chapter page for images.',
-    );
-  }
-
-  const comicsElement = $chapterPage('div#comics');
-  if (!comicsElement.length) {
-    throw new Error('Could not find "comics" element on chapter page.');
-  }
-  const newsIdForImages = comicsElement.attr('data-news_id');
-  if (!newsIdForImages) {
-    throw new Error(
-      'Missing data-news_id from "comics" element for fetching images.',
-    );
-  }
-
-  // 6. Fetch image list
-  const imageUrlParams = new URLSearchParams();
-  imageUrlParams.append('news_id', newsIdForImages);
-  imageUrlParams.append('action', 'show');
-  imageUrlParams.append(userHashQueryChapterPage, userHashChapterPage);
-
-  const finalImageUrl = `${BASE_URL}/${encodeURIComponent(`${imageListEndpoint}&${imageUrlParams.toString()}`)}`;
-  console.log(`Fetching image list from: ${finalImageUrl}`);
-
-  const imageListHtmlResponse = await axios
-    .get(finalImageUrl)
-    .catch((error) => {
-      console.error('Error fetching image list:', error);
-      throw new Error('Failed to fetch image list.');
-    });
-
-  const $imageList = cheerio.load(imageListHtmlResponse.data);
-  const images: string[] = [];
-  const backend_url = BACKEND_BRANCHES[await backendBranch.getValue()];
-  $imageList('img').each((_, imgElement) => {
-    const imageUrl = $imageList(imgElement).attr('data-src');
-    if (imageUrl) {
-      images.push(`${backend_url}/proxy?r=${imageUrl}`);
-    }
-  });
-
-  if (images.length === 0) {
-    console.warn(
-      'No images found. The response might be unexpected or selector needs adjustment.',
-    );
-    console.warn(
-      'Image list response data:',
-      `${imageListHtmlResponse.data.substring(0, 500)}...`,
-    );
-  }
-
-  console.log(`Fetched ${images.length} pages.`);
-  return images;
-}
-
-export async function get_miu_chapters(data: any): Promise<API.ChapterData[]> {
-  let manga_url: string | undefined = data.external.find(
-    (link: any) => link.text === 'Manga.in.ua',
-  )?.url;
-  const title = data.title_ua || data.title_en;
-
-  if (!manga_url) {
-    console.log(`Searching for manga: ${title}`);
-    const searchFormData = new URLSearchParams();
-    searchFormData.append('do', 'search');
-    searchFormData.append('subaction', 'search');
-    searchFormData.append('story', `${title} ${data.year}`);
-    searchFormData.append('search_start', '1'); // page 1
-
-    const searchResponse = await axios
-      .post(`${BASE_URL}/index.php?do=search`, searchFormData)
-      .catch((error) => {
-        console.error('Error searching for manga:', error);
-        throw new Error(`Failed to search for manga "${title}"`);
+    // 1. Search if necessary
+    if (!mangaUrl) {
+      const searchData = new URLSearchParams({
+        do: 'search',
+        subaction: 'search',
+        story: `${title} ${data.year}`,
+        search_start: '1',
       });
-
-    const $search = cheerio.load(searchResponse.data);
-    const mangaLinkElement = $search(
-      'main.main article.item h3.card__title a',
-    ).first();
-    if (!mangaLinkElement.length) {
-      console.error('Manga not found from search.');
-      throw new Error(`Manga "${title}" not found.`);
+      const searchHtml = await this.request(
+        this.endpoints.search,
+        'POST',
+        searchData,
+      );
+      const $search = cheerio.load(searchHtml);
+      mangaUrl = $search('main.main article.item h3.card__title a')
+        .first()
+        .attr('href');
+      if (!mangaUrl) throw new Error(`Manga "${title}" not found.`);
     }
-    manga_url = mangaLinkElement.attr('href');
-    if (!manga_url) {
-      console.error('Manga URL not found from search result.');
-      throw new Error('Could not extract manga URL from search result.');
-    }
-  }
-  console.log(`Found manga page URL: ${manga_url}`);
 
-  // 2. Go to manga page to get details for chapter list request
-  const mangaPageResponse = await axios
-    .get(`https://corsproxy.io/?url=${manga_url}`)
-    .catch((error) => {
-      console.error('Error fetching manga page:', error);
-      throw new Error(`Failed to fetch manga page at ${manga_url}`);
-    });
-  const mangaPageHtml = mangaPageResponse.data;
-  const $mangaPage = cheerio.load(mangaPageHtml);
+    // 2. Parse Manga Page for AJAX details
+    const pageHtml = await this.request(mangaUrl);
+    const $page = cheerio.load(pageHtml);
+    const container = $page('div#linkstocomics');
 
-  const userHashMangaPage = parseUserHash(mangaPageHtml);
-  if (!userHashMangaPage) {
-    throw new Error('Could not parse user_hash from manga page.');
-  }
-
-  const chapterListEndpoint = 'engine/ajax/controller.php?mod=load_chapters';
-  const userHashQueryMangaPage = parseUserHashQuery(
-    mangaPageHtml,
-    chapterListEndpoint,
-  );
-  if (!userHashQueryMangaPage) {
-    throw new Error('Could not parse user_hash_query from manga page.');
-  }
-
-  const linkstocomicsElement = $mangaPage('div#linkstocomics');
-  if (!linkstocomicsElement.length) {
-    throw new Error('Could not find "linkstocomics" element on manga page.');
-  }
-  const newsId = linkstocomicsElement.attr('data-news_id');
-  const newsCategory = linkstocomicsElement.attr('data-news_category');
-
-  if (!newsId || !newsCategory) {
-    throw new Error('Missing data attributes from "linkstocomics" element.');
-  }
-
-  // 3. Fetch chapter list
-  console.log('Fetching chapter list...');
-  const chapterListFormData = new URLSearchParams();
-  chapterListFormData.append('action', 'show');
-  chapterListFormData.append('news_id', newsId);
-  chapterListFormData.append('news_category', newsCategory);
-  // chapterListFormData.append("this_link", thisLink);
-  chapterListFormData.append(userHashQueryMangaPage, userHashMangaPage);
-
-  const chapterListResponse = await axios
-    .post(`${BASE_URL}/${chapterListEndpoint}`, chapterListFormData)
-    .catch((error) => {
-      console.error('Error fetching chapter list:', error);
-      throw new Error('Failed to fetch chapter list.');
+    const params = new URLSearchParams({
+      action: 'show',
+      news_id: container.attr('data-news_id') || '',
+      news_category: container.attr('data-news_category') || '',
+      [this.extractQueryKey(pageHtml, this.endpoints.loadChapters)]:
+        this.extractUserHash(pageHtml),
     });
 
-  const $chapterList = cheerio.load(chapterListResponse.data);
-  const chapters: API.ChapterData[] = [];
+    // 3. Fetch Chapter List via AJAX
+    const listHtml = await this.request(
+      this.endpoints.loadChapters,
+      'POST',
+      params,
+    );
+    const $list = cheerio.load(listHtml);
+    const chapters: API.ChapterData[] = [];
 
-  $chapterList('body')
-    .children()
-    .each((_i, el) => {
-      const $chapterElement = $chapterList(el);
-      const linkElement = $chapterElement.find('a').first();
-      const chapterHref = linkElement.attr('href');
-      const chapterTitleText = linkElement.text().trim(); // "Розділ X: Назва розділу" or "Розділ X"
+    $list('body > *').each((_, el) => {
+      const $el = $list(el);
+      const $link = $el.find('a').first();
+      const href = $link.attr('href') || '';
+      const text = $link.text().trim();
 
-      // todo
-      if (chapterTitleText.includes('Альтернативний переклад')) return;
-
-      const chapterTitle = chapterTitleText.includes('-')
-        ? chapterTitleText.split('-')[1].trim()
-        : '';
-      const chapterVolume = $chapterElement.attr('manga-tom') || '0';
-      const chapterNumber = $chapterElement.attr('manga-chappter') || '0';
-
-      const scanlator = $chapterElement.attr('translate') || '';
-      const date_upload = $chapterElement.children().first().text().trim();
-
-      const chapterId = chapterHref
-        ? chapterHref.split('/').pop()?.split('-')[0] || chapterNumber
-        : chapterNumber;
+      if (text.includes('Альтернативний переклад')) return;
 
       chapters.push({
-        id: chapterId,
-        scanlator,
-        date_upload,
-        volume: Number(chapterVolume),
-        chapter: Number(chapterNumber),
-        title: chapterTitle,
-        url: chapterHref || '',
+        id:
+          href.split('/').pop()?.split('-')[0] ||
+          $el.attr('manga-chappter') ||
+          '0',
+        scanlator: $el.attr('translate') || '',
+        date_upload: $el.children().first().text().trim(),
+        volume: Number($el.attr('manga-tom') || 0),
+        chapter: Number($el.attr('manga-chappter') || 0),
+        title: text.includes('-') ? text.split('-')[1].trim() : '',
+        url: href,
       });
     });
 
-  if (chapters.length === 0) {
-    console.warn(
-      'No chapters found. The response might be unexpected or selector needs adjustment.',
-    );
-    console.warn(
-      'Chapter list response data:',
-      `${chapterListResponse.data.substring(0, 500)}...`,
-    );
+    return chapters;
   }
 
-  console.log(`Fetched ${chapters.length} chapters.`);
-  return chapters;
+  /**
+   * Public API: Fetches image pages for a specific chapter URL
+   */
+  public async getChapterPages(url: string): Promise<string[]> {
+    const html = await this.request(url);
+    const $ = cheerio.load(html);
+
+    const params = new URLSearchParams({
+      news_id: $('div#comics').attr('data-news_id') || '',
+      action: 'show',
+      [this.extractQueryKey(html, this.endpoints.loadImages)]:
+        this.extractUserHash(html),
+    });
+
+    const imgListHtml = await this.request(
+      `${this.endpoints.loadImages}&${params.toString()}`,
+    );
+    const $imgs = cheerio.load(imgListHtml);
+    const branch = await backendBranch.getValue();
+    const backendBase = BACKEND_BRANCHES[branch];
+
+    const images: string[] = [];
+    $imgs('img').each((_, img) => {
+      const src = $(img).attr('data-src');
+      if (src) images.push(`${backendBase}/proxy?r=${encodeURIComponent(src)}`);
+    });
+
+    return images;
+  }
 }
+
+const miuScraper = new MIUScraper();
+
+export default miuScraper;
