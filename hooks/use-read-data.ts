@@ -10,7 +10,11 @@ const useReadData = () => {
     queryFn: async () => {
       const r = await miuScraper.getChapters(data);
 
-      return { chapters: r } as unknown as API.ReadData;
+      if (!r.length) {
+        throw new Error('No chapters found');
+      }
+
+      return { chapters: r } as API.ReadData;
     },
     retry: false,
     staleTime: Infinity,
