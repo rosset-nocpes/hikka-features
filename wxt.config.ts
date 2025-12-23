@@ -1,4 +1,5 @@
 import { resolve } from 'node:path';
+import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import Icons from 'unplugin-icons/vite';
 import { loadEnv } from 'vite';
@@ -13,7 +14,7 @@ const isWindows = process.platform === 'win32';
 export default defineConfig({
   modules: ['@wxt-dev/auto-icons'],
   vite: () => ({
-    plugins: [react(), Icons({ compiler: 'jsx', jsx: 'react' })],
+    plugins: [react(), tailwindcss(), Icons({ compiler: 'jsx', jsx: 'react' })],
     optimizeDeps: {
       entries: ['entrypoints/content/**/*.tsx'],
       include: ['react', 'react-dom'],

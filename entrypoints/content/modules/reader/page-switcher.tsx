@@ -27,7 +27,7 @@ const PageSwitcher: FC<Props> = ({ carouselApi }) => {
         orientation === 'vertical' && 'bottom-1/2 left-2 translate-y-1/2',
         orientation === 'vertical' && scrollMode && '-left-8 opacity-0',
         orientation === 'horizontal' &&
-          '-translate-x-1/2 -rotate-90 bottom-2 left-1/2 translate-y-1/4',
+          'bottom-2 left-1/2 -translate-x-1/2 translate-y-1/4 -rotate-90',
         orientation === 'horizontal' && scrollMode && '-bottom-8 opacity-0',
         !scrollMode && 'opacity-40 hover:opacity-100',
       )}

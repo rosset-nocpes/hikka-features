@@ -95,7 +95,7 @@ const MobileTeamSelect = () => {
             className={cn(
               'group/item w-full p-1 font-normal hover:bg-secondary/20',
               t.title === team.title &&
-                '!bg-secondary !text-secondary-foreground',
+                'bg-secondary! text-secondary-foreground!',
             )}
           >
             <Avatar className="rounded-sm">
@@ -123,21 +123,21 @@ const MobileTeamSelect = () => {
                   favoriteTeam?.provider === provider &&
                     favoriteTeam?.team === t.title
                     ? 'scale-100 opacity-100 blur-0'
-                    : 'scale-[0.25] opacity-0 blur-sm',
+                    : 'scale-[0.25] opacity-0 blur-xs',
                 )}
               >
-                <MaterialSymbolsStarRounded className="!size-7 text-yellow-300 transition-transform duration-300" />
+                <MaterialSymbolsStarRounded className="size-7! text-yellow-300 transition-transform duration-300" />
               </div>
               <div
                 className={cn(
                   'opacity transition-[transform,filter] duration-300 ease-in-out will-change-[transform,opacity,filter]',
                   favoriteTeam?.provider === provider &&
                     favoriteTeam?.team === t.title
-                    ? 'scale-[0.25] opacity-0 blur-sm'
+                    ? 'scale-[0.25] opacity-0 blur-xs'
                     : 'scale-100 opacity-100 blur-0',
                 )}
               >
-                <MaterialSymbolsStarRateOutlineRounded className="!size-7 text-muted-foreground transition-transform duration-300" />
+                <MaterialSymbolsStarRateOutlineRounded className="size-7! text-muted-foreground transition-transform duration-300" />
               </div>
             </Button>
             {/*<div className="flex w-full items-center justify-between gap-2  text-left text-sm">

@@ -110,7 +110,7 @@ const FandubBlock: FC<Props> = ({ container, smallerTitle }) => {
               ))}
             {(isError || (data && !data.fandub)) && (
               <BlockEntry className="cursor-default text-muted-foreground">
-                <Avatar className="size-8 rounded-sm">
+                <Avatar className="size-8 rounded-md">
                   <AvatarFallback>
                     <MaterialSymbolsSadTabRounded className="size-6" />
                   </AvatarFallback>
@@ -128,7 +128,7 @@ const FandubBlock: FC<Props> = ({ container, smallerTitle }) => {
                   >
                     {data.fandub.slice(0, 3).map((team) => (
                       <BlockEntry key={team.title} href={team.link}>
-                        <Avatar className="size-8 rounded-sm">
+                        <Avatar className="size-8 rounded-md">
                           <AvatarImage loading="lazy" src={team.logo} />
                           <AvatarFallback>
                             {team.title[0].toUpperCase()}
@@ -138,32 +138,32 @@ const FandubBlock: FC<Props> = ({ container, smallerTitle }) => {
                       </BlockEntry>
                     ))}
                     <CollapsibleContent
-                      asChild
-                      className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down"
+                      render={<div className="flex flex-col gap-2" />}
+                      className="h-(--collapsible-panel-height) overflow-hidden duration-150 data-ending-style:h-0 data-starting-style:h-0"
                     >
-                      <div className="flex flex-col gap-2">
-                        {data.fandub.slice(3).map((team) => (
-                          <BlockEntry key={team.title} href={team.link}>
-                            <Avatar className="size-8 rounded-sm">
-                              <AvatarImage loading="lazy" src={team.logo} />
-                              <AvatarFallback>
-                                {team.title[0].toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            {team.title}
-                          </BlockEntry>
-                        ))}
-                      </div>
+                      {data.fandub.slice(3).map((team) => (
+                        <BlockEntry key={team.title} href={team.link}>
+                          <Avatar className="size-8 rounded-md">
+                            <AvatarImage loading="lazy" src={team.logo} />
+                            <AvatarFallback>
+                              {team.title[0].toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          {team.title}
+                        </BlockEntry>
+                      ))}
                     </CollapsibleContent>
                     <div className="footer">
-                      <CollapsibleTrigger asChild>
-                        <Button
-                          variant="link"
-                          size="sm"
-                          className="p-0 text-muted-foreground"
-                        >
-                          {isOpen ? 'Згорнути...' : 'Показати більше...'}
-                        </Button>
+                      <CollapsibleTrigger
+                        render={
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="p-0 text-muted-foreground"
+                          />
+                        }
+                      >
+                        {isOpen ? 'Згорнути...' : 'Показати більше...'}
                       </CollapsibleTrigger>
                     </div>
                   </Collapsible>
@@ -171,7 +171,7 @@ const FandubBlock: FC<Props> = ({ container, smallerTitle }) => {
                 {data.fandub.length <= 3 &&
                   data.fandub.map((team) => (
                     <BlockEntry key={team.title} href={team.link}>
-                      <Avatar className="size-8 rounded-sm">
+                      <Avatar className="size-8 rounded-md">
                         <AvatarImage loading="lazy" src={team.logo} />
                         <AvatarFallback>
                           {team.title[0].toUpperCase()}

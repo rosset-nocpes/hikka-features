@@ -1,5 +1,5 @@
 import { Copy, CopyCheck, Link } from 'lucide-react';
-import { type FC, useState } from 'react';
+import { type FC, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -35,11 +35,14 @@ const ShareLinkButton: FC<Props> = ({
   const { container, provider, team, currentEpisode } = usePlayer();
 
   const [showTooltip, setShowTooltip] = useState(false);
+  const [open, setOpen] = useState(false);
+  const contentRef = useRef(null);
+  const triggerRef = useRef(null);
 
   const handleCopyShareLink = () => {
     const query_params = new URLSearchParams();
     query_params.append('playerProvider', provider!);
-    query_params.append('playerTeam', team?.title!);
+    query_params.append('playerTeam', team!.title);
     query_params.append('playerEpisode', currentEpisode!.episode.toString());
 
     if (isTimecodeLink) {
@@ -51,16 +54,37 @@ const ShareLinkButton: FC<Props> = ({
     );
   };
 
+  useEffect(() => {
+    const handleClick = (event: PointerEvent) => {
+      if (
+        open &&
+        contentRef.current &&
+        triggerRef.current &&
+        !event.composedPath().includes(contentRef.current) &&
+        !event.composedPath().includes(triggerRef.current)
+      ) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', handleClick);
+    return () => document.removeEventListener('pointerdown', handleClick);
+  }, [open]);
+
   return (
     <Popover
+      modal={false}
+      open={open}
       onOpenChange={(open) => {
+        setOpen(open);
+
         if (open) {
           toggleTimestampLink(false);
           setTimecodeLink(Math.floor(time));
         }
       }}
     >
-      <PopoverTrigger>
+      <PopoverTrigger ref={triggerRef}>
         <Tooltip>
           <TooltipTrigger>
             <Button variant="ghost" size="sm">
@@ -70,27 +94,33 @@ const ShareLinkButton: FC<Props> = ({
           <TooltipContent>Поділитися</TooltipContent>
         </Tooltip>
       </PopoverTrigger>
-      <PopoverContent className="flex flex-col gap-2" container={container}>
+      <PopoverContent
+        className="flex flex-col gap-2"
+        container={container}
+        ref={contentRef}
+      >
         <div className="flex items-center gap-2 rounded-md bg-muted py-1 pr-1 pl-2">
           <Link className="size-3.5 shrink-0 text-muted-foreground" />
           <span className="gradient-mask-r-90 cursor-default overflow-hidden text-nowrap font-medium text-xs">
             {window.location.href}
           </span>
-          <TooltipProvider>
-            <Tooltip delayDuration={0} open={showTooltip}>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-6 shrink-0 rounded-sm hover:bg-background"
-                  onClick={() => {
-                    handleCopyShareLink();
-                    setShowTooltip(true);
-                    setTimeout(() => setShowTooltip(false), 1000);
-                  }}
-                >
-                  <Copy className="h-3.5 w-3.5" />
-                </Button>
+          <TooltipProvider delay={0}>
+            <Tooltip open={showTooltip}>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-6 shrink-0 rounded-sm hover:bg-background"
+                    onClick={() => {
+                      handleCopyShareLink();
+                      setShowTooltip(true);
+                      setTimeout(() => setShowTooltip(false), 1000);
+                    }}
+                  />
+                }
+              >
+                <Copy className="h-3.5 w-3.5" />
               </TooltipTrigger>
               <TooltipContent
                 side="left"

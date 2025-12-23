@@ -17,7 +17,7 @@ export function Volume() {
 
   return (
     <Slider
-      className="group relative inline-flex h-10 w-full max-w-[80px] cursor-pointer touch-none select-none items-center outline-none"
+      className="group relative inline-flex h-10 w-full max-w-[80px] cursor-pointer touch-none select-none items-center outline-hidden"
       value={[volume * 100]}
       onValueChange={([value]) => {
         remote.changeVolume(value / 100);
@@ -53,7 +53,7 @@ export function Time({ thumbnails }: TimeSliderProps) {
 
   return (
     <Slider
-      className="group relative inline-flex h-9 w-full cursor-pointer touch-none select-none items-center outline-none"
+      className="group relative inline-flex h-9 w-full cursor-pointer touch-none select-none items-center outline-hidden"
       value={[value]}
       disabled={!canSeek}
       step={Number.isFinite(step) ? step : 1}

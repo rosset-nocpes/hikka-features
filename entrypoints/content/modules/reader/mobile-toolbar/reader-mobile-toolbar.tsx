@@ -42,13 +42,13 @@ const ReaderMobileToolbar: FC<Props> = ({ carouselApi }) => {
         </Button> */}
         <Sheet modal={false} open={sheetOpen} onOpenChange={setSheetOpen}>
           <SheetTrigger
-            className="inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-secondary bg-secondary px-3 font-medium text-secondary-foreground text-sm ring-offset-background transition-colors hover:bg-secondary/80 focus-visible:outline-none"
+            className="inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-secondary bg-secondary px-3 font-medium text-secondary-foreground text-sm ring-offset-background transition-colors hover:bg-secondary/80 focus-visible:outline-hidden"
             onClick={() => setSheetOpen(true)}
           >{`Том ${currentChapter?.volume} Розділ ${currentChapter?.chapter}`}</SheetTrigger>
           <SheetContent
             container={container}
             side="bottom"
-            className="flex h-full flex-col gap-2"
+            className="flex h-full! flex-col gap-2"
           >
             <SheetHeader>
               <SheetTitle>Оберіть розділ</SheetTitle>
@@ -71,7 +71,7 @@ const ReaderMobileToolbar: FC<Props> = ({ carouselApi }) => {
           </SheetContent>
         </Sheet>
         {/* <Drawer container={container}>
-          <DrawerTrigger className="inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-secondary bg-secondary px-3 font-medium text-secondary-foreground text-sm ring-offset-background transition-colors hover:bg-secondary/80 focus-visible:outline-none">{`Том ${readerContext.state.currentChapter.volume} Розділ ${readerContext.state.currentChapter.chapter}`}</DrawerTrigger>
+          <DrawerTrigger className="inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-secondary bg-secondary px-3 font-medium text-secondary-foreground text-sm ring-offset-background transition-colors hover:bg-secondary/80 focus-visible:outline-hidden">{`Том ${readerContext.state.currentChapter.volume} Розділ ${readerContext.state.currentChapter.chapter}`}</DrawerTrigger>
           <DrawerContent className="flex h-full flex-col gap-2">
             <DrawerHeader>
               <DrawerTitle>Сало</DrawerTitle>

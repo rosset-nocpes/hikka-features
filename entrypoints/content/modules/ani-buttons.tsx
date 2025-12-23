@@ -267,13 +267,13 @@ const AniButtons: FC<Props> = ({ container, data, smallerTitle }) => {
                         ? 'pointer-events-none opacity-50'
                         : ''
                     : '',
-                  compact && '!size-10',
+                  compact && 'size-10!',
                 )}
               >
                 <span
                   className={cn(
                     'size-5 overflow-hidden rounded-sm border border-secondary/60 p-px',
-                    compact && '!size-full',
+                    compact && 'size-full!',
                   )}
                 >
                   <img

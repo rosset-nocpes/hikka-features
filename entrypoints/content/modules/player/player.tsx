@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
-import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
 import drawerStyles from '../../../../node_modules/vaul/style.css?inline';
 import { queryClient } from '../..';
@@ -31,7 +31,7 @@ export default function player() {
       container.append(wrapper);
 
       wrapper.className =
-        'size-full backdrop-blur-sm bg-black/60 flex items-center justify-center md:p-8';
+        'size-full backdrop-blur-xs bg-black/60 flex items-center justify-center md:p-8';
 
       container.className = 'h-full';
       container.classList.toggle('dark', await darkMode.getValue());
@@ -43,16 +43,14 @@ export default function player() {
       const root = createRoot(wrapper);
       root.render(
         <QueryClientProvider client={queryClient}>
-          <SidebarProvider className="h-full w-full">
-            <PlayerProvider container={container}>
-              <div
-                className="fixed z-0 size-full"
-                onClick={() => player().then((x) => x.remove())}
-              />
-              <Player />
-              <Toaster position="top-center" />
-            </PlayerProvider>
-          </SidebarProvider>
+          <PlayerProvider container={container}>
+            <div
+              className="fixed z-0 size-full"
+              onClick={() => player().then((x) => x.remove())}
+            />
+            <Player />
+            <Toaster position="top-center" />
+          </PlayerProvider>
         </QueryClientProvider>,
       );
 
@@ -86,7 +84,7 @@ export const Player = () => {
   } = usePlayer();
   const { data } = useWatchData();
 
-  const { open, setOpen } = useSidebar();
+  const [open, setOpen] = useState(true);
   if (isShared) setOpen(false);
 
   const [isPlayerReady, togglePlayerReady] = useState(false);
@@ -264,47 +262,49 @@ export const Player = () => {
   return (
     <Card
       className={cn(
-        'relative z-10 flex size-full overflow-hidden rounded-none border-none duration-300 md:max-h-[722px] md:max-w-[1282px] md:rounded-lg md:border',
+        'relative z-10 flex size-full overflow-hidden rounded-none border-none duration-300 md:max-h-180.5 md:max-w-320.5 md:rounded-lg md:border',
         getTheatreState && 'md:max-h-full md:max-w-full',
       )}
     >
-      <PlayerMobileToolbar toggleWatchedState={toggleWatchedState} />
-      <PlayerNavbar showControls={showControls} />
-      <CardContent
-        className={cn(
-          'flex min-h-0 min-w-0 flex-1 flex-col gap-2 p-0 pb-2 duration-300',
-          !open && 'gap-0 pb-0',
-        )}
-      >
-        <div
+      <SidebarProvider open={open} onOpenChange={setOpen}>
+        <PlayerMobileToolbar toggleWatchedState={toggleWatchedState} />
+        <PlayerNavbar showControls={showControls} />
+        <CardContent
           className={cn(
-            'relative h-[81.1%] w-full duration-300',
-            isFullscreen ? 'fixed inset-0 z-20 size-full' : 'flex border-b',
-            (!open || getTheatreState) && 'h-full',
-            !open && 'border-0',
+            'flex min-h-0 min-w-0 flex-1 flex-col gap-2 p-0 pb-2 duration-300',
+            !open && 'gap-0 pb-0',
           )}
         >
-          <iframe
-            id="player-iframe"
-            src={`${currentEpisode?.video_url}?site=hikka.io`} // todo: move params to backend
-            loading="lazy"
-            className="z-[2] size-full"
-            allow="fullscreen; accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
-            allowFullScreen
-          ></iframe>
-        </div>
-        <PlayerToolbar
-          time={time}
-          isTimecodeLink={isTimecodeLink}
-          timecodeLink={timecodeLink}
-          setTimecodeLink={setTimecodeLink}
-          toggleTimestampLink={toggleTimestampLink}
-          toggleTheatreState={toggleTheatreState}
-          getTheatreState={getTheatreState}
-          handleEnterFullscreen={handleEnterFullscreen}
-        />
-      </CardContent>
-      <PlayerSidebar toggleWatchedState={toggleWatchedState} />
+          <div
+            className={cn(
+              'relative h-[81.1%] w-full duration-300',
+              isFullscreen ? 'fixed inset-0 z-20 size-full' : 'flex border-b',
+              (!open || getTheatreState) && 'h-full',
+              !open && 'border-0',
+            )}
+          >
+            <iframe
+              id="player-iframe"
+              src={`${currentEpisode?.video_url}?site=hikka.io`} // todo: move params to backend
+              loading="lazy"
+              className="z-2 size-full"
+              allow="fullscreen; accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+              allowFullScreen
+            ></iframe>
+          </div>
+          <PlayerToolbar
+            time={time}
+            isTimecodeLink={isTimecodeLink}
+            timecodeLink={timecodeLink}
+            setTimecodeLink={setTimecodeLink}
+            toggleTimestampLink={toggleTimestampLink}
+            toggleTheatreState={toggleTheatreState}
+            getTheatreState={getTheatreState}
+            handleEnterFullscreen={handleEnterFullscreen}
+          />
+        </CardContent>
+        <PlayerSidebar toggleWatchedState={toggleWatchedState} />
+      </SidebarProvider>
     </Card>
   );
 };

@@ -49,14 +49,16 @@ const PlayerNavbar: FC<Props> = ({ showControls }) => {
             : 'opacity-100',
         )}
       >
-        <ContextMenu modal={false}>
-          <ContextMenuTrigger asChild>
-            <SidebarTrigger
-              variant="ghost"
-              size="icon-sm"
-              className="hidden bg-sidebar md:inline-flex"
-            />
-          </ContextMenuTrigger>
+        <ContextMenu>
+          <ContextMenuTrigger
+            render={
+              <SidebarTrigger
+                variant="ghost"
+                size="icon-sm"
+                className="hidden bg-sidebar md:inline-flex"
+              />
+            }
+          />
           <ContextMenuContent container={container}>
             <ContextMenuCheckboxItem
               checked={sidebarMode === 'offcanvas'}

@@ -7,6 +7,7 @@ import {
   CarouselContent,
   CarouselItem,
 } from '@/components/ui/carousel';
+import { useSidebar } from '@/components/ui/sidebar';
 import { useReaderContext } from './context/reader-context';
 import ReaderNextPages from './reader-next-pages';
 
@@ -30,6 +31,8 @@ const ChapterPages: FC<Props> = ({ setCarouselApi, scrollContainerRef }) => {
   } = useReaderContext();
   const imageRefs = useRef<(HTMLImageElement | null)[]>([]);
   const prevScaleRef = useRef(scale);
+
+  const { open } = useSidebar();
 
   useEffect(() => {
     if (chapterImages.length === 0) return;
@@ -81,6 +84,32 @@ const ChapterPages: FC<Props> = ({ setCarouselApi, scrollContainerRef }) => {
     prevScaleRef.current = scale;
   }, [scale, scrollMode]);
 
+  const topImageIndexRef = useRef(0);
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (container) {
+      // 1. Find the index of the image closest to the top of the container
+      const index = chapterImages.findIndex((_, i) => {
+        const img = imageRefs.current[i];
+        // Check if image top is roughly at or past the container's top
+        return img && img.offsetTop >= container.scrollTop;
+      });
+
+      topImageIndexRef.current = index >= 0 ? index : 0;
+    }
+  }, [open]); // Fires when the sidebar state changes
+
+  useLayoutEffect(() => {
+    const container = scrollContainerRef.current;
+    const targetImage = imageRefs.current[topImageIndexRef.current];
+
+    if (container && targetImage) {
+      // 2. Snap the container back to that specific image's new offsetTop
+      container.scrollTop = targetImage.offsetTop;
+    }
+  }, [open]); // Triggered after the width changes
+
   const layoutAnimation = {
     initial: { opacity: 0 },
     animate: { opacity: 1, filter: 'blur(0px)' },
@@ -92,6 +121,7 @@ const ChapterPages: FC<Props> = ({ setCarouselApi, scrollContainerRef }) => {
     <AnimatePresence mode="wait" initial={false}>
       {scrollMode ? (
         <motion.div
+          layout
           key="scroll"
           ref={scrollContainerRef}
           className="no-scrollbar flex flex-1 flex-col items-center overflow-auto"
@@ -121,7 +151,7 @@ const ChapterPages: FC<Props> = ({ setCarouselApi, scrollContainerRef }) => {
           className="flex h-full"
           {...layoutAnimation}
         >
-          <CarouselContent className="!m-0 h-full">
+          <CarouselContent className="m-0! h-full">
             {imagesLoading && <CarouselItem className="size-full" />}
             {chapterImages.map((img_url, index) => {
               return (

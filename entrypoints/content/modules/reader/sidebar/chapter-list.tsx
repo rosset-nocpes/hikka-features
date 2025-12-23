@@ -1,6 +1,7 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { type FC, useEffect, useMemo, useRef, useState } from 'react';
+import { type FC, useEffect, useMemo, useRef } from 'react';
 import type { CarouselApi } from '@/components/ui/carousel';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   SidebarContent,
   SidebarGroup,
@@ -17,8 +18,7 @@ interface Props {
 }
 
 const ChapterList: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
-  const [isScrolled, setIsScrolled] = useState({ top: false, bottom: false });
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLUListElement>(null);
 
   const { open } = useSidebar();
   const { data: mangaData } = useReadData();
@@ -42,25 +42,6 @@ const ChapterList: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
     estimateSize: () => 52,
     overscan: 5,
   });
-
-  useEffect(() => {
-    const element = scrollRef.current;
-    if (!element) return;
-
-    const handleScroll = () => {
-      setIsScrolled({
-        top: element.scrollTop > 0,
-        bottom: element.scrollTop + element.clientHeight < element.scrollHeight,
-      });
-    };
-
-    element.addEventListener('scroll', handleScroll);
-    handleScroll();
-
-    return () => {
-      element.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
 
   useEffect(() => {
     if (!currentChapter || !mangaData) return;
@@ -103,88 +84,84 @@ const ChapterList: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
   }, [mangaData?.chapters, sortBy]);
 
   return (
-    <SidebarContent
-      ref={scrollRef}
-      className={cn('group-data-[collapsible=icon]:overflow-auto', {
-        'gradient-mask-t-90-d': isScrolled.top && isScrolled.bottom,
-        'gradient-mask-t-90': isScrolled.top && !isScrolled.bottom,
-        'gradient-mask-b-90': !isScrolled.top && isScrolled.bottom,
-      })}
-      style={{
-        scrollbarWidth: 'none',
-      }}
-    >
-      <SidebarGroup>
-        <SidebarMenu>
-          <div
-            style={{
-              height: `${rowVirtualizer.getTotalSize()}px`,
-              width: '100%',
-              position: 'relative',
-            }}
-          >
-            {rowVirtualizer.getVirtualItems().map((virtualItem) => (
-              <SidebarMenuItem key={virtualItem.index}>
-                <SidebarMenuButton
-                  onClick={() => handleSelectChapter(sorted[virtualItem.index])}
-                  isActive={sorted[virtualItem.index].id === currentChapter?.id}
-                  size="lg"
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    transform: `translateY(${virtualItem.start}px)`,
-                  }}
-                  ref={
-                    sorted[virtualItem.index].id === currentChapter?.id
-                      ? currentChapterRef
-                      : null
-                  }
-                >
-                  <div
-                    className={cn(
-                      'size-4 shrink-0 text-center duration-300',
-                      open ? '-ml-6' : 'ml-0 w-full',
-                    )}
+    <SidebarContent className="group-data-[collapsible=icon]:overflow-auto">
+      <ScrollArea scrollFade>
+        <SidebarGroup>
+          <SidebarMenu ref={scrollRef}>
+            <div
+              style={{
+                height: `${rowVirtualizer.getTotalSize()}px`,
+                width: '100%',
+                position: 'relative',
+              }}
+            >
+              {rowVirtualizer.getVirtualItems().map((virtualItem) => (
+                <SidebarMenuItem key={virtualItem.index}>
+                  <SidebarMenuButton
+                    onClick={() =>
+                      handleSelectChapter(sorted[virtualItem.index])
+                    }
+                    isActive={
+                      sorted[virtualItem.index].id === currentChapter?.id
+                    }
+                    size="lg"
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      transform: `translateY(${virtualItem.start}px)`,
+                    }}
+                    ref={
+                      sorted[virtualItem.index].id === currentChapter?.id
+                        ? currentChapterRef
+                        : null
+                    }
                   >
-                    <span
+                    <div
                       className={cn(
-                        'block leading-4 duration-300',
-                        open && '!text-transparent',
-                        sorted[virtualItem.index].chapter <= getRead() &&
-                          'text-muted-foreground',
+                        'size-4 shrink-0 text-center duration-300',
+                        open ? '-ml-6' : 'ml-0 w-full',
                       )}
                     >
-                      {sorted[virtualItem.index].chapter}
-                    </span>
-                  </div>
-                  <div className="flex flex-1 flex-col gap-1 truncate text-left leading-tight">
-                    <span
-                      className={cn(
-                        sorted[virtualItem.index].chapter <= getRead() &&
-                          'text-muted-foreground',
-                      )}
-                    >
-                      Том {sorted[virtualItem.index].volume} Розділ{' '}
-                      {sorted[virtualItem.index].chapter}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <span className="text-muted-foreground text-xs">
-                        {sorted[virtualItem.index].date_upload}
-                      </span>
-                      <div className="size-1 shrink-0 rounded-full bg-muted-foreground" />
-                      <span className="truncate text-muted-foreground text-xs">
-                        {sorted[virtualItem.index].scanlator}
+                      <span
+                        className={cn(
+                          'block leading-4 duration-300',
+                          open && 'text-transparent!',
+                          sorted[virtualItem.index].chapter <= getRead() &&
+                            'text-muted-foreground',
+                        )}
+                      >
+                        {sorted[virtualItem.index].chapter}
                       </span>
                     </div>
-                  </div>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </div>
-        </SidebarMenu>
-      </SidebarGroup>
+                    <div className="flex flex-1 flex-col gap-1 truncate text-left leading-tight">
+                      <span
+                        className={cn(
+                          sorted[virtualItem.index].chapter <= getRead() &&
+                            'text-muted-foreground',
+                        )}
+                      >
+                        Том {sorted[virtualItem.index].volume} Розділ{' '}
+                        {sorted[virtualItem.index].chapter}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-muted-foreground text-xs">
+                          {sorted[virtualItem.index].date_upload}
+                        </span>
+                        <div className="size-1 shrink-0 rounded-full bg-muted-foreground" />
+                        <span className="truncate text-muted-foreground text-xs">
+                          {sorted[virtualItem.index].scanlator}
+                        </span>
+                      </div>
+                    </div>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </div>
+          </SidebarMenu>
+        </SidebarGroup>
+      </ScrollArea>
     </SidebarContent>
   );
 };

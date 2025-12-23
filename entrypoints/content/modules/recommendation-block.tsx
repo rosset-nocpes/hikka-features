@@ -93,7 +93,7 @@ const RecommendationBlock: FC<Props> = ({ container }) => {
               disabled={isLoading || data?.recommendations.length === 0}
             />
           </div>
-          <div className="-m-4 no-scrollbar gradient-mask-r-90-d md:gradient-mask-none relative grid auto-cols-scroll grid-flow-col grid-cols-scroll gap-4 overflow-x-scroll p-4 md:grid-cols-4 lg:gap-8">
+          <div className="no-scrollbar gradient-mask-r-90-d md:gradient-mask-none relative -m-4 grid auto-cols-scroll grid-flow-col grid-cols-scroll gap-4 overflow-x-scroll p-4 md:grid-cols-4 lg:gap-8">
             {isLoading &&
               Array.from({ length: 4 }).map((_, index) => (
                 <div key={index} className="flex flex-col gap-2">
