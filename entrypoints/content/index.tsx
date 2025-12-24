@@ -3,7 +3,7 @@ import '../app.css';
 import aniBackground from './modules/ani-background';
 // import UCharURL from "@/utils/u-char-url";
 import aniButtons from './modules/ani-buttons';
-import editCharSuggestion from './modules/edit-char-name-suggestion';
+import characterSuggestion from './modules/character-suggestion';
 import anime_page from './pages/anime-page';
 import manga_page from './pages/manga-page';
 import novel_page from './pages/novel-page';
@@ -141,7 +141,7 @@ export default defineContentScript({
                       const haveAnime = data.anime_count !== 0;
 
                       if (creatingEdit) {
-                        (await editCharSuggestion())?.autoMount();
+                        (await characterSuggestion())?.autoMount();
                       }
 
                       (

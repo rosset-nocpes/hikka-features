@@ -71,5 +71,11 @@ declare global {
       episode: number;
       video_url: string;
     };
+
+    interface EditorCharacters {
+      suggestion: {
+        name: string;
+      };
+    }
   }
 }

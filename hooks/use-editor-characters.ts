@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 
-// character only
 const useEditorCharacters = () => {
   const path = new URLSearchParams(document.location.search);
   const slug = path.get('slug');
@@ -16,7 +15,7 @@ const useEditorCharacters = () => {
         throw new Error('Not found');
       }
 
-      return await r.json();
+      return (await r.json()) as API.EditorCharacters;
     },
     retry: false,
     staleTime: 0,
