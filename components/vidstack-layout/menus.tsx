@@ -24,7 +24,7 @@ export interface MenuProps {
 
 // We can reuse this class for other menus.
 const menuClass =
-  'animate-out fade-out z-[9999] slide-in-from-bottom-4 data-[state=open]:animate-in data-[state=open]:fade-in data-[state=open]:slide-out-to-bottom-2 flex max-h-[400px] min-w-[260px] flex-col rounded-md border border-white/10 bg-black/95 p-2.5 font-sans text-[15px] font-medium outline-none backdrop-blur-sm duration-300';
+  'animate-out fade-out z-9999 slide-in-from-bottom-4 data-[state=open]:animate-in data-[state=open]:fade-in data-[state=open]:slide-out-to-bottom-2 flex max-h-[400px] min-w-[260px] flex-col rounded-md border border-white/10 bg-black/95 p-2.5 font-sans text-[15px] font-medium outline-hidden backdrop-blur-xs duration-300';
 
 export function Captions({
   side = 'top',
@@ -92,7 +92,7 @@ function Radio({
 }: DropdownMenuPrimitive.DropdownMenuRadioItemProps) {
   return (
     <DropdownMenuRadioItem
-      className="group relative flex w-full cursor-pointer select-none items-center justify-start rounded-sm hocus:bg-white/10 p-2.5 text-sm outline-none ring-media-focus data-[focus]:ring-[3px]"
+      className="group relative flex w-full cursor-pointer select-none items-center justify-start rounded-sm hocus:bg-white/10 p-2.5 text-sm outline-hidden ring-media-focus data-focus:ring-[3px]"
       {...props}
     >
       <CircleIcon className="h-4 w-4 text-white group-data-[state=checked]:hidden" />

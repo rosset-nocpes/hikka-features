@@ -6,6 +6,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -42,10 +43,8 @@ const SortOptions = () => {
       </Button>
       <ButtonGroupSeparator />
       <DropdownMenu modal={false}>
-        <DropdownMenuTrigger asChild>
-          <Button size="sm" variant="secondary">
-            <MaterialSymbolsMoreHoriz />
-          </Button>
+        <DropdownMenuTrigger render={<Button size="sm" variant="secondary" />}>
+          <MaterialSymbolsMoreHoriz />
         </DropdownMenuTrigger>
         <DropdownMenuContent
           className="min-w-60"
@@ -54,18 +53,20 @@ const SortOptions = () => {
           sideOffset={open ? 4 : 12}
           container={container}
         >
-          <DropdownMenuLabel>Сортування</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onSelect={() => setSortBy({ ...sortBy, field: 'chapter' })}
-          >
-            За частиною
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={() => setSortBy({ ...sortBy, field: 'date_upload' })}
-          >
-            За датою
-          </DropdownMenuItem>
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>Сортування</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => setSortBy({ ...sortBy, field: 'chapter' })}
+            >
+              За частиною
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => setSortBy({ ...sortBy, field: 'date_upload' })}
+            >
+              За датою
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
     </ButtonGroup>

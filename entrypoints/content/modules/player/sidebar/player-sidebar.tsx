@@ -1,4 +1,4 @@
-import { type FC, useEffect, useRef, useState } from 'react';
+import type { FC } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -22,30 +22,8 @@ interface Props {
 }
 
 const PlayerSidebar: FC<Props> = ({ toggleWatchedState }) => {
-  const [isScrolled, setIsScrolled] = useState({ top: false, bottom: false });
-  const scrollRef = useRef<HTMLDivElement>(null);
-
   const { sidebarMode } = usePlayer();
   const { open } = useSidebar();
-
-  useEffect(() => {
-    const element = scrollRef.current;
-    if (!element) return;
-
-    const handleScroll = () => {
-      setIsScrolled({
-        top: element.scrollTop > 0,
-        bottom: element.scrollTop + element.clientHeight < element.scrollHeight,
-      });
-    };
-
-    element.addEventListener('scroll', handleScroll);
-    handleScroll();
-
-    return () => {
-      element.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
 
   return (
     <Sidebar
@@ -85,17 +63,7 @@ const PlayerSidebar: FC<Props> = ({ toggleWatchedState }) => {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarSeparator className="mx-0" />
-      <SidebarContent
-        ref={scrollRef}
-        className={cn('group-data-[collapsible=icon]:overflow-auto', {
-          'gradient-mask-t-90-d': isScrolled.top && isScrolled.bottom,
-          'gradient-mask-t-90': isScrolled.top && !isScrolled.bottom,
-          'gradient-mask-b-90': !isScrolled.top && isScrolled.bottom,
-        })}
-        style={{
-          scrollbarWidth: 'none',
-        }}
-      >
+      <SidebarContent className="group-data-[collapsible=icon]:overflow-auto">
         <EpisodeList toggleWatchedState={toggleWatchedState} />
       </SidebarContent>
       {/* <SidebarFooter>

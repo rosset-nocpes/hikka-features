@@ -27,7 +27,7 @@ export default function reader() {
       container.append(wrapper);
 
       wrapper.className =
-        'size-full md:backdrop-blur-sm bg-black/60 flex items-center justify-center md:p-8 duration-300';
+        'size-full md:backdrop-blur-xs bg-black/60 flex items-center justify-center md:p-8 duration-300';
 
       container.className = 'h-full';
       container.classList.toggle('dark', await darkMode.getValue());
@@ -35,16 +35,14 @@ export default function reader() {
       const root = createRoot(wrapper);
       root.render(
         <QueryClientProvider client={queryClient}>
-          <SidebarProvider className="h-full w-full">
-            <ReaderProvider container={container}>
-              <div
-                className="fixed z-0 size-full"
-                onClick={() => reader().then((x) => x.remove())}
-              />
-              <Reader />
-              <Toaster position="top-center" />
-            </ReaderProvider>
-          </SidebarProvider>
+          <ReaderProvider container={container}>
+            <div
+              className="fixed z-0 size-full"
+              onClick={() => reader().then((x) => x.remove())}
+            />
+            <Reader />
+            <Toaster position="top-center" />
+          </ReaderProvider>
         </QueryClientProvider>,
       );
 
@@ -165,42 +163,44 @@ export const Reader = () => {
   return (
     <Card
       className={cn(
-        'relative z-10 flex size-full overflow-hidden rounded-none border-none duration-300 md:max-w-[1282px] md:rounded-lg md:border',
-        fullscreen && '!max-w-full !rounded-none !border-none',
+        'relative z-10 flex size-full overflow-hidden rounded-none border-none duration-300 md:max-w-320.5 md:rounded-lg md:border',
+        fullscreen && 'max-w-full! rounded-none! border-none!',
       )}
     >
-      <ReaderMobileToolbar carouselApi={carouselApi} />
+      <SidebarProvider>
+        <ReaderMobileToolbar carouselApi={carouselApi} />
 
-      <ReaderNavbar carouselApi={carouselApi} />
+        <ReaderNavbar carouselApi={carouselApi} />
 
-      <CardContent className="relative flex min-h-0 min-w-0 flex-1 flex-col gap-2 p-0">
-        <PageIndicator carouselApi={carouselApi} />
-        <ScaleIndicator />
-        <PageSwitcher carouselApi={carouselApi} />
+        <CardContent className="relative flex min-h-0 min-w-0 flex-1 flex-col gap-2 p-0">
+          <PageIndicator carouselApi={carouselApi} />
+          <ScaleIndicator />
+          <PageSwitcher carouselApi={carouselApi} />
 
-        <AnimatePresence>
-          {imagesLoading && (
-            <motion.div
-              initial={{ opacity: 0, backdropFilter: 'blur(0px)' }}
-              animate={{ opacity: 1, backdropFilter: 'blur(64px)' }}
-              exit={{ opacity: 0, backdropFilter: 'blur(0px)' }}
-              className="absolute z-10 size-full"
-            >
-              <div className="size-full animate-pulse bg-accent/60" />
-            </motion.div>
-          )}
-        </AnimatePresence>
-        <ChapterPages
-          setCarouselApi={setCarouselApi}
+          <AnimatePresence>
+            {imagesLoading && (
+              <motion.div
+                initial={{ opacity: 0, backdropFilter: 'blur(0px)' }}
+                animate={{ opacity: 1, backdropFilter: 'blur(64px)' }}
+                exit={{ opacity: 0, backdropFilter: 'blur(0px)' }}
+                className="absolute z-10 size-full"
+              >
+                <div className="size-full animate-pulse bg-accent/60" />
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <ChapterPages
+            setCarouselApi={setCarouselApi}
+            scrollContainerRef={scrollContainerRef}
+          />
+        </CardContent>
+        <ReaderSidebar
+          carouselApi={carouselApi}
           scrollContainerRef={scrollContainerRef}
+          // isOpenSettings={isOpenSettings}
+          // setIsOpenSettings={setIsOpenSettings}
         />
-      </CardContent>
-      <ReaderSidebar
-        carouselApi={carouselApi}
-        scrollContainerRef={scrollContainerRef}
-        // isOpenSettings={isOpenSettings}
-        // setIsOpenSettings={setIsOpenSettings}
-      />
+      </SidebarProvider>
     </Card>
   );
 };

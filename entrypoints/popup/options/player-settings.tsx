@@ -39,6 +39,7 @@ const PlayerSettings = () => {
     <Drawer>
       <div className="flex justify-between">
         <div className="mr-10 flex flex-col gap-1">
+          {/** biome-ignore lint/a11y/noLabelWithoutControl: <explanation> */}
           <label className="font-medium text-sm">Програвач</label>
           <div className="font-medium text-[#A1A1A1] text-xs">
             Налаштування програвача
@@ -66,44 +67,28 @@ const PlayerSettings = () => {
               }}
             />
             <div className="flex items-center justify-between">
+              {/** biome-ignore lint/a11y/noLabelWithoutControl: <explanation> */}
               <label className="font-medium text-sm">
                 Програвач за замовчуванням
               </label>
-              {navigator.userAgent.toLowerCase().includes('firefox') ? (
-                <select
-                  className="flex h-10 w-24 cursor-pointer items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1"
-                  value={defaultPlayerProvider!}
-                  onChange={(e) => {
-                    defaultPlayer.setValue(e.target.value);
-                    setDefaultPlayerProvider(e.target.value);
-                  }}
-                >
+              <Select
+                value={defaultPlayerProvider!}
+                onValueChange={(value) => {
+                  defaultPlayer.setValue(value);
+                  setDefaultPlayerProvider(value);
+                }}
+              >
+                <SelectTrigger className="w-24">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent alignItemWithTrigger={false} side="top">
                   {['moon', 'ashdi'].map((elem) => (
-                    <option key={elem} value={elem}>
+                    <SelectItem key={elem} value={elem}>
                       {elem.toUpperCase()}
-                    </option>
+                    </SelectItem>
                   ))}
-                </select>
-              ) : (
-                <Select
-                  value={defaultPlayerProvider!}
-                  onValueChange={(value) => {
-                    defaultPlayer.setValue(value);
-                    setDefaultPlayerProvider(value);
-                  }}
-                >
-                  <SelectTrigger className="w-24">
-                    <SelectValue placeholder="Оберіть програвач за замовчуванням" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {['moon', 'ashdi'].map((elem) => (
-                      <SelectItem key={elem} value={elem}>
-                        {elem.toUpperCase()}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DrawerFooter>

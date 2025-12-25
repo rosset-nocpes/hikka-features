@@ -46,8 +46,9 @@ const aniBackground = async (mal_id: number, type: MediaType) => {
   return createShadowRootUi(usePageStore.getState().ctx, {
     name: 'ani-background',
     position: 'inline',
-    append: 'last',
-    anchor: document.querySelector('body main > .grid'),
+    append: 'first',
+    anchor: 'main',
+    inheritStyles: true,
     async onMount(container) {
       const wrapper = document.createElement('div');
       container.append(wrapper);
@@ -88,7 +89,7 @@ const AniBackground: FC<Props> = ({ banner_url }) => {
     <AnimatePresence>
       {stateBack && isLoaded && (
         <motion.div
-          className="-z-20 absolute top-0 left-0 h-80 w-full overflow-hidden opacity-40"
+          className="absolute top-0 left-0 -z-20 h-80 w-full overflow-hidden opacity-40"
           initial={{ height: 0 }}
           animate={{ height: '20rem' }}
           exit={{ height: 0 }}
@@ -99,7 +100,7 @@ const AniBackground: FC<Props> = ({ banner_url }) => {
             fetchPriority="high"
             decoding="async"
             data-nimg="fill"
-            className="!transition gradient-mask-b-0 relative size-full object-cover opacity-1"
+            className="transition! gradient-mask-b-0 relative size-full object-cover opacity-100"
             style={{
               position: 'absolute',
               height: '100%',

@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
-  TooltipPortal,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
@@ -104,21 +103,27 @@ const LocalizedPosterButton: FC<Props> = ({ container }) => {
           exit={{ opacity: 0, transform: 'translateX(10px)' }}
           transition={{ duration: 0.2 }}
         >
-          <TooltipProvider>
-            <Tooltip delayDuration={0}>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon-md" onClick={togglePoster}>
-                  {isPosterVisible && (
-                    <MaterialSymbolsPlannerBannerAdPtRounded className="text-lg" />
-                  )}
-                  {!isPosterVisible && (
-                    <MaterialSymbolsPlannerBannerAdPtOutlineRounded className="text-lg" />
-                  )}
-                </Button>
+          <TooltipProvider delay={0}>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon-md"
+                    onClick={togglePoster}
+                  />
+                }
+              >
+                {isPosterVisible && (
+                  <MaterialSymbolsPlannerBannerAdPtRounded className="text-lg" />
+                )}
+                {!isPosterVisible && (
+                  <MaterialSymbolsPlannerBannerAdPtOutlineRounded className="text-lg" />
+                )}
               </TooltipTrigger>
-              <TooltipPortal container={container}>
-                <TooltipContent side="top">Локалізувати постер</TooltipContent>
-              </TooltipPortal>
+              {/* <TooltipPortal container={container}> */}
+              <TooltipContent side="top">Локалізувати постер</TooltipContent>
+              {/* </TooltipPortal> */}
             </Tooltip>
           </TooltipProvider>
         </motion.div>

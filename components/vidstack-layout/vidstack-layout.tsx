@@ -18,8 +18,8 @@ export function VideoLayout({ thumbnails }: VideoLayoutProps) {
   return (
     <>
       <Gestures />
-      <Captions className="absolute inset-0 bottom-2 media-controls:bottom-[85px] z-10 select-none break-words media-captions:opacity-100 media-preview:opacity-0 opacity-0 transition-[opacity,bottom] duration-300" />
-      <Controls.Root className="absolute inset-0 z-10 flex h-full w-full flex-col bg-gradient-to-t from-black/10 to-transparent media-controls:opacity-100 opacity-0 transition-opacity">
+      <Captions className="absolute inset-0 bottom-2 media-controls:bottom-[85px] z-10 select-none wrap-break-word media-captions:opacity-100 media-preview:opacity-0 opacity-0 transition-[opacity,bottom] duration-300" />
+      <Controls.Root className="absolute inset-0 z-10 flex h-full w-full flex-col bg-linear-to-t from-black/10 to-transparent media-controls:opacity-100 opacity-0 transition-opacity">
         <TooltipProvider>
           <div className="flex-1" />
           <Controls.Group className="flex w-full items-center px-2">

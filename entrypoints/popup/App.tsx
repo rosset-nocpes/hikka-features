@@ -30,7 +30,7 @@ function App() {
   let devClicked = 0;
 
   return (
-    <div data-vaul-drawer-wrapper>
+    <div data-vaul-drawer-wrapper className="will-change-transform">
       <style>
         {`:root { background-color: black; }
         .slide-fade-enter-active {

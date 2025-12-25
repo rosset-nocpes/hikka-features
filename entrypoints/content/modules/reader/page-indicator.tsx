@@ -36,7 +36,7 @@ const PageIndicator: FC<Props> = ({ carouselApi }) => {
       )}
     >
       <div>{currentPage + 1}</div>
-      <div className="h-full w-[2px] bg-muted" />
+      <div className="h-full w-0.5 bg-muted" />
       <div>{chapterImages.length}</div>
     </div>
   );

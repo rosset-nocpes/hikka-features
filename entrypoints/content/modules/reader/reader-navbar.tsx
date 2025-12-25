@@ -46,18 +46,18 @@ const ReaderNavbar: FC<Props> = ({ carouselApi, showControls = true }) => {
     if (fullscreen) {
       document.documentElement.requestFullscreen();
       document.addEventListener('fullscreenchange', handleFullscreenChange);
-      wrapper?.classList.add('!p-0');
+      wrapper?.classList.add('p-0!');
     } else {
       if (document.fullscreenElement) document.exitFullscreen();
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
-      wrapper?.classList.remove('!p-0');
+      wrapper?.classList.remove('p-0!');
     }
 
     const re_init_carousel = setTimeout(() => carouselApi?.reInit(), 300);
 
     return () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
-      wrapper?.classList.remove('!p-0');
+      wrapper?.classList.remove('p-0!');
       clearTimeout(re_init_carousel);
     };
   }, [fullscreen]);
@@ -105,14 +105,16 @@ const ReaderNavbar: FC<Props> = ({ carouselApi, showControls = true }) => {
             <MaterialSymbolsFullscreenRounded />
           )}
         </Button>
-        <ContextMenu modal={false}>
-          <ContextMenuTrigger asChild>
-            <SidebarTrigger
-              variant="ghost"
-              size="icon-sm"
-              className="bg-sidebar"
-            />
-          </ContextMenuTrigger>
+        <ContextMenu>
+          <ContextMenuTrigger
+            render={
+              <SidebarTrigger
+                variant="ghost"
+                size="icon-sm"
+                className="bg-sidebar"
+              />
+            }
+          />
           <ContextMenuContent container={container}>
             <ContextMenuCheckboxItem
               checked={sidebarMode === 'offcanvas'}

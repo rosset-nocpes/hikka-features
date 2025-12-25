@@ -133,7 +133,7 @@ const Indicator = ({ isLoading }: IndicatorProps) => {
         className={cn(
           'absolute inset-0 flex items-center justify-center transition-[transform,opacity,filter] duration-200 ease-in-out will-change-[transform,opacity,filter]',
           isLoading
-            ? 'scale-[0.25] opacity-0 blur-sm'
+            ? 'scale-[0.25] opacity-0 blur-xs'
             : 'scale-100 opacity-100 blur-0',
         )}
       >
@@ -144,7 +144,7 @@ const Indicator = ({ isLoading }: IndicatorProps) => {
           'transition-[transform,opacity,filter] duration-200 ease-in-out will-change-[transform,opacity,filter]',
           isLoading
             ? 'scale-100 opacity-100 blur-0'
-            : 'scale-[0.25] opacity-0 blur-sm',
+            : 'scale-[0.25] opacity-0 blur-xs',
         )}
       >
         <Spinner className="size-full" />

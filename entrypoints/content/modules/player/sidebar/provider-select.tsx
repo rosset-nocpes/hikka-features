@@ -1,5 +1,5 @@
 import { ChevronsUpDown } from 'lucide-react';
-import type { FC } from 'react';
+import { type FC, useEffect, useRef, useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -22,10 +22,31 @@ interface Props {
 }
 
 const ProviderSelect: FC<Props> = ({ toggleWatchedState }) => {
-  const { open } = useSidebar();
+  const { open: openSidebar } = useSidebar();
 
   const { container, provider, setProvider, favoriteTeam } = usePlayer();
   const { data } = useWatchData();
+
+  const [open, setOpen] = useState(false);
+  const contentRef = useRef(null);
+  const triggerRef = useRef(null);
+
+  useEffect(() => {
+    const handleClick = (event: PointerEvent) => {
+      if (
+        open &&
+        contentRef.current &&
+        triggerRef.current &&
+        !event.composedPath().includes(contentRef.current) &&
+        !event.composedPath().includes(triggerRef.current)
+      ) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', handleClick);
+    return () => document.removeEventListener('pointerdown', handleClick);
+  }, [open]);
 
   if (!data) return;
 
@@ -53,33 +74,36 @@ const ProviderSelect: FC<Props> = ({ toggleWatchedState }) => {
 
   return (
     <SidebarMenuItem>
-      <DropdownMenu modal={false}>
-        <DropdownMenuTrigger asChild>
-          <SidebarMenuButton
-            size="lg"
-            disabled={avaliable_players.length === 1}
-          >
-            <Avatar className="size-8 rounded-md text-black">
-              <AvatarFallback className="bg-primary">
-                {provider?.[0].toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <span className="truncate text-left font-semibold text-sm leading-tight">
-              {provider?.toUpperCase()}
-            </span>
-            {avaliable_players.length > 1 && (
-              <ChevronsUpDown className="ml-auto" />
-            )}
-          </SidebarMenuButton>
+      <DropdownMenu modal={false} open={open} onOpenChange={setOpen}>
+        <DropdownMenuTrigger
+          render={
+            <SidebarMenuButton
+              size="lg"
+              disabled={avaliable_players.length === 1}
+              ref={triggerRef}
+            />
+          }
+        >
+          <Avatar className="size-8 rounded-md text-black">
+            <AvatarFallback className="bg-primary">
+              {provider?.[0].toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <span className="truncate text-left font-semibold text-sm leading-tight">
+            {provider?.toUpperCase()}
+          </span>
+          {avaliable_players.length > 1 && (
+            <ChevronsUpDown className="ml-auto" />
+          )}
         </DropdownMenuTrigger>
         <DropdownMenuContent
-          className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-          align={open ? 'end' : 'start'}
-          side={open ? 'bottom' : 'left'}
-          sideOffset={open ? 4 : 12}
+          className="min-w-56 rounded-lg"
+          align={openSidebar ? 'end' : 'start'}
+          side={openSidebar ? 'bottom' : 'left'}
+          sideOffset={openSidebar ? 4 : 12}
           container={container}
         >
-          <div className="flex flex-col">
+          <div className="flex flex-col" ref={contentRef}>
             {(
               Object.entries(grouped_players) as [ProviderLanguage, string[]][]
             ).map(([lang, players]) => (
@@ -99,7 +123,7 @@ const ProviderSelect: FC<Props> = ({ toggleWatchedState }) => {
                       )}
                     >
                       {favoriteTeam?.provider === elem && (
-                        <Avatar className="!size-5 rounded-sm duration-150">
+                        <Avatar className="size-5! rounded-sm duration-150">
                           <AvatarImage
                             src={
                               (

@@ -1,4 +1,5 @@
 import { ChevronsUpDown } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,34 +24,56 @@ import SwitchOption from './_base/switch-option';
 const ReaderSettings = () => {
   const { container, scrollMode, setScrollMode, orientation, setOrientation } =
     useReaderContext();
-  const { open } = useSidebar();
+  const { open: openSidebar } = useSidebar();
+
+  const [open, setOpen] = useState(false);
+  const contentRef = useRef(null);
+  const triggerRef = useRef(null);
 
   const handleOrientationChange = (value: string) => {
     setOrientation(value as ReaderState['orientation']);
   };
 
+  useEffect(() => {
+    const handleClick = (event: PointerEvent) => {
+      if (
+        open &&
+        contentRef.current &&
+        triggerRef.current &&
+        !event.composedPath().includes(contentRef.current) &&
+        !event.composedPath().includes(triggerRef.current)
+      ) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', handleClick);
+    return () => document.removeEventListener('pointerdown', handleClick);
+  }, [open]);
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <DropdownMenu modal={false}>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton size="lg">
-              <div className="flex size-8 shrink-0 items-center justify-center">
-                <MaterialSymbolsPageInfoOutlineRounded className="size-5" />
-              </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">Налаштування</span>
-              </div>
-              <ChevronsUpDown className="ml-auto" />
-            </SidebarMenuButton>
+        <DropdownMenu modal={false} open={open} onOpenChange={setOpen}>
+          <DropdownMenuTrigger
+            render={<SidebarMenuButton size="lg" ref={triggerRef} />}
+          >
+            <div className="flex size-8 shrink-0 items-center justify-center">
+              <MaterialSymbolsPageInfoOutlineRounded className="size-5!" />
+            </div>
+            <div className="grid flex-1 text-left text-sm leading-tight">
+              <span className="truncate font-semibold">Налаштування</span>
+            </div>
+            <ChevronsUpDown className="ml-auto" />
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="flex w-[--radix-dropdown-menu-trigger-width] min-w-56 flex-col gap-3 rounded-lg p-3"
-            align={open ? 'start' : 'end'}
-            side={open ? 'top' : 'left'}
-            sideOffset={open ? 4 : 12}
-            alignOffset={open ? 0 : -5}
+            className="flex min-w-56 flex-col gap-3 rounded-lg p-3"
+            align={openSidebar ? 'start' : 'end'}
+            side={openSidebar ? 'top' : 'left'}
+            sideOffset={openSidebar ? 4 : 12}
+            alignOffset={openSidebar ? 0 : -5}
             container={container}
+            ref={contentRef}
           >
             <DropdownMenuGroup className="flex flex-col gap-3">
               <DropdownMenuLabel className="p-0">Орієнтація</DropdownMenuLabel>
@@ -85,28 +108,5 @@ const ReaderSettings = () => {
     </SidebarMenu>
   );
 };
-
-// interface Props {
-//   isOpenSettings: boolean;
-//   setIsOpenSettings: React.Dispatch<React.SetStateAction<boolean>>;
-// }
-
-// const ReaderSettings: FC<Props> = ({ isOpenSettings, setIsOpenSettings }) => {
-//   return (
-//     <div
-//       className={cn(
-//         'relative h-full duration-300',
-//         isOpenSettings ? 'w-80' : 'w-0',
-//       )}
-//     >
-//       <div
-//         className={cn(
-//           'absolute left-full h-full w-80 rounded-md border bg-sidebar duration-300',
-//           isOpenSettings ? 'left-0' : 'right-full',
-//         )}
-//       ></div>
-//     </div>
-//   );
-// };
 
 export default ReaderSettings;
