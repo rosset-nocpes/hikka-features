@@ -5,14 +5,7 @@ export interface NovelReaderState {
   /* Base */
   container?: HTMLElement;
   /* Reader-related */
-  currentChapter?: {
-    title: string;
-    translator: string;
-    date_upload: string;
-    chapter: number;
-    volume?: number;
-    url: string;
-  };
+  currentChapter?: NovelChapter;
   chapterPage: string; // or Element?
   sidebarMode: 'offcanvas' | 'icon';
   scale: number;

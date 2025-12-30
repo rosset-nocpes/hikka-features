@@ -69,6 +69,7 @@ declare global {
   interface NovelChapter {
     id: string;
     chapter: number;
+    volume?: number;
     title: string;
     translator: string;
     date_upload: string;
