@@ -65,4 +65,28 @@ declare global {
     sidebarMode: 'offcanvas' | 'icon';
     container: HTMLElement;
   }
+
+  interface NovelChapter {
+    id: string;
+    chapter: number;
+    title: string;
+    translator: string;
+    date_upload: string;
+    url: string;
+  }
+
+  interface NovelVolume {
+    number: number;
+    chapters: (NovelChapter & { volume: number })[];
+  }
+
+  type NovelContent =
+    | {
+        displayMode: 'volumes';
+        volumes: NovelVolume[];
+      }
+    | {
+        displayMode: 'chapters';
+        chapters: NovelChapter[];
+      };
 }

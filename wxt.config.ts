@@ -27,6 +27,7 @@ export default defineConfig({
       'https://*.hikka-features.pp.ua/*',
       'https://corsproxy.io/*',
       'https://graphql.anilist.co/*',
+      'https://baka.in.ua/*',
     ],
     browser_specific_settings: {
       gecko: {

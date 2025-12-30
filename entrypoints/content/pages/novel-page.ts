@@ -1,6 +1,7 @@
 import aniBackground from '../modules/ani-background';
 import aniButtons from '../modules/ani-buttons';
 import devButtons from '../modules/dev-buttons';
+import novel_read_button from '../modules/novel-reader/novel-read-button';
 import recommendationBlock from '../modules/recommendation-block';
 
 const novel_page = async () => {
@@ -12,8 +13,8 @@ const novel_page = async () => {
     await prefetchHikkaNovel();
 
     await Promise.allSettled(
-      [devButtons, aniButtons, recommendationBlock].map(async (elem) =>
-        (await elem())?.mount(),
+      [devButtons, novel_read_button, aniButtons, recommendationBlock].map(
+        async (elem) => (await elem())?.mount(),
       ),
     );
   }
