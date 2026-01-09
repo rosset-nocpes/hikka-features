@@ -24,7 +24,7 @@ const parseSuperscriptToIndex = (superscripts: string): number => {
   );
 };
 
-export const parseNovelWithAutoExplanations = (html: string) => {
+export const parseNovelPage = (html: string) => {
   const sanitizedHtml = DOMPurify.sanitize(html, {
     FORBID_ATTR: ['class', 'style'],
   });

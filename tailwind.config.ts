@@ -132,6 +132,10 @@ export default {
       },
       fontFamily: {
         inter: ['Inter', 'sans-serif'],
+        caveat: ['Caveat', 'cursive'],
+        roboto: ['Roboto Variable', 'sans-serif'],
+        ebgaramond: ['EB Garamond Variable', 'serif'],
+        literata: ['Literata Variable', 'serif'],
         sans: ['var(--font-geist-sans)'],
         mono: ['var(--font-geist-mono)'],
       },
