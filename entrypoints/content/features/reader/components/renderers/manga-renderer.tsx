@@ -1,7 +1,7 @@
 /** biome-ignore-all lint/correctness/useHookAtTopLevel: . */
 import { WheelGesturesPlugin } from 'embla-carousel-wheel-gestures';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   Carousel,
   CarouselContent,
@@ -33,6 +33,7 @@ const MangaRenderer = () => {
 
   const imageRefs = useRef<(HTMLImageElement | null)[]>([]);
   const prevScaleRef = useRef(settings.scale);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!chapterImages || !Array.isArray(chapterImages)) return;
@@ -136,27 +137,30 @@ const MangaRenderer = () => {
     };
   }, [carouselApi, currentChapter, isLoading]);
 
-  // todo
-  // useLayoutEffect(() => {
-  //   const scrollContainer = scrollContainerRef.current;
-  //   if (settings.scrollMode && scrollContainer && prevScaleRef.current !== settings.scale) {
-  //     const oldScale = prevScaleRef.current;
-  //     const newScale = settings.scale;
+  useLayoutEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (
+      settings.scrollMode &&
+      scrollContainer &&
+      prevScaleRef.current !== settings.scale
+    ) {
+      const oldScale = prevScaleRef.current;
+      const newScale = settings.scale;
 
-  //     const effOldScale = oldScale - 0.6;
-  //     const effNewScale = newScale - 0.6;
+      const effOldScale = oldScale - 0.6;
+      const effNewScale = newScale - 0.6;
 
-  //     if (effOldScale > 0 && effNewScale > 0) {
-  //       const scaleRatio = effNewScale / effOldScale;
-  //       const { scrollTop, clientHeight } = scrollContainer;
-  //       const newScrollTop =
-  //         (scrollTop + clientHeight / 2) * scaleRatio - clientHeight / 2;
-  //       scrollContainer.scrollTop = newScrollTop;
-  //     }
-  //   }
+      if (effOldScale > 0 && effNewScale > 0) {
+        const scaleRatio = effNewScale / effOldScale;
+        const { scrollTop, clientHeight } = scrollContainer;
+        const newScrollTop =
+          (scrollTop + clientHeight / 2) * scaleRatio - clientHeight / 2;
+        scrollContainer.scrollTop = newScrollTop;
+      }
+    }
 
-  //   prevScaleRef.current = settings.scale;
-  // }, [settings.scale, settings.scrollMode]);
+    prevScaleRef.current = settings.scale;
+  }, [settings.scale, settings.scrollMode]);
 
   const layoutAnimation = {
     initial: { opacity: 0 },
@@ -186,7 +190,7 @@ const MangaRenderer = () => {
         {settings.scrollMode ? (
           <motion.div
             key="scroll"
-            // ref={scrollContainerRef}
+            ref={scrollContainerRef}
             className="no-scrollbar flex flex-1 flex-col items-center overflow-auto"
             {...layoutAnimation}
           >
@@ -199,9 +203,10 @@ const MangaRenderer = () => {
                 src={img_url}
                 alt="Chapter page"
                 loading="lazy"
+                className="max-w-none"
                 style={{
                   width: settings.scrollMode
-                    ? `${(settings.scale - 0.6) * 100}%`
+                    ? `${(settings.scale - 0.6) * 1000}px`
                     : `auto`,
                 }}
               />
