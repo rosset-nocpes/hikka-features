@@ -144,6 +144,10 @@
     scrollbar-width: none; /* Firefox */
 }
 
+.fullscreen {
+    padding: 0 !important;
+}
+
 @layer base {
     * {
         @apply border-border;
