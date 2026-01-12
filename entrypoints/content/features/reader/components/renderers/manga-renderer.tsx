@@ -71,6 +71,8 @@ const MangaRenderer = () => {
     if (!carouselApi) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (isLoading) return;
+
       switch (e.key) {
         case 'ArrowUp':
         case 'ArrowLeft':
@@ -169,14 +171,12 @@ const MangaRenderer = () => {
     transition: { duration: 0.2 },
   };
 
-  if (!chapterImages || !Array.isArray(chapterImages)) return;
-
   return (
     <>
       <MangaPageIndicator />
       <MangaScaleIndicator />
       <AnimatePresence>
-        {isLoading && (
+        {(!chapterImages || isLoading) && (
           <motion.div
             key="loading"
             className="absolute z-10 flex size-full items-center justify-center bg-card"
@@ -186,63 +186,65 @@ const MangaRenderer = () => {
           </motion.div>
         )}
       </AnimatePresence>
-      <AnimatePresence mode="wait" initial={false}>
-        {settings.scrollMode ? (
-          <motion.div
-            key="scroll"
-            ref={scrollContainerRef}
-            className="no-scrollbar flex flex-1 flex-col items-center overflow-auto"
-            {...layoutAnimation}
-          >
-            {chapterImages.map((img_url, index) => (
-              <img
-                key={index}
-                ref={(el) => {
-                  imageRefs.current[index] = el;
-                }}
-                src={img_url}
-                alt="Chapter page"
-                loading="lazy"
-                className="max-w-none"
-                style={{
-                  width: settings.scrollMode
-                    ? `${(settings.scale - 0.6) * 1000}px`
-                    : `auto`,
-                }}
-              />
-            ))}
-          </motion.div>
-        ) : (
-          <MotionCarousel
-            key="carousel"
-            plugins={[WheelGesturesPlugin()]}
-            orientation={settings.orientation}
-            setApi={setCarouselApi}
-            className="flex h-full"
-            {...layoutAnimation}
-          >
-            <CarouselContent className="!m-0 h-full">
-              {chapterImages.map((img_url, index) => {
-                return (
-                  <CarouselItem key={index} className="h-full">
-                    <div className="flex h-full items-center justify-center">
-                      <img
-                        ref={(el) => {
-                          imageRefs.current[index] = el;
-                        }}
-                        src={img_url}
-                        alt="Chapter page"
-                        className="h-full object-contain"
-                      />
-                    </div>
-                  </CarouselItem>
-                );
-              })}
-              <MangaNextPage />
-            </CarouselContent>
-          </MotionCarousel>
-        )}
-      </AnimatePresence>
+      {chapterImages && Array.isArray(chapterImages) && (
+        <AnimatePresence mode="wait" initial={false}>
+          {settings.scrollMode ? (
+            <motion.div
+              key="scroll"
+              ref={scrollContainerRef}
+              className="no-scrollbar flex flex-1 flex-col items-center overflow-auto"
+              {...layoutAnimation}
+            >
+              {chapterImages?.map((img_url, index) => (
+                <img
+                  key={index}
+                  ref={(el) => {
+                    imageRefs.current[index] = el;
+                  }}
+                  src={img_url}
+                  alt="Chapter page"
+                  loading="lazy"
+                  className="max-w-none"
+                  style={{
+                    width: settings.scrollMode
+                      ? `${(settings.scale - 0.6) * 1000}px`
+                      : `auto`,
+                  }}
+                />
+              ))}
+            </motion.div>
+          ) : (
+            <MotionCarousel
+              key="carousel"
+              plugins={[WheelGesturesPlugin()]}
+              orientation={settings.orientation}
+              setApi={setCarouselApi}
+              className="flex h-full"
+              {...layoutAnimation}
+            >
+              <CarouselContent className="!m-0 h-full">
+                {chapterImages?.map((img_url, index) => {
+                  return (
+                    <CarouselItem key={index} className="h-full">
+                      <div className="flex h-full items-center justify-center">
+                        <img
+                          ref={(el) => {
+                            imageRefs.current[index] = el;
+                          }}
+                          src={img_url}
+                          alt="Chapter page"
+                          className="h-full object-contain"
+                        />
+                      </div>
+                    </CarouselItem>
+                  );
+                })}
+                <MangaNextPage />
+              </CarouselContent>
+            </MotionCarousel>
+          )}
+        </AnimatePresence>
+      )}
     </>
   );
 };
