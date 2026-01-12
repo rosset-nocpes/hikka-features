@@ -39,7 +39,10 @@ const VolumesView = () => {
           >
             <SidebarMenuItem>
               <CollapsibleTrigger asChild>
-                <SidebarMenuButton className="duration-200 group-data-[state=open]/collapsible:rounded-b-none group-data-[state=open]/collapsible:bg-sidebar-accent/50">
+                <SidebarMenuButton
+                  size="md"
+                  className="font-medium duration-200 group-data-[state=open]/collapsible:rounded-b-none group-data-[state=open]/collapsible:bg-sidebar-accent/50"
+                >
                   <span>Том {volume.number}</span>
                   <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                 </SidebarMenuButton>
