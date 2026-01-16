@@ -8,7 +8,7 @@ import {
   motion,
   useScroll,
 } from 'motion/react';
-import { forwardRef, useRef, useState } from 'react';
+import { forwardRef, memo, useEffect, useMemo, useRef, useState } from 'react';
 import {
   HoverCard,
   HoverCardContent,
