@@ -35,6 +35,14 @@ const NovelRenderer = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ container: scrollRef });
 
+  useEffect(() => {
+    if (!chapterPage || !animationComplete) return;
+    scrollRef.current?.scrollTo({ top: 0 });
+
+    // scroll event is dispatched to trigger progress bar update
+    scrollRef.current?.dispatchEvent(new Event('scroll'));
+  }, [animationComplete, chapterPage]);
+
   if (Array.isArray(chapterPage)) return;
 
   const handleAnimationStart = () => {
