@@ -78,10 +78,20 @@ const ChapterList: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
   return (
     <SidebarContent
       ref={scrollRef}
-      className={cn('group-data-[collapsible=icon]:overflow-auto', {
-        'gradient-mask-t-90-d': isScrolled.top && isScrolled.bottom,
-        'gradient-mask-t-90': isScrolled.top && !isScrolled.bottom,
-        'gradient-mask-b-90': !isScrolled.top && isScrolled.bottom,
+      className={cn('relative group-data-[collapsible=icon]:overflow-auto', {
+        'gradient-mask-t-90-d':
+          isScrolled.top &&
+          isScrolled.bottom &&
+          data?.displayMode === ReaderContentMode.Chapters,
+        'gradient-mask-t-90':
+          isScrolled.top &&
+          !isScrolled.bottom &&
+          data?.displayMode === ReaderContentMode.Chapters,
+        'gradient-mask-b-90':
+          (!isScrolled.top && isScrolled.bottom) ||
+          (data?.displayMode === ReaderContentMode.Volumes &&
+            isScrolled.top &&
+            isScrolled.bottom),
       })}
       style={{
         scrollbarWidth: 'none',

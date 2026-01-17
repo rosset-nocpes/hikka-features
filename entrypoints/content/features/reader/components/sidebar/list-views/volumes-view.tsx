@@ -39,10 +39,9 @@ const VolumesView = () => {
           >
             <SidebarMenuItem>
               <CollapsibleTrigger asChild>
-                {/* todo: make sticky */}
                 <SidebarMenuButton
                   size="md"
-                  className="font-medium duration-200 group-data-[state=open]/collapsible:rounded-b-none group-data-[state=open]/collapsible:bg-sidebar-accent/50"
+                  className="sticky top-0 z-10 font-medium duration-200 group-data-[state=open]/collapsible:rounded-b-none group-data-[state=open]/collapsible:bg-sidebar-accent"
                 >
                   <span>Том {volume.number}</span>
                   <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />

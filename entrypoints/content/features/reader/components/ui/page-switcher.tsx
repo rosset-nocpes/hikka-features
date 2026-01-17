@@ -5,7 +5,6 @@ import MaterialSymbolsArrowUpwardRounded from '~icons/material-symbols/arrow-upw
 import { useReader } from '../../hooks/use-reader';
 import { MangaOrientation, ReaderType } from '../../reader.enums';
 
-// todo: add support for novel chapter switching
 const PageSwitcher = () => {
   const { settings, carouselApi, nextChapter, prevChapter } = useReader();
 
