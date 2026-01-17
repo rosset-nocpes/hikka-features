@@ -283,7 +283,6 @@ export default defineContentScript({
               ) as HTMLAnchorElement)!.href.split('/');
 
               const source_type = source[3] as MediaType;
-              console.log(source_type);
 
               const first_source_mal_id = await (
                 await fetch(`https://api.hikka.io/${source_type}/${source[4]}`)

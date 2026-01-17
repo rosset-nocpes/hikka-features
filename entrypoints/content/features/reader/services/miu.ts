@@ -1,44 +1,16 @@
-import axios from 'axios';
 import * as cheerio from 'cheerio';
+import { ReaderContentMode } from '../reader.enums';
+import type { Chapter, ReaderContent } from '../reader.types';
+import BaseScraper from './_scraper';
 
-class MIUScraper {
-  private readonly baseUrl = 'https://manga.in.ua';
-  private readonly endpoints = {
+class MIUScraper extends BaseScraper {
+  name = 'MIUScraper';
+  baseUrl = 'https://manga.in.ua';
+  endpoints = {
     search: `${this.baseUrl}/index.php?do=search`,
     loadChapters: 'engine/ajax/controller.php?mod=load_chapters',
     loadImages: 'engine/ajax/controller.php?mod=load_chapters_image',
   };
-
-  /**
-   * Resolves the proxy-wrapped URL for requests
-   */
-  private async getProxyUrl(targetUrl: string): Promise<string> {
-    const branch = await backendBranch.getValue();
-    const backendBase = BACKEND_BRANCHES[branch];
-    const absoluteUrl = targetUrl.startsWith('http')
-      ? targetUrl
-      : `${this.baseUrl}/${targetUrl}`;
-
-    return `${backendBase}/proxy?r=${encodeURIComponent(absoluteUrl)}`;
-  }
-
-  /**
-   * Generic request helper
-   */
-  private async request(
-    url: string,
-    method: 'GET' | 'POST' = 'GET',
-    data?: any,
-  ) {
-    const proxyUrl = await this.getProxyUrl(url);
-    try {
-      const response = await axios({ method, url: proxyUrl, data });
-      return response.data;
-    } catch (error) {
-      console.error(`[MIUScraper] Error during ${method} ${url}:`, error);
-      throw new Error(`MIUScraper failed to communicate with ${url}`);
-    }
-  }
 
   /**
    * Internal parser: Extracts site_login_hash
@@ -71,16 +43,12 @@ class MIUScraper {
     return html.includes('dle_user_hash') ? 'dle_user_hash' : 'user_hash';
   }
 
-  /**
-   * Public API: Fetches all chapters for a manga
-   */
-  public async getChapters(data: any): Promise<API.ChapterData[]> {
+  public async search(data: any) {
     const title = data.title_ua || data.title_en;
     let mangaUrl = data.external.find(
       (link: any) => link.text === 'Manga.in.ua',
     )?.url;
 
-    // 1. Search if necessary
     if (!mangaUrl) {
       const searchData = new URLSearchParams({
         do: 'search',
@@ -88,20 +56,30 @@ class MIUScraper {
         story: `${title} ${data.year}`,
         search_start: '1',
       });
+
       const searchHtml = await this.request(
         this.endpoints.search,
         'POST',
         searchData,
       );
+
       const $search = cheerio.load(searchHtml);
+
       mangaUrl = $search('main.main article.item h3.card__title a')
         .first()
         .attr('href');
-      if (!mangaUrl) throw new Error(`Manga "${title}" not found.`);
     }
+    if (!mangaUrl) throw new Error(`Manga "${title}" not found.`);
 
-    // 2. Parse Manga Page for AJAX details
-    const pageHtml = await this.request(mangaUrl);
+    return mangaUrl;
+  }
+
+  /**
+   * Public API: Fetches all chapters for a manga
+   */
+  public async getChapterList(url: string): Promise<ReaderContent> {
+    // 1. Parse Manga Page for AJAX details
+    const pageHtml = await this.request(url);
     const $page = cheerio.load(pageHtml);
     const container = $page('div#linkstocomics');
 
@@ -113,14 +91,14 @@ class MIUScraper {
         this.extractUserHash(pageHtml),
     });
 
-    // 3. Fetch Chapter List via AJAX
+    // 2. Fetch Chapter List via AJAX
     const listHtml = await this.request(
       this.endpoints.loadChapters,
       'POST',
       params,
     );
     const $list = cheerio.load(listHtml);
-    const chapters: API.ChapterData[] = [];
+    const chapters: Chapter[] = [];
 
     $list('body > *').each((_, el) => {
       const $el = $list(el);
@@ -135,7 +113,7 @@ class MIUScraper {
           href.split('/').pop()?.split('-')[0] ||
           $el.attr('manga-chappter') ||
           '0',
-        scanlator: $el.attr('translate') || '',
+        translator: $el.attr('translate') || '',
         date_upload: $el.children().first().text().trim(),
         volume: Number($el.attr('manga-tom') || 0),
         chapter: Number($el.attr('manga-chappter') || 0),
@@ -144,13 +122,13 @@ class MIUScraper {
       });
     });
 
-    return chapters;
+    return { displayMode: ReaderContentMode.Chapters, chapters };
   }
 
   /**
    * Public API: Fetches image pages for a specific chapter URL
    */
-  public async getChapterPages(url: string): Promise<string[]> {
+  public async getChapter(url: string) {
     const html = await this.request(url);
     const $ = cheerio.load(html);
 

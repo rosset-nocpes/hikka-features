@@ -125,14 +125,17 @@ export default {
         },
       },
       animation: {
-        'collapsible-down':
-          'collapsible-down 250ms cubic-bezier(0.32,0.72,0,0.75)',
-        'collapsible-up': 'collapsible-up 250ms cubic-bezier(0.32,0.72,0,0.75)',
+        'collapsible-down': 'collapsible-down 200ms ease-out',
+        'collapsible-up': 'collapsible-up 200ms ease-out',
         'content-show': 'content-show 0.1s ease-out',
         'content-hide': 'content-hide 0.1s ease-out',
       },
       fontFamily: {
         inter: ['Inter', 'sans-serif'],
+        nunitosans: ['Nunito Sans Variable', 'sans-serif'],
+        roboto: ['Roboto Variable', 'sans-serif'],
+        literata: ['Literata Variable', 'serif'],
+        ebgaramond: ['EB Garamond Variable', 'serif'],
         sans: ['var(--font-geist-sans)'],
         mono: ['var(--font-geist-mono)'],
       },

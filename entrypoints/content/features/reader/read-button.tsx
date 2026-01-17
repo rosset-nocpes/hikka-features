@@ -7,20 +7,22 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import MaterialSymbolsMenuBookOutlineRounded from '~icons/material-symbols/menu-book-outline-rounded';
 import { queryClient } from '../..';
+import useReadData from './hooks/use-read-data';
 import reader from './reader';
+import type { ReaderType } from './reader.enums';
 
-const readButton = async (location?: Element) => {
-  if (document.body.querySelectorAll('read-button').length !== 0) {
+const MOUNT_TAG = 'read-button';
+
+const readButton = async (type: ReaderType, location?: Element) => {
+  if (document.body.querySelectorAll(MOUNT_TAG).length !== 0) {
     return;
   }
 
   return createShadowRootUi(usePageStore.getState().ctx, {
-    name: 'read-button',
+    name: MOUNT_TAG,
     position: 'inline',
     append: 'first',
-    anchor:
-      location ||
-      document.querySelector('div.sticky.bottom-3.z-10.mt-12 > div'),
+    anchor: location || 'div.sticky.bottom-3.z-10.mt-12 > div',
     css: ':host(read-button) { margin-right: -0.5rem; }',
     inheritStyles: true,
     async onMount(container) {
@@ -32,7 +34,7 @@ const readButton = async (location?: Element) => {
       const root = createRoot(wrapper);
       root.render(
         <QueryClientProvider client={queryClient}>
-          <ReadButton container={container} />
+          <ReadButton type={type} container={container} />
         </QueryClientProvider>,
       );
 
@@ -42,18 +44,19 @@ const readButton = async (location?: Element) => {
 };
 
 interface Props {
+  type: ReaderType;
   container: HTMLElement;
 }
 
-const ReadButton: FC<Props> = ({ container }) => {
+const ReadButton: FC<Props> = ({ type }) => {
   const [buttonState, setButtonState] = useState<boolean>();
 
-  const { data, isLoading, isError } = useReadData();
+  const { data, isLoading, isError } = useReadData(type);
 
   const openReader = () => {
     document.body.classList.toggle('h-full');
     document.body.classList.toggle('overflow-hidden');
-    reader().then((ui) => ui.mount());
+    reader(type).then((ui) => ui.mount());
   };
 
   readerButtonState.watch((state) => setButtonState(state));

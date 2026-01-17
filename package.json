@@ -15,6 +15,10 @@
     "postinstall": "wxt prepare"
   },
   "dependencies": {
+    "@fontsource-variable/eb-garamond": "^5.2.7",
+    "@fontsource-variable/literata": "^5.2.8",
+    "@fontsource-variable/nunito-sans": "^5.2.7",
+    "@fontsource-variable/roboto": "^5.2.9",
     "@hookform/resolvers": "^5.2.2",
     "@tanstack/react-query": "^5.90.12",
     "@tanstack/react-virtual": "^3.13.13",
@@ -28,10 +32,12 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
+    "dompurify": "^3.3.1",
     "embla-carousel-react": "^8.6.0",
     "embla-carousel-wheel-gestures": "^8.1.0",
     "geist": "^1.5.1",
     "hls.js": "^1.6.15",
+    "html-react-parser": "^5.2.11",
     "lucide-react": "^0.554.0",
     "motion": "^12.23.26",
     "next-themes": "^0.4.6",
@@ -46,7 +52,7 @@
     "tailwindcss": "3.4.17",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^1.1.2",
-    "vite": "8.0.0-beta.2",
+    "vite": "8.0.0-beta.7",
     "zod": "^3.25.76",
     "zustand": "^5.0.9"
   },
@@ -67,7 +73,7 @@
     "wxt": "^0.20.13"
   },
   "overrides": {
-    "vite": "8.0.0-beta.2"
+    "vite": "8.0.0-beta.7"
   },
   "patchedDependencies": {
     "vaul@1.1.2": "patches/vaul@1.1.2.patch",

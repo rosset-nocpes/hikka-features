@@ -1,23 +1,26 @@
 import { Minus, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useReaderContext } from './context/reader-context';
+import { useReader } from '../../../hooks/use-reader';
+import { ReaderType } from '../../../reader.enums';
 
-const ScaleIndicator = () => {
-  const { scrollMode, scale, setScale } = useReaderContext();
+const MangaScaleIndicator = () => {
+  const { settings, setSettings } = useReader();
+
+  if (settings.type !== ReaderType.Manga) return;
 
   const handleZoomIn = () => {
-    setScale(Math.min(scale + 0.1, 1.4));
+    setSettings({ scale: Math.min(settings.scale + 0.1, 1.4) });
   };
 
   const handleZoomOut = () => {
-    setScale(Math.max(scale - 0.1, 0.8));
+    setSettings({ scale: Math.max(settings.scale - 0.1, 0.8) });
   };
 
   return (
     <div
       className={cn(
         'absolute right-2 bottom-2 z-20 flex h-8 cursor-default items-center gap-2 rounded-md bg-sidebar px-1 font-medium duration-300',
-        !scrollMode && '-bottom-8',
+        !settings.scrollMode && '-bottom-8',
       )}
     >
       <Button
@@ -28,7 +31,7 @@ const ScaleIndicator = () => {
       >
         <Minus className="size-4" />
       </Button>
-      <div>{Math.round(scale * 100)}%</div>
+      <div>{Math.round(settings.scale * 100)}%</div>
       <Button
         variant="ghost"
         size="icon"
@@ -41,4 +44,4 @@ const ScaleIndicator = () => {
   );
 };
 
-export default ScaleIndicator;
+export default MangaScaleIndicator;

@@ -14,14 +14,23 @@ import {
 import { useSidebar } from '@/components/ui/sidebar';
 import MaterialSymbolsArrowDownwardRounded from '~icons/material-symbols/arrow-downward-rounded';
 import MaterialSymbolsMoreHoriz from '~icons/material-symbols/more-horiz';
-import { useReaderContext } from '../context/reader-context';
+import { useReader } from '../../hooks/use-reader';
+import { ReaderOrderBy, ReaderSortBy } from '../../reader.enums';
 
 const SortOptions = () => {
-  const { container, sortBy, setSortBy } = useReaderContext();
+  const { container, settings, setSettings } = useReader();
   const { open } = useSidebar();
 
   const handleOrderChange = () => {
-    setSortBy({ ...sortBy, order: sortBy.order === 'asc' ? 'desc' : 'asc' });
+    setSettings({
+      sortBy: {
+        ...settings.sortBy,
+        order:
+          settings.sortBy.order === ReaderOrderBy.Ascending
+            ? ReaderOrderBy.Descending
+            : ReaderOrderBy.Ascending,
+      },
+    });
   };
 
   return (
@@ -35,10 +44,10 @@ const SortOptions = () => {
         <MaterialSymbolsArrowDownwardRounded
           className={cn(
             'duration-150',
-            sortBy.order === 'asc' && 'scale-y-[-1]',
+            settings.sortBy.order === 'asc' && 'scale-y-[-1]',
           )}
         />
-        {sortBy.field === 'chapter' ? 'За частиною' : 'За датою'}
+        {settings.sortBy.field === 'chapter' ? 'За частиною' : 'За датою'}
       </Button>
       <ButtonGroupSeparator />
       <DropdownMenu modal={false}>
@@ -57,12 +66,22 @@ const SortOptions = () => {
           <DropdownMenuLabel>Сортування</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            onSelect={() => setSortBy({ ...sortBy, field: 'chapter' })}
+            onSelect={() =>
+              setSettings({
+                ...settings,
+                sortBy: { ...settings.sortBy, field: ReaderSortBy.Chapter },
+              })
+            }
           >
             За частиною
           </DropdownMenuItem>
           <DropdownMenuItem
-            onSelect={() => setSortBy({ ...sortBy, field: 'date_upload' })}
+            onSelect={() =>
+              setSettings({
+                ...settings,
+                sortBy: { ...settings.sortBy, field: ReaderSortBy.DateUpload },
+              })
+            }
           >
             За датою
           </DropdownMenuItem>

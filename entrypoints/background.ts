@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 interface LoginRequest {
   type: 'login';
 }
@@ -24,10 +26,54 @@ interface WatchTogetherRequestHost extends WatchTogetherRequest {
   playerInfo: PlayerInfo;
 }
 
+interface ProxyRequest {
+  type: 'proxy';
+  requestId: string;
+  method: 'GET' | 'POST';
+  url: string;
+  data?: any;
+}
+
 type MessageRequest =
   | LoginRequest
   | RichPresenceCheckRequest
-  | WatchTogetherRequest;
+  | WatchTogetherRequest
+  | ProxyRequest;
+
+export const proxyUrl = <T = any>(
+  url: string,
+  method: 'GET' | 'POST' = 'GET',
+  data?: any,
+): Promise<T> => {
+  const requestId = Math.random().toString(36).substring(2, 9);
+
+  return new Promise((resolve, reject) => {
+    const handleMessage = (message: any) => {
+      if (message.type === 'proxy-response') {
+        if (message.requestId !== requestId) return;
+
+        browser.runtime.onMessage.removeListener(handleMessage);
+
+        resolve(message.data);
+      }
+    };
+
+    browser.runtime.onMessage.addListener(handleMessage);
+
+    browser.runtime
+      .sendMessage({
+        type: 'proxy',
+        requestId,
+        method,
+        url,
+        data,
+      })
+      .catch((err) => {
+        browser.runtime.onMessage.removeListener(handleMessage);
+        reject(err);
+      });
+  });
+};
 
 export default defineBackground(() => {
   browser.webNavigation.onHistoryStateUpdated.addListener(async (details) => {
@@ -166,6 +212,23 @@ export default defineBackground(() => {
               return undefined;
           }
         }
+        case 'proxy': {
+          const { method, url, data, requestId } = typedRequest;
+
+          const r = await axios({
+            method,
+            url,
+            data,
+          });
+
+          browser.tabs.sendMessage(sender.tab!.id!, {
+            type: 'proxy-response',
+            requestId,
+            data: r.data,
+          });
+          return true;
+        }
+
         default:
           return undefined;
       }

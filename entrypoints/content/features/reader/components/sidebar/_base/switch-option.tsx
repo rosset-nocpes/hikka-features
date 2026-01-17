@@ -18,7 +18,7 @@ const SwitchOption: FC<Props> = ({
   return (
     <div className="flex items-center justify-between">
       <div className="mr-10 flex flex-col gap-1">
-        <Label>{label}</Label>
+        <Label className="font-semibold">{label}</Label>
         {description && (
           <p className="font-medium text-[#A1A1A1] text-xs">{description}</p>
         )}
