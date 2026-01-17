@@ -9,6 +9,7 @@ import {
   useScroll,
 } from 'motion/react';
 import { forwardRef, memo, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   HoverCard,
   HoverCardContent,
@@ -129,6 +130,15 @@ const PageParser = memo(
       const options: HTMLReactParserOptions = useMemo(
         () => ({
           replace: (domNode: any) => {
+            if (domNode.name === 'img') {
+              return (
+                <ZoomableImage
+                  src={domNode.attribs.src}
+                  alt={domNode.attribs.alt}
+                />
+              );
+            }
+
             if (domNode?.attribs?.class === 'hover-card-trigger') {
               const term = domNode.attribs['data-term'];
               const definition = domNode.attribs['data-definition'];
@@ -175,5 +185,67 @@ const PageParser = memo(
     },
   ),
 );
+
+interface ZoomableImageProps {
+  src: string;
+  alt?: string;
+}
+
+const ZoomableImage = ({ src, alt }: ZoomableImageProps) => {
+  const [zoomed, setZoomed] = useState(false);
+  const { container } = useReader();
+
+  useEffect(() => {
+    if (!zoomed) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        setZoomed(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown, { capture: true });
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown, { capture: true });
+    };
+  }, [zoomed]);
+
+  return (
+    <>
+      <motion.img
+        layoutId={src}
+        src={src}
+        alt={alt}
+        className="cursor-zoom-in"
+        onClick={() => setZoomed(true)}
+      />
+      {container &&
+        createPortal(
+          <AnimatePresence>
+            {zoomed && (
+              <motion.div
+                initial={{ backgroundColor: 'hsl(var(--background) / 0)' }}
+                animate={{ backgroundColor: 'hsl(var(--background) / 0.95)' }}
+                exit={{ backgroundColor: 'hsl(var(--background) / 0)' }}
+                className="absolute inset-0 z-[9999] flex cursor-zoom-out items-center justify-center"
+                onClick={() => setZoomed(false)}
+              >
+                <motion.img
+                  layoutId={src}
+                  src={src}
+                  alt={alt}
+                  className="max-h-[90vh] max-w-[90vw] rounded-lg border"
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          container,
+        )}
+    </>
+  );
+};
 
 export default NovelRenderer;
