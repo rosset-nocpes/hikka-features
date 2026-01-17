@@ -18,7 +18,7 @@ import { ReaderContentMode } from '../../../reader.enums';
 import type { Chapter } from '../../../reader.types';
 
 const VolumesView = () => {
-  const { currentChapter, setChapter } = useReader();
+  const { currentChapter, setChapter, getRead } = useReader();
   const { data } = useReadData();
 
   const handleSelectChapter = (value: Chapter) => {
@@ -39,6 +39,7 @@ const VolumesView = () => {
           >
             <SidebarMenuItem>
               <CollapsibleTrigger asChild>
+                {/* todo: make sticky */}
                 <SidebarMenuButton
                   size="md"
                   className="font-medium duration-200 group-data-[state=open]/collapsible:rounded-b-none group-data-[state=open]/collapsible:bg-sidebar-accent/50"
@@ -75,10 +76,14 @@ const VolumesView = () => {
                             <span className="text-muted-foreground text-xs">
                               {chapter.date_upload}
                             </span>
-                            <div className="size-1 shrink-0 rounded-full bg-muted-foreground" />
-                            <span className="truncate text-muted-foreground text-xs">
-                              {chapter.translator}
-                            </span>
+                            {chapter.translator && (
+                              <>
+                                <div className="size-1 shrink-0 rounded-full bg-muted-foreground" />
+                                <span className="truncate text-muted-foreground text-xs">
+                                  {chapter.translator}
+                                </span>
+                              </>
+                            )}
                           </div>
                         </div>
                       </SidebarMenuButton>

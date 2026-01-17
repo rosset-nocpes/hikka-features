@@ -22,3 +22,11 @@ export enum MangaOrientation {
   Vertical = 'vertical',
   Horizontal = 'horizontal',
 }
+
+export enum NovelTheme {
+  Light = 'novel-theme-light',
+  Sepia = 'novel-theme-sepia',
+  Slate = 'novel-theme-slate',
+  Dark = 'novel-theme-dark',
+  Black = 'novel-theme-black',
+}

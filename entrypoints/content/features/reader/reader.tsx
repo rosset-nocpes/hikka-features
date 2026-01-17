@@ -31,6 +31,8 @@ export default function reader(type: ReaderType) {
       container.className = 'h-full';
       container.classList.toggle('dark', await darkMode.getValue());
 
+      Fonts.injectAllFonts();
+
       const root = createRoot(wrapper);
       root.render(
         <QueryClientProvider client={queryClient}>
@@ -57,7 +59,7 @@ export default function reader(type: ReaderType) {
         x?.wrapper.remove();
       });
 
-      document.body.removeChild(document.getElementsByTagName('reader-ui')[0]);
+      document.body.removeChild(document.getElementsByTagName(MOUNT_TAG)[0]);
       document.body.classList.toggle('h-full');
       document.body.classList.toggle('overflow-hidden');
 

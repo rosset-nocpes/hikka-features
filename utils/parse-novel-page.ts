@@ -119,5 +119,5 @@ export const parseNovelPage = (html: string) => {
       }
     });
 
-  return $('body').html();
+  return $('body').html() || '';
 };

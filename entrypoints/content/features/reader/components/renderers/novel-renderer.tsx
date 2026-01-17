@@ -18,6 +18,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import useReadChapterData from '../../hooks/use-read-chapter-data';
 import { useReader } from '../../hooks/use-reader';
+import { ReaderType } from '../../reader.enums';
 
 const layoutAnimation = {
   initial: { opacity: 0 },
@@ -43,7 +44,13 @@ const NovelRenderer = () => {
     scrollRef.current?.dispatchEvent(new Event('scroll'));
   }, [animationComplete, chapterPage]);
 
-  if (Array.isArray(chapterPage)) return;
+  const htmlContent = useMemo(
+    () =>
+      chapterPage && !Array.isArray(chapterPage)
+        ? parseNovelPage(chapterPage)
+        : '',
+    [chapterPage],
+  );
 
   const handleAnimationStart = () => {
     setAnimationComplete(false);
@@ -65,24 +72,33 @@ const NovelRenderer = () => {
 
       <div
         className={cn(
-          'flex w-full justify-center overflow-y-auto px-3',
-          // settings.type === ReaderType.Novel && settings.fontFamily,
+          'flex w-full flex-1 justify-center overflow-y-auto bg-background px-3 text-foreground',
+          settings.type === ReaderType.Novel && settings.fontFamily,
+          settings.type === ReaderType.Novel && settings.theme,
         )}
+        style={{
+          fontSize:
+            settings.type === ReaderType.Novel ? settings.fontSize : undefined,
+        }}
       >
         <ScrollArea ref={scrollRef} className="w-full max-w-4xl">
           <div className="mt-48 mb-10 flex flex-col">
-            <p className="font-bold text-muted-foreground text-sm uppercase tracking-widest">
-              Том {currentChapter?.volume} Розділ {currentChapter?.chapter}
-            </p>
+            {currentChapter?.title && (
+              <p className="font-bold text-muted-foreground text-sm uppercase tracking-widest">
+                {currentChapter?.volume && `Том ${currentChapter?.volume} `}
+                Розділ {currentChapter?.chapter}
+              </p>
+            )}
             <h1 className="scroll-m-20 whitespace-nowrap text-balance font-extrabold text-4xl tracking-tight">
-              {currentChapter?.title}
+              {currentChapter?.title ||
+                `${currentChapter?.volume ? `Том ${currentChapter?.volume} ` : ''}Розділ ${currentChapter?.chapter}`}
             </h1>
           </div>
 
           <AnimatePresence mode="wait">
             {chapterPage && !isLoading && (
               <PageParser
-                htmlContent={parseNovelPage(chapterPage) || ''}
+                htmlContent={htmlContent}
                 onAnimationStart={handleAnimationStart}
                 onAnimationComplete={handleAnimationComplete}
               />
@@ -90,9 +106,7 @@ const NovelRenderer = () => {
             {isLoading && (
               <motion.div className="flex flex-col gap-4" {...layoutAnimation}>
                 {Array.from({ length: 15 }).map((_, index) => (
-                  <div key={index}>
-                    <Skeleton className="h-4 w-full" />
-                  </div>
+                  <Skeleton key={index} className="h-4 w-full" />
                 ))}
               </motion.div>
             )}
@@ -107,48 +121,59 @@ interface PageParserProps extends HTMLMotionProps<'div'> {
   htmlContent: string;
 }
 
-const PageParser = forwardRef<HTMLDivElement, PageParserProps>(
-  ({ htmlContent, ...props }, ref) => {
-    const { container } = useReader();
+const PageParser = memo(
+  forwardRef<HTMLDivElement, PageParserProps>(
+    ({ htmlContent, ...props }, ref) => {
+      const { container } = useReader();
 
-    const options: HTMLReactParserOptions = {
-      replace: (domNode: any) => {
-        if (domNode.attribs && domNode.attribs.class === 'hover-card-trigger') {
-          const term = domNode.attribs['data-term'];
-          const definition = domNode.attribs['data-definition'];
+      const options: HTMLReactParserOptions = useMemo(
+        () => ({
+          replace: (domNode: any) => {
+            if (domNode?.attribs?.class === 'hover-card-trigger') {
+              const term = domNode.attribs['data-term'];
+              const definition = domNode.attribs['data-definition'];
 
-          return (
-            <HoverCard openDelay={200} closeDelay={100}>
-              <HoverCardTrigger asChild>
-                <span className="cursor-help text-primary underline decoration-dotted underline-offset-4">
-                  {domToReact(domNode.children)}
-                </span>
-              </HoverCardTrigger>
-              <HoverCardContent className="w-80" container={container}>
-                <div className="flex flex-col gap-2">
-                  <h4 className="font-semibold text-sm">{term}</h4>
-                  <p className="text-muted-foreground text-sm leading-relaxed">
-                    {definition}
-                  </p>
-                </div>
-              </HoverCardContent>
-            </HoverCard>
-          );
-        }
-      },
-    };
+              return (
+                <HoverCard openDelay={200} closeDelay={100}>
+                  <HoverCardTrigger asChild>
+                    <span className="cursor-help text-primary underline decoration-dotted underline-offset-4">
+                      {domToReact(domNode.children)}
+                    </span>
+                  </HoverCardTrigger>
+                  <HoverCardContent className="w-80" container={container}>
+                    <div className="flex flex-col gap-2">
+                      <h4 className="font-semibold text-sm">{term}</h4>
+                      <p className="text-muted-foreground text-sm leading-relaxed">
+                        {definition}
+                      </p>
+                    </div>
+                  </HoverCardContent>
+                </HoverCard>
+              );
+            }
+            return undefined;
+          },
+        }),
+        [container],
+      );
 
-    return (
-      <motion.div
-        className="[&_img]:rounded-md [&_img]:border [&_p:not(:first-child)]:mt-6 [&_p]:leading-7 [&_span]:inline"
-        ref={ref}
-        {...layoutAnimation}
-        {...props}
-      >
-        {parse(htmlContent, options)}
-      </motion.div>
-    );
-  },
+      const parsed = useMemo(
+        () => parse(htmlContent, options),
+        [htmlContent, options],
+      );
+
+      return (
+        <motion.div
+          className="[&_img]:rounded-md [&_img]:border [&_p:not(:first-child)]:mt-6 [&_p]:leading-7 [&_span]:inline"
+          ref={ref}
+          {...layoutAnimation}
+          {...props}
+        >
+          {parsed}
+        </motion.div>
+      );
+    },
+  ),
 );
 
 export default NovelRenderer;

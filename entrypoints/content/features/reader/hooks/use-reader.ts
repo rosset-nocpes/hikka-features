@@ -4,6 +4,7 @@ import type { CarouselApi } from '@/components/ui/carousel';
 import { queryClient } from '@/entrypoints/content';
 import {
   MangaOrientation,
+  NovelTheme,
   ReaderContentMode,
   ReaderOrderBy,
   ReaderSortBy,
@@ -62,8 +63,8 @@ export const useReader = create<ReaderState & ReaderActions>((set, get) => ({
     if (type === ReaderType.Manga) {
       initialSettings = {
         ...initialSettings,
-        orientation: MangaOrientation.Vertical,
         scale: 1,
+        orientation: MangaOrientation.Vertical,
         scrollMode: false,
       } as MangaSettings;
     }
@@ -73,6 +74,7 @@ export const useReader = create<ReaderState & ReaderActions>((set, get) => ({
         ...initialSettings,
         fontFamily: 'font-sans',
         fontSize: 16,
+        theme: NovelTheme.Dark,
       } as NovelSettings;
     }
 

@@ -111,17 +111,22 @@ const ChaptersView: FC<Props> = ({ scrollRef }) => {
                         'text-muted-foreground',
                     )}
                   >
-                    Том {sorted[virtualItem.index].volume} Розділ{' '}
-                    {sorted[virtualItem.index].chapter}
+                    {sorted[virtualItem.index].volume &&
+                      `Том ${sorted[virtualItem.index].volume} `}
+                    Розділ {sorted[virtualItem.index].chapter}
                   </span>
                   <div className="flex items-center gap-1">
                     <span className="text-muted-foreground text-xs">
                       {sorted[virtualItem.index].date_upload}
                     </span>
-                    <div className="size-1 shrink-0 rounded-full bg-muted-foreground" />
-                    <span className="truncate text-muted-foreground text-xs">
-                      {sorted[virtualItem.index].translator}
-                    </span>
+                    {sorted[virtualItem.index].translator && (
+                      <>
+                        <div className="size-1 shrink-0 rounded-full bg-muted-foreground" />
+                        <span className="truncate text-muted-foreground text-xs">
+                          {sorted[virtualItem.index].translator}
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
               </SidebarMenuButton>

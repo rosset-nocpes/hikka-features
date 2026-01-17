@@ -1,5 +1,7 @@
+import type { ForwardRefExoticComponent, SVGProps } from 'react';
 import type {
   MangaOrientation,
+  NovelTheme,
   ReaderContentMode,
   ReaderOrderBy,
   ReaderSortBy,
@@ -45,14 +47,40 @@ export interface BaseReaderSettings {
 export interface MangaSettings extends BaseReaderSettings {
   type: ReaderType.Manga;
   scale: number; // maybe move it to base settings
-  scrollMode: boolean;
   orientation: MangaOrientation;
+  scrollMode: boolean;
 }
 
 export interface NovelSettings extends BaseReaderSettings {
   type: ReaderType.Novel;
   fontSize: number;
   fontFamily: string;
+  theme: NovelTheme;
 }
 
 export type ReaderSettings = MangaSettings | NovelSettings;
+
+export type UISettingType =
+  | 'boolean'
+  | 'number'
+  | 'slider'
+  | 'select'
+  | 'tabs'
+  | 'text';
+
+export interface UISettingMetadata {
+  label: string;
+  type: UISettingType;
+  min?: number;
+  max?: number;
+  options?: {
+    value: string;
+    label?: string;
+    icon?: ForwardRefExoticComponent<
+      SVGProps<SVGSVGElement> & { title?: string | undefined }
+    >;
+  }[];
+}
+
+export type KeysOfUnion<T> = T extends T ? keyof T : never;
+export type BaseKeys = BaseReaderSettings | 'type';
