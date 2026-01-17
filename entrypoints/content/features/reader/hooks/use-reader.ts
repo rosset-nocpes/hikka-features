@@ -78,12 +78,12 @@ export const useReader = create<ReaderState & ReaderActions>((set, get) => ({
       } as NovelSettings;
     }
 
-    // todo
-    // const targetChapter = data[useReaderContext.getState().getRead()];
+    const readIndex = get().getRead();
     const targetChapter =
       data.displayMode === ReaderContentMode.Chapters
-        ? data.chapters[0]
-        : data.volumes[0].chapters[0];
+        ? data.chapters[readIndex] || data.chapters[0]
+        : data.volumes.flatMap((v) => v.chapters)[readIndex] ||
+          data.volumes.flatMap((v) => v.chapters)[0];
 
     set((state) => ({
       settings: {

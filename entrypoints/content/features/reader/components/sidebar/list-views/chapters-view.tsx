@@ -106,6 +106,7 @@ const ChaptersView: FC<Props> = ({ scrollRef }) => {
               >
                 <div className="flex flex-1 flex-col gap-1 truncate text-left leading-tight">
                   <span
+                    // todo: change it
                     className={cn(
                       sorted[virtualItem.index].chapter <= getRead() &&
                         'text-muted-foreground',

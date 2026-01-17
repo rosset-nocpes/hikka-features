@@ -63,11 +63,21 @@ const VolumesView = () => {
                       >
                         <div className="flex flex-1 flex-col gap-1 truncate text-left leading-tight">
                           <span
-                            className={
-                              cn()
-                              // volume.index <= getRead() &&
-                              //   "text-muted-foreground",
-                            }
+                            className={cn(
+                              (() => {
+                                const allChapters = data.volumes.flatMap(
+                                  (vol) => vol.chapters,
+                                );
+                                const chapterIndex = allChapters.findIndex(
+                                  (chap) => chap.id === chapter.id,
+                                );
+                                return (
+                                  chapterIndex !== -1 &&
+                                  chapterIndex < getRead() &&
+                                  'text-muted-foreground'
+                                );
+                              })(),
+                            )}
                           >
                             Розділ {chapter.chapter}
                           </span>
