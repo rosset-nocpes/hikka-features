@@ -16,6 +16,7 @@ interface PlayerState {
   /* Temporary */
   sharedParams?: SharedPlayerParams;
   isShared?: boolean;
+  minified: boolean;
 }
 
 interface PlayerActions {
@@ -28,6 +29,7 @@ interface PlayerActions {
   setSidebarMode: (mode: PlayerState['sidebarMode']) => void;
   setSharedStatus: (status: boolean) => void;
   setContainer: (container: HTMLElement) => void;
+  setMinified: (value: boolean) => void,
   reset: () => void;
 }
 
@@ -40,6 +42,7 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => ({
   episodeData: undefined,
   currentEpisode: undefined,
   sidebarMode: 'offcanvas',
+  minified: false,
 
   initialize: async (data) => {
     const providers_avaliable = getAvailablePlayers(data).map((e) => e.title);
@@ -203,6 +206,7 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => ({
   setSidebarMode: (mode) => set({ sidebarMode: mode }),
   setSharedStatus: (status) => set({ isShared: status }),
   setContainer: (container) => set({ container }),
+  setMinified: (minified) => set({ minified }),
   reset: () => {
     set({
       container: undefined,
@@ -251,11 +255,22 @@ export const getWatched = (): number => {
 
 interface PlayerProviderProps extends PropsWithChildren {
   container: HTMLElement;
+  wrapper: HTMLDivElement;
 }
 
-export const PlayerProvider: FC<PlayerProviderProps> = ({ children }) => {
-  const { initialize } = usePlayer();
+export const PlayerProvider: FC<PlayerProviderProps> = ({ children, wrapper }) => {
+  const { initialize, minified } = usePlayer();
   const { data } = useWatchData();
+
+  useEffect(() => {
+    if (!wrapper) return;
+
+    if (minified) {
+      wrapper.classList.remove('backdrop-blur-sm', 'bg-black/60');
+    } else {
+      wrapper.classList.add('backdrop-blur-sm', 'bg-black/60');
+    }
+  }, [minified])
 
   useEffect(() => {
     if (!data) return;

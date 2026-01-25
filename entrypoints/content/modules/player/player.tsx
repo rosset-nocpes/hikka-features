@@ -21,17 +21,16 @@ import PlayerToolbar from './toolbar/player-toolbar';
 export default function player() {
   return createShadowRootUi(usePageStore.getState().ctx, {
     name: 'player-ui',
-    position: 'modal',
+    position: 'overlay',
     zIndex: 100,
-    inheritStyles: true,
+    inheritStyles: false,
     async onMount(container) {
       usePlayer.getState().setContainer(container);
 
       const wrapper = document.createElement('div');
       container.append(wrapper);
 
-      wrapper.className =
-        'size-full backdrop-blur-sm bg-black/60 flex items-center justify-center md:p-8';
+      wrapper.className = 'size-full fixed flex items-center justify-center md:p-8';
 
       container.className = 'h-full';
       container.classList.toggle('dark', await darkMode.getValue());
@@ -44,12 +43,12 @@ export default function player() {
       root.render(
         <QueryClientProvider client={queryClient}>
           <SidebarProvider className="h-full w-full">
-            <PlayerProvider container={container}>
-              <div
+            <PlayerProvider container={container} wrapper={wrapper}>
+              {/* <div
                 className="fixed z-0 size-full"
                 onClick={() => player().then((x) => x.remove())}
-              />
-              <Player />
+              /> */}
+              <Player/>
               <Toaster position="top-center" />
             </PlayerProvider>
           </SidebarProvider>
@@ -83,6 +82,7 @@ export const Player = () => {
     team,
     currentEpisode,
     setEpisode,
+    minified,
   } = usePlayer();
   const { data } = useWatchData();
 
@@ -264,7 +264,8 @@ export const Player = () => {
   return (
     <Card
       className={cn(
-        'relative z-10 flex size-full overflow-hidden rounded-none border-none duration-300 md:max-h-[722px] md:max-w-[1282px] md:rounded-lg md:border',
+        'z-10 flex overflow-hidden rounded-none border-none duration-300 min-h-[200px] min-w-[356px] md:max-h-[722px] md:max-w-[1282px] md:rounded-lg md:border',
+        minified ? 'fixed size-1/4 end-5 bottom-5' : 'relative size-full',
         getTheatreState && 'md:max-h-full md:max-w-full',
       )}
     >
