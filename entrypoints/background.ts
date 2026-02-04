@@ -92,6 +92,8 @@ export default defineBackground(() => {
       const typedRequest = request as MessageRequest;
       switch (typedRequest.type) {
         case 'login': {
+          const { setSettings } = useSettings.getState();
+
           const auth_url = `https://hikka.io/oauth/?reference=${CLIENT_REFERENCE}&scope=${encodeURIComponent(
             NEEDED_SCOPES.join(','),
           )}`;
@@ -104,16 +106,20 @@ export default defineBackground(() => {
             .then((response_url) => {
               const params = new URLSearchParams(response_url?.split('?')[1]);
 
-              hikkaSecret.setValue(params.get('secret')!);
-              hikkaSecret.setMeta({
-                expiration: Number(params.get('expiration')),
+              setSettings({
+                hikkaSecret: {
+                  secret: params.get('secret')!,
+                  expiration: Number(params.get('expiration')),
+                },
               });
 
               getUserData().then((r) => {
-                userData.setValue({
-                  hikkaId: r['reference'],
-                  username: r['username'],
-                  avatar: r['avatar'],
+                setSettings({
+                  userData: {
+                    hikkaId: r.reference,
+                    username: r.username,
+                    avatar: r.avatar,
+                  },
                 });
               });
             });
@@ -135,7 +141,7 @@ export default defineBackground(() => {
           return true;
 
         case 'watch-together': {
-          const userDataValue = await userData.getValue();
+          const { userData } = useSettings.getState();
 
           switch (typedRequest.action) {
             case 'create': {
@@ -145,7 +151,7 @@ export default defineBackground(() => {
               ws.send(
                 JSON.stringify({
                   type: 'create',
-                  userData: userDataValue,
+                  userData: userData,
                   animeSlug,
                   playerInfo,
                 }),
@@ -169,7 +175,7 @@ export default defineBackground(() => {
               ws.send(
                 JSON.stringify({
                   type: 'join',
-                  userData: userDataValue,
+                  userData: userData,
                   room: typedRequest.roomId!,
                 }),
               );
@@ -191,7 +197,7 @@ export default defineBackground(() => {
               ws.send(
                 JSON.stringify({
                   type: 'leave',
-                  userData: userDataValue,
+                  userData: userData,
                 }),
               );
 

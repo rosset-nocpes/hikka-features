@@ -3,29 +3,35 @@ export async function Login() {
 }
 
 export async function Logout() {
-  richPresence.removeValue();
-  userData.removeValue();
-  hikkaSecret.removeValue();
+  const { setSettings } = useSettings.getState();
+
+  setSettings({
+    richPresence: false,
+    userData: undefined,
+    hikkaSecret: undefined,
+  });
 }
 
 export async function getUserData() {
-  if ((await hikkaSecret.getValue()) === null) {
-    return;
-  }
+  const { hikkaSecret } = useSettings.getState();
+  if (!hikkaSecret) return;
 
   return await (
     await fetch('https://api.hikka.io/user/me', {
-      headers: { auth: (await hikkaSecret.getValue())! },
+      headers: { auth: hikkaSecret.secret },
     })
   ).json();
 }
 
 export async function EditDesc(description: string) {
+  const { hikkaSecret } = useSettings.getState();
+  if (!hikkaSecret) return;
+
   await fetch('https://api.hikka.io/settings/description', {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
-      auth: (await hikkaSecret.getValue())!,
+      auth: hikkaSecret.secret,
     },
     body: JSON.stringify({
       description: description,
@@ -34,7 +40,9 @@ export async function EditDesc(description: string) {
 }
 
 export async function actionRichPresence(action: 'check' | 'remove') {
-  if (await richPresence.getValue()) {
+  const { richPresence } = useSettings.getState();
+
+  if (richPresence) {
     browser.runtime.sendMessage({
       type: 'rich-presence-check',
       action: action,

@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Drawer,
@@ -20,20 +19,8 @@ import MaterialSymbolsExpandAllRounded from '~icons/material-symbols/expand-all-
 import SwitchOption from '../_base/switch-option';
 
 const PlayerSettings = () => {
-  const [showWatchButton, toggleWatchButton] = useState<boolean | null>(null);
-
-  const [defaultPlayerProvider, setDefaultPlayerProvider] = useState<
-    string | null
-  >(null);
-
-  useEffect(() => {
-    Promise.all([watchButtonState.getValue(), defaultPlayer.getValue()]).then(
-      ([watchButton, defaultPlayerValue]) => {
-        toggleWatchButton(watchButton);
-        setDefaultPlayerProvider(defaultPlayerValue);
-      },
-    );
-  }, []);
+  const { features, updateFeatureSettings } = useSettings();
+  const { enabled, defaultProvider } = features.player;
 
   return (
     <Drawer>
@@ -57,12 +44,11 @@ const PlayerSettings = () => {
           </DrawerHeader>
           <div className="flex flex-col gap-5 px-[30px]">
             <SwitchOption
-              checked={showWatchButton!}
+              checked={enabled}
               label="Кнопка перегляду"
               description="Кнопка для відображення програвача"
               onClick={() => {
-                watchButtonState.setValue(!showWatchButton);
-                toggleWatchButton(!showWatchButton);
+                updateFeatureSettings('player', { enabled: !enabled });
               }}
             />
             <div className="flex items-center justify-between">
@@ -72,10 +58,11 @@ const PlayerSettings = () => {
               {navigator.userAgent.toLowerCase().includes('firefox') ? (
                 <select
                   className="flex h-10 w-24 cursor-pointer items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1"
-                  value={defaultPlayerProvider!}
+                  value={defaultProvider}
                   onChange={(e) => {
-                    defaultPlayer.setValue(e.target.value);
-                    setDefaultPlayerProvider(e.target.value);
+                    updateFeatureSettings('player', {
+                      defaultProvider: e.target.value,
+                    });
                   }}
                 >
                   {['moon', 'ashdi'].map((elem) => (
@@ -86,10 +73,9 @@ const PlayerSettings = () => {
                 </select>
               ) : (
                 <Select
-                  value={defaultPlayerProvider!}
+                  value={defaultProvider}
                   onValueChange={(value) => {
-                    defaultPlayer.setValue(value);
-                    setDefaultPlayerProvider(value);
+                    updateFeatureSettings('player', { defaultProvider: value });
                   }}
                 >
                   <SelectTrigger className="w-24">

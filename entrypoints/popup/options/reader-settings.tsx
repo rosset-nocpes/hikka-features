@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Drawer,
@@ -13,13 +12,8 @@ import MaterialSymbolsExpandAllRounded from '~icons/material-symbols/expand-all-
 import SwitchOption from '../_base/switch-option';
 
 const ReaderSettings = () => {
-  const [showReaderButton, toggleReaderButton] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    readerButtonState.getValue().then((showReaderButton) => {
-      toggleReaderButton(showReaderButton);
-    });
-  }, []);
+  const { features, updateFeatureSettings } = useSettings();
+  const { enabled } = features.reader;
 
   return (
     <Drawer>
@@ -43,12 +37,11 @@ const ReaderSettings = () => {
           </DrawerHeader>
           <div className="flex flex-col gap-5 px-[30px]">
             <SwitchOption
-              checked={showReaderButton!}
+              checked={enabled}
               label="Кнопка читалки"
               description="Кнопка для відображення читалки"
               onClick={() => {
-                readerButtonState.setValue(!showReaderButton);
-                toggleReaderButton(!showReaderButton);
+                updateFeatureSettings('reader', { enabled: !enabled });
               }}
             />
           </div>

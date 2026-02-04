@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Drawer,
@@ -13,22 +12,8 @@ import MaterialSymbolsExpandAllRounded from '~icons/material-symbols/expand-all-
 import SwitchOption from '../_base/switch-option';
 
 const LocalizedPosterSettings = () => {
-  const [showLocalizedPosterButton, toggleLocalizedPosterButton] = useState<
-    boolean | null
-  >(null);
-  const [showLocalizedPoster, toggleLocalizedPoster] = useState<boolean | null>(
-    null,
-  );
-
-  useEffect(() => {
-    Promise.all([
-      localizedPosterButtonState.getValue(),
-      localizedPosterState.getValue(),
-    ]).then(([localizedPosterButton, localizedPoster]) => {
-      toggleLocalizedPosterButton(localizedPosterButton);
-      toggleLocalizedPoster(localizedPoster);
-    });
-  }, []);
+  const { features, updateFeatureSettings } = useSettings();
+  const { enabled, autoShow } = features.localizedPoster;
 
   return (
     <Drawer>
@@ -52,20 +37,20 @@ const LocalizedPosterSettings = () => {
           </DrawerHeader>
           <div className="flex flex-col gap-5 px-[30px]">
             <SwitchOption
-              checked={showLocalizedPosterButton!}
+              checked={enabled}
               label="Кнопка локалізації постера"
               onClick={() => {
-                localizedPosterButtonState.setValue(!showLocalizedPosterButton);
-                toggleLocalizedPosterButton(!showLocalizedPosterButton);
+                updateFeatureSettings('localizedPoster', { enabled: !enabled });
               }}
             />
             <SwitchOption
-              checked={showLocalizedPoster!}
+              checked={autoShow}
               label="Автолокалізація постера"
               description="Автоматично замінює постер локалізованою версією"
               onClick={() => {
-                localizedPosterState.setValue(!showLocalizedPoster);
-                toggleLocalizedPoster(!showLocalizedPoster);
+                updateFeatureSettings('localizedPoster', {
+                  autoShow: !autoShow,
+                });
               }}
             />
           </div>

@@ -1,25 +1,16 @@
-import { useEffect, useState } from 'react';
 import SwitchOption from '../_base/switch-option';
 
 const AniBackgroundSettings = () => {
-  const [showAniBackground, toggleAniBackground] = useState<boolean | null>(
-    null,
-  );
+  const { features, updateFeatureSettings } = useSettings();
+  const { enabled } = features.aniBackground;
 
   const handleClick = () => {
-    aniBackState.setValue(!showAniBackground);
-    toggleAniBackground(!showAniBackground);
+    updateFeatureSettings('aniBackground', { enabled: !enabled });
   };
-
-  useEffect(() => {
-    aniBackState.getValue().then((showAniBackground) => {
-      toggleAniBackground(showAniBackground);
-    });
-  }, []);
 
   return (
     <SwitchOption
-      checked={showAniBackground!}
+      checked={enabled}
       label="Обкладинки"
       description="Покращене оформлення на сторінках тайтлів, персонажів та правок"
       onClick={handleClick}

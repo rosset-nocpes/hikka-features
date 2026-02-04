@@ -1,25 +1,18 @@
-import { useEffect, useState } from 'react';
 import SwitchOption from '../_base/switch-option';
 
 const AniButtonsSettings = () => {
-  const [showAniButtons, toggleAniButtons] = useState<boolean | null>(null);
+  const { features, updateFeatureSettings } = useSettings();
+  const { enabled } = features.aniButtons;
 
   const handleClick = () => {
-    aniButtonsState.setValue(!showAniButtons);
-    toggleAniButtons(!showAniButtons);
+    updateFeatureSettings('aniButtons', { enabled: !enabled });
   };
-
-  useEffect(() => {
-    aniButtonsState.getValue().then((showAniButtons) => {
-      toggleAniButtons(showAniButtons);
-    });
-  }, []);
 
   return (
     <SwitchOption
       label="Інші джерела"
       description="Додаткові посилання на сторінках тайтлів"
-      checked={showAniButtons!}
+      checked={enabled}
       onClick={handleClick}
     />
   );

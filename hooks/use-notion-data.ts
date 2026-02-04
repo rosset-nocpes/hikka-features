@@ -3,12 +3,13 @@ import useHikkaAnime from './use-hikka-anime';
 
 const useNotionData = () => {
   const { data } = useHikkaAnime();
+  const { backendBranch } = useSettings();
 
   return useQuery({
     queryKey: ['notion-data', data.slug],
     queryFn: async () => {
       const r = await fetch(
-        `${BACKEND_BRANCHES[await backendBranch.getValue()]}/notion/${data.slug}`,
+        `${BACKEND_BRANCHES[backendBranch]}/notion/${data.slug}`,
       );
 
       if (!r.ok) {

@@ -18,28 +18,29 @@ import MaterialSymbolsPersonRounded from '~icons/material-symbols/person-rounded
 import MdiBeta from '~icons/mdi/beta';
 
 const UserOptions = () => {
-  const [getRichPresence, toggleRichPresence] = useState<boolean | null>(null);
+  const { richPresence, userData, setSettings } = useSettings();
+  // const [getRichPresence, toggleRichPresence] = useState<boolean | null>(null);
 
-  const [getUserData, setUserData] = useState<any>(null);
+  // const [getUserData, setUserData] = useState<any>(null);
 
-  useEffect(() => {
-    Promise.all([richPresence.getValue(), userData.getValue()]).then(
-      ([richPresence, userData]) => {
-        toggleRichPresence(richPresence);
-        setUserData(userData);
-      },
-    );
+  // useEffect(() => {
+  //   Promise.all([richPresence.getValue(), userData.getValue()]).then(
+  //     ([richPresence, userData]) => {
+  //       toggleRichPresence(richPresence);
+  //       setUserData(userData);
+  //     },
+  //   );
 
-    hikkaSecret.watch(async () => {
-      setUserData(await userData.getValue());
-    });
-  }, []);
+  //   hikkaSecret.watch(async () => {
+  //     setUserData(await userData.getValue());
+  //   });
+  // }, []);
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild disabled>
         <Avatar className="pointer-events-none">
-          <AvatarImage src={getUserData?.avatar} />
+          <AvatarImage src={userData?.avatar} />
           <AvatarFallback>
             {/* <MaterialSymbolsPersonRounded className="size-5" /> */}
             WIP
@@ -47,16 +48,16 @@ const UserOptions = () => {
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        {!getUserData && (
+        {!userData && (
           <DropdownMenuItem onClick={Login} className="items-center gap-2">
             <img src={HikkaLogo} className="size-5 rounded-sm" />
             Увійти в акаунт hikka.io
           </DropdownMenuItem>
         )}
-        {getUserData && (
+        {userData && (
           <>
             <DropdownMenuLabel className="-m-1 line-clamp-1 bg-secondary/30 p-2">
-              {getUserData?.username}
+              {userData?.username}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={Logout} className="items-center gap-2">
@@ -76,11 +77,10 @@ const UserOptions = () => {
                 </Badge>
               </DropdownMenuLabel>
               <DropdownMenuCheckboxItem
-                checked={getRichPresence!}
+                checked={richPresence}
                 onSelect={(e) => e.preventDefault()}
                 onCheckedChange={(e) => {
-                  richPresence.setValue(e);
-                  toggleRichPresence(e);
+                  setSettings({ richPresence: e });
                 }}
               >
                 Rich Presence

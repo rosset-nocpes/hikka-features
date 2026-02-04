@@ -29,7 +29,8 @@ export default function reader(type: ReaderType) {
         'size-full md:backdrop-blur-sm bg-black/60 flex items-center justify-center md:p-8 duration-300';
 
       container.className = 'h-full';
-      container.classList.toggle('dark', await darkMode.getValue());
+      const { darkMode } = useSettings.getState();
+      container.classList.toggle('dark', darkMode);
 
       Fonts.injectAllFonts();
 

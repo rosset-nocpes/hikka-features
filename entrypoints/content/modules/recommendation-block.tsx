@@ -1,6 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { type FC, useEffect, useState } from 'react';
+import type { FC } from 'react';
 import { createRoot } from 'react-dom/client';
 import BlockButton from '@/components/hikka/block-button';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
@@ -25,7 +25,8 @@ const recommendationBlock = async (location?: Element) => {
       const wrapper = document.createElement('div');
       container.append(wrapper);
 
-      container.classList.toggle('dark', await darkMode.getValue());
+      const { darkMode } = useSettings.getState();
+      container.classList.toggle('dark', darkMode);
 
       const root = createRoot(wrapper);
       root.render(
@@ -44,7 +45,7 @@ interface Props {
 }
 
 const RecommendationBlock: FC<Props> = ({ container }) => {
-  const [blockState, setBlockState] = useState<boolean>();
+  const { enabled } = useSettings().features.recommendationBlock;
 
   const { contentType } = usePageStore();
   const content_data = useHikka()?.data;
@@ -52,18 +53,9 @@ const RecommendationBlock: FC<Props> = ({ container }) => {
 
   const mal_id = content_data.mal_id;
 
-  useEffect(() => {
-    const initializeAsync = async () => {
-      setBlockState(await recommendationBlockState.getValue());
-    };
-
-    initializeAsync();
-  });
-  recommendationBlockState.watch(setBlockState);
-
   return (
     <AnimatePresence>
-      {blockState && (
+      {enabled && (
         <motion.div
           initial={{ opacity: 0, height: 0, scale: 0.93, marginTop: 0 }}
           animate={{

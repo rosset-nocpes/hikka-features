@@ -34,7 +34,8 @@ export default function player() {
         'size-full backdrop-blur-sm bg-black/60 flex items-center justify-center md:p-8';
 
       container.className = 'h-full';
-      container.classList.toggle('dark', await darkMode.getValue());
+      const { darkMode } = useSettings.getState();
+      container.classList.toggle('dark', darkMode);
 
       const style = document.createElement('style');
       style.textContent = drawerStyles;

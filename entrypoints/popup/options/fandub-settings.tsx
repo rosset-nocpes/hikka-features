@@ -1,23 +1,16 @@
-import { useEffect, useState } from 'react';
 import SwitchOption from '../_base/switch-option';
 
 const FandubSettings = () => {
-  const [showFandubBlock, toggleFandubBlock] = useState<boolean | null>(null);
+  const { features, updateFeatureSettings } = useSettings();
+  const { enabled } = features.fandubBlock;
 
   const handleClick = () => {
-    fandubBlockState.setValue(!showFandubBlock);
-    toggleFandubBlock(!showFandubBlock);
+    updateFeatureSettings('fandubBlock', { enabled: !enabled });
   };
-
-  useEffect(() => {
-    fandubBlockState.getValue().then((showFandubBlock) => {
-      toggleFandubBlock(showFandubBlock);
-    });
-  }, []);
 
   return (
     <SwitchOption
-      checked={showFandubBlock!}
+      checked={enabled}
       label="Блок фандаб команд"
       description="Посилання на фандаб команди, які озвучили аніме тайтл"
       onClick={handleClick}

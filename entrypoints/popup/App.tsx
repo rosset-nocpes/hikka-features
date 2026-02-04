@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { version } from '@/package.json';
 import MdiGithub from '~icons/mdi/github';
 import MdiTelegram from '~icons/mdi/telegram';
@@ -14,18 +13,8 @@ import RecommendationBlockSettings from './options/recommendation-block-settings
 import UserOptions from './options/user-options';
 
 function App() {
-  const [showDevOptions, toggleDevOptions] = useState<boolean | null>(null);
-
-  const [getBurunyaaMode, toggleBurunyaaMode] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    Promise.all([devOptionsState.getValue(), burunyaaMode.getValue()]).then(
-      ([devOptions, burunyaaMode]) => {
-        toggleDevOptions(devOptions);
-        toggleBurunyaaMode(burunyaaMode);
-      },
-    );
-  }, []);
+  const { enabled, burunyaaMode } = useSettings().features.devOptions;
+  const { updateFeatureSettings } = useSettings();
 
   let devClicked = 0;
 
@@ -48,7 +37,7 @@ function App() {
       <div
         className={cn(
           'flex w-[400px] flex-col gap-7 rounded-none p-[30px] font-inter font-semibold',
-          getBurunyaaMode
+          burunyaaMode
             ? 'bg-[url(https://media1.tenor.com/m/PDzKPqFw6f8AAAAC/neco-neco-arc.gif)] bg-center bg-cover bg-no-repeat'
             : 'bg-black',
         )}
@@ -56,11 +45,7 @@ function App() {
         <h3 className="flex items-center justify-between">
           <span className="flex items-center gap-2 font-bold text-lg tracking-normal">
             Налаштування
-            <ExperimentalSettings
-              showDevOptions={showDevOptions!}
-              getBurunyaaMode={getBurunyaaMode}
-              toggleBurunyaaMode={toggleBurunyaaMode}
-            />
+            <ExperimentalSettings />
           </span>
           <UserOptions />
         </h3>
@@ -88,8 +73,7 @@ function App() {
               onClick={() => {
                 devClicked++;
                 if (devClicked === 5) {
-                  devOptionsState.setValue(!showDevOptions);
-                  toggleDevOptions(!showDevOptions);
+                  updateFeatureSettings('devOptions', { enabled: !enabled });
                   devClicked = 0;
                 }
               }}

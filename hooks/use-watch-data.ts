@@ -5,14 +5,13 @@ import useHikkaAnime from './use-hikka-anime';
 // TODO: add types for api
 const useWatchData = () => {
   const { data: anime_data } = useHikkaAnime();
+  const { backendBranch } = useSettings();
 
   return useQuery({
     queryKey: ['watch-data', anime_data.slug],
     queryFn: async () => {
       const r = await fetch(
-        `${BACKEND_BRANCHES[await backendBranch.getValue()]}/watch/v2/${
-          anime_data.slug
-        }`,
+        `${BACKEND_BRANCHES[backendBranch]}/watch/v2/${anime_data.slug}`,
       );
 
       if (!r.ok) {

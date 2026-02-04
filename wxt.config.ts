@@ -28,6 +28,7 @@ export default defineConfig({
       'https://corsproxy.io/*',
       'https://graphql.anilist.co/*',
       'https://baka.in.ua/*',
+      'https://api.jikan.moe/*',
     ],
     browser_specific_settings: {
       gecko: {
@@ -41,6 +42,9 @@ export default defineConfig({
       !isWindows && isPersistent ? ['--user-data-dir=./.wxt/chrome-data'] : [],
     chromiumProfile: isWindows && isPersistent && resolve('.wxt/chrome-data'),
     keepProfileChanges: isWindows && isPersistent,
+    binaries: {
+      chrome: 'helium-browser',
+    },
   },
   autoIcons: {
     developmentIndicator: 'overlay',

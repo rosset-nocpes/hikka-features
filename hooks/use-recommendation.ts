@@ -11,7 +11,7 @@ const useRecommendation = () => {
       const mal_id = data.mal_id;
       let maxSingleVotes = 0;
 
-      const url = `https://corsproxy.io/?url=https://api.jikan.moe/v4/${content_type === 'novel' ? 'manga' : content_type}/${mal_id}/recommendations`;
+      const url = `https://api.jikan.moe/v4/${content_type === 'novel' ? 'manga' : content_type}/${mal_id}/recommendations`;
 
       const r = await fetch(url);
 
@@ -21,7 +21,7 @@ const useRecommendation = () => {
 
       const recommendation_data = await r.json();
       const result = await Promise.all(
-        recommendation_data.data.slice(0, 4).map(async (element: any) => {
+        recommendation_data.data.slice(0, 5).map(async (element: any) => {
           try {
             const hikkaData = await fetchDetailedData(content_type!, element);
             if (element.votes > maxSingleVotes) maxSingleVotes = element.votes;

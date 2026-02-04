@@ -2,23 +2,18 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { type FC, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { create } from 'zustand';
 import { queryClient } from '../..';
 
-export const posterState = {
-  isVisible: false,
-  updateFn: null as ((state: boolean) => void) | null,
+export const usePosterState = create<{
+  visible: boolean;
+  setVisible: (visible: boolean) => void;
+}>((set) => ({
+  visible: false,
+  setVisible: (visible) => set({ visible }),
+}));
 
-  setVisibility(visible: boolean) {
-    this.isVisible = visible;
-    if (this.updateFn) {
-      this.updateFn(visible);
-    }
-  },
-};
-
-const localizedPoster = async (initialPosterState: boolean) => {
-  posterState.isVisible = initialPosterState;
-
+const localizedPoster = async () => {
   if (document.body.querySelectorAll('localized-poster').length !== 0) {
     return;
   }
@@ -41,13 +36,14 @@ const localizedPoster = async (initialPosterState: boolean) => {
       container.style.width = '100%';
       wrapper.style.height = '100%';
       wrapper.style.width = '100%';
-      container.classList.toggle('dark', await darkMode.getValue());
+      const { darkMode } = useSettings.getState();
+      container.classList.toggle('dark', darkMode);
 
       const root = createRoot(wrapper);
 
       root.render(
         <QueryClientProvider client={queryClient}>
-          <LocalizedPoster initialState={initialPosterState} />
+          <LocalizedPoster />
         </QueryClientProvider>,
       );
 
@@ -56,15 +52,11 @@ const localizedPoster = async (initialPosterState: boolean) => {
   });
 };
 
-interface Props {
-  initialState: boolean;
-}
-
-const LocalizedPoster: FC<Props> = ({ initialState }) => {
+const LocalizedPoster: FC = () => {
+  const { visible } = usePosterState();
   const { data } = useNotionData();
 
   const [isLoaded, setIsLoaded] = useState(false);
-  const [showPoster, setShowPoster] = useState(initialState);
 
   useEffect(() => {
     if (data?.poster) {
@@ -74,17 +66,9 @@ const LocalizedPoster: FC<Props> = ({ initialState }) => {
     }
   }, [data]);
 
-  useEffect(() => {
-    posterState.updateFn = setShowPoster;
-
-    return () => {
-      posterState.updateFn = null;
-    };
-  }, []);
-
   return (
     <AnimatePresence>
-      {showPoster && isLoaded && data?.poster && (
+      {visible && isLoaded && data?.poster && (
         <motion.img
           key="poster"
           alt="Localized Poster"

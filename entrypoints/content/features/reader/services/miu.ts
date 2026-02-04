@@ -143,8 +143,8 @@ class MIUScraper extends BaseScraper {
       `${this.endpoints.loadImages}&${params.toString()}`,
     );
     const $imgs = cheerio.load(imgListHtml);
-    const branch = await backendBranch.getValue();
-    const backendBase = BACKEND_BRANCHES[branch];
+    const { backendBranch } = useSettings.getState();
+    const backendBase = BACKEND_BRANCHES[backendBranch];
 
     const images: string[] = [];
     $imgs('img').each((_, img) => {
