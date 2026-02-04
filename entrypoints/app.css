@@ -256,6 +256,10 @@
     --ring: 221 100% 70%;
 }
 
+.grid-min-6 {
+    --grid-min: 6rem;
+}
+
 @layer base {
     * {
         @apply border-border;

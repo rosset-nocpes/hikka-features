@@ -28,6 +28,7 @@ export default defineConfig({
       'https://corsproxy.io/*',
       'https://graphql.anilist.co/*',
       'https://baka.in.ua/*',
+      'https://api.jikan.moe/v4/*',
     ],
     browser_specific_settings: {
       gecko: {
