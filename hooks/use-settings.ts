@@ -18,6 +18,8 @@ const extensionStorage: StateStorage = {
   },
 };
 
+let hasMigratedFromOldStorage = false;
+
 interface AppState {
   // State Values
   hikkaSecret?: { secret: string; expiration: number };
@@ -69,29 +71,6 @@ interface AppState {
   ) => void;
 }
 
-interface StorageInterface {
-  aniBackState: boolean | undefined;
-  localizedPosterState: boolean | undefined;
-  localizedPosterButtonState: boolean | undefined;
-  watchButtonState: boolean | undefined;
-  playerAnimeFavoriteTeam:
-    | Record<string, { provider: string; team: string }>
-    | undefined;
-  readerButtonState: boolean | undefined;
-  hikkaSecret: string | undefined;
-  userData: UserDataV2 | undefined;
-  aniButtonsState: boolean | undefined;
-  fandubBlockState: boolean | undefined;
-  recommendationBlockState: boolean | undefined;
-  defaultPlayer: string | undefined;
-  devOptionsState: boolean | undefined;
-  backendBranch: BackendBranches | undefined;
-  burunyaaMode: boolean | undefined;
-  devMode: boolean | undefined;
-  richPresence: boolean | undefined;
-  darkMode: boolean | undefined;
-}
-
 export const useSettings = create<AppState>()(
   persist(
     (set) => ({
@@ -131,8 +110,9 @@ export const useSettings = create<AppState>()(
       },
       hikkaSecret: undefined,
       userData: undefined,
-      backendBranch:
-        import.meta.env.MODE === 'development' ? 'localhost' : 'stable',
+      backendBranch: import.meta.env.WXT_BACKEND_BASE_URL
+        ? 'localhost'
+        : 'stable',
       richPresence: false,
       darkMode: true,
 
@@ -159,96 +139,88 @@ export const useSettings = create<AppState>()(
         darkMode: state.darkMode,
       }),
       version: 0,
-      migrate: async (persisted: any, version) => {
-        const oldStorage: StorageInterface = await browser.storage.local.get();
-
-        if (oldStorage.darkMode) {
-          await browser.storage.local.clear();
-
-          persisted = {
-            ...persisted,
-            features: {
-              ...persisted.features,
-              aniBackground: {
-                enabled:
-                  oldStorage.aniBackState ||
-                  persisted.features.aniBackground.enabled,
-              },
-              localizedPoster: {
-                enabled:
-                  oldStorage.localizedPosterButtonState ||
-                  persisted.features.localizedPoster.enabled,
-                autoShow:
-                  oldStorage.localizedPosterState ||
-                  persisted.features.localizedPoster.autoShow,
-              },
-              player: {
-                enabled:
-                  oldStorage.watchButtonState ||
-                  persisted.features.player.enabled,
-                defaultProvider:
-                  oldStorage.defaultPlayer ||
-                  persisted.features.player.defaultProvider,
-                favoriteTeams:
-                  oldStorage.playerAnimeFavoriteTeam ||
-                  persisted.features.player.favoriteTeams,
-              },
-              reader: {
-                enabled:
-                  oldStorage.readerButtonState ||
-                  persisted.features.reader.enabled,
-              },
-              aniButtons: {
-                enabled:
-                  oldStorage.aniButtonsState ||
-                  persisted.features.aniButtons.enabled,
-              },
-              fandubBlock: {
-                enabled:
-                  oldStorage.fandubBlockState ||
-                  persisted.features.fandubBlock.enabled,
-              },
-              recommendationBlock: {
-                enabled:
-                  oldStorage.recommendationBlockState ||
-                  persisted.features.recommendationBlock.enabled,
-              },
-              devOptions: {
-                enabled:
-                  oldStorage.devOptionsState ||
-                  persisted.features.devOptions.enabled,
-                devTools:
-                  oldStorage.devMode || persisted.features.devOptions.devTools,
-                burunyaaMode:
-                  oldStorage.burunyaaMode ||
-                  persisted.features.devOptions.burunyaaMode,
-              },
-            },
-          };
+      onRehydrateStorage: () => () => {
+        if (!hasMigratedFromOldStorage) {
+          hasMigratedFromOldStorage = true;
+          migrateFromOldStorage();
         }
-
-        return persisted;
       },
     },
   ),
 );
 
-// update storage for content script
-if (
-  typeof chrome !== 'undefined' &&
-  browser.storage &&
-  browser.storage.onChanged
-) {
-  browser.storage.onChanged.addListener((changes, areaName) => {
-    if (areaName === 'local' && changes.settings) {
-      const newValue = changes.settings.newValue;
+browser.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes.settings) {
+    useSettings.persist.rehydrate();
+  }
+});
 
-      if (newValue) {
-        const parsed =
-          typeof newValue === 'string' ? JSON.parse(newValue) : newValue;
+const migrateFromOldStorage = async () => {
+  const oldStorage: any = await browser.storage.local.get();
 
-        useSettings.setState(parsed.state);
-      }
-    }
-  });
-}
+  if (oldStorage.settings === undefined) {
+    await browser.storage.local.clear();
+    let state = useSettings.getState();
+
+    state = {
+      ...state,
+      hikkaSecret:
+        oldStorage.hikkaSecret !== undefined
+          ? { secret: oldStorage.hikkaSecret, expiration: 0 }
+          : state.hikkaSecret,
+      userData: oldStorage.userData || state.userData,
+      backendBranch: oldStorage.backendBranch || state.backendBranch,
+      richPresence: oldStorage.richPresence ?? state.richPresence,
+      darkMode: oldStorage.darkMode ?? state.darkMode,
+      features: {
+        ...state.features,
+        aniBackground: {
+          enabled:
+            oldStorage.aniBackState ?? state.features.aniBackground.enabled,
+        },
+        localizedPoster: {
+          enabled:
+            oldStorage.localizedPosterButtonState ??
+            state.features.localizedPoster.enabled,
+          autoShow:
+            oldStorage.localizedPosterState ??
+            state.features.localizedPoster.autoShow,
+        },
+        player: {
+          enabled: oldStorage.watchButtonState ?? state.features.player.enabled,
+          defaultProvider:
+            oldStorage.defaultPlayer || state.features.player.defaultProvider,
+          favoriteTeams:
+            oldStorage.playerAnimeFavoriteTeam ||
+            state.features.player.favoriteTeams,
+        },
+        reader: {
+          enabled:
+            oldStorage.readerButtonState ?? state.features.reader.enabled,
+        },
+        aniButtons: {
+          enabled:
+            oldStorage.aniButtonsState ?? state.features.aniButtons.enabled,
+        },
+        fandubBlock: {
+          enabled:
+            oldStorage.fandubBlockState ?? state.features.fandubBlock.enabled,
+        },
+        recommendationBlock: {
+          enabled:
+            oldStorage.recommendationBlockState ??
+            state.features.recommendationBlock.enabled,
+        },
+        devOptions: {
+          enabled:
+            oldStorage.devOptionsState ?? state.features.devOptions.enabled,
+          devTools: oldStorage.devMode ?? state.features.devOptions.devTools,
+          burunyaaMode:
+            oldStorage.burunyaaMode ?? state.features.devOptions.burunyaaMode,
+        },
+      },
+    };
+
+    useSettings.setState(state);
+  }
+};
