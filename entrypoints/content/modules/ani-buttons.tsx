@@ -1,6 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { type FC, useEffect, useState } from 'react';
+import type { FC } from 'react';
 import { createRoot } from 'react-dom/client';
 import HFLogoSmall from '@/public/hikka-features-small.svg';
 import HFLogoSmallDark from '@/public/hikka-features-small-dark.svg';
@@ -43,7 +43,8 @@ const aniButtons = async (
       const wrapper = document.createElement('div');
       container.append(wrapper);
 
-      container.classList.toggle('dark', await darkMode.getValue());
+      const { darkMode } = useSettings.getState();
+      container.classList.toggle('dark', darkMode);
 
       const root = createRoot(wrapper);
       root.render(
@@ -68,18 +69,10 @@ interface Props {
 }
 
 const AniButtons: FC<Props> = ({ container, data, smallerTitle }) => {
-  const [blockState, setBlockState] = useState<boolean>();
+  const { enabled } = useSettings().features.aniButtons;
 
   const hikka = useHikka();
   if (!data) data = hikka?.data;
-
-  useEffect(() => {
-    const initializeAsync = async () => {
-      setBlockState(await aniButtonsState.getValue());
-    };
-
-    initializeAsync();
-  }, []);
 
   const content_type: MediaType | InfoType = data?.data_type;
 
@@ -205,13 +198,11 @@ const AniButtons: FC<Props> = ({ container, data, smallerTitle }) => {
     isError: agawaUrlError,
   } = useAmanogawaUrl(data);
 
-  aniButtonsState.watch((state) => setBlockState(state));
-
   const compact = false;
 
   return (
     <AnimatePresence>
-      {blockState && (
+      {enabled && (
         <motion.div
           className="flex flex-col gap-4"
           initial={{ opacity: 0, height: 0, scale: 0.93, marginBottom: 0 }}

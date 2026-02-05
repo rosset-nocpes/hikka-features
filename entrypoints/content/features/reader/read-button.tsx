@@ -1,6 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { type FC, useEffect, useState } from 'react';
+import type { FC } from 'react';
 import { createRoot } from 'react-dom/client';
 import { RotatingText } from '@/components/animate-ui/text/rotating';
 import { Button } from '@/components/ui/button';
@@ -29,7 +29,8 @@ const readButton = async (type: ReaderType, location?: Element) => {
       const wrapper = document.createElement('div');
       container.append(wrapper);
 
-      container.classList.toggle('dark', await darkMode.getValue());
+      const { darkMode } = useSettings.getState();
+      container.classList.toggle('dark', darkMode);
 
       const root = createRoot(wrapper);
       root.render(
@@ -49,7 +50,7 @@ interface Props {
 }
 
 const ReadButton: FC<Props> = ({ type }) => {
-  const [buttonState, setButtonState] = useState<boolean>();
+  const { enabled } = useSettings().features.reader;
 
   const { data, isLoading, isError } = useReadData(type);
 
@@ -58,16 +59,6 @@ const ReadButton: FC<Props> = ({ type }) => {
     document.body.classList.toggle('overflow-hidden');
     reader(type).then((ui) => ui.mount());
   };
-
-  readerButtonState.watch((state) => setButtonState(state));
-
-  useEffect(() => {
-    const initializeAsync = async () => {
-      setButtonState(await readerButtonState.getValue());
-    };
-
-    initializeAsync();
-  }, []);
 
   const statusMessage = isLoading
     ? 'Шукаю'
@@ -79,7 +70,7 @@ const ReadButton: FC<Props> = ({ type }) => {
 
   return (
     <AnimatePresence>
-      {buttonState && (
+      {enabled && (
         <motion.div
           initial={{ opacity: 0, width: 0, scale: 0.93, marginRight: 0 }}
           animate={{

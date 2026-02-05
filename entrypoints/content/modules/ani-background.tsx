@@ -52,7 +52,8 @@ const aniBackground = async (mal_id: number, type: MediaType) => {
       const wrapper = document.createElement('div');
       container.append(wrapper);
 
-      container.classList.toggle('dark', await darkMode.getValue());
+      const { darkMode } = useSettings.getState();
+      container.classList.toggle('dark', darkMode);
 
       const root = createRoot(wrapper);
       root.render(<AniBackground banner_url={banner} />);
@@ -67,28 +68,21 @@ interface Props {
 }
 
 const AniBackground: FC<Props> = ({ banner_url }) => {
-  const [stateBack, setAniBack] = useState<boolean>();
+  const { enabled } = useSettings().features.aniBackground;
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    const initializeAsync = async () => {
-      setAniBack(await aniBackState.getValue());
-    };
-    initializeAsync();
-
     const img = new Image();
     img.src = banner_url;
 
     img.onload = () => setIsLoaded(true);
   }, []);
 
-  aniBackState.watch((state) => setAniBack(state));
-
   return (
     <AnimatePresence>
-      {stateBack && isLoaded && (
+      {enabled && isLoaded && (
         <motion.div
-          className="-z-20 absolute top-0 left-0 h-80 w-full overflow-hidden opacity-40"
+          className="absolute top-0 left-0 -z-20 h-80 w-full overflow-hidden opacity-40"
           initial={{ height: 0 }}
           animate={{ height: '20rem' }}
           exit={{ height: 0 }}

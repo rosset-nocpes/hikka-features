@@ -58,9 +58,11 @@ export default defineContentScript({
 
     browser.runtime.onMessage.addListener(async (request) => {
       if (request.type === 'page-rendered') {
+        const { setSettings } = useSettings.getState();
+
         getComputedStyle(document.documentElement).colorScheme === 'dark'
-          ? darkMode.setValue(true)
-          : darkMode.setValue(false);
+          ? setSettings({ darkMode: true })
+          : setSettings({ darkMode: false });
 
         usePageStore.getState().updateFromUrl(new URL(document.location.href));
         const { path, contentType, slug } = usePageStore.getState();
@@ -319,10 +321,9 @@ export default defineContentScript({
               .querySelectorAll('[name=previous-creating-edit][content]')
               .forEach((e) => e.remove());
 
-            if (
-              (await richPresence.getValue()) &&
-              (await userData.getValue())?.description
-            ) {
+            const { richPresence, userData } = useSettings.getState();
+
+            if (richPresence && userData?.description) {
               browser.runtime.sendMessage(undefined, {
                 type: 'rich-presence-check',
               });

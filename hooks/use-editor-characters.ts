@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 
 const useEditorCharacters = () => {
+  const { backendBranch } = useSettings();
+
   const path = new URLSearchParams(document.location.search);
   const slug = path.get('slug');
 
@@ -8,7 +10,7 @@ const useEditorCharacters = () => {
     queryKey: ['editor-characters', slug],
     queryFn: async () => {
       const r = await fetch(
-        `${BACKEND_BRANCHES[await backendBranch.getValue()]}/editor/characters/${slug}`,
+        `${BACKEND_BRANCHES[backendBranch]}/editor/characters/${slug}`,
       );
 
       if (!r.ok) {

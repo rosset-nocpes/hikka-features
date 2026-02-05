@@ -34,7 +34,8 @@ export const characterSuggestion = async () => {
         container.parentElement.style.bottom = '0.5rem';
       }
 
-      container.classList.toggle('dark', await darkMode.getValue());
+      const { darkMode } = useSettings.getState();
+      container.classList.toggle('dark', darkMode);
 
       const root = createRoot(wrapper);
       root.render(

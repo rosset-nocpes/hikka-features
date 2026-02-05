@@ -1,7 +1,7 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Check, ClipboardCopy } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Button } from '@/components/ui/button';
 import { queryClient } from '..';
@@ -24,7 +24,8 @@ const devButtons = async () => {
       const wrapper = document.createElement('div');
       container.append(wrapper);
 
-      container.classList.toggle('dark', await darkMode.getValue());
+      const { darkMode } = useSettings.getState();
+      container.classList.toggle('dark', darkMode);
 
       const root = createRoot(wrapper);
       root.render(
@@ -39,18 +40,8 @@ const devButtons = async () => {
 };
 
 const DevButtons = () => {
-  const [show, toggleShow] = useState<boolean | null>(null);
+  const { devTools } = useSettings().features.devOptions;
   const [copiedButton, setCopiedButton] = useState<string | null>(null);
-
-  useEffect(() => {
-    const initializeAsync = async () => {
-      toggleShow(await devMode.getValue());
-    };
-
-    initializeAsync();
-  }, []);
-
-  devMode.watch((state) => toggleShow(state));
 
   const data = useHikka()?.data;
   if (!data) return;
@@ -68,7 +59,7 @@ const DevButtons = () => {
 
   return (
     <AnimatePresence>
-      {show && (
+      {devTools && (
         <motion.div
           className="flex gap-2"
           initial={{ opacity: 0 }}

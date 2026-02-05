@@ -1,5 +1,4 @@
 import { AnimatePresence, motion } from 'motion/react';
-import { type FC, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Drawer,
@@ -20,35 +19,14 @@ import {
 import MaterialSymbolsExperiment from '~icons/material-symbols/experiment';
 import SwitchOption from '../_base/switch-option';
 
-interface Props {
-  showDevOptions: boolean;
-  getBurunyaaMode: boolean | null;
-  toggleBurunyaaMode: (value: boolean) => void;
-}
-
-const ExperimentalSettings: FC<Props> = ({
-  showDevOptions,
-  getBurunyaaMode,
-  toggleBurunyaaMode,
-}) => {
-  const [getBackendBranch, setBackendBranch] = useState<BackendBranches | null>(
-    null,
-  );
-
-  const [getDevMode, toggleDevMode] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    Promise.all([backendBranch.getValue(), devMode.getValue()]).then(
-      ([backendBranch, devMode]) => {
-        setBackendBranch(backendBranch);
-        toggleDevMode(devMode);
-      },
-    );
-  }, []);
+const ExperimentalSettings = () => {
+  const { backendBranch, features, updateFeatureSettings, setSettings } =
+    useSettings();
+  const { enabled, burunyaaMode, devTools } = features.devOptions;
 
   return (
     <AnimatePresence>
-      {showDevOptions && (
+      {enabled && (
         <Drawer>
           <DrawerTrigger>
             <motion.span
@@ -68,19 +46,21 @@ const ExperimentalSettings: FC<Props> = ({
               <div className="flex flex-col gap-5 px-[30px]">
                 <SwitchOption
                   label="Burunyaa режим"
-                  checked={getBurunyaaMode!}
+                  checked={burunyaaMode}
                   onClick={() => {
-                    burunyaaMode.setValue(!getBurunyaaMode);
-                    toggleBurunyaaMode(!getBurunyaaMode);
+                    updateFeatureSettings('devOptions', {
+                      burunyaaMode: !burunyaaMode,
+                    });
                   }}
                 />
                 <SwitchOption
                   label="Режим розробника"
                   description="Додає функції, які полегшують роботу з розширенням"
-                  checked={getDevMode!}
+                  checked={devTools}
                   onClick={() => {
-                    devMode.setValue(!getDevMode);
-                    toggleDevMode(!getDevMode);
+                    updateFeatureSettings('devOptions', {
+                      devTools: !devTools,
+                    });
                   }}
                 />
                 <div className="flex items-center justify-between">
@@ -88,11 +68,10 @@ const ExperimentalSettings: FC<Props> = ({
                   {navigator.userAgent.toLowerCase().includes('firefox') ? (
                     <select
                       className="flex h-10 w-24 cursor-pointer items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1"
-                      value={getBackendBranch!}
+                      value={backendBranch}
                       onChange={(e) => {
                         const value = e.target.value as BackendBranches;
-                        backendBranch.setValue(value);
-                        setBackendBranch(value);
+                        setSettings({ backendBranch: value });
                       }}
                     >
                       {Object.keys(BACKEND_BRANCHES).map((elem) => (
@@ -103,11 +82,10 @@ const ExperimentalSettings: FC<Props> = ({
                     </select>
                   ) : (
                     <Select
-                      value={getBackendBranch!}
+                      value={backendBranch}
                       onValueChange={(value) => {
                         const target = value as BackendBranches;
-                        backendBranch.setValue(target);
-                        setBackendBranch(target);
+                        setSettings({ backendBranch: target });
                       }}
                     >
                       <SelectTrigger className="w-32">

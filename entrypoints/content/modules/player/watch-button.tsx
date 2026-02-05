@@ -1,6 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { type FC, useEffect, useState } from 'react';
+import { type FC, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { RotatingText } from '@/components/animate-ui/text/rotating';
 import { Button } from '@/components/ui/button';
@@ -27,7 +27,8 @@ export default async function watchButton(location?: Element) {
       const wrapper = document.createElement('div');
       container.append(wrapper);
 
-      container.classList.toggle('dark', await darkMode.getValue());
+      const { darkMode } = useSettings.getState();
+      container.classList.toggle('dark', darkMode);
 
       const root = createRoot(wrapper);
       root.render(
@@ -46,8 +47,7 @@ interface Props {
 }
 
 const WatchButton: FC<Props> = ({ container }) => {
-  const [buttonState, setButtonState] = useState<boolean>();
-
+  const { enabled } = useSettings().features.player;
   const { data, isLoading, isError } = useWatchData();
 
   const openPlayer = () => {
@@ -73,15 +73,6 @@ const WatchButton: FC<Props> = ({ container }) => {
     }
   }, [data]);
 
-  watchButtonState.watch((state) => setButtonState(state));
-
-  useEffect(() => {
-    const initializeAsync = async () => {
-      setButtonState(await watchButtonState.getValue());
-    };
-    initializeAsync();
-  }, []);
-
   const statusMessage = isLoading
     ? 'Шукаю'
     : isError
@@ -92,7 +83,7 @@ const WatchButton: FC<Props> = ({ container }) => {
 
   return (
     <AnimatePresence>
-      {buttonState && (
+      {enabled && (
         <motion.div
           initial={{ opacity: 0, width: 0, scale: 0.93, marginRight: 0 }}
           animate={{

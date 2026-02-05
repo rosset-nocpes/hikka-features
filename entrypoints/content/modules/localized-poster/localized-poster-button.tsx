@@ -13,7 +13,7 @@ import {
 import MaterialSymbolsPlannerBannerAdPtOutlineRounded from '~icons/material-symbols/planner-banner-ad-pt-outline-rounded';
 import MaterialSymbolsPlannerBannerAdPtRounded from '~icons/material-symbols/planner-banner-ad-pt-rounded';
 import { queryClient } from '../..';
-import localizedPoster, { posterState } from './localized-poster';
+import localizedPoster, { usePosterState } from './localized-poster';
 
 const localizedPosterButton = async () => {
   if (document.body.querySelectorAll('localized-poster-button').length !== 0) {
@@ -37,7 +37,8 @@ const localizedPosterButton = async () => {
       container.style.right = '0.5rem';
       container.style.zIndex = '10';
 
-      container.classList.toggle('dark', await darkMode.getValue());
+      const { darkMode } = useSettings.getState();
+      container.classList.toggle('dark', darkMode);
 
       const root = createRoot(wrapper);
       root.render(
@@ -57,46 +58,25 @@ interface Props {
 
 const LocalizedPosterButton: FC<Props> = ({ container }) => {
   const { data } = useNotionData();
-
-  const [isPosterVisible, setIsPosterVisible] = useState<boolean>(false);
-  const [showButton, setShowButton] = useState<boolean>(false);
-  const [initalized, setInitialized] = useState<boolean>(false);
+  const { setVisible } = usePosterState();
+  const { enabled, autoShow } = useSettings().features.localizedPoster;
 
   useEffect(() => {
-    const initializeAsync = async () => {
-      const initialPosterState = await localizedPosterState.getValue();
-
-      setIsPosterVisible(initialPosterState);
-      posterState.setVisibility(initialPosterState);
-
-      setShowButton(await localizedPosterButtonState.getValue());
-
-      setInitialized(true);
-    };
-
-    initializeAsync();
-
-    const unsubscribe = localizedPosterButtonState.watch((state) =>
-      setShowButton(state),
-    );
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (initalized && data?.poster)
-      localizedPoster(isPosterVisible).then((ui) => ui?.mount());
-  }, [data, initalized, isPosterVisible]);
+    if (data?.poster) {
+      setVisible(autoShow);
+      localizedPoster().then((ui) => ui?.mount());
+    }
+  }, [data]);
 
   const togglePoster = () => {
-    const newState = !isPosterVisible;
-    setIsPosterVisible(newState);
-
-    posterState.setVisibility(newState);
+    setVisible(!usePosterState.getState().visible);
   };
+
+  const isPosterVisible = usePosterState((state) => state.visible);
 
   return (
     <AnimatePresence>
-      {showButton && data?.poster && (
+      {enabled && data?.poster && (
         <motion.div
           key="poster-button"
           initial={{ opacity: 0, transform: 'translateX(10px)' }}

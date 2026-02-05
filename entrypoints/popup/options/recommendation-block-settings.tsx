@@ -1,25 +1,16 @@
-import { useEffect, useState } from 'react';
 import SwitchOption from '../_base/switch-option';
 
 const RecommendationBlockSettings = () => {
-  const [showRecommendationBlock, toggleRecommendationBlock] = useState<
-    boolean | null
-  >(null);
-
-  useEffect(() => {
-    recommendationBlockState.getValue().then((showRecommendationBlock) => {
-      toggleRecommendationBlock(showRecommendationBlock);
-    });
-  }, []);
+  const { features, updateFeatureSettings } = useSettings();
+  const { enabled } = features.recommendationBlock;
 
   const handleClick = () => {
-    recommendationBlockState.setValue(!showRecommendationBlock);
-    toggleRecommendationBlock(!showRecommendationBlock);
+    updateFeatureSettings('recommendationBlock', { enabled: !enabled });
   };
 
   return (
     <SwitchOption
-      checked={showRecommendationBlock!}
+      checked={enabled}
       label="Блок рекомендацій"
       description="Блок із контентом, який схожий на той, який ви дивитеся"
       onClick={handleClick}

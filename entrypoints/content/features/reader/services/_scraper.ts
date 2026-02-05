@@ -7,9 +7,9 @@ abstract class BaseScraper {
   abstract readonly baseUrl: string;
   abstract readonly endpoints: Record<string, string>;
 
-  private async getProxyUrl(targetUrl: string): Promise<string> {
-    const branch = await backendBranch.getValue();
-    const backendBase = BACKEND_BRANCHES[branch];
+  private getProxyUrl(targetUrl: string): string {
+    const { backendBranch } = useSettings.getState();
+    const backendBase = BACKEND_BRANCHES[backendBranch];
     const absoluteUrl = targetUrl.startsWith('http')
       ? targetUrl
       : `${this.baseUrl}/${targetUrl}`;
@@ -23,7 +23,7 @@ abstract class BaseScraper {
     method: 'GET' | 'POST' = 'GET',
     data?: any,
   ) {
-    const proxyUrl = await this.getProxyUrl(url);
+    const proxyUrl = this.getProxyUrl(url);
     try {
       const response = await axios({ method, url: proxyUrl, data });
       return response.data;

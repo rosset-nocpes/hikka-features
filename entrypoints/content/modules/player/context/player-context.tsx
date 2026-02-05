@@ -42,10 +42,12 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => ({
   sidebarMode: 'offcanvas',
 
   initialize: async (data) => {
+    const { defaultProvider, favoriteTeams } =
+      useSettings.getState().features.player;
+
     const providers_avaliable = getAvailablePlayers(data).map((e) => e.title);
-    const defaultPlayerValue = await defaultPlayer.getValue();
     const { slug } = usePageStore.getState();
-    const favoriteTeam = (await playerAnimeFavoriteTeam.getValue())[slug!];
+    const favoriteTeam = favoriteTeams[slug!];
 
     const params = new URLSearchParams(window.location.search);
     const sharedParams: SharedPlayerParams = {
@@ -75,8 +77,8 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => ({
         ? sharedParams.provider!
         : favoriteTeam
           ? favoriteTeam.provider
-          : providers_avaliable.includes(defaultPlayerValue)
-            ? defaultPlayerValue
+          : providers_avaliable.includes(defaultProvider)
+            ? defaultProvider
             : providers_avaliable[0];
 
     // Determine team
@@ -181,23 +183,25 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => ({
       team,
     };
 
-    playerAnimeFavoriteTeam.getValue().then((current) => {
-      const updated = { ...current, [slug]: newTeam };
-      playerAnimeFavoriteTeam.setValue(updated);
-    });
+    const { favoriteTeams } = useSettings.getState().features.player;
+    const { updateFeatureSettings } = useSettings.getState();
+
+    const updated = { ...favoriteTeams, [slug]: newTeam };
+    updateFeatureSettings('player', { favoriteTeams: updated });
 
     set({ favoriteTeam: newTeam });
   },
   removeFavoriteTeam: () => {
+    const { favoriteTeams } = useSettings.getState().features.player;
+    const { updateFeatureSettings } = useSettings.getState();
     const { slug } = usePageStore.getState();
     if (!slug) return;
 
-    playerAnimeFavoriteTeam.getValue().then((current) => {
-      const updated = { ...current };
-      delete updated[slug];
-      playerAnimeFavoriteTeam.setValue(updated);
-      set({ favoriteTeam: undefined });
-    });
+    const updated = { ...favoriteTeams };
+    delete updated[slug];
+    updateFeatureSettings('player', { favoriteTeams: updated });
+
+    set({ favoriteTeam: undefined });
   },
   setEpisode: (episode) => set({ currentEpisode: episode }),
   setSidebarMode: (mode) => set({ sidebarMode: mode }),

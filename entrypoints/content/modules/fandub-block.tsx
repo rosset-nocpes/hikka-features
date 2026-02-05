@@ -1,6 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { type FC, Fragment, useEffect, useState } from 'react';
+import { type FC, Fragment, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import BlockEntry from '@/components/block-entry';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -34,7 +34,8 @@ const fandubBlock = async (smallerTitle?: boolean, location?: Element) => {
       const wrapper = document.createElement('div');
       container.append(wrapper);
 
-      container.classList.toggle('dark', await darkMode.getValue());
+      const { darkMode } = useSettings.getState();
+      container.classList.toggle('dark', darkMode);
 
       const root = createRoot(wrapper);
       root.render(
@@ -54,24 +55,14 @@ interface Props {
 }
 
 const FandubBlock: FC<Props> = ({ container, smallerTitle }) => {
+  const { enabled } = useSettings().features.fandubBlock;
   const { data, isLoading, isError } = useNotionData();
 
   const [isOpen, setIsOpen] = useState(false);
-  const [blockState, setBlockState] = useState<boolean>();
-
-  useEffect(() => {
-    const initializeAsync = async () => {
-      setBlockState(await fandubBlockState.getValue());
-    };
-
-    initializeAsync();
-  }, []);
-
-  fandubBlockState.watch((state) => setBlockState(state));
 
   return (
     <AnimatePresence>
-      {blockState && (
+      {enabled && (
         <motion.div
           initial={{ opacity: 0, height: 0, scale: 0.93 }}
           animate={{ opacity: 1, height: 'auto', scale: 1 }}
