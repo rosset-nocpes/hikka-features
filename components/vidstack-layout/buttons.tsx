@@ -1,4 +1,4 @@
-import * as TooltipPrimitive from '@radix-ui/react-tooltip';
+import type * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import {
   CaptionButton,
   FullscreenButton,
@@ -7,26 +7,40 @@ import {
   PIPButton,
   PlayButton,
   useMediaState,
+  useMediaStore,
 } from '@vidstack/react';
 import {
-  Minimize as FullscreenExitIcon,
-  Maximize as FullscreenIcon,
-  VolumeX as MuteIcon,
-  PauseIcon,
+  Copy,
+  CopyCheck,
+  Link,
   PictureInPictureIcon as PictureInPictureExitIcon,
   PictureInPicture2 as PictureInPictureIcon,
-  PlayIcon,
   SubtitlesIcon,
-  Volume2 as VolumeHighIcon,
-  Volume1 as VolumeLowIcon,
 } from 'lucide-react';
+import { useState } from 'react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { usePlayer } from '@/entrypoints/content/modules/player/context/player-context';
+import MaterialSymbolsFullscreenExitRounded from '~icons/material-symbols/fullscreen-exit-rounded';
+import MaterialSymbolsFullscreenRounded from '~icons/material-symbols/fullscreen-rounded';
 import MaterialSymbolsPauseOutlineRounded from '~icons/material-symbols/pause-outline-rounded';
 import MaterialSymbolsPlayArrowOutlineRounded from '~icons/material-symbols/play-arrow-outline-rounded';
+import MaterialSymbolsShareOutline from '~icons/material-symbols/share-outline';
 import MaterialSymbolsVolumeDownOutlineRounded from '~icons/material-symbols/volume-down-outline-rounded';
 import MaterialSymbolsVolumeOffOutlineRounded from '~icons/material-symbols/volume-off-outline-rounded';
 import MaterialSymbolsVolumeUpOutlineRounded from '~icons/material-symbols/volume-up-outline-rounded';
 import { Button } from '../ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '../ui/tooltip';
 
 export interface MediaButtonProps {
   tooltipSide?: TooltipPrimitive.TooltipContentProps['side'];
@@ -50,7 +64,7 @@ export function Play({
     <Tooltip>
       <TooltipTrigger asChild>
         <PlayButton asChild>
-          <Button variant="secondary" size="icon-sm">
+          <Button variant="ghost" size="icon-sm">
             {isPaused ? (
               <MaterialSymbolsPlayArrowOutlineRounded className="text-lg" />
             ) : (
@@ -82,8 +96,8 @@ export function Mute({
     <Tooltip>
       <TooltipTrigger asChild>
         <MuteButton asChild>
-          <Button variant="secondary" size="icon-sm">
-            {isMuted || volume == 0 ? (
+          <Button variant="ghost" size="icon-sm">
+            {isMuted || volume === 0 ? (
               <MaterialSymbolsVolumeOffOutlineRounded className="text-lg" />
             ) : volume < 0.5 ? (
               <MaterialSymbolsVolumeDownOutlineRounded className="text-lg" />
@@ -171,12 +185,14 @@ export function Fullscreen({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <FullscreenButton className={buttonClass}>
-          {isActive ? (
-            <FullscreenExitIcon className="h-7 w-7" />
-          ) : (
-            <FullscreenIcon className="h-7 w-7" />
-          )}
+        <FullscreenButton asChild>
+          <Button variant="ghost" size="icon-sm">
+            {isActive ? (
+              <MaterialSymbolsFullscreenExitRounded />
+            ) : (
+              <MaterialSymbolsFullscreenRounded />
+            )}
+          </Button>
         </FullscreenButton>
       </TooltipTrigger>
       <TooltipContent
@@ -190,3 +206,116 @@ export function Fullscreen({
     </Tooltip>
   );
 }
+
+// interface Props {
+//   time: number;
+// }
+
+export const PlayerShareLinkButton = () => {
+  const { container, provider, team, currentEpisode } = usePlayer();
+  const { currentTime } = useMediaStore();
+
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [isTimecodeLink, toggleTimestampLink] = useState(false);
+  const [timecodeLink, setTimecodeLink] = useState(0);
+
+  const handleCopyShareLink = () => {
+    if (!provider || !team || !currentEpisode) return;
+
+    const url = new URL(`${window.location.origin}${window.location.pathname}`);
+    const searchParams = url.searchParams;
+
+    searchParams.append('playerProvider', provider);
+    searchParams.append('playerTeam', team.title);
+    searchParams.append('playerEpisode', currentEpisode.episode.toString());
+
+    if (isTimecodeLink) {
+      searchParams.append('time', timecodeLink.toString());
+    }
+
+    navigator.clipboard.writeText(url.href);
+  };
+
+  return (
+    <Popover
+      onOpenChange={(open) => {
+        if (open) {
+          toggleTimestampLink(false);
+          setTimecodeLink(Math.floor(currentTime));
+        }
+      }}
+    >
+      <PopoverTrigger>
+        <Tooltip>
+          <TooltipTrigger>
+            <Button variant="ghost" size="sm">
+              <MaterialSymbolsShareOutline className="flex-1" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Поділитися</TooltipContent>
+        </Tooltip>
+      </PopoverTrigger>
+      <PopoverContent className="flex flex-col gap-2" container={container}>
+        <div className="flex items-center gap-2 rounded-md bg-muted py-1 pr-1 pl-2">
+          <Link className="size-3.5 shrink-0 text-muted-foreground" />
+          <span className="gradient-mask-r-90 cursor-default overflow-hidden text-nowrap font-medium text-xs">
+            {window.location.href}
+          </span>
+          <TooltipProvider>
+            <Tooltip delayDuration={0} open={showTooltip}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-6 shrink-0 rounded-sm hover:bg-background"
+                  onClick={() => {
+                    handleCopyShareLink();
+                    setShowTooltip(true);
+                    setTimeout(() => setShowTooltip(false), 1000);
+                  }}
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent
+                side="left"
+                className="flex items-center gap-1 font-medium text-xs"
+              >
+                <CopyCheck className="size-3.5 shrink-0" />
+                Скопійовано
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        <div className="flex items-center gap-2">
+          <Checkbox
+            checked={isTimecodeLink}
+            onCheckedChange={() => toggleTimestampLink(!isTimecodeLink)}
+          />
+          <div
+            className={cn(
+              'flex items-center gap-2',
+              !isTimecodeLink && 'cursor-not-allowed opacity-70',
+            )}
+          >
+            <div className="text-muted-foreground text-xs">Починати з:</div>
+            <Input
+              disabled={!isTimecodeLink}
+              defaultValue={new Date(timecodeLink * 1000)
+                .toISOString()
+                .slice(11, 19)}
+              onBlur={(e) => {
+                const [hours, minutes, seconds] = e.target.value
+                  .split(':')
+                  .map(Number);
+                setTimecodeLink(hours * 3600 + minutes * 60 + seconds);
+              }}
+              placeholder="00:00:00"
+              className="h-6 w-24 text-xs focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0"
+            />
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+};
