@@ -8,6 +8,8 @@ import {
 } from '@/components/ui/context-menu';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
+import MaterialSymbolsMinimizeRounded from '~icons/material-symbols/minimize-rounded';
+import MaterialSymbolsWidthFullRounded from '~icons/material-symbols/width-full-outline';
 import { usePlayer } from './context/player-context';
 import player from './player';
 
@@ -16,7 +18,7 @@ interface Props {
 }
 
 const PlayerNavbar: FC<Props> = ({ showControls }) => {
-  const { container, sidebarMode, setSidebarMode, currentEpisode } =
+  const { container, sidebarMode, setSidebarMode, currentEpisode, minified, setMinified } =
     usePlayer();
   const { open } = useSidebar();
 
@@ -29,6 +31,14 @@ const PlayerNavbar: FC<Props> = ({ showControls }) => {
           open && '-top-8',
         )}
       >
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="bg-sidebar"
+          onClick={() => setMinified(!minified)}
+        >
+          {minified ? <MaterialSymbolsWidthFullRounded /> : <MaterialSymbolsMinimizeRounded />}
+        </Button>
         <Button
           variant="ghost"
           size="icon-sm"
