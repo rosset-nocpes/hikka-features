@@ -23,14 +23,11 @@ const readButton = async (type: ReaderType, location?: Element) => {
     position: 'inline',
     append: 'first',
     anchor: location || 'div.sticky.bottom-3.z-10.mt-12 > div',
-    css: ':host(read-button) { margin-right: -0.5rem; }',
+    css: `:host(read-button) { margin-right: -0.5rem; ${getThemeVariables()} }`,
     inheritStyles: true,
     async onMount(container) {
       const wrapper = document.createElement('div');
       container.append(wrapper);
-
-      const { darkMode } = useSettings.getState();
-      container.classList.toggle('dark', darkMode);
 
       const root = createRoot(wrapper);
       root.render(

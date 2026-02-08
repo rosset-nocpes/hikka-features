@@ -52,9 +52,6 @@ const aniBackground = async (mal_id: number, type: MediaType) => {
       const wrapper = document.createElement('div');
       container.append(wrapper);
 
-      const { darkMode } = useSettings.getState();
-      container.classList.toggle('dark', darkMode);
-
       const root = createRoot(wrapper);
       root.render(<AniBackground banner_url={banner} />);
 

@@ -30,12 +30,10 @@ const fandubBlock = async (smallerTitle?: boolean, location?: Element) => {
         'main > div > div.flex.flex-col.gap-4 > div.flex.w-full.flex-col.gap-4 > div',
       ),
     inheritStyles: true,
+    css: `:host(fandub-block) { ${getThemeVariables()} }`,
     async onMount(container) {
       const wrapper = document.createElement('div');
       container.append(wrapper);
-
-      const { darkMode } = useSettings.getState();
-      container.classList.toggle('dark', darkMode);
 
       const root = createRoot(wrapper);
       root.render(

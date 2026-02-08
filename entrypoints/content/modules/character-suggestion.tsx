@@ -24,7 +24,7 @@ export const characterSuggestion = async () => {
     alignment: 'bottom-right',
     anchor: () => document.querySelector(INPUT_SELECTOR)?.parentElement,
     inheritStyles: true,
-    css: `:host(${MOUNT_TAG}) { margin-top: -1rem; width: 100% !important; }`,
+    css: `:host(${MOUNT_TAG}) { margin-top: -1rem; width: 100% !important; ${getThemeVariables()} }`,
     async onMount(container) {
       const wrapper = document.createElement('div');
       container.append(wrapper);
@@ -33,9 +33,6 @@ export const characterSuggestion = async () => {
         container.parentElement.style.right = '0.5rem';
         container.parentElement.style.bottom = '0.5rem';
       }
-
-      const { darkMode } = useSettings.getState();
-      container.classList.toggle('dark', darkMode);
 
       const root = createRoot(wrapper);
       root.render(
