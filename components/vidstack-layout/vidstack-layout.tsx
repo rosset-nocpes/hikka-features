@@ -1,5 +1,12 @@
-import { Captions, Controls, Gesture, Tooltip } from '@vidstack/react';
+import {
+  Captions,
+  Controls,
+  Gesture,
+  Thumbnail,
+  Tooltip,
+} from '@vidstack/react';
 import { TooltipProvider } from '../ui/tooltip';
+import BufferingIndicator from './buffering-indicator';
 import * as Buttons from './buttons';
 import * as Menus from './menus';
 import * as Sliders from './sliders';
@@ -19,13 +26,14 @@ export function VideoLayout({ thumbnails }: VideoLayoutProps) {
     <>
       <Gestures />
       <Captions className="absolute inset-0 bottom-2 media-controls:bottom-[85px] z-10 select-none break-words media-captions:opacity-100 media-preview:opacity-0 opacity-0 transition-[opacity,bottom] duration-300" />
-      <Controls.Root className="absolute inset-0 z-10 flex h-full w-full flex-col bg-gradient-to-t from-black/10 to-transparent media-controls:opacity-100 opacity-0 transition-opacity">
+      <BufferingIndicator />
+      <Controls.Root className="absolute inset-0 z-10 flex h-full w-full flex-col bg-gradient-to-t from-black/10 to-transparent media-controls:opacity-100 opacity-0 transition-opacity duration-300">
         <TooltipProvider>
           <div className="flex-1" />
           <Controls.Group className="flex w-full items-center px-2">
             <Sliders.Time thumbnails={thumbnails} />
           </Controls.Group>
-          <Controls.Group className="mx-auto mb-2 flex w-fit items-center justify-center">
+          <Controls.Group className="flex w-full items-center justify-between p-2">
             <VideoToolbar />
           </Controls.Group>
           {/* <Controls.Group className="-mt-0.5 flex w-full items-center px-2 pb-2">

@@ -1,29 +1,36 @@
 import {
   isHLSProvider,
   MediaPlayer,
-  MediaPlayerInstance,
+  type MediaPlayerInstance,
   MediaProvider,
-  MediaProviderAdapter,
-  MediaProviderChangeEvent,
+  type MediaProviderAdapter,
+  type MediaProviderChangeEvent,
   useMediaRemote,
 } from '@vidstack/react';
 // import '@vidstack/react/player/styles/default/layouts/video.css';
 // import '@vidstack/react/player/styles/default/theme.css';
 // import './vidstack-layout.css';
 import HLS from 'hls.js';
-import { FC, Ref } from 'react';
+import type { FC, Ref } from 'react';
 import { VideoLayout } from '@/components/vidstack-layout/vidstack-layout';
-import { usePlayerContext } from './context/player-context';
+import { usePlayer } from './context/player-context';
 
 interface Props {
-  url: string;
-  title: string;
-  data: API.WatchData;
+  // data: API.WatchData;
   ref?: Ref<MediaPlayerInstance>;
 }
 
-const VidStackPlayer: FC<Props> = ({ url, title, data, ref }) => {
-  const playerContext = usePlayerContext();
+const VidStackPlayer: FC<Props> = ({ ref }) => {
+  const { provider, team, currentEpisode, setEpisode } = usePlayer();
+  const { data: watchData } = useWatchData();
+
+  // todo
+  // const { data: hlsData } = usePlayerjsData();
+  const hlsData = {
+    hlsUrl: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
+  };
+
+  const { data: animeData } = useHikkaAnime();
 
   const remote = useMediaRemote();
 
@@ -40,33 +47,47 @@ const VidStackPlayer: FC<Props> = ({ url, title, data, ref }) => {
   };
 
   const onEnded = () => {
-    const nextEpisode = data![playerContext.state.provider][
-      playerContext.state.team
-    ].find(
-      (episode: API.EpisodeData) =>
-        episode.episode === playerContext.state.currentEpisode.episode + 1,
-    );
+    if (!watchData || !provider || !team || !currentEpisode) return;
+
+    const providerData = watchData[provider];
+    let nextEpisode: API.EpisodeData | undefined;
+
+    if (providerData instanceof ProviderTeamIFrame) {
+      const teamEpisodes = providerData.teams[team.title].episodes;
+      nextEpisode = teamEpisodes.find(
+        (episode: API.EpisodeData) =>
+          episode.episode === currentEpisode.episode + 1,
+      );
+    } else if (providerData instanceof ProviderIFrame) {
+      nextEpisode = providerData.episodes.find(
+        (episode: API.EpisodeData) =>
+          episode.episode === currentEpisode.episode + 1,
+      );
+    }
 
     if (nextEpisode) {
-      playerContext.setState((prev) => ({
-        ...prev,
-        currentEpisode: nextEpisode,
-      }));
+      setEpisode(nextEpisode);
 
       remote.play();
     }
   };
 
+  const title =
+    animeData?.title_ua || animeData?.title_en || animeData?.title_ja;
+
   return (
     <MediaPlayer
+      src={hlsData?.hlsUrl}
+      title={`Епізод #${currentEpisode?.episode}`}
+      artist={title}
+      artwork={[{ src: animeData?.image }]}
       ref={ref}
-      title={title}
-      src={url}
       onProviderChange={onProviderChange}
+      className="w-full outline-none"
       onEnded={onEnded}
     >
-      <MediaProvider />
-      <VideoLayout />
+      <MediaProvider className="flex size-full justify-center" />
+      <VideoLayout thumbnails={hlsData?.vttUrl} />
     </MediaPlayer>
   );
 };

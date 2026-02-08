@@ -260,6 +260,11 @@
     --grid-min: 6rem;
 }
 
+[data-media-player][data-view-type="video"][data-started]:not([data-controls]) {
+    pointer-events: auto;
+    cursor: none;
+}
+
 @layer base {
     * {
         @apply border-border;
