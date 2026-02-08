@@ -52,10 +52,10 @@ export const buttonClass =
   'group ring-media-focus relative inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-md outline-none ring-inset hover:bg-white/20 focus-visible:ring-4 aria-disabled:hidden';
 
 export const tooltipClass =
-  'animate-out fade-out slide-out-to-bottom-2 data-[state=delayed-open]:animate-in data-[state=delayed-open]:fade-in data-[state=delayed-open]:slide-in-from-bottom-4 z-10 rounded-sm bg-black/90 px-2 py-0.5 text-sm font-medium text-white parent-data-[open]:hidden';
+  'z-10 px-2 py-0.5 text-sm font-medium parent-data-[open]:hidden';
 
 export function Play({
-  tooltipOffset = 0,
+  tooltipOffset = 32,
   tooltipSide = 'top',
   tooltipAlign = 'center',
 }: MediaButtonProps) {
@@ -79,14 +79,14 @@ export function Play({
         align={tooltipAlign}
         sideOffset={tooltipOffset}
       >
-        {isPaused ? 'Play' : 'Pause'}
+        {isPaused ? 'Відтворити' : 'Призупинити'}
       </TooltipContent>
     </Tooltip>
   );
 }
 
 export function Mute({
-  tooltipOffset = 0,
+  tooltipOffset = 32,
   tooltipSide = 'top',
   tooltipAlign = 'center',
 }: MediaButtonProps) {
@@ -113,7 +113,7 @@ export function Mute({
         align={tooltipAlign}
         sideOffset={tooltipOffset}
       >
-        {isMuted ? 'Unmute' : 'Mute'}
+        {isMuted ? 'Увімкнути звук' : 'Вимкнути звук'}
       </TooltipContent>
     </Tooltip>
   );
@@ -177,7 +177,7 @@ export function PIP({
 }
 
 export function Fullscreen({
-  tooltipOffset = 0,
+  tooltipOffset = 32,
   tooltipSide = 'top',
   tooltipAlign = 'center',
 }: MediaButtonProps) {
@@ -201,7 +201,7 @@ export function Fullscreen({
         align={tooltipAlign}
         sideOffset={tooltipOffset}
       >
-        {isActive ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+        {isActive ? 'Вийти з повноекранного режиму' : 'Повноекранний режим'}
       </TooltipContent>
     </Tooltip>
   );
@@ -252,7 +252,9 @@ export const PlayerShareLinkButton = () => {
               <MaterialSymbolsShareOutline className="flex-1" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Поділитися</TooltipContent>
+          <TooltipContent className={tooltipClass} side="top" sideOffset={32}>
+            Поділитися
+          </TooltipContent>
         </Tooltip>
       </PopoverTrigger>
       <PopoverContent className="flex flex-col gap-2" container={container}>
