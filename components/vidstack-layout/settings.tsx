@@ -1,12 +1,11 @@
 import {
   useAudioGainOptions,
   useMediaPlayer,
-  useMediaStore,
   usePlaybackRateOptions,
   useVideoQualityOptions,
 } from '@vidstack/react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { usePlayer } from '@/entrypoints/content/modules/player/context/player-context';
 import MaterialSymbolsPageInfoOutlineRounded from '~icons/material-symbols/page-info-outline-rounded';
 import { Button } from '../ui/button';
@@ -15,11 +14,11 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 
 enum Views {
   Settings = 'settings',
@@ -32,6 +31,7 @@ const MotionDropdownMenuGroup = motion.create(DropdownMenuGroup);
 
 const Settings = () => {
   const { container } = usePlayer();
+  const player = useMediaPlayer();
   const videoQualityOptions = useVideoQualityOptions();
   const currentQualityHeight = videoQualityOptions.selectedQuality?.height;
   const videoQualityHint =
@@ -48,6 +48,7 @@ const Settings = () => {
   const audioGainOptions = useAudioGainOptions();
 
   const [activeView, setView] = useState<Views>(Views.Settings);
+  const [open, setOpen] = useState(false);
   const direction = activeView === Views.Settings ? -1 : 1;
 
   const menuVariants = {
@@ -65,12 +66,33 @@ const Settings = () => {
     }),
   };
 
+  useEffect(() => {
+    if (open) {
+      player?.controls.pause();
+    } else {
+      player?.controls.resume();
+    }
+  }, [open]);
+
   return (
-    <DropdownMenu modal={false}>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-sm">
-          <MaterialSymbolsPageInfoOutlineRounded />
-        </Button>
+    <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
+      <DropdownMenuTrigger>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon-sm">
+              <MaterialSymbolsPageInfoOutlineRounded />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent
+            className="z-10 parent-data-[open]:hidden px-2 py-0.5 font-medium text-sm"
+            side="top"
+            sideOffset={32}
+            collisionBoundary={player?.el}
+            collisionPadding={8}
+          >
+            Налаштування
+          </TooltipContent>
+        </Tooltip>
       </DropdownMenuTrigger>
       <DropdownMenuContent
         container={container}

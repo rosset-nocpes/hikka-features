@@ -6,6 +6,7 @@ import {
   MuteButton,
   PIPButton,
   PlayButton,
+  useMediaPlayer,
   useMediaState,
   useMediaStore,
 } from '@vidstack/react';
@@ -59,6 +60,7 @@ export function Play({
   tooltipSide = 'top',
   tooltipAlign = 'center',
 }: MediaButtonProps) {
+  const player = useMediaPlayer();
   const isPaused = useMediaState('paused');
   return (
     <Tooltip>
@@ -78,6 +80,8 @@ export function Play({
         side={tooltipSide}
         align={tooltipAlign}
         sideOffset={tooltipOffset}
+        collisionBoundary={player?.el}
+        collisionPadding={8}
       >
         {isPaused ? 'Відтворити' : 'Призупинити'}
       </TooltipContent>
@@ -90,8 +94,10 @@ export function Mute({
   tooltipSide = 'top',
   tooltipAlign = 'center',
 }: MediaButtonProps) {
+  const player = useMediaPlayer();
   const volume = useMediaState('volume'),
     isMuted = useMediaState('muted');
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -112,6 +118,8 @@ export function Mute({
         side={tooltipSide}
         align={tooltipAlign}
         sideOffset={tooltipOffset}
+        collisionBoundary={player?.el}
+        collisionPadding={8}
       >
         {isMuted ? 'Увімкнути звук' : 'Вимкнути звук'}
       </TooltipContent>
@@ -181,7 +189,9 @@ export function Fullscreen({
   tooltipSide = 'top',
   tooltipAlign = 'center',
 }: MediaButtonProps) {
+  const player = useMediaPlayer();
   const isActive = useMediaState('fullscreen');
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -200,6 +210,8 @@ export function Fullscreen({
         side={tooltipSide}
         align={tooltipAlign}
         sideOffset={tooltipOffset}
+        collisionBoundary={player?.el}
+        collisionPadding={8}
       >
         {isActive ? 'Вийти з повноекранного режиму' : 'Повноекранний режим'}
       </TooltipContent>
@@ -214,6 +226,7 @@ export function Fullscreen({
 export const PlayerShareLinkButton = () => {
   const { container, provider, team, currentEpisode } = usePlayer();
   const { currentTime } = useMediaStore();
+  const player = useMediaPlayer();
 
   const [showTooltip, setShowTooltip] = useState(false);
   const [isTimecodeLink, toggleTimestampLink] = useState(false);
@@ -252,7 +265,13 @@ export const PlayerShareLinkButton = () => {
               <MaterialSymbolsShareOutline className="flex-1" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent className={tooltipClass} side="top" sideOffset={32}>
+          <TooltipContent
+            className={tooltipClass}
+            side="top"
+            sideOffset={32}
+            collisionBoundary={player?.el}
+            collisionPadding={8}
+          >
             Поділитися
           </TooltipContent>
         </Tooltip>
