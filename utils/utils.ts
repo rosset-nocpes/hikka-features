@@ -11,7 +11,7 @@ export const getThemeVariables = () => {
   );
 
   const theme = document.documentElement.getAttribute('data-theme') || 'light';
-  const themeSelector = `.${theme}`;
+  const themeSelector = theme === 'light' ? ':root' : '.dark';
 
   for (const sheet of styleSheets) {
     const cssRules =
@@ -23,7 +23,6 @@ export const getThemeVariables = () => {
       if (rule instanceof CSSStyleRule) {
         const isThemeMatch =
           rule.selectorText === themeSelector ||
-          rule.selectorText === ':root' ||
           rule.selectorText.includes(themeSelector);
 
         if (isThemeMatch) {
