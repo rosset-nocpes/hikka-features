@@ -4,41 +4,42 @@ export const getLocalMALId = () =>
       ?.content,
   );
 
-export const getThemeVariables = () => {
-  const variables: Record<string, string> = {};
-  const styleSheets = document.head.querySelectorAll(
-    'style, link[rel="stylesheet"]',
-  );
+export const getThemeVariables = (): string => {
+  const userStyles = document.getElementById('user-styles') as HTMLStyleElement;
+  if (!userStyles?.sheet) return '';
 
-  const theme = document.documentElement.getAttribute('data-theme') || 'light';
-  const themeSelector = theme === 'light' ? ':root' : '.dark';
+  const isDark = document.documentElement.classList.contains('dark');
+  const variables = new Map<string, string>();
 
-  for (const sheet of styleSheets) {
-    const cssRules =
-      sheet instanceof HTMLStyleElement ? sheet.sheet?.cssRules : null;
+  try {
+    const rules = Array.from(userStyles.sheet.cssRules);
 
-    if (!cssRules) continue;
+    const extractVariables = (selector: string): void => {
+      const rule = rules.find(
+        (rule): rule is CSSStyleRule =>
+          rule instanceof CSSStyleRule && rule.selectorText === selector,
+      );
 
-    for (const rule of cssRules) {
-      if (rule instanceof CSSStyleRule) {
-        const isThemeMatch =
-          rule.selectorText === themeSelector ||
-          rule.selectorText.includes(themeSelector);
-
-        if (isThemeMatch) {
-          const style = rule.style;
-          for (let i = 0; i < style.length; i++) {
-            const prop = style[i];
-            if (prop.startsWith('--')) {
-              variables[prop] = style.getPropertyValue(prop).trim();
-            }
-          }
-        }
+      if (rule) {
+        Array.from(rule.style)
+          .filter((prop) => prop.startsWith('--'))
+          .map((prop) =>
+            variables.set(prop, rule.style.getPropertyValue(prop).trim()),
+          );
       }
-    }
-  }
+    };
 
-  return Object.entries(variables)
-    .map(([key, value]) => `${key}: ${value};`)
-    .join(' ');
+    extractVariables(':root');
+    if (isDark) extractVariables('.dark');
+
+    return Array.from(variables.entries())
+      .map(([key, value]) => `${key}: ${value};`)
+      .join(' ');
+  } catch (error) {
+    console.warn(
+      '[hikka Features] Failed to read CSS rules from #user-styles:',
+      error,
+    );
+    return '';
+  }
 };
