@@ -222,7 +222,7 @@ const AniButtons: FC<Props> = ({ container, data, smallerTitle }) => {
             Інші джерела
             <img
               src={
-                container.classList.contains('dark')
+                document.documentElement.classList.contains('dark')
                   ? HFLogoSmall
                   : HFLogoSmallDark
               }

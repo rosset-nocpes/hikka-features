@@ -70,7 +70,7 @@ const RecommendationBlock: FC<Props> = ({ container }) => {
               Схожий контент
               <img
                 src={
-                  container.classList.contains('dark')
+                  document.documentElement.classList.contains('dark')
                     ? HFLogoSmall
                     : HFLogoSmallDark
                 }

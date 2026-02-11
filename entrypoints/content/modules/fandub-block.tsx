@@ -81,7 +81,7 @@ const FandubBlock: FC<Props> = ({ container, smallerTitle }) => {
             >
               <img
                 src={
-                  container.classList.contains('dark')
+                  document.documentElement.classList.contains('dark')
                     ? HFxCPRBadge
                     : HFxCPRBadgeDark
                 }
