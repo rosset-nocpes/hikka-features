@@ -19,6 +19,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -34,8 +35,7 @@ import type {
 import SwitchOption from '../_base/switch-option';
 
 const ReaderSettings = () => {
-  const { container, settings, setSettings } = useReader();
-  const { type, sortBy, fullscreen, ...dynamicFields } = settings;
+  const { container, settings } = useReader();
 
   return (
     <SidebarMenu>
@@ -58,33 +58,40 @@ const ReaderSettings = () => {
             side="top"
             container={container}
           >
-            <div className="flex flex-col gap-3 p-3 pb-0">
-              {Object.entries(dynamicFields).map(([key, value]) => (
-                <SettingItem
-                  key={key}
-                  settingKey={
-                    key as Exclude<KeysOfUnion<ReaderSettingsType>, BaseKeys>
-                  }
-                  value={value}
-                  onChange={(newValue) => setSettings({ [key]: newValue })}
-                />
-              ))}
-            </div>
+            <SettingsItems />
             <div className="flex flex-col text-center text-muted-foreground text-xs">
               <DropdownMenuSeparator />
               <a
-                href={READER_POWERED_BY[type]?.url}
+                href={READER_POWERED_BY[settings.type]?.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="py-1"
               >
-                {READER_POWERED_BY[type]?.label}
+                {READER_POWERED_BY[settings.type]?.label}
               </a>
             </div>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
+  );
+};
+
+export const SettingsItems = () => {
+  const { settings, setSettings } = useReader();
+  const { type, sortBy, fullscreen, ...dynamicFields } = settings;
+
+  return (
+    <div className="flex flex-col gap-3 p-3 pb-0">
+      {Object.entries(dynamicFields).map(([key, value]) => (
+        <SettingItem
+          key={key}
+          settingKey={key as Exclude<KeysOfUnion<ReaderSettingsType>, BaseKeys>}
+          value={value}
+          onChange={(newValue) => setSettings({ [key]: newValue })}
+        />
+      ))}
+    </div>
   );
 };
 
@@ -98,6 +105,7 @@ const SettingItem = ({
   onChange: (val: any) => void;
 }) => {
   const { container, settings } = useReader();
+  const { isMobile } = useSidebar();
   const config = SETTINGS_CONFIG[settingKey];
 
   if (!config) return null;
@@ -174,6 +182,7 @@ const SettingItem = ({
             value={value}
             onChange={onChange}
             container={container}
+            isMobile={isMobile}
             fontFamily={
               settings.type === ReaderType.Novel
                 ? settings.fontFamily
@@ -197,6 +206,7 @@ const FontFamilySelect = ({
   value,
   onChange,
   container,
+  isMobile,
   fontFamily,
 }: any) => (
   <DropdownMenu>
@@ -219,13 +229,18 @@ const FontFamilySelect = ({
       </Button>
     </DropdownMenuTrigger>
     <DropdownMenuContent
-      side="left"
+      side={isMobile ? 'bottom' : 'left'}
       align="end"
-      sideOffset={24}
-      alignOffset={-12}
+      sideOffset={isMobile ? 4 : 24}
+      alignOffset={isMobile ? 0 : -12}
       container={container}
     >
-      <ScrollArea className="max-h-80 w-full overflow-y-auto">
+      <ScrollArea
+        className={cn(
+          'max-h-80 w-full overflow-y-auto',
+          isMobile && 'w-[--radix-dropdown-menu-trigger-width]',
+        )}
+      >
         {config.options?.map((option: any, index: number) => (
           <>
             <DropdownMenuItem

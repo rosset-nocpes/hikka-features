@@ -9,6 +9,7 @@ import ReaderNavbar from './components/reader-navbar';
 import MangaRenderer from './components/renderers/manga-renderer';
 import NovelRenderer from './components/renderers/novel-renderer';
 import ReaderSidebar from './components/sidebar/reader-sidebar';
+import ReaderMobileToolbar from './components/ui/mobile/reader-mobile-toolbar';
 import PageSwitcher from './components/ui/page-switcher';
 import { ReaderProvider, useReader } from './hooks/use-reader';
 import { ReaderType } from './reader.enums';
@@ -95,8 +96,7 @@ export const Reader = () => {
         settings.fullscreen && '!max-w-full !rounded-none !border-none',
       )}
     >
-      {/* todo */}
-      {/*<ReaderMobileToolbar carouselApi={carouselApi} />*/}
+      <ReaderMobileToolbar />
 
       <ReaderNavbar />
 
