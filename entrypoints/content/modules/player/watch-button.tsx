@@ -21,14 +21,11 @@ export default async function watchButton(location?: Element) {
     anchor:
       location ||
       document.querySelector('div.sticky.bottom-3.z-10.mt-12 > div'),
-    css: ':host(watch-button) { margin-right: -0.5rem; }',
+    css: `:host(watch-button) { margin-right: -0.5rem; ${getThemeVariables()} }`,
     inheritStyles: true,
     async onMount(container) {
       const wrapper = document.createElement('div');
       container.append(wrapper);
-
-      const { darkMode } = useSettings.getState();
-      container.classList.toggle('dark', darkMode);
 
       const root = createRoot(wrapper);
       root.render(

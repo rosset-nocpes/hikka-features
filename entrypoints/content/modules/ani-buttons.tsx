@@ -37,14 +37,11 @@ const aniButtons = async (
       document.querySelector(
         '.grid > div.flex.flex-col.gap-12.lg\\:col-span-1 > div',
       ),
-    css: ':host(ani-buttons) { margin-bottom: -3rem; }',
+    css: `:host(ani-buttons) { margin-bottom: -3rem; ${getThemeVariables()} }`,
     inheritStyles: true,
     async onMount(container) {
       const wrapper = document.createElement('div');
       container.append(wrapper);
-
-      const { darkMode } = useSettings.getState();
-      container.classList.toggle('dark', darkMode);
 
       const root = createRoot(wrapper);
       root.render(

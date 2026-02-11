@@ -19,14 +19,11 @@ const recommendationBlock = async (location?: Element) => {
     position: 'inline',
     append: 'last',
     anchor: location || document.querySelector('.grid > div:nth-of-type(2)'),
-    css: ':host(recommendation-block) { margin-top: -3rem; }',
+    css: `:host(recommendation-block) { margin-top: -3rem; ${getThemeVariables()} }`,
     inheritStyles: true,
     async onMount(container) {
       const wrapper = document.createElement('div');
       container.append(wrapper);
-
-      const { darkMode } = useSettings.getState();
-      container.classList.toggle('dark', darkMode);
 
       const root = createRoot(wrapper);
       root.render(

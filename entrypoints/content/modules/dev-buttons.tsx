@@ -18,14 +18,11 @@ const devButtons = async () => {
     anchor: document.querySelector(
       'main > div > div.flex.flex-col.gap-12 > div.flex.flex-col.gap-4',
     ),
-    css: ':host(dev-buttons) { margin-bottom: -1rem; }',
+    css: `:host(dev-buttons) { margin-bottom: -1rem; ${getThemeVariables()} }`,
     inheritStyles: true,
     async onMount(container) {
       const wrapper = document.createElement('div');
       container.append(wrapper);
-
-      const { darkMode } = useSettings.getState();
-      container.classList.toggle('dark', darkMode);
 
       const root = createRoot(wrapper);
       root.render(
