@@ -2,7 +2,7 @@ import type { Config } from 'tailwindcss';
 
 export default {
   darkMode: ['class', '[data-kb-theme="dark"]'],
-  content: ['./components/**/*.tsx', './entrypoints/**/*.tsx'],
+  content: ['./components/**/*.tsx', './entrypoints/**/*.{ts,tsx}'],
   theme: {
     container: {
       center: true,
