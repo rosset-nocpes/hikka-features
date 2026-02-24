@@ -24,7 +24,6 @@ export interface ReaderState {
   container?: HTMLElement;
   /* Reader-related */
   currentChapter?: Chapter;
-  chapterContent?: string[] | string; // remove this
   settings: ReaderSettings;
   /* Manga-related (idk where to put it for now) */
   carouselApi?: CarouselApi;
@@ -39,7 +38,6 @@ interface ReaderActions {
   setChapter: (chapter: Chapter) => void;
   nextChapter: () => void;
   prevChapter: () => void;
-  setChapterContent: (content: string[] | string) => void; // remove this
   setSettings: (settings: Partial<ReaderSettings>) => void;
   toggleFullscreen: () => Promise<void>;
   syncFullscreen: (val: boolean) => void;
@@ -161,7 +159,6 @@ export const useReader = create<ReaderState & ReaderActions>((set, get) => ({
       set({ currentChapter: previousChapter });
     }
   },
-  setChapterContent: (content) => set({ chapterContent: content }),
   setSettings: (settings) =>
     set((state) => ({
       settings: {
@@ -202,7 +199,6 @@ export const useReader = create<ReaderState & ReaderActions>((set, get) => ({
     set({
       container: undefined,
       currentChapter: undefined,
-      chapterContent: undefined,
       settings: {
         fullscreen: false,
         sortBy: {

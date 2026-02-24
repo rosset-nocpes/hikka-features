@@ -1,20 +1,14 @@
-import { type FC, useEffect, useRef, useState } from 'react';
-import type { CarouselApi } from '@/components/ui/carousel';
+import { useEffect, useRef, useState } from 'react';
 import { SidebarContent } from '@/components/ui/sidebar';
 import useReadData from '../../hooks/use-read-data';
 import { ReaderContentMode } from '../../reader.enums';
 import ChaptersView from './list-views/chapters-view';
 import VolumesView from './list-views/volumes-view';
 
-interface Props {
-  carouselApi?: CarouselApi;
-  scrollContainerRef?: React.RefObject<HTMLDivElement | null>;
-}
-
-const ChapterList: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
-  const [isScrolled, setIsScrolled] = useState({ top: false, bottom: false });
-  const scrollRef = useRef<HTMLDivElement>(null);
+const ChapterList = () => {
   const { data } = useReadData();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isScrolled, setIsScrolled] = useState({ top: false, bottom: false });
 
   useEffect(() => {
     const element = scrollRef.current;
@@ -34,21 +28,6 @@ const ChapterList: FC<Props> = ({ carouselApi, scrollContainerRef }) => {
       element.removeEventListener('scroll', handleScroll);
     };
   }, []);
-
-  // useEffect(() => {
-  //   if (!currentChapter || !mangaData) return;
-
-  //   const currentIndex = mangaData.chapters.findIndex(
-  //     (chapter) => chapter.id === currentChapter.id,
-  //   );
-
-  //   if (currentIndex !== -1) {
-  //     rowVirtualizer.scrollToIndex(currentIndex, {
-  //       align: 'center',
-  //       behavior: 'auto',
-  //     });
-  //   }
-  // }, [!!currentChapter]);
 
   // const sorted = useMemo(() => {
   //   if (!mangaData?.chapters) return [];

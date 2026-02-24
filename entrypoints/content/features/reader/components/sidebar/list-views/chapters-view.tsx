@@ -1,5 +1,5 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { type FC, type RefObject, useMemo, useRef } from 'react';
+import { type FC, type RefObject, useLayoutEffect, useMemo } from 'react';
 import {
   SidebarGroup,
   SidebarMenu,
@@ -22,8 +22,14 @@ interface Props {
 
 const ChaptersView: FC<Props> = ({ scrollRef }) => {
   const { data } = useReadData();
-  const { settings, carouselApi, currentChapter, setChapter, getRead } =
-    useReader();
+  const {
+    container,
+    settings,
+    carouselApi,
+    currentChapter,
+    setChapter,
+    getRead,
+  } = useReader();
 
   const handleSelectChapter = (value: Chapter) => {
     setChapter(value);
@@ -38,14 +44,29 @@ const ChaptersView: FC<Props> = ({ scrollRef }) => {
     }
   };
 
-  const currentChapterRef = useRef<HTMLButtonElement>(null);
-
   const rowVirtualizer = useVirtualizer({
     count: (data as any).chapters.length || 0,
     getScrollElement: () => scrollRef.current,
     estimateSize: () => 52,
     overscan: 5,
   });
+
+  // initial scroll to current chapter
+  useLayoutEffect(() => {
+    if (!currentChapter) return;
+    if (data?.displayMode !== ReaderContentMode.Chapters) return;
+
+    const currentIndex = data.chapters.findIndex(
+      (chapter) => chapter.id === currentChapter.id,
+    );
+
+    if (currentIndex !== -1) {
+      rowVirtualizer.scrollToIndex(currentIndex, {
+        align: 'center',
+        behavior: 'auto',
+      });
+    }
+  }, [container]);
 
   const sorted = useMemo(() => {
     if (data?.displayMode !== ReaderContentMode.Chapters) return [];
@@ -98,11 +119,6 @@ const ChaptersView: FC<Props> = ({ scrollRef }) => {
                   width: '100%',
                   transform: `translateY(${virtualItem.start}px)`,
                 }}
-                ref={
-                  sorted[virtualItem.index].id === currentChapter?.id
-                    ? currentChapterRef
-                    : null
-                }
               >
                 <div className="flex flex-1 flex-col gap-1 truncate text-left leading-tight">
                   <span

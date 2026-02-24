@@ -39,10 +39,7 @@ const ReaderSidebar = () => {
         {/* todo: add support for volumes */}
         {data?.displayMode === ReaderContentMode.Chapters && <SortOptions />}
       </SidebarHeader>
-      <ChapterList
-      // carouselApi={carouselApi}
-      // scrollContainerRef={scrollContainerRef}
-      />
+      <ChapterList />
       <SidebarFooter>
         <ReaderSettings />
       </SidebarFooter>

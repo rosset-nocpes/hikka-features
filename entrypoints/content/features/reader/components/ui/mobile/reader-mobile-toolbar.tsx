@@ -15,7 +15,6 @@ import { useReader } from '../../../hooks/use-reader';
 import reader from '../../../reader';
 import { READER_POWERED_BY } from '../../../reader.constants';
 import { ReaderContentMode } from '../../../reader.enums';
-import { BaseKeys, KeysOfUnion } from '../../../reader.types';
 import ChapterList from '../../sidebar/chapter-list';
 import { SettingsItems } from '../../sidebar/settings/reader-settings';
 import SortOptions from '../../sidebar/sort-options';

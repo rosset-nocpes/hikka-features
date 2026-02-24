@@ -1,4 +1,5 @@
 import { ChevronRight } from 'lucide-react';
+import { useLayoutEffect, useRef } from 'react';
 import {
   Collapsible,
   CollapsibleContent,
@@ -18,12 +19,25 @@ import { ReaderContentMode } from '../../../reader.enums';
 import type { Chapter } from '../../../reader.types';
 
 const VolumesView = () => {
-  const { currentChapter, setChapter, getRead } = useReader();
+  const { container, currentChapter, setChapter, getRead } = useReader();
   const { data } = useReadData();
+
+  const currentChapterRef = useRef<HTMLButtonElement>(null);
 
   const handleSelectChapter = (value: Chapter) => {
     setChapter(value);
   };
+
+  // initial scroll to current chapter
+  useLayoutEffect(() => {
+    if (!currentChapterRef.current) return;
+    if (data?.displayMode !== ReaderContentMode.Volumes) return;
+
+    currentChapterRef.current.scrollIntoView({
+      behavior: 'auto',
+      block: 'center',
+    });
+  }, [container]);
 
   if (data?.displayMode !== ReaderContentMode.Volumes) return;
 
@@ -55,11 +69,11 @@ const VolumesView = () => {
                         onClick={() => handleSelectChapter(chapter)}
                         isActive={chapter.id === currentChapter?.id}
                         size="lg"
-                        // ref={
-                        //   chapter.chapter === currentChapter?.chapter
-                        //     ? currentChapterRef
-                        //     : null
-                        // }
+                        ref={
+                          chapter.id === currentChapter?.id
+                            ? currentChapterRef
+                            : null
+                        }
                       >
                         <div className="flex flex-1 flex-col gap-1 truncate text-left leading-tight">
                           <span
