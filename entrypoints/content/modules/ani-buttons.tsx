@@ -21,26 +21,26 @@ enum MediaEnum {
   Novel = 'novel',
 }
 
+const MOUNT_TAG = 'ani-buttons';
+
+let isMounting = false;
+
 const aniButtons = async (
   append: ContentScriptAppendMode = 'after',
-  smallerTitle?: boolean,
   location?: Element,
   data?: any,
 ) => {
-  if (document.body.querySelectorAll('ani-buttons').length !== 0) {
-    return;
-  }
+  const existing = document.body.querySelectorAll(MOUNT_TAG);
+  if (existing.length > 0 || isMounting) return;
+
+  isMounting = true;
 
   return createShadowRootUi(usePageStore.getState().ctx, {
-    name: 'ani-buttons',
+    name: MOUNT_TAG,
     position: 'inline',
     append,
-    anchor:
-      location ||
-      document.querySelector(
-        '.grid > div.flex.flex-col.gap-12.lg\\:col-span-1 > div',
-      ),
-    css: `:host(ani-buttons) { margin-bottom: -3rem; ${getThemeVariables()} }`,
+    anchor: location || '.grid.grid-cols-1 > div:nth-of-type(3) > div',
+    css: `:host(${MOUNT_TAG}) { margin-bottom: -2rem !important; ${getThemeVariables()} }`,
     inheritStyles: true,
     async onMount(container) {
       const wrapper = document.createElement('div');
@@ -49,11 +49,7 @@ const aniButtons = async (
       const root = createRoot(wrapper);
       root.render(
         <QueryClientProvider client={queryClient}>
-          <AniButtons
-            container={container}
-            data={data}
-            smallerTitle={smallerTitle}
-          />
+          <AniButtons data={data} />
         </QueryClientProvider>,
       );
 
@@ -63,12 +59,10 @@ const aniButtons = async (
 };
 
 interface Props {
-  container: HTMLElement;
   data?: any;
-  smallerTitle?: boolean;
 }
 
-const AniButtons: FC<Props> = ({ container, data, smallerTitle }) => {
+const AniButtons: FC<Props> = ({ data }) => {
   const { enabled } = useSettings().features.aniButtons;
 
   const hikka = useHikka();
@@ -204,77 +198,78 @@ const AniButtons: FC<Props> = ({ container, data, smallerTitle }) => {
     <AnimatePresence>
       {enabled && (
         <motion.div
-          className="flex flex-col gap-4"
+          className="overflow-hidden rounded-lg border border-border bg-secondary/20"
           initial={{ opacity: 0, height: 0, scale: 0.93, marginBottom: 0 }}
           animate={{
             opacity: 1,
             height: 'auto',
             scale: 1,
-            marginBottom: '3rem',
+            marginBottom: '2rem',
           }}
           exit={{ opacity: 0, height: 0, scale: 0.93, marginBottom: 0 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
         >
-          <h3
-            className={cn(
-              'flex scroll-m-20 items-center justify-between font-bold tracking-normal',
-              smallerTitle ? 'text-lg' : 'text-xl',
-              compact && 'hidden',
-            )}
-          >
-            Інші джерела
-            <img
-              src={
-                document.documentElement.classList.contains('dark')
-                  ? HFLogoSmall
-                  : HFLogoSmallDark
-              }
-              style={{ width: '21px', height: '20px' }}
-            />
-          </h3>
-          <div
-            className={cn(
-              compact ? 'flex justify-between' : 'grid grid-cols-2 gap-2',
-            )}
-          >
-            {(isAnime
-              ? anime_links
-              : content_type === 'character'
-                ? character_links
-                : content_type === 'person'
-                  ? people_links
-                  : manga_links
-            ).map((elem) => (
-              <a
-                key={elem.title}
-                href={elem.title === 'Amanogawa' ? agawaUrl : elem.url}
-                target="_blank"
-                className={cn(
-                  'flex items-center gap-2 rounded-sm p-1 text-sm font-medium transition hover:bg-secondary/60',
-                  elem.title === 'Amanogawa'
-                    ? agawaUrlLoading
-                      ? 'animate-pulse'
-                      : agawaUrlError
-                        ? 'pointer-events-none opacity-50'
-                        : ''
-                    : '',
-                  compact && '!size-10',
-                )}
-              >
-                <span
+          <div className="flex flex-col gap-6 p-4">
+            <h4
+              className={cn(
+                'flex items-center justify-between',
+                compact && 'hidden',
+              )}
+            >
+              Інші джерела
+              <img
+                src={
+                  document.documentElement.classList.contains('dark')
+                    ? HFLogoSmall
+                    : HFLogoSmallDark
+                }
+                style={{ width: '21px', height: '20px' }}
+              />
+            </h4>
+            <div
+              className={cn(
+                compact ? 'flex justify-between' : 'grid grid-cols-2 gap-2',
+              )}
+            >
+              {(isAnime
+                ? anime_links
+                : content_type === 'character'
+                  ? character_links
+                  : content_type === 'person'
+                    ? people_links
+                    : manga_links
+              ).map((elem) => (
+                <a
+                  key={elem.title}
+                  href={elem.title === 'Amanogawa' ? agawaUrl : elem.url}
+                  target="_blank"
                   className={cn(
-                    'size-5 overflow-hidden rounded-sm border border-secondary/60 p-px',
-                    compact && '!size-full',
+                    'flex items-center gap-2 rounded-sm p-1 text-sm font-medium transition hover:bg-secondary/60',
+                    elem.title === 'Amanogawa'
+                      ? agawaUrlLoading
+                        ? 'animate-pulse'
+                        : agawaUrlError
+                          ? 'pointer-events-none opacity-50'
+                          : ''
+                      : '',
+                    compact && '!size-10',
                   )}
                 >
-                  <img
-                    className="size-full"
-                    src={`https://www.google.com/s2/favicons?domain=${elem.host}`}
-                  />
-                </span>
-                {!compact && elem.title}
-              </a>
-            ))}
+                  <span
+                    className={cn(
+                      'size-5 overflow-hidden rounded-sm border border-secondary/60 p-px',
+                      compact && '!size-full',
+                    )}
+                  >
+                    <img
+                      className="size-full"
+                      src={`https://www.google.com/s2/favicons?domain=${elem.host}`}
+                    />
+                  </span>
+                  {!compact && elem.title}
+                </a>
+              ))}
+            </div>
           </div>
         </motion.div>
       )}

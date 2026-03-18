@@ -14,18 +14,22 @@ export const usePosterState = create<{
   setVisible: (visible) => set({ visible }),
 }));
 
+const MOUNT_TAG = 'localized-poster';
+
+let isMounting = false;
+
 const localizedPoster = async () => {
-  if (document.body.querySelectorAll('localized-poster').length !== 0) {
-    return;
-  }
+  const existing = document.body.querySelectorAll(MOUNT_TAG);
+  if (existing.length > 0 || isMounting) return;
+
+  isMounting = true;
 
   return createShadowRootUi(usePageStore.getState().ctx, {
-    name: 'localized-poster',
+    name: MOUNT_TAG,
     position: 'inline',
     append: 'first',
-    anchor: document.querySelector(
-      'div.absolute.left-0.top-0.flex.size-full.items-center.justify-center.rounded-md',
-    ),
+    anchor:
+      '.grid.grid-cols-1 > div:nth-of-type(1) > div:nth-of-type(1) div.absolute',
     async onMount(container) {
       const wrapper = document.createElement('div');
       container.append(wrapper);

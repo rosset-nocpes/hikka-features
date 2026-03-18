@@ -17,22 +17,24 @@ import HFxCPRBadge from '@/public/hf-x-cpr.svg';
 
 import { queryClient } from '..';
 
-const fandubBlock = async (smallerTitle?: boolean, location?: Element) => {
-  if (document.body.querySelectorAll('fandub-block').length !== 0) {
-    return;
-  }
+const MOUNT_TAG = 'fandub-block';
+
+let isMounting = false;
+
+const fandubBlock = async (location?: Element) => {
+  const existing = document.body.querySelectorAll(MOUNT_TAG);
+  if (existing.length > 0 || isMounting) return;
+
+  isMounting = true;
 
   return createShadowRootUi(usePageStore.getState().ctx, {
-    name: 'fandub-block',
+    name: MOUNT_TAG,
     position: 'inline',
     append: 'last',
     anchor:
-      location ||
-      document.querySelector(
-        'main > div > div.flex.flex-col.gap-4 > div.flex.w-full.flex-col.gap-4 > div',
-      ),
+      location || '.grid.grid-cols-1 > div:nth-of-type(1) > div:nth-of-type(2)',
     inheritStyles: true,
-    css: `:host(fandub-block) { ${getThemeVariables()} }`,
+    css: `:host(${MOUNT_TAG}) { ${getThemeVariables()} }`,
     async onMount(container) {
       const wrapper = document.createElement('div');
       container.append(wrapper);
@@ -40,7 +42,7 @@ const fandubBlock = async (smallerTitle?: boolean, location?: Element) => {
       const root = createRoot(wrapper);
       root.render(
         <QueryClientProvider client={queryClient}>
-          <FandubBlock container={container} smallerTitle={smallerTitle} />
+          <FandubBlock />
         </QueryClientProvider>,
       );
 
@@ -49,12 +51,7 @@ const fandubBlock = async (smallerTitle?: boolean, location?: Element) => {
   });
 };
 
-interface Props {
-  container: HTMLElement;
-  smallerTitle?: boolean;
-}
-
-const FandubBlock: FC<Props> = ({ container, smallerTitle }) => {
+const FandubBlock: FC = () => {
   const { enabled } = useSettings().features.fandubBlock;
   const { data, isLoading, isError } = useNotionData();
 
@@ -64,115 +61,124 @@ const FandubBlock: FC<Props> = ({ container, smallerTitle }) => {
     <AnimatePresence>
       {enabled && (
         <motion.div
+          className="overflow-hidden rounded-lg border border-border bg-secondary/20"
           initial={{ opacity: 0, height: 0, scale: 0.93 }}
           animate={{ opacity: 1, height: 'auto', scale: 1 }}
           exit={{ opacity: 0, height: 0, scale: 0.93 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
-          className="flex flex-col gap-4"
         >
-          <h3
-            className={`flex scroll-m-20 items-center justify-between ${
-              smallerTitle ? 'text-lg' : 'text-xl'
-            } font-bold tracking-normal`}
-          >
-            Від команд
-            <a
-              href="https://drbryanman.github.io/CPRcatalog/#/"
-              target="_blank"
-              rel="noopener"
-            >
-              <img
-                src={
-                  document.documentElement.classList.contains('dark')
-                    ? HFxCPRBadge
-                    : HFxCPRBadgeDark
-                }
-                style={{ height: '20px' }}
-              />
-            </a>
-          </h3>
-          <div className="flex flex-col gap-2">
-            {isLoading &&
-              Array.from({ length: 3 }).map((_, i) => (
-                <div
-                  key={`skeleton-${i}`}
-                  className="skeleton h-10 animate-pulse bg-secondary/60"
+          <div className="flex flex-col gap-6 p-4">
+            <h4 className="flex items-center justify-between">
+              Від команд
+              <a
+                href="https://drbryanman.github.io/CPRcatalog/#/"
+                target="_blank"
+                rel="noopener"
+              >
+                <img
+                  src={
+                    document.documentElement.classList.contains('dark')
+                      ? HFxCPRBadge
+                      : HFxCPRBadgeDark
+                  }
+                  style={{ height: '20px' }}
                 />
-              ))}
-            {(isError || (data && !data.fandub)) && (
-              <BlockEntry className="cursor-default text-muted-foreground">
-                <Avatar className="size-8 rounded-sm">
-                  <AvatarFallback>
-                    <MaterialSymbolsSadTabRounded className="size-6" />
-                  </AvatarFallback>
-                </Avatar>
-                Немає даних
-              </BlockEntry>
-            )}
-            {data?.fandub && (
-              <Fragment>
-                {data.fandub.length > 3 && (
-                  <Collapsible
-                    open={isOpen}
-                    onOpenChange={setIsOpen}
-                    className="flex flex-col gap-2"
-                  >
-                    {data.fandub.slice(0, 3).map((team) => (
-                      <BlockEntry key={team.title} href={team.link}>
-                        <Avatar className="size-8 rounded-sm">
-                          <AvatarImage loading="lazy" src={team.logo} />
-                          <AvatarFallback>
-                            {team.title[0].toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        {team.title}
-                      </BlockEntry>
-                    ))}
-                    <CollapsibleContent
-                      asChild
-                      className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down"
+              </a>
+            </h4>
+            <div className="flex flex-col gap-2">
+              {isLoading &&
+                Array.from({ length: 4 }).map((_, i) => (
+                  <div
+                    key={`skeleton-${i}`}
+                    className="skeleton h-10 animate-pulse bg-secondary/60"
+                  />
+                ))}
+              {(isError || (data && !data.fandub)) && (
+                <BlockEntry className="cursor-default text-muted-foreground">
+                  <Avatar className="w-10 rounded-md">
+                    <AvatarFallback>
+                      <MaterialSymbolsSadTabRounded className="size-6" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="font-medium text-sm leading-tight">
+                    Немає даних
+                  </span>
+                </BlockEntry>
+              )}
+              {data?.fandub && (
+                <Fragment>
+                  {data.fandub.length > 4 && (
+                    <Collapsible
+                      open={isOpen}
+                      onOpenChange={setIsOpen}
+                      className="flex flex-col gap-4"
                     >
-                      <div className="flex flex-col gap-2">
-                        {data.fandub.slice(3).map((team) => (
-                          <BlockEntry key={team.title} href={team.link}>
-                            <Avatar className="size-8 rounded-sm">
-                              <AvatarImage loading="lazy" src={team.logo} />
-                              <AvatarFallback>
-                                {team.title[0].toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
+                      {data.fandub.slice(0, 4).map((team) => (
+                        <BlockEntry key={team.title} href={team.link}>
+                          <Avatar className="w-10 rounded-md">
+                            <AvatarImage loading="lazy" src={team.logo} />
+                            <AvatarFallback>
+                              {team.title[0].toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="line-clamp-1 truncate font-medium text-sm leading-tight">
                             {team.title}
-                          </BlockEntry>
-                        ))}
+                          </span>
+                        </BlockEntry>
+                      ))}
+                      <CollapsibleContent
+                        asChild
+                        className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down"
+                      >
+                        <div className="flex flex-col gap-4">
+                          {data.fandub.slice(4).map((team) => (
+                            <BlockEntry key={team.title} href={team.link}>
+                              <Avatar className="w-10 rounded-md">
+                                <AvatarImage loading="lazy" src={team.logo} />
+                                <AvatarFallback>
+                                  {team.title[0].toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="line-clamp-1 truncate font-medium text-sm leading-tight">
+                                {team.title}
+                              </span>
+                            </BlockEntry>
+                          ))}
+                        </div>
+                      </CollapsibleContent>
+                      <div className="footer">
+                        <CollapsibleTrigger asChild>
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="p-0 text-muted-foreground"
+                          >
+                            {isOpen ? 'Згорнути...' : 'Показати більше...'}
+                          </Button>
+                        </CollapsibleTrigger>
                       </div>
-                    </CollapsibleContent>
-                    <div className="footer">
-                      <CollapsibleTrigger asChild>
-                        <Button
-                          variant="link"
-                          size="sm"
-                          className="p-0 text-muted-foreground"
-                        >
-                          {isOpen ? 'Згорнути...' : 'Показати більше...'}
-                        </Button>
-                      </CollapsibleTrigger>
+                    </Collapsible>
+                  )}
+                  {data.fandub.length <= 4 && (
+                    <div className="flex flex-col gap-4">
+                      {data.fandub.map((team) => (
+                        <BlockEntry key={team.title} href={team.link}>
+                          <Avatar className="w-10 rounded-md">
+                            <AvatarImage loading="lazy" src={team.logo} />
+                            <AvatarFallback>
+                              {team.title[0].toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="line-clamp-1 truncate font-medium text-sm leading-tight">
+                            {team.title}
+                          </span>
+                        </BlockEntry>
+                      ))}
                     </div>
-                  </Collapsible>
-                )}
-                {data.fandub.length <= 3 &&
-                  data.fandub.map((team) => (
-                    <BlockEntry key={team.title} href={team.link}>
-                      <Avatar className="size-8 rounded-sm">
-                        <AvatarImage loading="lazy" src={team.logo} />
-                        <AvatarFallback>
-                          {team.title[0].toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      {team.title}
-                    </BlockEntry>
-                  ))}
-              </Fragment>
-            )}
+                  )}
+                </Fragment>
+              )}
+            </div>
           </div>
         </motion.div>
       )}

@@ -111,6 +111,15 @@
       'rlig' 1,
       'calt' 1;
   }
+
+  h3 {
+    @apply scroll-m-20 font-sans text-lg font-bold tracking-normal;
+  }
+
+  h4,
+  h5 {
+    @apply scroll-m-20 font-sans text-base font-bold tracking-normal;
+  }
 }
 
 @media (max-width: 640px) {
