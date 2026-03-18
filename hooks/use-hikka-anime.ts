@@ -14,12 +14,13 @@ export const hikkaAnimeFetcher = async (slug: string) => {
   return r.json();
 };
 
-const useHikkaAnime = () => {
+const useHikkaAnime = ({ enabled }: { enabled: boolean }) => {
   return useQuery({
     queryKey: ['hikka-anime-data', usePageStore.getState().slug!],
     queryFn: ({ queryKey }) => hikkaAnimeFetcher(queryKey[1]),
     retry: false,
     staleTime: Infinity,
+    enabled,
   });
 };
 

@@ -1,7 +1,7 @@
 import { QueryClient } from '@tanstack/react-query';
 
 import '../app.css';
-import aniBackground from './modules/ani-background';
+import mediaCover from './features/media-cover/media-cover';
 // import UCharURL from "@/utils/u-char-url";
 import aniButtons from './modules/ani-buttons';
 import characterSuggestion from './modules/character-suggestion';
@@ -133,11 +133,11 @@ export default defineContentScript({
                 // aniBackground
                 switch (content_type) {
                   case 'anime':
-                    (await aniBackground(data.mal_id, 'anime'))?.mount();
+                    (await mediaCover(data.mal_id, 'anime'))?.mount();
                     break;
                   case 'manga':
                   case 'novel':
-                    (await aniBackground(data.mal_id, 'manga'))?.mount();
+                    (await mediaCover(data.mal_id, 'manga'))?.mount();
                     break;
                   case 'character':
                     {
@@ -148,7 +148,7 @@ export default defineContentScript({
                       }
 
                       (
-                        await aniBackground(
+                        await mediaCover(
                           usePageStore.getState().saved_mal_id
                             ? usePageStore.getState().saved_mal_id
                             : await (
@@ -292,19 +292,16 @@ export default defineContentScript({
               ).json();
 
               (
-                await aniBackground(first_source_mal_id.mal_id, source_type)
+                await mediaCover(first_source_mal_id.mal_id, source_type)
               )?.mount();
             }
 
             if (usePageStore.getState().saved_mal_id) {
               (
-                await aniBackground(
-                  usePageStore.getState().saved_mal_id!,
-                  'anime',
-                )
+                await mediaCover(usePageStore.getState().saved_mal_id!, 'anime')
               )?.mount() ??
                 (
-                  await aniBackground(
+                  await mediaCover(
                     usePageStore.getState().saved_mal_id!,
                     'manga',
                   )

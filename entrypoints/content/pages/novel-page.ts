@@ -1,6 +1,6 @@
+import mediaCover from '../features/media-cover/media-cover';
 import readButton from '../features/reader/read-button';
 import { ReaderType } from '../features/reader/reader.enums';
-import aniBackground from '../modules/ani-background';
 import aniButtons from '../modules/ani-buttons';
 import devButtons from '../modules/dev-buttons';
 import recommendationBlock from '../modules/recommendation-block';
@@ -23,9 +23,9 @@ const novel_page = async () => {
     );
   }
 
-  // aniBackground
+  // mediaCover
   if (path?.length! >= 2) {
-    (await aniBackground(mal_id, 'manga'))?.mount();
+    (await mediaCover(mal_id, 'manga'))?.mount();
     usePageStore.getState().setMALId(mal_id);
   } else {
     usePageStore.getState().clearMALId();

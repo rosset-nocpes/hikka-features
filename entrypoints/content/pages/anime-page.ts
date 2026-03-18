@@ -1,4 +1,4 @@
-import aniBackground from '../modules/ani-background';
+import mediaCover from '../features/media-cover/media-cover';
 import aniButtons from '../modules/ani-buttons';
 import devButtons from '../modules/dev-buttons';
 import fandubBlock from '../modules/fandub-block';
@@ -27,7 +27,7 @@ const anime_page = async () => {
   }
 
   if (path && path.length >= 2) {
-    (await aniBackground(mal_id, 'anime'))?.mount();
+    (await mediaCover(mal_id, 'anime'))?.mount();
     usePageStore.getState().setMALId(mal_id);
   } else {
     usePageStore.getState().clearMALId();
