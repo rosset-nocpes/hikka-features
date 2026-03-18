@@ -14,7 +14,7 @@ export const queryClient = new QueryClient({
 });
 
 export default defineContentScript({
-  matches: ['https://hikka.io/*'],
+  matches: ['https://hikka.io/*', 'https://dev.hikka.io/*'],
   cssInjectionMode: 'ui',
   async main(ctx) {
     usePageStore.getState().setCTX(ctx);
