@@ -1,7 +1,18 @@
 import { type FC, type PropsWithChildren, useEffect } from 'react';
 import { create } from 'zustand';
+
 import type { CarouselApi } from '@/components/ui/carousel';
+
 import { queryClient } from '@/entrypoints/content';
+
+import type {
+  Chapter,
+  MangaSettings,
+  NovelSettings,
+  ReaderContent,
+  ReaderSettings,
+} from '../reader.types';
+
 import {
   MangaOrientation,
   NovelTheme,
@@ -10,13 +21,6 @@ import {
   ReaderSortBy,
   ReaderType,
 } from '../reader.enums';
-import type {
-  Chapter,
-  MangaSettings,
-  NovelSettings,
-  ReaderContent,
-  ReaderSettings,
-} from '../reader.types';
 import useReadData from './use-read-data';
 
 export interface ReaderState {

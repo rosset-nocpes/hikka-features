@@ -1,4 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
+
 import '../app.css';
 import aniBackground from './modules/ani-background';
 // import UCharURL from "@/utils/u-char-url";

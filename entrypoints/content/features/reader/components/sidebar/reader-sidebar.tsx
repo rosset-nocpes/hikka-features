@@ -1,7 +1,9 @@
+import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Sidebar, SidebarFooter, SidebarHeader } from '@/components/ui/sidebar';
-import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
+
 import useReadData from '../../hooks/use-read-data';
 import { useReader } from '../../hooks/use-reader';
 import reader from '../../reader';

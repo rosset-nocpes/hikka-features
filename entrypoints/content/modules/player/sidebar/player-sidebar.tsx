@@ -1,4 +1,6 @@
 import { type FC, useEffect, useRef, useState } from 'react';
+import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
+
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -10,7 +12,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { cn } from '@/utils/cn';
-import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
+
 import { usePlayer } from '../context/player-context';
 import player from '../player';
 import EpisodeList from './episode-list';

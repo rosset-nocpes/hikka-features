@@ -1,5 +1,9 @@
-import { ChevronsUpDown } from 'lucide-react';
 import type { FC } from 'react';
+
+import { ChevronsUpDown } from 'lucide-react';
+
+import type { ProviderTeamIFrame } from '@/utils/provider_classes';
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -14,7 +18,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
-import type { ProviderTeamIFrame } from '@/utils/provider_classes';
+
 import { getAvailablePlayers, usePlayer } from '../context/player-context';
 
 interface Props {
@@ -64,7 +68,7 @@ const ProviderSelect: FC<Props> = ({ toggleWatchedState }) => {
                 {provider?.[0].toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <span className="truncate text-left font-semibold text-sm leading-tight">
+            <span className="truncate text-left text-sm font-semibold leading-tight">
               {provider?.toUpperCase()}
             </span>
             {avaliable_players.length > 1 && (
@@ -84,7 +88,7 @@ const ProviderSelect: FC<Props> = ({ toggleWatchedState }) => {
               Object.entries(grouped_players) as [ProviderLanguage, string[]][]
             ).map(([lang, players]) => (
               <DropdownMenuGroup key={lang}>
-                <DropdownMenuLabel className="text-muted-foreground text-xs">
+                <DropdownMenuLabel className="text-xs text-muted-foreground">
                   {LANGUAGE_GROUP_NAMES[lang]}
                 </DropdownMenuLabel>
                 <div className="flex flex-wrap">

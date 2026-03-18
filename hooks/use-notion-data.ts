@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+
 import useHikkaAnime from './use-hikka-anime';
 
 const useNotionData = () => {

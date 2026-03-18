@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
+
 import { SidebarContent } from '@/components/ui/sidebar';
+
 import useReadData from '../../hooks/use-read-data';
 import { ReaderContentMode } from '../../reader.enums';
 import ChaptersView from './list-views/chapters-view';

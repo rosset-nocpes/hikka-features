@@ -2,10 +2,12 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { type FC, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
+import MaterialSymbolsSubscriptionsOutlineRounded from '~icons/material-symbols/subscriptions-outline-rounded';
+
 import { RotatingText } from '@/components/animate-ui/text/rotating';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import MaterialSymbolsSubscriptionsOutlineRounded from '~icons/material-symbols/subscriptions-outline-rounded';
+
 import { queryClient } from '../..';
 import player from './player';
 

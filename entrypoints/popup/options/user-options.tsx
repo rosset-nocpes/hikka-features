@@ -1,4 +1,8 @@
 import { useEffect, useState } from 'react';
+import MaterialSymbolsExitToAppRounded from '~icons/material-symbols/exit-to-app-rounded';
+import MaterialSymbolsPersonRounded from '~icons/material-symbols/person-rounded';
+import MdiBeta from '~icons/mdi/beta';
+
 import HikkaLogo from '@/assets/hikka_logo.svg';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -13,9 +17,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Logout } from '@/utils/hikka-integration';
-import MaterialSymbolsExitToAppRounded from '~icons/material-symbols/exit-to-app-rounded';
-import MaterialSymbolsPersonRounded from '~icons/material-symbols/person-rounded';
-import MdiBeta from '~icons/mdi/beta';
 
 const UserOptions = () => {
   const { richPresence, userData, setSettings } = useSettings();

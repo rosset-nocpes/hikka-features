@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react';
+import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
+import MaterialSymbolsPageInfoOutlineRounded from '~icons/material-symbols/page-info-outline-rounded';
+
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -8,8 +11,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
-import MaterialSymbolsPageInfoOutlineRounded from '~icons/material-symbols/page-info-outline-rounded';
+
 import useReadData from '../../../hooks/use-read-data';
 import { useReader } from '../../../hooks/use-reader';
 import reader from '../../../reader';
@@ -47,7 +49,7 @@ const ReaderMobileToolbar = () => {
               <SheetTitle>Налаштування</SheetTitle>
             </SheetHeader>
             <SettingsItems />
-            <SheetFooter className="flex flex-col text-center text-muted-foreground text-xs">
+            <SheetFooter className="flex flex-col text-center text-xs text-muted-foreground">
               <a
                 href={READER_POWERED_BY[settings.type]?.url}
                 target="_blank"
@@ -61,7 +63,7 @@ const ReaderMobileToolbar = () => {
         </Sheet>
         <Sheet modal={false} open={sheetOpen} onOpenChange={setSheetOpen}>
           <SheetTrigger
-            className="inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-secondary bg-secondary px-3 font-medium text-secondary-foreground text-sm ring-offset-background transition-colors hover:bg-secondary/80 focus-visible:outline-none"
+            className="inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-secondary bg-secondary px-3 text-sm font-medium text-secondary-foreground ring-offset-background transition-colors hover:bg-secondary/80 focus-visible:outline-none"
             onClick={() => setSheetOpen(true)}
           >{`Том ${currentChapter?.volume} Розділ ${currentChapter?.chapter}`}</SheetTrigger>
           <SheetContent

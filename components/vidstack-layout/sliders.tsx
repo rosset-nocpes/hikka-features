@@ -71,7 +71,13 @@ export interface TimeSliderProps {
 }
 
 export function Time({ thumbnails }: TimeSliderProps) {
-  const { currentTime: time, canSeek, duration, seeking, buffered } = useMediaStore();
+  const {
+    currentTime: time,
+    canSeek,
+    duration,
+    seeking,
+    buffered,
+  } = useMediaStore();
 
   const remote = useMediaRemote();
   const step = (1 / duration) * 100;
@@ -104,7 +110,7 @@ export function Time({ thumbnails }: TimeSliderProps) {
 
   return (
     <Slider
-      className="group relative inline-flex w-full cursor-pointer touch-none select-none pt-6 pb-1 outline-none"
+      className="group relative inline-flex w-full cursor-pointer touch-none select-none pb-1 pt-6 outline-none"
       value={[value]}
       disabled={!canSeek}
       step={Number.isFinite(step) ? step : 1}

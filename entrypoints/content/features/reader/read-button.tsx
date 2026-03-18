@@ -1,15 +1,19 @@
+import type { FC } from 'react';
+
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import type { FC } from 'react';
 import { createRoot } from 'react-dom/client';
+import MaterialSymbolsMenuBookOutlineRounded from '~icons/material-symbols/menu-book-outline-rounded';
+
 import { RotatingText } from '@/components/animate-ui/text/rotating';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import MaterialSymbolsMenuBookOutlineRounded from '~icons/material-symbols/menu-book-outline-rounded';
+
+import type { ReaderType } from './reader.enums';
+
 import { queryClient } from '../..';
 import useReadData from './hooks/use-read-data';
 import reader from './reader';
-import type { ReaderType } from './reader.enums';
 
 const MOUNT_TAG = 'read-button';
 

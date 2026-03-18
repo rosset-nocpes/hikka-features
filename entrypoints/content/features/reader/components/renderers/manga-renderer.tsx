@@ -2,18 +2,20 @@
 import { WheelGesturesPlugin } from 'embla-carousel-wheel-gestures';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
 } from '@/components/ui/carousel';
 import { Spinner } from '@/components/ui/spinner';
+
 import useReadChapterData from '../../hooks/use-read-chapter-data';
 import { useReader } from '../../hooks/use-reader';
 import { ReaderType } from '../../reader.enums';
+import MangaNextPage from '../ui/manga-next-page';
 import MangaPageIndicator from '../ui/manga/manga-page-indicator';
 import MangaScaleIndicator from '../ui/manga/manga-scale-indicator';
-import MangaNextPage from '../ui/manga-next-page';
 
 const MotionCarousel = motion.create(Carousel);
 

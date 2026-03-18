@@ -1,5 +1,7 @@
 import { Copy, CopyCheck, Link } from 'lucide-react';
 import { type FC, useState } from 'react';
+import MaterialSymbolsShareOutline from '~icons/material-symbols/share-outline';
+
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -14,7 +16,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import MaterialSymbolsShareOutline from '~icons/material-symbols/share-outline';
+
 import { usePlayer } from '../context/player-context';
 
 interface Props {
@@ -71,9 +73,9 @@ const ShareLinkButton: FC<Props> = ({
         </Tooltip>
       </PopoverTrigger>
       <PopoverContent className="flex flex-col gap-2" container={container}>
-        <div className="flex items-center gap-2 rounded-md bg-muted py-1 pr-1 pl-2">
+        <div className="flex items-center gap-2 rounded-md bg-muted py-1 pl-2 pr-1">
           <Link className="size-3.5 shrink-0 text-muted-foreground" />
-          <span className="gradient-mask-r-90 cursor-default overflow-hidden text-nowrap font-medium text-xs">
+          <span className="cursor-default overflow-hidden text-nowrap text-xs font-medium gradient-mask-r-90">
             {window.location.href}
           </span>
           <TooltipProvider>
@@ -94,7 +96,7 @@ const ShareLinkButton: FC<Props> = ({
               </TooltipTrigger>
               <TooltipContent
                 side="left"
-                className="flex items-center gap-1 font-medium text-xs"
+                className="flex items-center gap-1 text-xs font-medium"
               >
                 <CopyCheck className="size-3.5 shrink-0" />
                 Скопійовано
@@ -113,7 +115,7 @@ const ShareLinkButton: FC<Props> = ({
               !isTimecodeLink && 'cursor-not-allowed opacity-70',
             )}
           >
-            <div className="text-muted-foreground text-xs">Починати з:</div>
+            <div className="text-xs text-muted-foreground">Починати з:</div>
             <Input
               disabled={!isTimecodeLink}
               defaultValue={new Date(timecodeLink * 1000)

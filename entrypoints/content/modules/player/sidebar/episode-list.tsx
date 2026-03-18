@@ -1,4 +1,5 @@
 import { type FC, useEffect, useRef } from 'react';
+
 import {
   SidebarGroup,
   SidebarMenu,
@@ -6,6 +7,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
+
 import { getWatched, usePlayer } from '../context/player-context';
 
 interface Props {

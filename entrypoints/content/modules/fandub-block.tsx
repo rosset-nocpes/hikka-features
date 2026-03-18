@@ -2,6 +2,8 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { type FC, Fragment, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import MaterialSymbolsSadTabRounded from '~icons/material-symbols/sad-tab-rounded';
+
 import BlockEntry from '@/components/block-entry';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -10,9 +12,9 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import HFxCPRBadge from '@/public/hf-x-cpr.svg';
 import HFxCPRBadgeDark from '@/public/hf-x-cpr-dark.svg';
-import MaterialSymbolsSadTabRounded from '~icons/material-symbols/sad-tab-rounded';
+import HFxCPRBadge from '@/public/hf-x-cpr.svg';
+
 import { queryClient } from '..';
 
 const fandubBlock = async (smallerTitle?: boolean, location?: Element) => {

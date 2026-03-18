@@ -79,7 +79,7 @@ const AniBackground: FC<Props> = ({ banner_url }) => {
     <AnimatePresence>
       {enabled && isLoaded && (
         <motion.div
-          className="absolute top-0 left-0 -z-20 h-80 w-full overflow-hidden opacity-40"
+          className="absolute left-0 top-0 -z-20 h-80 w-full overflow-hidden opacity-40"
           initial={{ height: 0 }}
           animate={{ height: '20rem' }}
           exit={{ height: 0 }}
@@ -90,7 +90,7 @@ const AniBackground: FC<Props> = ({ banner_url }) => {
             fetchPriority="high"
             decoding="async"
             data-nimg="fill"
-            className="!transition gradient-mask-b-0 relative size-full object-cover opacity-1"
+            className="opacity-1 relative size-full object-cover !transition gradient-mask-b-0"
             style={{
               position: 'absolute',
               height: '100%',

@@ -1,4 +1,5 @@
 import type * as TooltipPrimitive from '@radix-ui/react-tooltip';
+
 import {
   CaptionButton,
   FullscreenButton,
@@ -19,14 +20,6 @@ import {
   SubtitlesIcon,
 } from 'lucide-react';
 import { useState } from 'react';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { usePlayer } from '@/entrypoints/content/modules/player/context/player-context';
 import MaterialSymbolsFullscreenExitRounded from '~icons/material-symbols/fullscreen-exit-rounded';
 import MaterialSymbolsFullscreenRounded from '~icons/material-symbols/fullscreen-rounded';
 import MaterialSymbolsPauseOutlineRounded from '~icons/material-symbols/pause-outline-rounded';
@@ -35,6 +28,16 @@ import MaterialSymbolsShareOutline from '~icons/material-symbols/share-outline';
 import MaterialSymbolsVolumeDownOutlineRounded from '~icons/material-symbols/volume-down-outline-rounded';
 import MaterialSymbolsVolumeOffOutlineRounded from '~icons/material-symbols/volume-off-outline-rounded';
 import MaterialSymbolsVolumeUpOutlineRounded from '~icons/material-symbols/volume-up-outline-rounded';
+
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { usePlayer } from '@/entrypoints/content/modules/player/context/player-context';
+
 import { Button } from '../ui/button';
 import {
   Tooltip,
@@ -277,9 +280,9 @@ export const PlayerShareLinkButton = () => {
         </Tooltip>
       </PopoverTrigger>
       <PopoverContent className="flex flex-col gap-2" container={container}>
-        <div className="flex items-center gap-2 rounded-md bg-muted py-1 pr-1 pl-2">
+        <div className="flex items-center gap-2 rounded-md bg-muted py-1 pl-2 pr-1">
           <Link className="size-3.5 shrink-0 text-muted-foreground" />
-          <span className="gradient-mask-r-90 cursor-default overflow-hidden text-nowrap font-medium text-xs">
+          <span className="cursor-default overflow-hidden text-nowrap text-xs font-medium gradient-mask-r-90">
             {window.location.href}
           </span>
           <TooltipProvider>
@@ -300,7 +303,7 @@ export const PlayerShareLinkButton = () => {
               </TooltipTrigger>
               <TooltipContent
                 side="left"
-                className="flex items-center gap-1 font-medium text-xs"
+                className="flex items-center gap-1 text-xs font-medium"
               >
                 <CopyCheck className="size-3.5 shrink-0" />
                 Скопійовано
@@ -319,7 +322,7 @@ export const PlayerShareLinkButton = () => {
               !isTimecodeLink && 'cursor-not-allowed opacity-70',
             )}
           >
-            <div className="text-muted-foreground text-xs">Починати з:</div>
+            <div className="text-xs text-muted-foreground">Починати з:</div>
             <Input
               disabled={!isTimecodeLink}
               defaultValue={new Date(timecodeLink * 1000)

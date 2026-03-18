@@ -1,6 +1,9 @@
 import type { FC } from 'react';
-import { Button } from '@/components/ui/button';
+
 import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
+
+import { Button } from '@/components/ui/button';
+
 import player from '../player';
 import MobileEpisodeDrawer from './mobile-episode-drawer';
 import MobileTeamProviderDrawer from './mobile-team-provider-drawer';
@@ -11,7 +14,7 @@ interface Props {
 
 const PlayerMobileToolbar: FC<Props> = ({ toggleWatchedState }) => {
   return (
-    <div className="-translate-x-1/2 absolute bottom-3 left-1/2 z-20 flex gap-2 rounded-2xl bg-secondary/60 p-2 backdrop-blur-xl md:hidden">
+    <div className="absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 gap-2 rounded-2xl bg-secondary/60 p-2 backdrop-blur-xl md:hidden">
       <MobileTeamProviderDrawer toggleWatchedState={toggleWatchedState} />
       <MobileEpisodeDrawer />
       <Button

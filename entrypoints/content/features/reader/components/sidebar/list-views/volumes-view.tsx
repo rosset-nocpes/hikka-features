@@ -1,5 +1,6 @@
 import { ChevronRight } from 'lucide-react';
 import { useLayoutEffect, useRef } from 'react';
+
 import {
   Collapsible,
   CollapsibleContent,
@@ -13,10 +14,12 @@ import {
   SidebarMenuSub,
   SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
+
+import type { Chapter } from '../../../reader.types';
+
 import useReadData from '../../../hooks/use-read-data';
 import { useReader } from '../../../hooks/use-reader';
 import { ReaderContentMode } from '../../../reader.enums';
-import type { Chapter } from '../../../reader.types';
 
 const VolumesView = () => {
   const { container, currentChapter, setChapter, getRead } = useReader();
@@ -96,13 +99,13 @@ const VolumesView = () => {
                             Розділ {chapter.chapter}
                           </span>
                           <div className="flex items-center gap-1">
-                            <span className="text-muted-foreground text-xs">
+                            <span className="text-xs text-muted-foreground">
                               {chapter.date_upload}
                             </span>
                             {chapter.translator && (
                               <>
                                 <div className="size-1 shrink-0 rounded-full bg-muted-foreground" />
-                                <span className="truncate text-muted-foreground text-xs">
+                                <span className="truncate text-xs text-muted-foreground">
                                   {chapter.translator}
                                 </span>
                               </>

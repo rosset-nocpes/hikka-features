@@ -1,9 +1,11 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
+
 import { Card, CardContent } from '@/components/ui/card';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
+
 import { queryClient } from '../..';
 import ReaderNavbar from './components/reader-navbar';
 import MangaRenderer from './components/renderers/manga-renderer';

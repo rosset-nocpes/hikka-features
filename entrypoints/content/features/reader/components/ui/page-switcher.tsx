@@ -1,7 +1,9 @@
 import { useCallback } from 'react';
-import { Button } from '@/components/ui/button';
 import MaterialSymbolsArrowDownwardRounded from '~icons/material-symbols/arrow-downward-rounded';
 import MaterialSymbolsArrowUpwardRounded from '~icons/material-symbols/arrow-upward-rounded';
+
+import { Button } from '@/components/ui/button';
+
 import { useReader } from '../../hooks/use-reader';
 import { MangaOrientation, ReaderType } from '../../reader.enums';
 

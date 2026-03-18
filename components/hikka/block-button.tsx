@@ -1,5 +1,7 @@
 import type { FC } from 'react';
+
 import MaterialSymbolsArrowRightAltRounded from '~icons/material-symbols/arrow-right-alt-rounded';
+
 import { Button } from '../ui/button';
 
 interface Props {

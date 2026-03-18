@@ -1,4 +1,6 @@
 import { Check, ChevronsUpDown } from 'lucide-react';
+import MaterialSymbolsPageInfoOutlineRounded from '~icons/material-symbols/page-info-outline-rounded';
+
 import { Button } from '@/components/ui/button';
 import {
   ButtonGroup,
@@ -23,15 +25,16 @@ import {
 } from '@/components/ui/sidebar';
 import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import MaterialSymbolsPageInfoOutlineRounded from '~icons/material-symbols/page-info-outline-rounded';
-import { useReader } from '../../../hooks/use-reader';
-import { READER_POWERED_BY, SETTINGS_CONFIG } from '../../../reader.constants';
-import { ReaderType } from '../../../reader.enums';
+
 import type {
   BaseKeys,
   KeysOfUnion,
   ReaderSettings as ReaderSettingsType,
 } from '../../../reader.types';
+
+import { useReader } from '../../../hooks/use-reader';
+import { READER_POWERED_BY, SETTINGS_CONFIG } from '../../../reader.constants';
+import { ReaderType } from '../../../reader.enums';
 import SwitchOption from '../_base/switch-option';
 
 const ReaderSettings = () => {
@@ -59,7 +62,7 @@ const ReaderSettings = () => {
             container={container}
           >
             <SettingsItems />
-            <div className="flex flex-col text-center text-muted-foreground text-xs">
+            <div className="flex flex-col text-center text-xs text-muted-foreground">
               <DropdownMenuSeparator />
               <a
                 href={READER_POWERED_BY[settings.type]?.url}
@@ -160,7 +163,7 @@ const SettingItem = ({
         return (
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <span className="font-medium text-muted-foreground text-xs">
+              <span className="text-xs font-medium text-muted-foreground">
                 {config.label}
               </span>
               <span className="text-xs">{value}</span>
@@ -213,8 +216,8 @@ const FontFamilySelect = ({
     <DropdownMenuTrigger asChild>
       <Button variant="ghost" className="justify-between gap-4 pl-2">
         <div className="flex flex-col justify-start text-left">
-          <div className="text-muted-foreground text-xs">{config.label}</div>
-          <div className="font-medium text-foreground text-sm">
+          <div className="text-xs text-muted-foreground">{config.label}</div>
+          <div className="text-sm font-medium text-foreground">
             {config.options?.find((opt: any) => opt.value === value)?.label}
           </div>
         </div>
@@ -251,7 +254,7 @@ const FontFamilySelect = ({
                 onChange(option.value);
               }}
             >
-              <div className="font-medium text-muted-foreground text-xs">
+              <div className="text-xs font-medium text-muted-foreground">
                 {option.label}
               </div>
               <div className={cn(option.value)}>
@@ -268,7 +271,7 @@ const FontFamilySelect = ({
 
 const ThemeSelect = ({ config, value, onChange }: any) => (
   <div className="flex flex-col gap-2">
-    <span className="font-medium text-muted-foreground text-xs">
+    <span className="text-xs font-medium text-muted-foreground">
       {config.label}
     </span>
     <ButtonGroup className="w-full">

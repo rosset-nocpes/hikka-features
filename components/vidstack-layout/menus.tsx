@@ -2,6 +2,7 @@ import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import { useCaptionOptions, useMediaPlayer } from '@vidstack/react';
 import { CheckCircle, CircleIcon, SubtitlesIcon } from 'lucide-react';
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,7 +66,7 @@ export function Captions({
         sideOffset={offset}
         collisionBoundary={player?.el}
       >
-        <DropdownMenuLabel className="mb-2 flex w-full items-center px-1.5 font-medium text-[15px]">
+        <DropdownMenuLabel className="mb-2 flex w-full items-center px-1.5 text-[15px] font-medium">
           <SubtitlesIcon className="mr-1.5 h-5 w-5 translate-y-px" />
           Captions
           <span className="ml-auto text-sm text-white/50">{hint}</span>
@@ -92,11 +93,11 @@ function Radio({
 }: DropdownMenuPrimitive.DropdownMenuRadioItemProps) {
   return (
     <DropdownMenuRadioItem
-      className="group relative flex w-full cursor-pointer select-none items-center justify-start rounded-sm hocus:bg-white/10 p-2.5 text-sm outline-none ring-media-focus data-[focus]:ring-[3px]"
+      className="hocus:bg-white/10 ring-media-focus group relative flex w-full cursor-pointer select-none items-center justify-start rounded-sm p-2.5 text-sm outline-none data-[focus]:ring-[3px]"
       {...props}
     >
       <CircleIcon className="h-4 w-4 text-white group-data-[state=checked]:hidden" />
-      <CheckCircle className="hidden h-4 w-4 text-media-brand group-data-[state=checked]:block" />
+      <CheckCircle className="text-media-brand hidden h-4 w-4 group-data-[state=checked]:block" />
       <span className="ml-2">{children}</span>
     </DropdownMenuRadioItem>
   );

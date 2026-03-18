@@ -1,4 +1,5 @@
 import axios from 'axios';
+
 import type { ReaderContent } from '../reader.types';
 
 abstract class BaseScraper {

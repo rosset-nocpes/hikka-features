@@ -1,27 +1,27 @@
 export async function getMangaupdatesURL(title: string) {
   const url =
-    "https://corsproxy.io/?" +
-    encodeURIComponent("https://api.mangaupdates.com/v1/series/search");
+    'https://corsproxy.io/?' +
+    encodeURIComponent('https://api.mangaupdates.com/v1/series/search');
   const response = await (
     await fetch(url, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
       },
       body: JSON.stringify({
         search: title,
       }),
     })
   ).json();
-  return response["results"][0]["record"]["url"];
+  return response['results'][0]['record']['url'];
 }
 
 export async function getDengekiURL(title: string) {
   const url =
-    "https://corsproxy.io/?" +
+    'https://corsproxy.io/?' +
     encodeURIComponent(
-      `https://api.dengeki.one/search/?search=${encodeURIComponent(title)}`
+      `https://api.dengeki.one/search/?search=${encodeURIComponent(title)}`,
     );
   let x = (await (await fetch(url)).json())[0];
 
@@ -29,5 +29,5 @@ export async function getDengekiURL(title: string) {
     return;
   }
 
-  return `https://dengeki.one/catalog?title=${x["slug"]}&translator=${x["default_translator_slug"]}&volume=1`;
+  return `https://dengeki.one/catalog?title=${x['slug']}&translator=${x['default_translator_slug']}&volume=1`;
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+
 import useReadChapterData from '../../../hooks/use-read-chapter-data';
 import { useReader } from '../../../hooks/use-reader';
 import { ReaderType } from '../../../reader.enums';

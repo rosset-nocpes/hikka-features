@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+
 import type { ContentType } from './use-page-store';
 
 const useRecommendation = () => {

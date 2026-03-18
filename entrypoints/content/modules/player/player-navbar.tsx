@@ -1,4 +1,7 @@
 import type { FC } from 'react';
+
+import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
+
 import { Button } from '@/components/ui/button';
 import {
   ContextMenu,
@@ -7,7 +10,7 @@ import {
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
-import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
+
 import { usePlayer } from './context/player-context';
 import player from './player';
 
@@ -24,7 +27,7 @@ const PlayerNavbar: FC<Props> = ({ showControls }) => {
     <>
       <div
         className={cn(
-          'absolute top-2 left-2 z-20 flex gap-2 duration-300',
+          'absolute left-2 top-2 z-20 flex gap-2 duration-300',
           showControls && !open ? 'opacity-100' : 'opacity-0',
           open && '-top-8',
         )}
@@ -43,7 +46,7 @@ const PlayerNavbar: FC<Props> = ({ showControls }) => {
       </div>
       <div
         className={cn(
-          'absolute top-2 right-2 z-20 duration-300',
+          'absolute right-2 top-2 z-20 duration-300',
           !showControls && sidebarMode === 'offcanvas' && !open
             ? 'opacity-0'
             : 'opacity-100',

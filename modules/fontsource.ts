@@ -8,12 +8,14 @@ const require = createRequire(import.meta.url);
 const getFontsourcePackages = (rootDir: string): string[] => {
   const pkgPath = path.join(rootDir, 'package.json');
   if (!fs.existsSync(pkgPath)) return [];
-  
+
   const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
   const deps = { ...pkg.dependencies, ...pkg.devDependencies };
-  
-  return Object.keys(deps).filter(name => 
-    name.startsWith('@fontsource/') || name.startsWith('@fontsource-variable/')
+
+  return Object.keys(deps).filter(
+    (name) =>
+      name.startsWith('@fontsource/') ||
+      name.startsWith('@fontsource-variable/'),
   );
 };
 
@@ -28,14 +30,17 @@ export default defineWxtModule({
     const runtimePath = 'fontsource-runtime.ts';
     const absoluteRuntimePath = path.resolve(wxt.config.wxtDir, runtimePath);
 
-    if (fs.existsSync(tempAssetsDir)) fs.rmSync(tempAssetsDir, { recursive: true });
+    if (fs.existsSync(tempAssetsDir))
+      fs.rmSync(tempAssetsDir, { recursive: true });
     fs.mkdirSync(tempAssetsDir, { recursive: true });
 
     const fontCssMap: Record<string, string> = {};
 
     for (const pkgName of fonts) {
       try {
-        const pkgPath = path.dirname(require.resolve(`${pkgName}/package.json`));
+        const pkgPath = path.dirname(
+          require.resolve(`${pkgName}/package.json`),
+        );
         const cssPath = path.join(pkgPath, 'index.css');
         let css = fs.readFileSync(cssPath, 'utf-8');
 
@@ -47,8 +52,14 @@ export default defineWxtModule({
         for (const match of css.matchAll(urlRegex)) {
           const relativePath = match[1];
           const fileName = path.basename(relativePath);
-          fs.copyFileSync(path.join(pkgPath, relativePath), path.join(fontDestDir, fileName));
-          css = css.replace(relativePath, `__WXT_FONT_URL__fonts/${safePkgName}/${fileName}__`);
+          fs.copyFileSync(
+            path.join(pkgPath, relativePath),
+            path.join(fontDestDir, fileName),
+          );
+          css = css.replace(
+            relativePath,
+            `__WXT_FONT_URL__fonts/${safePkgName}/${fileName}__`,
+          );
         }
         fontCssMap[pkgName] = css;
       } catch (err) {
