@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
+
 import { queryClient } from '@/entrypoints/content';
+
 import { usePageStore } from './use-page-store';
 
 const hikkaCharacterFetcher = async (
@@ -18,12 +20,12 @@ const hikkaCharacterFetcher = async (
 };
 
 const useHikkaCharacter = ({
-  enabled,
+  enabled = true,
   sourceType = 'anime',
 }: {
-  enabled: boolean;
+  enabled?: boolean;
   sourceType?: 'anime' | 'manga';
-}) => {
+} = {}) => {
   return useQuery({
     queryKey: [
       'hikka-character-data',

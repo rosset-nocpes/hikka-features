@@ -14,7 +14,7 @@ export const hikkaAnimeFetcher = async (slug: string) => {
   return r.json();
 };
 
-const useHikkaAnime = ({ enabled }: { enabled: boolean }) => {
+const useHikkaAnime = ({ enabled = true }: { enabled?: boolean } = {}) => {
   return useQuery({
     queryKey: ['hikka-anime-data', usePageStore.getState().slug!],
     queryFn: ({ queryKey }) => hikkaAnimeFetcher(queryKey[1]),

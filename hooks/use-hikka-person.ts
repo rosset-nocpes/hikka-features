@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
+
 import { queryClient } from '@/entrypoints/content';
+
 import { usePageStore } from './use-page-store';
 
 const hikkaPersonFetcher = async (slug: string) => {
@@ -12,7 +14,7 @@ const hikkaPersonFetcher = async (slug: string) => {
   return r.json();
 };
 
-const useHikkaPerson = ({ enabled }: { enabled: boolean }) => {
+const useHikkaPerson = ({ enabled = true }: { enabled?: boolean } = {}) => {
   return useQuery({
     queryKey: ['hikka-person-data', usePageStore.getState().slug!],
     queryFn: ({ queryKey }) => hikkaPersonFetcher(queryKey[1]),

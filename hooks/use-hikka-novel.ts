@@ -14,7 +14,7 @@ const hikkaNovelFetcher = async (slug: string) => {
   return r.json();
 };
 
-const useHikkaNovel = ({ enabled }: { enabled: boolean }) => {
+const useHikkaNovel = ({ enabled = true }: { enabled?: boolean } = {}) => {
   return useQuery({
     queryKey: ['hikka-novel-data', usePageStore.getState().slug!],
     queryFn: ({ queryKey }) => hikkaNovelFetcher(queryKey[1]),
