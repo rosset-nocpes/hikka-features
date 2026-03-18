@@ -1,4 +1,5 @@
 import { useState } from 'react';
+
 import { Button } from '@/components/ui/button';
 import {
   Drawer,
@@ -7,6 +8,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer';
+
 import { getWatched, usePlayer } from '../context/player-context';
 
 const MobileEpisodeDrawer = () => {

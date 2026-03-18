@@ -1,3 +1,5 @@
+import type { FC, Ref } from 'react';
+
 import {
   isHLSProvider,
   MediaPlayer,
@@ -11,8 +13,9 @@ import {
 // import '@vidstack/react/player/styles/default/theme.css';
 // import './vidstack-layout.css';
 import HLS from 'hls.js';
-import type { FC, Ref } from 'react';
+
 import { VideoLayout } from '@/components/vidstack-layout/vidstack-layout';
+
 import { usePlayer } from './context/player-context';
 
 interface Props {

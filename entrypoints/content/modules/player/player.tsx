@@ -1,13 +1,16 @@
-import { QueryClientProvider } from '@tanstack/react-query';
 import type { MediaPlayerInstance } from '@vidstack/react';
+
+import { QueryClientProvider } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { toast } from 'sonner';
+
 import { Card, CardContent } from '@/components/ui/card';
 import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
-import drawerStyles from '../../../../node_modules/vaul/style.css?inline';
+
 import { queryClient } from '../..';
+import drawerStyles from '../../../../node_modules/vaul/style.css?inline';
 import {
   getWatched,
   PlayerProvider,

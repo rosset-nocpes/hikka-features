@@ -1,4 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react';
+import MaterialSymbolsExperiment from '~icons/material-symbols/experiment';
+
 import { Button } from '@/components/ui/button';
 import {
   Drawer,
@@ -16,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import MaterialSymbolsExperiment from '~icons/material-symbols/experiment';
+
 import SwitchOption from '../_base/switch-option';
 
 const ExperimentalSettings = () => {
@@ -64,7 +66,7 @@ const ExperimentalSettings = () => {
                   }}
                 />
                 <div className="flex items-center justify-between">
-                  <label className="font-medium text-sm">Гілка бекенду</label>
+                  <label className="text-sm font-medium">Гілка бекенду</label>
                   {navigator.userAgent.toLowerCase().includes('firefox') ? (
                     <select
                       className="flex h-10 w-24 cursor-pointer items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1"

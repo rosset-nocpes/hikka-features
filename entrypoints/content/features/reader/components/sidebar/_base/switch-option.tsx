@@ -1,4 +1,5 @@
 import type { FC, PropsWithChildren } from 'react';
+
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 
@@ -20,7 +21,7 @@ const SwitchOption: FC<Props> = ({
       <div className="mr-10 flex flex-col gap-1">
         <Label className="font-semibold">{label}</Label>
         {description && (
-          <p className="font-medium text-[#A1A1A1] text-xs">{description}</p>
+          <p className="text-xs font-medium text-[#A1A1A1]">{description}</p>
         )}
       </div>
       <Switch

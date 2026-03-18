@@ -1,3 +1,5 @@
+import MaterialSymbolsExpandAllRounded from '~icons/material-symbols/expand-all-rounded';
+
 import { Button } from '@/components/ui/button';
 import {
   Drawer,
@@ -15,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import MaterialSymbolsExpandAllRounded from '~icons/material-symbols/expand-all-rounded';
+
 import SwitchOption from '../_base/switch-option';
 
 const PlayerSettings = () => {
@@ -26,8 +28,8 @@ const PlayerSettings = () => {
     <Drawer>
       <div className="flex justify-between">
         <div className="mr-10 flex flex-col gap-1">
-          <label className="font-medium text-sm">Програвач</label>
-          <div className="font-medium text-[#A1A1A1] text-xs">
+          <label className="text-sm font-medium">Програвач</label>
+          <div className="text-xs font-medium text-[#A1A1A1]">
             Налаштування програвача
           </div>
         </div>
@@ -52,7 +54,7 @@ const PlayerSettings = () => {
               }}
             />
             <div className="flex items-center justify-between">
-              <label className="font-medium text-sm">
+              <label className="text-sm font-medium">
                 Програвач за замовчуванням
               </label>
               {navigator.userAgent.toLowerCase().includes('firefox') ? (

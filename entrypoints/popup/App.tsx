@@ -1,6 +1,8 @@
-import { version } from '@/package.json';
 import MdiGithub from '~icons/mdi/github';
 import MdiTelegram from '~icons/mdi/telegram';
+
+import { version } from '@/package.json';
+
 import '../app.css';
 import AniBackgroundSettings from './options/anibackground-settings';
 import AniButtonsSettings from './options/anibuttons-settings';
@@ -36,20 +38,20 @@ function App() {
       </style>
       <div
         className={cn(
-          'flex w-[400px] flex-col gap-7 rounded-none p-[30px] font-inter font-semibold',
+          'flex h-[600px] w-[400px] flex-col gap-7 rounded-none p-[30px] font-inter font-semibold',
           burunyaaMode
-            ? 'bg-[url(https://media1.tenor.com/m/PDzKPqFw6f8AAAAC/neco-neco-arc.gif)] bg-center bg-cover bg-no-repeat'
+            ? 'bg-[url(https://media1.tenor.com/m/PDzKPqFw6f8AAAAC/neco-neco-arc.gif)] bg-cover bg-center bg-no-repeat'
             : 'bg-black',
         )}
       >
         <h3 className="flex items-center justify-between">
-          <span className="flex items-center gap-2 font-bold text-lg tracking-normal">
+          <span className="flex items-center gap-2 text-lg font-bold tracking-normal">
             Налаштування
             <ExperimentalSettings />
           </span>
           <UserOptions />
         </h3>
-        <div className="flex flex-col gap-5">
+        <div className="flex h-full flex-col gap-5">
           <PlayerSettings />
           <ReaderSettings />
           <AniButtonsSettings />
@@ -58,7 +60,7 @@ function App() {
           <AniBackgroundSettings />
           <LocalizedPosterSettings />
         </div>
-        <div className="flex items-center justify-center gap-3 text-[#5C5C5C] text-xs">
+        <div className="flex items-center justify-center gap-3 text-xs text-[#5C5C5C]">
           <a
             href="https://github.com/rosset-nocpes/hikka-features"
             className="flex flex-1 items-center justify-center gap-1 font-bold"

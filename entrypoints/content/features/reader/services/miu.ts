@@ -1,6 +1,8 @@
 import * as cheerio from 'cheerio';
-import { ReaderContentMode } from '../reader.enums';
+
 import type { Chapter, ReaderContent } from '../reader.types';
+
+import { ReaderContentMode } from '../reader.enums';
 import BaseScraper from './_scraper';
 
 class MIUScraper extends BaseScraper {

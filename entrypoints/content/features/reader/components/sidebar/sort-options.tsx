@@ -1,3 +1,6 @@
+import MaterialSymbolsArrowDownwardRounded from '~icons/material-symbols/arrow-downward-rounded';
+import MaterialSymbolsMoreHoriz from '~icons/material-symbols/more-horiz';
+
 import { Button } from '@/components/ui/button';
 import {
   ButtonGroup,
@@ -12,8 +15,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useSidebar } from '@/components/ui/sidebar';
-import MaterialSymbolsArrowDownwardRounded from '~icons/material-symbols/arrow-downward-rounded';
-import MaterialSymbolsMoreHoriz from '~icons/material-symbols/more-horiz';
+
 import { useReader } from '../../hooks/use-reader';
 import { ReaderOrderBy, ReaderSortBy } from '../../reader.enums';
 

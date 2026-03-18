@@ -3,6 +3,7 @@ import { Copy, Link, MessageCircle, UserPlus, Users, X } from 'lucide-react';
 import { FC } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -26,6 +27,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+
 import { usePlayerContext } from './context/player-context';
 
 interface Props {}
@@ -233,7 +235,7 @@ const WatchTogetherControls: FC<Props> = ({}) => {
         <div className="flex flex-1 items-center gap-2">
           <div className="flex items-center gap-2 rounded-md bg-muted px-2 py-1">
             <Link className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="font-medium text-xs">{roomId}</span>
+            <span className="text-xs font-medium">{roomId}</span>
             <Button
               variant="ghost"
               size="icon"
@@ -258,13 +260,13 @@ const WatchTogetherControls: FC<Props> = ({}) => {
             >
               <div className="flex h-[300px] flex-col">
                 <div className="flex items-center justify-between border-b p-2">
-                  <span className="font-medium text-sm">Watch Party Chat</span>
+                  <span className="text-sm font-medium">Watch Party Chat</span>
                   <Button variant="ghost" size="icon" className="h-6 w-6">
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-3">
-                  <div className="text-center text-muted-foreground text-xs">
+                  <div className="text-center text-xs text-muted-foreground">
                     Chat messages will appear here
                   </div>
                 </div>

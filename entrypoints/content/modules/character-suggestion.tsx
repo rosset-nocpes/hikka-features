@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client';
 
 import { Button } from '@/components/ui/button';
 import { Kbd } from '@/components/ui/kbd';
+
 import { queryClient } from '..';
 
 const INPUT_SELECTOR = 'input[placeholder*="українською"]';

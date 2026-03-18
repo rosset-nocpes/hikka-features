@@ -42,7 +42,7 @@ function RotatingText({
     <div className="relative">
       <div
         className={cn(
-          '-translate-y-1/2 absolute top-1/2 overflow-hidden py-1',
+          'absolute top-1/2 -translate-y-1/2 overflow-hidden py-1',
           containerClassName,
         )}
       >

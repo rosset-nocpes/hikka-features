@@ -1,9 +1,11 @@
 import { type FC, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
 import MaterialSymbolsFullscreenExitRounded from '~icons/material-symbols/fullscreen-exit-rounded';
 import MaterialSymbolsFullscreenRounded from '~icons/material-symbols/fullscreen-rounded';
+
+import { Button } from '@/components/ui/button';
+import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
+
 import { useReader } from '../hooks/use-reader';
 import reader from '../reader';
 import { ReaderType } from '../reader.enums';
@@ -46,7 +48,7 @@ const ReaderNavbar: FC<Props> = ({ showControls = true }) => {
     <div className="hidden md:flex">
       <div
         className={cn(
-          'absolute top-2 left-2 z-20 flex gap-2 duration-300',
+          'absolute left-2 top-2 z-20 flex gap-2 duration-300',
           showControls && !open ? 'opacity-100' : 'opacity-0',
           open && '-top-8',
         )}
@@ -68,7 +70,7 @@ const ReaderNavbar: FC<Props> = ({ showControls = true }) => {
       </div>
       <div
         className={cn(
-          'absolute top-2 right-2 z-20 flex gap-2 duration-300',
+          'absolute right-2 top-2 z-20 flex gap-2 duration-300',
           !showControls && !open ? 'opacity-0' : 'opacity-100',
           open && 'gap-0',
         )}

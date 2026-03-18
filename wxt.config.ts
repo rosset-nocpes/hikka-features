@@ -1,5 +1,5 @@
-import { resolve } from 'node:path';
 import react from '@vitejs/plugin-react';
+import { resolve } from 'node:path';
 import Icons from 'unplugin-icons/vite';
 import { loadEnv } from 'vite';
 import { defineConfig } from 'wxt';

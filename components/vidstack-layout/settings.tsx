@@ -6,8 +6,10 @@ import {
 } from '@vidstack/react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useState } from 'react';
-import { usePlayer } from '@/entrypoints/content/modules/player/context/player-context';
 import MaterialSymbolsPageInfoOutlineRounded from '~icons/material-symbols/page-info-outline-rounded';
+
+import { usePlayer } from '@/entrypoints/content/modules/player/context/player-context';
+
 import { Button } from '../ui/button';
 import {
   DropdownMenu,
@@ -84,7 +86,7 @@ const Settings = () => {
             </Button>
           </TooltipTrigger>
           <TooltipContent
-            className="z-10 parent-data-[open]:hidden px-2 py-0.5 font-medium text-sm"
+            className="parent-data-[open]:hidden z-10 px-2 py-0.5 text-sm font-medium"
             side="top"
             sideOffset={32}
             collisionBoundary={player?.el}

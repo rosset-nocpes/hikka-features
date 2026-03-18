@@ -1,4 +1,8 @@
 import type { FC } from 'react';
+
+import MaterialSymbolsFullscreen from '~icons/material-symbols/fullscreen';
+import MaterialSymbolsWidthFullOutlineSharp from '~icons/material-symbols/width-full-outline-sharp';
+
 import { Button } from '@/components/ui/button';
 import { useSidebar } from '@/components/ui/sidebar';
 import {
@@ -6,8 +10,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import MaterialSymbolsFullscreen from '~icons/material-symbols/fullscreen';
-import MaterialSymbolsWidthFullOutlineSharp from '~icons/material-symbols/width-full-outline-sharp';
+
 // import WatchTogetherControls from '../watch-together-controls';
 import ShareLinkButton from './share-link-button';
 

@@ -1,4 +1,5 @@
 import { CarouselItem } from '@/components/ui/carousel';
+
 import useReadData from '../../hooks/use-read-data';
 import { useReader } from '../../hooks/use-reader';
 import { ReaderContentMode } from '../../reader.enums';
@@ -27,13 +28,13 @@ const MangaNextPage = () => {
     <>
       <CarouselItem className="flex h-full flex-col items-center justify-center gap-4">
         <div className="flex flex-col gap-1">
-          <div className="font-medium text-sm">Закінчено:</div>
+          <div className="text-sm font-medium">Закінчено:</div>
           <div>{`Том ${currentChapter?.volume}. Розділ ${currentChapter?.chapter}`}</div>
         </div>
         <div className="flex flex-col gap-1">
           {nextChapterData ? (
             <>
-              <div className="font-medium text-sm">Наступний:</div>
+              <div className="text-sm font-medium">Наступний:</div>
               <div>{`Том ${nextChapterData.volume}. Розділ ${nextChapterData.chapter}`}</div>
             </>
           ) : (

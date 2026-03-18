@@ -1,3 +1,5 @@
+import MaterialSymbolsExpandAllRounded from '~icons/material-symbols/expand-all-rounded';
+
 import { Button } from '@/components/ui/button';
 import {
   Drawer,
@@ -8,7 +10,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer';
-import MaterialSymbolsExpandAllRounded from '~icons/material-symbols/expand-all-rounded';
+
 import SwitchOption from '../_base/switch-option';
 
 const ReaderSettings = () => {
@@ -19,8 +21,8 @@ const ReaderSettings = () => {
     <Drawer>
       <div className="flex justify-between">
         <div className="mr-10 flex flex-col gap-1">
-          <label className="font-medium text-sm">Читалка</label>
-          <div className="font-medium text-[#A1A1A1] text-xs">
+          <label className="text-sm font-medium">Читалка</label>
+          <div className="text-xs font-medium text-[#A1A1A1]">
             Налаштування читалки
           </div>
         </div>

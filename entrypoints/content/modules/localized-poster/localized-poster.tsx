@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { type FC, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { create } from 'zustand';
+
 import { queryClient } from '../..';
 
 export const usePosterState = create<{

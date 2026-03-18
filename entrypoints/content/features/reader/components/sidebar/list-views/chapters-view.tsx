@@ -1,11 +1,15 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { type FC, type RefObject, useLayoutEffect, useMemo } from 'react';
+
 import {
   SidebarGroup,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
+
+import type { Chapter } from '../../../reader.types';
+
 import useReadData from '../../../hooks/use-read-data';
 import { useReader } from '../../../hooks/use-reader';
 import {
@@ -14,7 +18,6 @@ import {
   ReaderSortBy,
   ReaderType,
 } from '../../../reader.enums';
-import type { Chapter } from '../../../reader.types';
 
 interface Props {
   scrollRef: RefObject<HTMLDivElement | null>;
@@ -133,13 +136,13 @@ const ChaptersView: FC<Props> = ({ scrollRef }) => {
                     Розділ {sorted[virtualItem.index].chapter}
                   </span>
                   <div className="flex items-center gap-1">
-                    <span className="text-muted-foreground text-xs">
+                    <span className="text-xs text-muted-foreground">
                       {sorted[virtualItem.index].date_upload}
                     </span>
                     {sorted[virtualItem.index].translator && (
                       <>
                         <div className="size-1 shrink-0 rounded-full bg-muted-foreground" />
-                        <span className="truncate text-muted-foreground text-xs">
+                        <span className="truncate text-xs text-muted-foreground">
                           {sorted[virtualItem.index].translator}
                         </span>
                       </>

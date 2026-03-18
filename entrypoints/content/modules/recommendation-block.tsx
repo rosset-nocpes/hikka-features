@@ -1,12 +1,15 @@
+import type { FC } from 'react';
+
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import type { FC } from 'react';
 import { createRoot } from 'react-dom/client';
+import MaterialSymbolsSadTabRounded from '~icons/material-symbols/sad-tab-rounded';
+
 import BlockButton from '@/components/hikka/block-button';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
-import HFLogoSmall from '@/public/hikka-features-small.svg';
 import HFLogoSmallDark from '@/public/hikka-features-small-dark.svg';
-import MaterialSymbolsSadTabRounded from '~icons/material-symbols/sad-tab-rounded';
+import HFLogoSmall from '@/public/hikka-features-small.svg';
+
 import { queryClient } from '..';
 
 const recommendationBlock = async (location?: Element) => {
@@ -66,7 +69,7 @@ const RecommendationBlock: FC<Props> = ({ container }) => {
           className="flex flex-col gap-4 lg:gap-8"
         >
           <div className="flex items-center justify-between gap-2">
-            <h3 className="flex scroll-m-20 items-center justify-between gap-2 font-bold text-xl tracking-normal">
+            <h3 className="flex scroll-m-20 items-center justify-between gap-2 text-xl font-bold tracking-normal">
               Схожий контент
               <img
                 src={
@@ -82,7 +85,7 @@ const RecommendationBlock: FC<Props> = ({ container }) => {
               disabled={isLoading || data?.recommendations.length === 0}
             />
           </div>
-          <div className="no-scrollbar md:gradient-mask-none grid-min-6 relative -mx-4 -my-4 grid auto-cols-scroll grid-flow-col grid-cols-scroll gap-4 overflow-x-scroll px-4 py-4 md:grid-cols-5 lg:gap-8">
+          <div className="no-scrollbar grid-min-6 relative -mx-4 -my-4 grid auto-cols-scroll grid-flow-col grid-cols-scroll gap-4 overflow-x-scroll px-4 py-4 md:grid-cols-5 md:gradient-mask-none lg:gap-8">
             {isLoading &&
               Array.from({ length: 4 }).map((_, index) => (
                 <div key={index} className="flex flex-col gap-2">
@@ -131,7 +134,7 @@ const RecommendationBlock: FC<Props> = ({ container }) => {
                       loading="lazy"
                     />
                   </AspectRatio>
-                  <span className="line-clamp-2 font-medium text-sm leading-5">
+                  <span className="line-clamp-2 text-sm font-medium leading-5">
                     {item?.title_ua ||
                       item?.title_en ||
                       item?.title_ja ||

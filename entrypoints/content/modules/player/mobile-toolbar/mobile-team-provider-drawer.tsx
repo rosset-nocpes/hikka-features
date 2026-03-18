@@ -1,5 +1,7 @@
-import { motion } from 'motion/react';
 import type { FC } from 'react';
+
+import { motion } from 'motion/react';
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,6 +12,7 @@ import {
   DrawerTrigger,
 } from '@/components/ui/drawer';
 import { Separator } from '@/components/ui/separator';
+
 import { getAvailablePlayers, usePlayer } from '../context/player-context';
 import MobileTeamSelect from './mobile-team-select';
 
@@ -69,7 +72,7 @@ const MobileTeamProviderDrawer: FC<Props> = ({ toggleWatchedState }) => {
               Object.entries(grouped_players) as [ProviderLanguage, string[]][]
             ).map(([lang, players]) => (
               <div key={lang} className="flex flex-col gap-2">
-                <span className="px-2 py-1.5 font-semibold text-sm">
+                <span className="px-2 py-1.5 text-sm font-semibold">
                   {LANGUAGE_GROUP_NAMES[lang]}
                 </span>
                 <div className="flex flex-wrap gap-2">
@@ -78,7 +81,7 @@ const MobileTeamProviderDrawer: FC<Props> = ({ toggleWatchedState }) => {
                       key={elem}
                       onClick={() => handleSelectPlayer(elem)}
                       variant={provider === elem ? 'default' : 'outline'}
-                      className="flex-[1_0_calc(33.3%-0.5rem)] font-semibold text-lg"
+                      className="flex-[1_0_calc(33.3%-0.5rem)] text-lg font-semibold"
                     >
                       {elem.toUpperCase()}
                     </Button>

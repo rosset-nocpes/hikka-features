@@ -1,9 +1,12 @@
+import type { FC } from 'react';
+
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import type { FC } from 'react';
 import { createRoot } from 'react-dom/client';
-import HFLogoSmall from '@/public/hikka-features-small.svg';
+
 import HFLogoSmallDark from '@/public/hikka-features-small-dark.svg';
+import HFLogoSmall from '@/public/hikka-features-small.svg';
+
 import { queryClient } from '..';
 
 interface Website {
@@ -247,7 +250,7 @@ const AniButtons: FC<Props> = ({ container, data, smallerTitle }) => {
                 href={elem.title === 'Amanogawa' ? agawaUrl : elem.url}
                 target="_blank"
                 className={cn(
-                  'flex items-center gap-2 rounded-sm p-1 font-medium text-sm transition hover:bg-secondary/60',
+                  'flex items-center gap-2 rounded-sm p-1 text-sm font-medium transition hover:bg-secondary/60',
                   elem.title === 'Amanogawa'
                     ? agawaUrlLoading
                       ? 'animate-pulse'

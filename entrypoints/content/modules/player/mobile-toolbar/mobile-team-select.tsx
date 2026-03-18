@@ -1,9 +1,11 @@
 import { motion } from 'motion/react';
 import { useMemo } from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import MaterialSymbolsStarRateOutlineRounded from '~icons/material-symbols/star-rate-outline-rounded';
 import MaterialSymbolsStarRounded from '~icons/material-symbols/star-rounded';
+
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+
 import { usePlayer } from '../context/player-context';
 
 const getEpisodeRanges = (episodes: { episode: number }[]) => {
@@ -103,7 +105,7 @@ const MobileTeamSelect = () => {
               <AvatarFallback>{t.title[0]}</AvatarFallback>
             </Avatar>
             <div className="grid flex-1 text-left leading-tight">
-              <span className="truncate font-semibold text-lg">{t.title}</span>
+              <span className="truncate text-lg font-semibold">{t.title}</span>
               {/*<span className="truncate text-xs">
                 {getEpisodeRanges(
                   (data[provider] as ProviderTeamIFrame).teams[t.title]

@@ -10,6 +10,7 @@ import {
 } from 'motion/react';
 import { forwardRef, memo, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+
 import {
   HoverCard,
   HoverCardContent,
@@ -17,6 +18,7 @@ import {
 } from '@/components/ui/hover-card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
+
 import useReadChapterData from '../../hooks/use-read-chapter-data';
 import { useReader } from '../../hooks/use-reader';
 import { ReaderType } from '../../reader.enums';
@@ -65,7 +67,7 @@ const NovelRenderer = () => {
     <>
       <motion.div
         id="scroll-indicator"
-        className="absolute top-0 right-0 left-0 z-10 h-1 origin-left bg-primary"
+        className="absolute left-0 right-0 top-0 z-10 h-1 origin-left bg-primary"
         style={{
           scaleX: animationComplete && !isLoading ? scrollYProgress : 0,
         }}
@@ -83,14 +85,14 @@ const NovelRenderer = () => {
         }}
       >
         <ScrollArea ref={scrollRef} className="w-full max-w-4xl">
-          <div className="mt-48 mb-10 flex flex-col">
+          <div className="mb-10 mt-48 flex flex-col">
             {currentChapter?.title && (
-              <p className="font-bold text-muted-foreground text-sm uppercase tracking-widest">
+              <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
                 {currentChapter?.volume && `Том ${currentChapter?.volume} `}
                 Розділ {currentChapter?.chapter}
               </p>
             )}
-            <h1 className="scroll-m-20 whitespace-nowrap text-balance font-extrabold text-4xl tracking-tight">
+            <h1 className="scroll-m-20 whitespace-nowrap text-balance text-4xl font-extrabold tracking-tight">
               {currentChapter?.title ||
                 `${currentChapter?.volume ? `Том ${currentChapter?.volume} ` : ''}Розділ ${currentChapter?.chapter}`}
             </h1>
@@ -152,8 +154,8 @@ const PageParser = memo(
                   </HoverCardTrigger>
                   <HoverCardContent className="w-80" container={container}>
                     <div className="flex flex-col gap-2">
-                      <h4 className="font-semibold text-sm">{term}</h4>
-                      <p className="text-muted-foreground text-sm leading-relaxed">
+                      <h4 className="text-sm font-semibold">{term}</h4>
+                      <p className="text-sm leading-relaxed text-muted-foreground">
                         {definition}
                       </p>
                     </div>

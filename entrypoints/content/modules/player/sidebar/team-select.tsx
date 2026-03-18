@@ -1,6 +1,9 @@
 import { ChevronsUpDown } from 'lucide-react';
 import { motion } from 'motion/react';
 import { type FC, useMemo } from 'react';
+import MaterialSymbolsStarRateOutlineRounded from '~icons/material-symbols/star-rate-outline-rounded';
+import MaterialSymbolsStarRounded from '~icons/material-symbols/star-rounded';
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,8 +19,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { ProviderTeamIFrame } from '@/utils/provider_classes';
-import MaterialSymbolsStarRateOutlineRounded from '~icons/material-symbols/star-rate-outline-rounded';
-import MaterialSymbolsStarRounded from '~icons/material-symbols/star-rounded';
+
 import { usePlayer } from '../context/player-context';
 
 interface Props {
@@ -131,7 +133,7 @@ const TeamSelect: FC<Props> = ({ toggleWatchedState }) => {
             sideOffset={open ? 4 : 12}
             container={container}
           >
-            <DropdownMenuLabel className="text-muted-foreground text-xs">
+            <DropdownMenuLabel className="text-xs text-muted-foreground">
               Команди
             </DropdownMenuLabel>
             {orderedTeams.map((team) => (

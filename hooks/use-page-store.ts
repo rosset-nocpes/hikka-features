@@ -1,5 +1,6 @@
-import { create } from 'zustand';
 import type { ContentScriptContext } from '#imports';
+
+import { create } from 'zustand';
 
 export type ContentType =
   | 'anime'

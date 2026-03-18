@@ -1,6 +1,7 @@
 import { useVideoQualityOptions } from '@vidstack/react';
 import { DoorClosed, Pi } from 'lucide-react';
 import { useEffect } from 'react';
+
 import { Button } from '../ui/button';
 import * as Buttons from './buttons';
 import Settings from './settings';
