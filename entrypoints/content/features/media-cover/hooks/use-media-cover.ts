@@ -4,101 +4,138 @@ import { usePageStore } from '@/hooks/use-page-store';
 
 export type MediaType = 'anime' | 'manga' | 'novel';
 
+interface CharacterMediaListItem {
+  anime?: { mal_id: number };
+  manga?: { mal_id: number };
+}
+
+interface CharacterMediaResponse {
+  list: CharacterMediaListItem[];
+}
+
+const API_BASE_URL = 'https://api.hikka.io';
+const ANILIST_URL = 'https://graphql.anilist.co';
+
+const fetchCharacterMedia = async (
+  slug: string,
+  mediaType: 'anime' | 'manga',
+): Promise<number | null> => {
+  const response = await fetch(
+    `${API_BASE_URL}/characters/${slug}/${mediaType}`,
+  );
+  if (!response.ok) return null;
+
+  const data: CharacterMediaResponse = await response.json();
+  return data.list[0]?.[mediaType]?.mal_id ?? null;
+};
+
+const fetchBannerImage = async (
+  malId: number | null,
+  mediaType: MediaType | undefined,
+): Promise<string | null> => {
+  if (!malId || !mediaType) return null;
+
+  if (mediaType === 'novel') mediaType = 'manga';
+
+  const query = `
+    query media($mal_id: Int, $type: MediaType) {
+      Media(idMal: $mal_id, type: $type) {
+        bannerImage
+      }
+    }
+  `;
+
+  const response = await fetch(ANILIST_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({
+      query,
+      variables: {
+        mal_id: malId,
+        type: mediaType.toUpperCase(),
+      },
+    }),
+  });
+
+  if (!response.ok) return null;
+
+  const json = await response.json();
+  return json.data?.Media?.bannerImage ?? null;
+};
+
+const getCharacterMalId = async (
+  slug: string,
+  animeCount: number,
+  mangaCount: number,
+  savedMalId: number | null,
+): Promise<number | null> => {
+  if (savedMalId) return savedMalId;
+
+  if (animeCount > 0) {
+    const malId = await fetchCharacterMedia(slug, 'anime');
+    if (malId) return malId;
+  }
+
+  if (mangaCount > 0) {
+    return fetchCharacterMedia(slug, 'manga');
+  }
+
+  return null;
+};
+
 const useMediaCover = () => {
   const { contentType: storeContentType, saved_mal_id, slug } = usePageStore();
-
   const { data: hikkaData, isLoading } = useHikka();
 
   return useQuery({
-    queryKey: ['media-cover', hikkaData?.slug],
+    queryKey: [
+      'media-cover',
+      storeContentType,
+      slug,
+      saved_mal_id,
+      hikkaData?.mal_id,
+    ],
     queryFn: async () => {
-      let mal_id = hikkaData?.mal_id;
-      let effectiveType =
-        storeContentType === 'characters'
+      if (!slug) return null;
+
+      let malId = hikkaData?.mal_id ?? null;
+      let effectiveType: MediaType | undefined =
+        storeContentType === 'characters' || storeContentType === 'person'
           ? 'anime'
-          : storeContentType === 'person'
-            ? 'anime'
+          : storeContentType === 'edit'
+            ? undefined
             : (storeContentType as MediaType);
 
-      if (hikkaData?.data_type === 'character') {
-        if (saved_mal_id) {
-          mal_id = saved_mal_id;
-        } else if (hikkaData?.anime_count > 0) {
-          mal_id = (
-            await (
-              await fetch(`https://api.hikka.io/characters/${slug}/anime`)
-            ).json()
-          ).list[0].anime.mal_id;
-        } else if (hikkaData?.manga_count > 0) {
-          mal_id = (
-            await (
-              await fetch(`https://api.hikka.io/characters/${slug}/manga`)
-            ).json()
-          ).list[0].manga.mal_id;
-        }
+      if (hikkaData?.data_type === 'character' && !malId) {
+        malId = await getCharacterMalId(
+          slug,
+          hikkaData.anime_count ?? 0,
+          hikkaData.manga_count ?? 0,
+          saved_mal_id ?? null,
+        );
       }
 
-      if (storeContentType === 'edit') {
-        if (saved_mal_id) {
-          mal_id = saved_mal_id;
-        } else {
-          const content_data = await hikkaEditContentFetcher();
+      if (storeContentType === 'edit' && !malId) {
+        const contentData = await hikkaEditContentFetcher();
 
-          if (content_data.data_type === 'character') {
-            if (content_data.anime_count > 0) {
-              mal_id = (
-                await (
-                  await fetch(
-                    `https://api.hikka.io/characters/${content_data.slug}/anime`,
-                  )
-                ).json()
-              ).list[0].anime.mal_id;
+        if (contentData?.data_type === 'character') {
+          malId = await getCharacterMalId(
+            contentData.slug,
+            contentData.anime_count ?? 0,
+            contentData.manga_count ?? 0,
+            saved_mal_id ?? null,
+          );
 
-              effectiveType = 'anime';
-            } else if (content_data.manga_count > 0) {
-              mal_id = (
-                await (
-                  await fetch(
-                    `https://api.hikka.io/characters/${content_data.slug}/manga`,
-                  )
-                ).json()
-              ).list[0].manga.mal_id;
-
-              effectiveType = 'manga';
-            }
+          if (malId) {
+            effectiveType = contentData.anime_count > 0 ? 'anime' : 'manga';
           }
         }
       }
 
-      const anilist_url = 'https://graphql.anilist.co';
-      const banner_query = `
-        query media($mal_id: Int, $type: MediaType) {
-            Media(idMal: $mal_id, type: $type) {
-              bannerImage
-            }
-        }
-        `;
-
-      const r = await fetch(anilist_url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({
-          query: banner_query,
-          variables: {
-            mal_id,
-            type: effectiveType?.toUpperCase(),
-          },
-        }),
-      });
-
-      if (!r.ok) {
-        throw new Error('Not found');
-      }
-
-      return (await r.json()).data.Media.bannerImage as string | null;
+      return fetchBannerImage(malId, effectiveType);
     },
     retry: false,
     staleTime: 0,
