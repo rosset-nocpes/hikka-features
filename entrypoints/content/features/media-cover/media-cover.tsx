@@ -1,6 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { queryClient } from '../..';
@@ -47,6 +47,7 @@ const MediaCover = () => {
     <AnimatePresence>
       {enabled && cover_url && (
         <motion.div
+          key={cover_url}
           className="absolute left-0 top-0 -z-20 h-80 w-full overflow-hidden opacity-40"
           initial={{ height: 0 }}
           animate={{ height: imageLoaded ? '20rem' : 0 }}
@@ -55,23 +56,23 @@ const MediaCover = () => {
           <img
             id="cover"
             alt="cover"
+            src={cover_url}
             fetchPriority="high"
             decoding="async"
-            data-nimg="fill"
-            className="opacity-1 relative size-full object-cover !transition gradient-mask-b-0"
+            sizes="100vw"
+            className="relative size-full object-cover !transition gradient-mask-b-0"
             style={{
               position: 'absolute',
+              inset: 0,
               height: '100%',
               width: '100%',
-              left: '0',
-              top: '0',
-              right: '0',
-              bottom: '0',
               color: 'transparent',
             }}
-            sizes="100vw"
-            src={cover_url || ''}
+            ref={(img) => {
+              if (img) setImageLoaded(img.complete);
+            }}
             onLoad={() => setImageLoaded(true)}
+            onError={() => setImageLoaded(false)}
           />
         </motion.div>
       )}
