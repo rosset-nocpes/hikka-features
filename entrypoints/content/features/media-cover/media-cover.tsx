@@ -1,6 +1,8 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
+import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
+
 import { queryClient } from '../..';
 import useMediaCover from './hooks/use-media-cover';
 
@@ -8,7 +10,7 @@ const MOUNT_TAG = 'media-cover';
 
 let isMounting = false;
 
-const mediaCover = async (mal_id: number, type: MediaType) => {
+const mediaCover = async () => {
   const existing = document.body.querySelectorAll(MOUNT_TAG);
   if (existing.length > 0 || isMounting) return;
 
@@ -18,7 +20,7 @@ const mediaCover = async (mal_id: number, type: MediaType) => {
     name: MOUNT_TAG,
     position: 'inline',
     append: 'last',
-    anchor: document.querySelector('body main > .grid'),
+    anchor: 'main',
     async onMount(container) {
       const wrapper = document.createElement('div');
       container.append(wrapper);
@@ -26,7 +28,7 @@ const mediaCover = async (mal_id: number, type: MediaType) => {
       const root = createRoot(wrapper);
       root.render(
         <QueryClientProvider client={queryClient}>
-          <MediaCover mal_id={mal_id} type={type} />
+          <MediaCover />
         </QueryClientProvider>,
       );
 
@@ -35,14 +37,11 @@ const mediaCover = async (mal_id: number, type: MediaType) => {
   });
 };
 
-interface Props {
-  mal_id: number;
-  type: MediaType;
-}
-
-const MediaCover = ({ mal_id, type }: Props) => {
+const MediaCover = () => {
   const { enabled } = useSettings().features.aniBackground;
   const { data: cover_url } = useMediaCover();
+
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   return (
     <AnimatePresence>
@@ -50,7 +49,7 @@ const MediaCover = ({ mal_id, type }: Props) => {
         <motion.div
           className="absolute left-0 top-0 -z-20 h-80 w-full overflow-hidden opacity-40"
           initial={{ height: 0 }}
-          animate={{ height: '20rem' }}
+          animate={{ height: imageLoaded ? '20rem' : 0 }}
           exit={{ height: 0 }}
         >
           <img
@@ -72,6 +71,7 @@ const MediaCover = ({ mal_id, type }: Props) => {
             }}
             sizes="100vw"
             src={cover_url || ''}
+            onLoad={() => setImageLoaded(true)}
           />
         </motion.div>
       )}

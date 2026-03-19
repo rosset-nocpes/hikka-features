@@ -66,15 +66,7 @@ export default defineContentScript({
           : setSettings({ darkMode: false });
 
         usePageStore.getState().updateFromUrl(new URL(document.location.href));
-        const { path, contentType, slug } = usePageStore.getState();
-
-        const mal_id = parseInt(
-          (
-            document.head.querySelector(
-              '[name=mal-id][content]',
-            ) as HTMLMetaElement
-          )?.content,
-        );
+        const { contentType } = usePageStore.getState();
 
         switch (contentType) {
           case 'anime':
@@ -130,50 +122,21 @@ export default defineContentScript({
 
                 (await aniButtons('last', true, info_block, data))?.mount();
 
-                // aniBackground
                 switch (content_type) {
                   case 'anime':
-                    (await mediaCover(data.mal_id, 'anime'))?.mount();
+                    (await mediaCover())?.mount();
                     break;
                   case 'manga':
                   case 'novel':
-                    (await mediaCover(data.mal_id, 'manga'))?.mount();
+                    (await mediaCover())?.mount();
                     break;
                   case 'character':
                     {
-                      const haveAnime = data.anime_count !== 0;
-
                       if (creatingEdit) {
                         (await characterSuggestion())?.autoMount();
                       }
 
-                      (
-                        await mediaCover(
-                          usePageStore.getState().saved_mal_id
-                            ? usePageStore.getState().saved_mal_id
-                            : await (
-                                await (
-                                  await fetch(
-                                    `https://api.hikka.io/${
-                                      haveAnime ? 'anime' : 'manga'
-                                    }/${
-                                      (
-                                        await (
-                                          await fetch(
-                                            `https://api.hikka.io/characters/${editSlug}/${
-                                              haveAnime ? 'anime' : 'manga'
-                                            }`,
-                                          )
-                                        ).json()
-                                      ).list[0][haveAnime ? 'anime' : 'manga']
-                                        .slug
-                                    }`,
-                                  )
-                                ).json()
-                              ).mal_id,
-                          haveAnime ? 'anime' : 'manga',
-                        )
-                      )?.mount();
+                      (await mediaCover())?.mount();
                     }
                     break;
                 }
@@ -280,35 +243,7 @@ export default defineContentScript({
 
             break;
           case 'characters': {
-            async function first_aniBackground() {
-              const source = (document.body.querySelector(
-                'a.mt-1.truncate',
-              ) as HTMLAnchorElement)!.href.split('/');
-
-              const source_type = source[3] as MediaType;
-
-              const first_source_mal_id = await (
-                await fetch(`https://api.hikka.io/${source_type}/${source[4]}`)
-              ).json();
-
-              (
-                await mediaCover(first_source_mal_id.mal_id, source_type)
-              )?.mount();
-            }
-
-            if (usePageStore.getState().saved_mal_id) {
-              (
-                await mediaCover(usePageStore.getState().saved_mal_id!, 'anime')
-              )?.mount() ??
-                (
-                  await mediaCover(
-                    usePageStore.getState().saved_mal_id!,
-                    'manga',
-                  )
-                )?.mount();
-            } else {
-              first_aniBackground();
-            }
+            (await mediaCover())?.mount();
 
             // actionRichPresence("remove");
 

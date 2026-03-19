@@ -10,14 +10,15 @@ const useHikka = () => {
     enabled: contentType === 'characters',
   });
   const person = useHikkaPerson({ enabled: contentType === 'person' });
+  const edit = useHikkaEdit({ enabled: contentType === 'edit' });
 
   if (
-    contentType === 'edit' ||
-    (contentType !== 'anime' &&
-      contentType !== 'manga' &&
-      contentType !== 'novel' &&
-      contentType !== 'characters' &&
-      contentType !== 'person')
+    contentType !== 'edit' &&
+    contentType !== 'anime' &&
+    contentType !== 'manga' &&
+    contentType !== 'novel' &&
+    contentType !== 'characters' &&
+    contentType !== 'person'
   )
     return {
       data: undefined,
@@ -31,6 +32,7 @@ const useHikka = () => {
     novel,
     characters: character,
     person,
+    edit,
   } as const;
 
   return map[contentType];
