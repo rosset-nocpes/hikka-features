@@ -90,18 +90,13 @@ const useMediaCover = () => {
   const { contentType: storeContentType, saved_mal_id, slug } = usePageStore();
   const { data: hikkaData, isLoading } = useHikka();
 
+  let malId = saved_mal_id ?? hikkaData?.mal_id ?? null;
+
   return useQuery({
-    queryKey: [
-      'media-cover',
-      storeContentType,
-      slug,
-      saved_mal_id,
-      hikkaData?.mal_id,
-    ],
+    queryKey: ['media-cover', malId],
     queryFn: async () => {
       if (!slug) return null;
 
-      let malId = hikkaData?.mal_id ?? null;
       let effectiveType: MediaType | undefined =
         storeContentType === 'characters' || storeContentType === 'person'
           ? 'anime'
@@ -109,7 +104,7 @@ const useMediaCover = () => {
             ? undefined
             : (storeContentType as MediaType);
 
-      if (hikkaData?.data_type === 'character' && !malId) {
+      if (hikkaData?.data_type === 'character' && !hikkaData?.mal_id) {
         malId = await getCharacterMalId(
           slug,
           hikkaData.anime_count ?? 0,
@@ -118,7 +113,7 @@ const useMediaCover = () => {
         );
       }
 
-      if (storeContentType === 'edit' && !malId) {
+      if (storeContentType === 'edit' && !hikkaData?.mal_id) {
         const contentData = await hikkaEditContentFetcher();
 
         if (contentData?.data_type === 'character') {

@@ -264,11 +264,6 @@ export default defineContentScript({
 
             usePageStore.getState().clearMALId();
             actionRichPresence('remove');
-
-            document.body.removeChild(
-              document.getElementsByTagName('ani-background')[0],
-            );
-
             break;
           }
         }
