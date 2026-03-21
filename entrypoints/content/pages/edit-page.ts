@@ -1,4 +1,4 @@
-import aniBackground from '../modules/ani-background';
+import mediaCover from '../features/media-cover/media-cover';
 import aniButtons from '../modules/ani-buttons';
 
 const edit_page = async () => {
@@ -48,42 +48,15 @@ const edit_page = async () => {
     // aniBackground
     switch (content_type) {
       case 'anime':
-        (await aniBackground(data.mal_id, 'anime'))?.mount();
+        (await mediaCover())?.mount();
         break;
       case 'manga':
       case 'novel':
-        (await aniBackground(data.mal_id, 'manga'))?.mount();
+        (await mediaCover())?.mount();
         break;
       case 'character':
         {
-          const haveAnime = data.anime_count !== 0;
-
-          (
-            await aniBackground(
-              usePageStore.getState().saved_mal_id
-                ? usePageStore.getState().saved_mal_id
-                : await (
-                    await (
-                      await fetch(
-                        `https://api.hikka.io/${
-                          haveAnime ? 'anime' : 'manga'
-                        }/${
-                          (
-                            await (
-                              await fetch(
-                                `https://api.hikka.io/characters/${editSlug}/${
-                                  haveAnime ? 'anime' : 'manga'
-                                }`,
-                              )
-                            ).json()
-                          ).list[0][haveAnime ? 'anime' : 'manga'].slug
-                        }`,
-                      )
-                    ).json()
-                  ).mal_id,
-              haveAnime ? 'anime' : 'manga',
-            )
-          )?.mount();
+          (await mediaCover())?.mount();
         }
         break;
     }

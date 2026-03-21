@@ -14,12 +14,13 @@ const hikkaMangaFetcher = async (slug: string) => {
   return r.json();
 };
 
-const useHikkaManga = () => {
+const useHikkaManga = ({ enabled = true }: { enabled?: boolean } = {}) => {
   return useQuery({
     queryKey: ['hikka-manga-data', usePageStore.getState().slug!],
     queryFn: ({ queryKey }) => hikkaMangaFetcher(queryKey[1]),
     retry: false,
     staleTime: Infinity,
+    enabled,
   });
 };
 
