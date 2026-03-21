@@ -1,16 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 
-import useHikkaAnime from './use-hikka-anime';
-
 const useNotionData = () => {
-  const { data } = useHikkaAnime();
   const { backendBranch } = useSettings();
+  const { slug } = usePageStore();
 
   return useQuery({
-    queryKey: ['notion-data', data.slug],
+    queryKey: ['notion-data', slug],
     queryFn: async () => {
       const r = await fetch(
-        `${BACKEND_BRANCHES[backendBranch]}/notion/${data.slug}`,
+        `${BACKEND_BRANCHES[backendBranch]}/notion/${slug}`,
       );
 
       if (!r.ok) {

@@ -12,17 +12,24 @@ import HFLogoSmall from '@/public/hikka-features-small.svg';
 
 import { queryClient } from '..';
 
+const MOUNT_TAG = 'recommendation-block';
+
+let isMounting = false;
+
 const recommendationBlock = async (location?: Element) => {
-  if (document.body.querySelectorAll('recommendation-block').length !== 0) {
-    return;
-  }
+  const existing = document.body.querySelectorAll(MOUNT_TAG);
+  if (existing.length > 0 || isMounting) return;
+
+  isMounting = true;
 
   return createShadowRootUi(usePageStore.getState().ctx, {
-    name: 'recommendation-block',
+    name: MOUNT_TAG,
     position: 'inline',
-    append: 'last',
-    anchor: location || document.querySelector('.grid > div:nth-of-type(2)'),
-    css: `:host(recommendation-block) { margin-top: -3rem; ${getThemeVariables()} }`,
+    append: 'after',
+    anchor:
+      location ||
+      '.grid.grid-cols-1 > div:nth-of-type(2) > section:last-of-type',
+    css: `:host(${MOUNT_TAG}) { margin-top: -2rem !important; ${getThemeVariables()} }`,
     inheritStyles: true,
     async onMount(container) {
       const wrapper = document.createElement('div');
@@ -31,7 +38,7 @@ const recommendationBlock = async (location?: Element) => {
       const root = createRoot(wrapper);
       root.render(
         <QueryClientProvider client={queryClient}>
-          <RecommendationBlock container={container} />
+          <RecommendationBlock />
         </QueryClientProvider>,
       );
 
@@ -40,11 +47,7 @@ const recommendationBlock = async (location?: Element) => {
   });
 };
 
-interface Props {
-  container: HTMLElement;
-}
-
-const RecommendationBlock: FC<Props> = ({ container }) => {
+const RecommendationBlock: FC = () => {
   const { enabled } = useSettings().features.recommendationBlock;
 
   const { contentType } = usePageStore();
@@ -62,14 +65,14 @@ const RecommendationBlock: FC<Props> = ({ container }) => {
             opacity: 1,
             height: 'auto',
             scale: 1,
-            marginTop: '3rem',
+            marginTop: '2rem',
           }}
           exit={{ opacity: 0, height: 0, scale: 0.93, marginTop: 0 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
-          className="flex flex-col gap-4 lg:gap-8"
+          className="flex flex-col gap-4 lg:gap-6"
         >
           <div className="flex items-center justify-between gap-2">
-            <h3 className="flex scroll-m-20 items-center justify-between gap-2 text-xl font-bold tracking-normal">
+            <h3 className="flex items-center justify-between gap-2">
               Схожий контент
               <img
                 src={
@@ -85,9 +88,9 @@ const RecommendationBlock: FC<Props> = ({ container }) => {
               disabled={isLoading || data?.recommendations.length === 0}
             />
           </div>
-          <div className="no-scrollbar grid-min-6 relative -mx-4 -my-4 grid auto-cols-scroll grid-flow-col grid-cols-scroll gap-4 overflow-x-scroll px-4 py-4 md:grid-cols-5 md:gradient-mask-none lg:gap-8">
+          <div className="no-scrollbar grid-min-6 relative -mx-4 -my-4 grid auto-cols-scroll grid-flow-col grid-cols-scroll gap-4 overflow-x-scroll p-4 md:grid-cols-5 md:gradient-mask-none lg:gap-6">
             {isLoading &&
-              Array.from({ length: 4 }).map((_, index) => (
+              Array.from({ length: 5 }).map((_, index) => (
                 <div key={index} className="flex flex-col gap-2">
                   <AspectRatio
                     ratio={0.7}
@@ -97,7 +100,7 @@ const RecommendationBlock: FC<Props> = ({ container }) => {
                 </div>
               ))}
             {data?.recommendations.length === 0 &&
-              Array.from({ length: 4 }).map((_, index) => (
+              Array.from({ length: 5 }).map((_, index) => (
                 <div key={index} className="flex flex-col gap-2">
                   <AspectRatio
                     ratio={0.7}

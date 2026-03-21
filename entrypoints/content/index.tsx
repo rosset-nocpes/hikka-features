@@ -14,7 +14,7 @@ export const queryClient = new QueryClient({
 });
 
 export default defineContentScript({
-  matches: ['https://hikka.io/*'],
+  matches: ['https://hikka.io/*', 'https://dev.hikka.io/*'],
   cssInjectionMode: 'ui',
   async main(ctx) {
     usePageStore.getState().setCTX(ctx);
@@ -58,14 +58,14 @@ export default defineContentScript({
     // (await getPreviousAnimeSlug()) == "" ? setPreviousAnimeSlug("") : "";
 
     browser.runtime.onMessage.addListener(async (request) => {
-      if (request.type === 'page-rendered') {
+      if (request.type === 'route-changed') {
         const { setSettings } = useSettings.getState();
 
         getComputedStyle(document.documentElement).colorScheme === 'dark'
           ? setSettings({ darkMode: true })
           : setSettings({ darkMode: false });
 
-        usePageStore.getState().updateFromUrl(new URL(document.location.href));
+        usePageStore.getState().updateFromUrl(new URL(request.url));
         const { contentType } = usePageStore.getState();
 
         switch (contentType) {
@@ -120,7 +120,7 @@ export default defineContentScript({
                   })`,
                 )!;
 
-                (await aniButtons('last', true, info_block, data))?.mount();
+                (await aniButtons('last', info_block, data))?.mount();
 
                 switch (content_type) {
                   case 'anime':

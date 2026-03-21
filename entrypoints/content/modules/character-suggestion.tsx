@@ -25,7 +25,7 @@ export const characterSuggestion = async () => {
     alignment: 'bottom-right',
     anchor: () => document.querySelector(INPUT_SELECTOR)?.parentElement,
     inheritStyles: true,
-    css: `:host(${MOUNT_TAG}) { margin-top: -1rem; width: 100% !important; ${getThemeVariables()} }`,
+    css: `:host(${MOUNT_TAG}) { margin-top: -1rem !important; width: 100% !important; ${getThemeVariables()} }`,
     async onMount(container) {
       const wrapper = document.createElement('div');
       container.append(wrapper);

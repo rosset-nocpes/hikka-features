@@ -11,19 +11,22 @@ import { Spinner } from '@/components/ui/spinner';
 import { queryClient } from '../..';
 import player from './player';
 
+const MOUNT_TAG = 'watch-button';
+
+let isMounting = false;
+
 export default async function watchButton(location?: Element) {
-  if (document.body.querySelectorAll('watch-button').length !== 0) {
-    return;
-  }
+  const existing = document.body.querySelectorAll(MOUNT_TAG);
+  if (existing.length > 0 || isMounting) return;
+
+  isMounting = true;
 
   return createShadowRootUi(usePageStore.getState().ctx, {
-    name: 'watch-button',
+    name: MOUNT_TAG,
     position: 'inline',
     append: 'first',
-    anchor:
-      location ||
-      document.querySelector('div.sticky.bottom-3.z-10.mt-12 > div'),
-    css: `:host(watch-button) { margin-right: -0.5rem; ${getThemeVariables()} }`,
+    anchor: location || 'main > div:nth-of-type(2) div.relative',
+    css: `:host(${MOUNT_TAG}) { margin-right: -0.5rem !important; ${getThemeVariables()} }`,
     inheritStyles: true,
     async onMount(container) {
       const wrapper = document.createElement('div');

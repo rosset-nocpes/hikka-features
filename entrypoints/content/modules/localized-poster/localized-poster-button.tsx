@@ -17,20 +17,24 @@ import {
 import { queryClient } from '../..';
 import localizedPoster, { usePosterState } from './localized-poster';
 
+const MOUNT_TAG = 'localized-poster-button';
+
+let isMounting = false;
+
 const localizedPosterButton = async () => {
-  if (document.body.querySelectorAll('localized-poster-button').length !== 0) {
-    return;
-  }
+  const existing = document.body.querySelectorAll(MOUNT_TAG);
+  if (existing.length > 0 || isMounting) return;
+
+  isMounting = true;
 
   return createShadowRootUi(usePageStore.getState().ctx, {
-    name: 'localized-poster-button',
+    name: MOUNT_TAG,
     position: 'inline',
     append: 'first',
-    anchor: document.querySelector(
-      '.grid > div.flex.flex-col.gap-4.lg\\:col-span-1 > div.z-0.flex.items-center.px-16.md\\:px-48.lg\\:px-0 > div > div > div',
-    ),
+    anchor:
+      '.grid.grid-cols-1 > div:nth-of-type(1) > div:nth-of-type(1) div.relative',
     inheritStyles: true,
-    css: `:host(localized-poster-button) { ${getThemeVariables()} }`,
+    css: `:host(${MOUNT_TAG}) { ${getThemeVariables()} }`,
     async onMount(container) {
       const wrapper = document.createElement('div');
       container.append(wrapper);

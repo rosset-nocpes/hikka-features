@@ -17,17 +17,20 @@ import reader from './reader';
 
 const MOUNT_TAG = 'read-button';
 
+let isMounting = false;
+
 const readButton = async (type: ReaderType, location?: Element) => {
-  if (document.body.querySelectorAll(MOUNT_TAG).length !== 0) {
-    return;
-  }
+  const existing = document.body.querySelectorAll(MOUNT_TAG);
+  if (existing.length > 0 || isMounting) return;
+
+  isMounting = true;
 
   return createShadowRootUi(usePageStore.getState().ctx, {
     name: MOUNT_TAG,
     position: 'inline',
     append: 'first',
     anchor: location || 'div.sticky.bottom-3.z-10.mt-12 > div',
-    css: `:host(read-button) { margin-right: -0.5rem; ${getThemeVariables()} }`,
+    css: `:host(${MOUNT_TAG}) { margin-right: -0.5rem !important; ${getThemeVariables()} }`,
     inheritStyles: true,
     async onMount(container) {
       const wrapper = document.createElement('div');
@@ -36,7 +39,7 @@ const readButton = async (type: ReaderType, location?: Element) => {
       const root = createRoot(wrapper);
       root.render(
         <QueryClientProvider client={queryClient}>
-          <ReadButton type={type} container={container} />
+          <ReadButton type={type} />
         </QueryClientProvider>,
       );
 
@@ -47,7 +50,6 @@ const readButton = async (type: ReaderType, location?: Element) => {
 
 interface Props {
   type: ReaderType;
-  container: HTMLElement;
 }
 
 const ReadButton: FC<Props> = ({ type }) => {

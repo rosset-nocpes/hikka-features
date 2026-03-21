@@ -4,7 +4,7 @@ import type { ContentType } from './use-page-store';
 
 const useRecommendation = () => {
   const { contentType: content_type } = usePageStore();
-  const data = useHikka().data;
+  const { data } = useHikka();
 
   return useQuery({
     queryKey: ['recommendation-data', data.slug],

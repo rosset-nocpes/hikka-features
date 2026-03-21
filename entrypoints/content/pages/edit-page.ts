@@ -43,7 +43,7 @@ const edit_page = async () => {
       `div.gap-12:nth-child(2) > section:nth-child(${creatingEdit ? 1 : 2})`,
     )!;
 
-    (await aniButtons('last', true, info_block, data))?.mount();
+    (await aniButtons('last', info_block, data))?.mount();
 
     // aniBackground
     switch (content_type) {
