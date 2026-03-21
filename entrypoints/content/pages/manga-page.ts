@@ -24,7 +24,7 @@ const manga_page = async () => {
   }
 
   if (path?.length! >= 2) {
-    (await mediaCover(mal_id, 'manga'))?.mount();
+    (await mediaCover())?.mount();
     usePageStore.getState().setMALId(mal_id);
   } else {
     usePageStore.getState().clearMALId();

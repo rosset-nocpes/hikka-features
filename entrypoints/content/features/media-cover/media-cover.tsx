@@ -1,6 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { queryClient } from '../..';

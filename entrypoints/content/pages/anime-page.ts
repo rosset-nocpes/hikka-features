@@ -27,7 +27,7 @@ const anime_page = async () => {
   }
 
   if (path && path.length >= 2) {
-    (await mediaCover(mal_id, 'anime'))?.mount();
+    (await mediaCover())?.mount();
     usePageStore.getState().setMALId(mal_id);
   } else {
     usePageStore.getState().clearMALId();
