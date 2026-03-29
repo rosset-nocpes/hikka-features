@@ -1,6 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { type FC, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import MaterialSymbolsPlannerBannerAdPtOutlineRounded from '~icons/material-symbols/planner-banner-ad-pt-outline-rounded';
 import MaterialSymbolsPlannerBannerAdPtRounded from '~icons/material-symbols/planner-banner-ad-pt-rounded';
@@ -17,10 +17,9 @@ import {
 import { queryClient } from '../..';
 import { BaseFeature } from '../../core/base-feature';
 import { HikkaPages } from '../../core/core.enums';
-import localizedPoster, { usePosterState } from './localized-poster';
 
-export default class LocalizedPosterButtonFeature extends BaseFeature {
-  readonly id = 'localized-poster-button';
+export default class LocalizedPosterFeature extends BaseFeature {
+  readonly id = 'localized-poster';
   readonly pages = [HikkaPages.AnimeMainPage];
 
   async init() {
@@ -29,22 +28,26 @@ export default class LocalizedPosterButtonFeature extends BaseFeature {
       position: 'inline',
       append: 'first',
       anchor:
-        '.grid.grid-cols-1 > div:nth-of-type(1) > div:nth-of-type(1) div.relative',
-      inheritStyles: true,
+        '.grid.grid-cols-1 > div:nth-of-type(1) > div:nth-of-type(1) div.relative div.relative',
       css: `:host(${this.id}) { ${getThemeVariables()} }`,
-      onMount(container) {
+      inheritStyles: true,
+      onMount: (container) => {
         const wrapper = document.createElement('div');
         container.append(wrapper);
 
         container.style.position = 'absolute';
-        container.style.bottom = '0.5rem';
-        container.style.right = '0.5rem';
-        container.style.zIndex = '10';
+        container.style.zIndex = '1';
+        container.style.top = '0';
+        container.style.left = '0';
+        container.style.height = '100%';
+        container.style.width = '100%';
+        wrapper.style.height = '100%';
+        wrapper.style.width = '100%';
 
         const root = createRoot(wrapper);
         root.render(
           <QueryClientProvider client={queryClient}>
-            <LocalizedPosterButton container={container} />
+            <LocalizedPoster container={container} />
           </QueryClientProvider>,
         );
 
@@ -61,29 +64,42 @@ interface Props {
   container: HTMLElement;
 }
 
-const LocalizedPosterButton: FC<Props> = ({ container }) => {
+const LocalizedPoster = ({ container }: Props) => {
   const { data } = useNotionData();
-  const { setVisible } = usePosterState();
   const { enabled, autoShow } = useSettings().features.localizedPoster;
 
-  useEffect(() => {
-    if (data?.poster) {
-      setVisible(autoShow);
-      localizedPoster().then((ui) => ui?.mount());
-    }
-  }, [data]);
+  const [visible, setVisible] = useState(autoShow);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const togglePoster = () => {
-    setVisible(!usePosterState.getState().visible);
+    setVisible(!visible);
   };
-
-  const isPosterVisible = usePosterState((state) => state.visible);
 
   return (
     <AnimatePresence>
+      {visible && data?.poster && (
+        <motion.img
+          key="poster"
+          alt="Localized Poster"
+          decoding="async"
+          className="size-full object-cover [overflow-clip-margin:unset]"
+          style={{ color: 'transparent' }}
+          src={data.poster}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: imageLoaded ? 1 : 0 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2, ease: 'easeInOut' }}
+          ref={(img) => {
+            if (img) setImageLoaded(img.complete);
+          }}
+          onLoad={() => setImageLoaded(true)}
+          onError={() => setImageLoaded(false)}
+        />
+      )}
       {enabled && data?.poster && (
         <motion.div
           key="poster-button"
+          className="absolute bottom-2 right-2"
           initial={{ opacity: 0, transform: 'translateX(10px)' }}
           animate={{ opacity: 1, transform: 'translateX(0px)' }}
           exit={{ opacity: 0, transform: 'translateX(10px)' }}
@@ -92,11 +108,16 @@ const LocalizedPosterButton: FC<Props> = ({ container }) => {
           <TooltipProvider>
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon-md" onClick={togglePoster}>
-                  {isPosterVisible && (
+                <Button
+                  variant="ghost"
+                  size="icon-md"
+                  className="flex"
+                  onClick={togglePoster}
+                >
+                  {visible && (
                     <MaterialSymbolsPlannerBannerAdPtRounded className="text-lg" />
                   )}
-                  {!isPosterVisible && (
+                  {!visible && (
                     <MaterialSymbolsPlannerBannerAdPtOutlineRounded className="text-lg" />
                   )}
                 </Button>

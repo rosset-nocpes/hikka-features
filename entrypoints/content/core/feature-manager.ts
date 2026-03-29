@@ -21,11 +21,6 @@ export class FeatureManager {
     usePageStore.getState().updateFromUrl(new URL(location.href));
     for (const f of this.features) f.init();
 
-    useSettings.getState().setSettings({
-      darkMode:
-        getComputedStyle(document.documentElement).colorScheme === 'dark',
-    });
-
     // Initial check
     this.reconcile();
     this.startObserving();
