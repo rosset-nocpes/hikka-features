@@ -1,13 +1,14 @@
-import type { FC } from 'react';
-
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
+import { useEffect, type FC } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import HFLogoSmallDark from '@/public/hikka-features-small-dark.svg';
 import HFLogoSmall from '@/public/hikka-features-small.svg';
 
 import { queryClient } from '..';
+import { BaseFeature } from '../core/base-feature';
+import { HikkaPages } from '../core/core.enums';
 
 interface Website {
   title: string;
@@ -21,54 +22,63 @@ enum MediaEnum {
   Novel = 'novel',
 }
 
-const MOUNT_TAG = 'ani-buttons';
+export default class AniButtonsFeature extends BaseFeature {
+  readonly id = 'ani-buttons';
+  readonly pages = [
+    HikkaPages.AnimeMainPage,
+    HikkaPages.MangaMainPage,
+    HikkaPages.NovelMainPage,
+    HikkaPages.EditContent,
+  ];
 
-let isMounting = false;
+  async init() {
+    const isEdit = () => document.location.pathname.startsWith('/edit/');
+    const creatingEdit = () =>
+      document.location.pathname.startsWith('/edit/new');
 
-const aniButtons = async (
-  append: ContentScriptAppendMode = 'after',
-  location?: Element,
-  data?: any,
-) => {
-  const existing = document.body.querySelectorAll(MOUNT_TAG);
-  if (existing.length > 0 || isMounting) return;
+    this.ui = await createShadowRootUi(usePageStore.getState().ctx, {
+      name: this.id,
+      position: 'inline',
+      append: (anchor, ui) => {
+        if (isEdit()) {
+          anchor.append(ui);
+        } else {
+          anchor.parentElement?.insertBefore(ui, anchor.nextElementSibling);
+        }
+      },
+      anchor: () =>
+        isEdit()
+          ? `div.gap-12:nth-child(2) > section:nth-child(${creatingEdit() ? 1 : 2})`
+          : '.grid.grid-cols-1 > div:nth-of-type(3) > div',
+      css: `:host(${this.id}) { margin-bottom: -2rem !important; ${getThemeVariables()} }`,
+      inheritStyles: true,
+      onMount(container) {
+        const wrapper = document.createElement('div');
+        container.append(wrapper);
 
-  isMounting = true;
+        const root = createRoot(wrapper);
+        root.render(
+          <QueryClientProvider client={queryClient}>
+            <AniButtons />
+          </QueryClientProvider>,
+        );
 
-  return createShadowRootUi(usePageStore.getState().ctx, {
-    name: MOUNT_TAG,
-    position: 'inline',
-    append,
-    anchor: location || '.grid.grid-cols-1 > div:nth-of-type(3) > div',
-    css: `:host(${MOUNT_TAG}) { margin-bottom: -2rem !important; ${getThemeVariables()} }`,
-    inheritStyles: true,
-    async onMount(container) {
-      const wrapper = document.createElement('div');
-      container.append(wrapper);
-
-      const root = createRoot(wrapper);
-      root.render(
-        <QueryClientProvider client={queryClient}>
-          <AniButtons data={data} />
-        </QueryClientProvider>,
-      );
-
-      return { root, wrapper };
-    },
-  });
-};
-
-interface Props {
-  data?: any;
+        return root;
+      },
+      onRemove: (root) => {
+        root?.unmount();
+      },
+    });
+  }
 }
 
-const AniButtons: FC<Props> = ({ data }) => {
+const AniButtons = () => {
   const { enabled } = useSettings().features.aniButtons;
 
-  const hikka = useHikka();
-  if (!data) data = hikka?.data;
+  const { data } = useHikka();
 
-  const content_type: MediaType | InfoType = data?.data_type;
+  const content_type: MediaType | InfoType =
+    data?.data_type || data?.content_type;
 
   const contentTypeMap: Record<string, Record<string, string>> = {
     character: {
@@ -79,9 +89,12 @@ const AniButtons: FC<Props> = ({ data }) => {
   };
 
   const isMedia = Object.keys(MediaEnum).includes(content_type);
-  const isAnime = content_type === 'anime';
   const title =
-    data?.title_ja || data?.title_en || data?.title_original || data?.name_en;
+    data?.title_ja ||
+    data?.title_en ||
+    data?.title_original ||
+    data?.name_en ||
+    data?.content.name_en;
 
   const hosts: Record<SourcesType, string> = {
     mal: 'myanimelist.net',
@@ -154,37 +167,32 @@ const AniButtons: FC<Props> = ({ data }) => {
     },
   };
 
-  const anime_links: Website[] = [
-    searchUrls.mal,
-    searchUrls.anilist,
-    searchUrls.anidb,
-    searchUrls.ann,
-    searchUrls.wiki,
-    searchUrls.amanogawa,
-  ];
-
-  const manga_links: Website[] = [
-    searchUrls.mal,
-    searchUrls.anilist,
-    searchUrls.wiki,
-    searchUrls.mu,
-  ];
-
-  const character_links: Website[] = [
-    searchUrls.mal,
-    searchUrls.anilist,
-    searchUrls.anidb,
-    searchUrls.ann,
-    searchUrls.wiki,
-  ];
-
-  const people_links: Website[] = [
-    searchUrls.mal,
-    searchUrls.anilist,
-    searchUrls.anidb,
-    searchUrls.ann,
-    searchUrls.wiki,
-  ];
+  const contentLinks: Record<MediaType | InfoType, Website[]> = {
+    anime: [
+      searchUrls.mal,
+      searchUrls.anilist,
+      searchUrls.anidb,
+      searchUrls.ann,
+      searchUrls.wiki,
+      searchUrls.amanogawa,
+    ],
+    manga: [searchUrls.mal, searchUrls.anilist, searchUrls.wiki, searchUrls.mu],
+    character: [
+      searchUrls.mal,
+      searchUrls.anilist,
+      searchUrls.anidb,
+      searchUrls.ann,
+      searchUrls.wiki,
+    ],
+    person: [
+      searchUrls.mal,
+      searchUrls.anilist,
+      searchUrls.anidb,
+      searchUrls.ann,
+      searchUrls.wiki,
+    ],
+    novel: [searchUrls.mal, searchUrls.anilist, searchUrls.wiki, searchUrls.mu],
+  };
 
   const {
     data: agawaUrl,
@@ -196,7 +204,7 @@ const AniButtons: FC<Props> = ({ data }) => {
 
   return (
     <AnimatePresence>
-      {enabled && (
+      {enabled && data && (
         <motion.div
           className="overflow-hidden rounded-lg border border-border bg-secondary/20"
           initial={{ opacity: 0, height: 0, scale: 0.93, marginBottom: 0 }}
@@ -231,14 +239,7 @@ const AniButtons: FC<Props> = ({ data }) => {
                 compact ? 'flex justify-between' : 'grid grid-cols-2 gap-2',
               )}
             >
-              {(isAnime
-                ? anime_links
-                : content_type === 'character'
-                  ? character_links
-                  : content_type === 'person'
-                    ? people_links
-                    : manga_links
-              ).map((elem) => (
+              {contentLinks[content_type].map((elem) => (
                 <a
                   key={elem.title}
                   href={elem.title === 'Amanogawa' ? agawaUrl : elem.url}
@@ -276,5 +277,3 @@ const AniButtons: FC<Props> = ({ data }) => {
     </AnimatePresence>
   );
 };
-
-export default aniButtons;

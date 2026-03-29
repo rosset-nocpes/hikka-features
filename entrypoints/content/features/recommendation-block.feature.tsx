@@ -11,47 +11,50 @@ import HFLogoSmallDark from '@/public/hikka-features-small-dark.svg';
 import HFLogoSmall from '@/public/hikka-features-small.svg';
 
 import { queryClient } from '..';
+import { BaseFeature } from '../core/base-feature';
+import { HikkaPages } from '../core/core.enums';
 
-const MOUNT_TAG = 'recommendation-block';
+export default class RecommendationBlockFeature extends BaseFeature {
+  readonly id = 'recommendation-block';
+  readonly pages = [
+    HikkaPages.AnimeMainPage,
+    HikkaPages.MangaMainPage,
+    HikkaPages.NovelMainPage,
+  ];
 
-let isMounting = false;
+  async init() {
+    this.ui = await createShadowRootUi(usePageStore.getState().ctx, {
+      name: this.id,
+      position: 'inline',
+      append: 'after',
+      anchor: '.grid.grid-cols-1 > div:nth-of-type(2) > section:last-of-type',
+      css: `:host(${this.id}) { margin-top: -2rem !important; ${getThemeVariables()} }`,
+      inheritStyles: true,
+      onMount(container) {
+        const wrapper = document.createElement('div');
+        container.append(wrapper);
 
-const recommendationBlock = async (location?: Element) => {
-  const existing = document.body.querySelectorAll(MOUNT_TAG);
-  if (existing.length > 0 || isMounting) return;
+        const root = createRoot(wrapper);
+        root.render(
+          <QueryClientProvider client={queryClient}>
+            <RecommendationBlock />
+          </QueryClientProvider>,
+        );
 
-  isMounting = true;
-
-  return createShadowRootUi(usePageStore.getState().ctx, {
-    name: MOUNT_TAG,
-    position: 'inline',
-    append: 'after',
-    anchor:
-      location ||
-      '.grid.grid-cols-1 > div:nth-of-type(2) > section:last-of-type',
-    css: `:host(${MOUNT_TAG}) { margin-top: -2rem !important; ${getThemeVariables()} }`,
-    inheritStyles: true,
-    async onMount(container) {
-      const wrapper = document.createElement('div');
-      container.append(wrapper);
-
-      const root = createRoot(wrapper);
-      root.render(
-        <QueryClientProvider client={queryClient}>
-          <RecommendationBlock />
-        </QueryClientProvider>,
-      );
-
-      return { root, wrapper };
-    },
-  });
-};
+        return root;
+      },
+      onRemove: (root) => {
+        root?.unmount();
+      },
+    });
+  }
+}
 
 const RecommendationBlock: FC = () => {
   const { enabled } = useSettings().features.recommendationBlock;
 
   const { contentType } = usePageStore();
-  const content_data = useHikka()?.data;
+  const { data: content_data } = useHikka();
   const { data, isLoading } = useRecommendation();
 
   const mal_id = content_data.mal_id;
@@ -151,5 +154,3 @@ const RecommendationBlock: FC = () => {
     </AnimatePresence>
   );
 };
-
-export default recommendationBlock;

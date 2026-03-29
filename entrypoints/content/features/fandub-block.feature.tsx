@@ -16,40 +16,40 @@ import HFxCPRBadgeDark from '@/public/hf-x-cpr-dark.svg';
 import HFxCPRBadge from '@/public/hf-x-cpr.svg';
 
 import { queryClient } from '..';
+import { BaseFeature } from '../core/base-feature';
+import { HikkaPages } from '../core/core.enums';
 
-const MOUNT_TAG = 'fandub-block';
+export default class FandubBlockFeature extends BaseFeature {
+  readonly id = 'fandub-block';
+  readonly pages = [HikkaPages.AnimeMainPage];
 
-let isMounting = false;
+  async init() {
+    this.ui = await createShadowRootUi(usePageStore.getState().ctx, {
+      name: this.id,
+      position: 'inline',
+      append: 'last',
+      anchor: '.grid.grid-cols-1 > div:nth-of-type(1) > div:nth-of-type(2)',
+      inheritStyles: true,
+      css: `:host(${this.id}) { ${getThemeVariables()} }`,
+      onMount(container) {
+        const wrapper = document.createElement('div');
+        container.append(wrapper);
 
-const fandubBlock = async (location?: Element) => {
-  const existing = document.body.querySelectorAll(MOUNT_TAG);
-  if (existing.length > 0 || isMounting) return;
+        const root = createRoot(wrapper);
+        root.render(
+          <QueryClientProvider client={queryClient}>
+            <FandubBlock />
+          </QueryClientProvider>,
+        );
 
-  isMounting = true;
-
-  return createShadowRootUi(usePageStore.getState().ctx, {
-    name: MOUNT_TAG,
-    position: 'inline',
-    append: 'last',
-    anchor:
-      location || '.grid.grid-cols-1 > div:nth-of-type(1) > div:nth-of-type(2)',
-    inheritStyles: true,
-    css: `:host(${MOUNT_TAG}) { ${getThemeVariables()} }`,
-    async onMount(container) {
-      const wrapper = document.createElement('div');
-      container.append(wrapper);
-
-      const root = createRoot(wrapper);
-      root.render(
-        <QueryClientProvider client={queryClient}>
-          <FandubBlock />
-        </QueryClientProvider>,
-      );
-
-      return { root, wrapper };
-    },
-  });
-};
+        return root;
+      },
+      onRemove: (root) => {
+        root?.unmount();
+      },
+    });
+  }
+}
 
 const FandubBlock: FC = () => {
   const { enabled } = useSettings().features.fandubBlock;
@@ -100,7 +100,7 @@ const FandubBlock: FC = () => {
                       <MaterialSymbolsSadTabRounded className="size-6" />
                     </AvatarFallback>
                   </Avatar>
-                  <span className="font-medium text-sm leading-tight">
+                  <span className="text-sm font-medium leading-tight">
                     Немає даних
                   </span>
                 </BlockEntry>
@@ -121,7 +121,7 @@ const FandubBlock: FC = () => {
                               {team.title[0].toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="line-clamp-1 truncate font-medium text-sm leading-tight">
+                          <span className="line-clamp-1 truncate text-sm font-medium leading-tight">
                             {team.title}
                           </span>
                         </BlockEntry>
@@ -139,7 +139,7 @@ const FandubBlock: FC = () => {
                                   {team.title[0].toUpperCase()}
                                 </AvatarFallback>
                               </Avatar>
-                              <span className="line-clamp-1 truncate font-medium text-sm leading-tight">
+                              <span className="line-clamp-1 truncate text-sm font-medium leading-tight">
                                 {team.title}
                               </span>
                             </BlockEntry>
@@ -169,7 +169,7 @@ const FandubBlock: FC = () => {
                               {team.title[0].toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="line-clamp-1 truncate font-medium text-sm leading-tight">
+                          <span className="line-clamp-1 truncate text-sm font-medium leading-tight">
                             {team.title}
                           </span>
                         </BlockEntry>
@@ -185,5 +185,3 @@ const FandubBlock: FC = () => {
     </AnimatePresence>
   );
 };
-
-export default fandubBlock;

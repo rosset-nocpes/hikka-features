@@ -216,22 +216,26 @@ export const useReader = create<ReaderState & ReaderActions>((set, get) => ({
 }));
 
 interface ReaderProviderProps extends PropsWithChildren {
-  type: ReaderType;
   container: HTMLElement;
 }
 
 export const ReaderProvider: FC<ReaderProviderProps> = ({
   children,
-  type,
   container,
 }) => {
   const { initialize } = useReader();
-  const { data } = useReadData(type);
+  const { data } = useReadData();
+  const { contentType } = usePageStore();
+  const typeFromContent = contentType
+    ? contentType === 'manga'
+      ? ReaderType.Manga
+      : ReaderType.Novel
+    : ReaderType.Manga;
 
   useEffect(() => {
     if (!data) return;
 
-    initialize(type, data, container);
+    initialize(typeFromContent, data, container);
   }, [data]);
 
   return children;

@@ -3,16 +3,16 @@ import { useQuery } from '@tanstack/react-query';
 import type { ContentType } from './use-page-store';
 
 const useRecommendation = () => {
-  const { contentType: content_type } = usePageStore();
-  const { data } = useHikka();
+  const { contentType, slug } = usePageStore();
+  const { data, isLoading } = useHikka();
 
   return useQuery({
-    queryKey: ['recommendation-data', data.slug],
+    queryKey: ['recommendation-data', slug],
     queryFn: async () => {
       const mal_id = data.mal_id;
       let maxSingleVotes = 0;
 
-      const url = `https://api.jikan.moe/v4/${content_type === 'novel' ? 'manga' : content_type}/${mal_id}/recommendations`;
+      const url = `https://api.jikan.moe/v4/${contentType === 'novel' ? 'manga' : contentType}/${mal_id}/recommendations`;
 
       const r = await fetch(url);
 
@@ -24,12 +24,12 @@ const useRecommendation = () => {
       const result = await Promise.all(
         recommendation_data.data.slice(0, 5).map(async (element: any) => {
           try {
-            const hikkaData = await fetchDetailedData(content_type!, element);
+            const hikkaData = await fetchDetailedData(contentType!, element);
             if (element.votes > maxSingleVotes) maxSingleVotes = element.votes;
             return { ...hikkaData, mal: { ...element } };
           } catch (error) {
             await new Promise((resolve) => setTimeout(resolve, 700));
-            const hikkaData = await fetchDetailedData(content_type!, element);
+            const hikkaData = await fetchDetailedData(contentType!, element);
             if (element.votes > maxSingleVotes) maxSingleVotes = element.votes;
             return { ...hikkaData, mal: { ...element } };
           }
@@ -42,6 +42,7 @@ const useRecommendation = () => {
 
       return { recommendations: result, maxSingleVotes };
     },
+    enabled: !isLoading && !!data,
     retry: false,
     staleTime: 0,
     gcTime: 0,

@@ -15,46 +15,47 @@ import {
 } from '@/components/ui/tooltip';
 
 import { queryClient } from '../..';
+import { BaseFeature } from '../../core/base-feature';
+import { HikkaPages } from '../../core/core.enums';
 import localizedPoster, { usePosterState } from './localized-poster';
 
-const MOUNT_TAG = 'localized-poster-button';
+export default class LocalizedPosterButtonFeature extends BaseFeature {
+  readonly id = 'localized-poster-button';
+  readonly pages = [HikkaPages.AnimeMainPage];
 
-let isMounting = false;
+  async init() {
+    this.ui = await createShadowRootUi(usePageStore.getState().ctx, {
+      name: this.id,
+      position: 'inline',
+      append: 'first',
+      anchor:
+        '.grid.grid-cols-1 > div:nth-of-type(1) > div:nth-of-type(1) div.relative',
+      inheritStyles: true,
+      css: `:host(${this.id}) { ${getThemeVariables()} }`,
+      onMount(container) {
+        const wrapper = document.createElement('div');
+        container.append(wrapper);
 
-const localizedPosterButton = async () => {
-  const existing = document.body.querySelectorAll(MOUNT_TAG);
-  if (existing.length > 0 || isMounting) return;
+        container.style.position = 'absolute';
+        container.style.bottom = '0.5rem';
+        container.style.right = '0.5rem';
+        container.style.zIndex = '10';
 
-  isMounting = true;
+        const root = createRoot(wrapper);
+        root.render(
+          <QueryClientProvider client={queryClient}>
+            <LocalizedPosterButton container={container} />
+          </QueryClientProvider>,
+        );
 
-  return createShadowRootUi(usePageStore.getState().ctx, {
-    name: MOUNT_TAG,
-    position: 'inline',
-    append: 'first',
-    anchor:
-      '.grid.grid-cols-1 > div:nth-of-type(1) > div:nth-of-type(1) div.relative',
-    inheritStyles: true,
-    css: `:host(${MOUNT_TAG}) { ${getThemeVariables()} }`,
-    async onMount(container) {
-      const wrapper = document.createElement('div');
-      container.append(wrapper);
-
-      container.style.position = 'absolute';
-      container.style.bottom = '0.5rem';
-      container.style.right = '0.5rem';
-      container.style.zIndex = '10';
-
-      const root = createRoot(wrapper);
-      root.render(
-        <QueryClientProvider client={queryClient}>
-          <LocalizedPosterButton container={container} />
-        </QueryClientProvider>,
-      );
-
-      return { root, wrapper };
-    },
-  });
-};
+        return root;
+      },
+      onRemove: (root) => {
+        root?.unmount();
+      },
+    });
+  }
+}
 
 interface Props {
   container: HTMLElement;
@@ -110,5 +111,3 @@ const LocalizedPosterButton: FC<Props> = ({ container }) => {
     </AnimatePresence>
   );
 };
-
-export default localizedPosterButton;

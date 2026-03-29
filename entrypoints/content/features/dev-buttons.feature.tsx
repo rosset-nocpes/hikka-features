@@ -7,39 +7,44 @@ import { createRoot } from 'react-dom/client';
 import { Button } from '@/components/ui/button';
 
 import { queryClient } from '..';
+import { BaseFeature } from '../core/base-feature';
+import { HikkaPages } from '../core/core.enums';
 
-const MOUNT_TAG = 'dev-buttons';
+export default class DevButtonsFeature extends BaseFeature {
+  readonly id = 'dev-buttons';
+  readonly pages = [
+    HikkaPages.AnimeMainPage,
+    HikkaPages.MangaMainPage,
+    HikkaPages.NovelMainPage,
+  ];
 
-let isMounting = false;
+  async init() {
+    this.ui = await createShadowRootUi(usePageStore.getState().ctx, {
+      name: this.id,
+      position: 'inline',
+      append: 'last',
+      anchor: '.grid.grid-cols-1 > div:nth-of-type(2) > div:nth-of-type(1)',
+      css: `:host(${this.id}) { margin-bottom: -1rem !important; ${getThemeVariables()} }`,
+      inheritStyles: true,
+      onMount(container) {
+        const wrapper = document.createElement('div');
+        container.append(wrapper);
 
-const devButtons = async () => {
-  const existing = document.body.querySelectorAll(MOUNT_TAG);
-  if (existing.length > 0 || isMounting) return;
+        const root = createRoot(wrapper);
+        root.render(
+          <QueryClientProvider client={queryClient}>
+            <DevButtons />
+          </QueryClientProvider>,
+        );
 
-  isMounting = true;
-
-  return createShadowRootUi(usePageStore.getState().ctx, {
-    name: MOUNT_TAG,
-    position: 'inline',
-    append: 'last',
-    anchor: '.grid.grid-cols-1 > div:nth-of-type(2) > div:nth-of-type(1)',
-    css: `:host(${MOUNT_TAG}) { margin-bottom: -1rem !important; ${getThemeVariables()} }`,
-    inheritStyles: true,
-    async onMount(container) {
-      const wrapper = document.createElement('div');
-      container.append(wrapper);
-
-      const root = createRoot(wrapper);
-      root.render(
-        <QueryClientProvider client={queryClient}>
-          <DevButtons />
-        </QueryClientProvider>,
-      );
-
-      return { root, wrapper };
-    },
-  });
-};
+        return root;
+      },
+      onRemove: (root) => {
+        root?.unmount();
+      },
+    });
+  }
+}
 
 const DevButtons = () => {
   const { devTools } = useSettings().features.devOptions;
@@ -127,5 +132,3 @@ const Indicator = ({ isCopied }: IndicatorProps) => {
     </div>
   );
 };
-
-export default devButtons;

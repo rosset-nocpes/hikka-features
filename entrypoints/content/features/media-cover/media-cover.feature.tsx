@@ -4,38 +4,41 @@ import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { queryClient } from '../..';
+import { BaseFeature } from '../../core/base-feature';
+import { HikkaPages } from '../../core/core.enums';
 import useMediaCover from './hooks/use-media-cover';
 
-const MOUNT_TAG = 'media-cover';
+export default class MediaCoverFeature extends BaseFeature {
+  readonly id = 'media-cover';
+  readonly pages = [HikkaPages.All];
 
-let isMounting = false;
+  async init() {
+    const id = this.id;
 
-const mediaCover = async () => {
-  const existing = document.body.querySelectorAll(MOUNT_TAG);
-  if (existing.length > 0 || isMounting) return;
+    this.ui = await createShadowRootUi(usePageStore.getState().ctx, {
+      name: id,
+      position: 'inline',
+      append: 'last',
+      anchor: 'main',
+      onMount(container) {
+        const wrapper = document.createElement('div');
+        container.append(wrapper);
 
-  isMounting = true;
+        const root = createRoot(wrapper);
+        root.render(
+          <QueryClientProvider client={queryClient}>
+            <MediaCover />
+          </QueryClientProvider>,
+        );
 
-  return createShadowRootUi(usePageStore.getState().ctx, {
-    name: MOUNT_TAG,
-    position: 'inline',
-    append: 'last',
-    anchor: 'main',
-    async onMount(container) {
-      const wrapper = document.createElement('div');
-      container.append(wrapper);
-
-      const root = createRoot(wrapper);
-      root.render(
-        <QueryClientProvider client={queryClient}>
-          <MediaCover />
-        </QueryClientProvider>,
-      );
-
-      return { root, wrapper };
-    },
-  });
-};
+        return root;
+      },
+      onRemove: (root) => {
+        root?.unmount();
+      },
+    });
+  }
+}
 
 const MediaCover = () => {
   const { enabled } = useSettings().features.aniBackground;
@@ -79,5 +82,3 @@ const MediaCover = () => {
     </AnimatePresence>
   );
 };
-
-export default mediaCover;

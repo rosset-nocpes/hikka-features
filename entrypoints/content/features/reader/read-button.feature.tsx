@@ -1,5 +1,3 @@
-import type { FC } from 'react';
-
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { createRoot } from 'react-dom/client';
@@ -9,58 +7,55 @@ import { RotatingText } from '@/components/animate-ui/text/rotating';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 
-import type { ReaderType } from './reader.enums';
-
 import { queryClient } from '../..';
+import { BaseFeature } from '../../core/base-feature';
+import { HikkaPages } from '../../core/core.enums';
 import useReadData from './hooks/use-read-data';
 import reader from './reader';
 
-const MOUNT_TAG = 'read-button';
+export default class ReadButtonFeature extends BaseFeature {
+  readonly id = 'read-button';
+  readonly pages = [HikkaPages.MangaContent, HikkaPages.NovelContent];
 
-let isMounting = false;
+  async init() {
+    const id = this.id;
 
-const readButton = async (type: ReaderType, location?: Element) => {
-  const existing = document.body.querySelectorAll(MOUNT_TAG);
-  if (existing.length > 0 || isMounting) return;
+    this.ui = await createShadowRootUi(usePageStore.getState().ctx, {
+      name: id,
+      position: 'inline',
+      append: 'first',
+      anchor: 'div.sticky.bottom-3.z-10.mt-12 > div',
+      css: `:host(${id}) { margin-right: -0.5rem !important; ${getThemeVariables()} }`,
+      inheritStyles: true,
+      onMount: (container) => {
+        const wrapper = document.createElement('div');
+        container.append(wrapper);
 
-  isMounting = true;
+        const root = createRoot(wrapper);
+        root.render(
+          <QueryClientProvider client={queryClient}>
+            <ReadButton />
+          </QueryClientProvider>,
+        );
 
-  return createShadowRootUi(usePageStore.getState().ctx, {
-    name: MOUNT_TAG,
-    position: 'inline',
-    append: 'first',
-    anchor: location || 'div.sticky.bottom-3.z-10.mt-12 > div',
-    css: `:host(${MOUNT_TAG}) { margin-right: -0.5rem !important; ${getThemeVariables()} }`,
-    inheritStyles: true,
-    async onMount(container) {
-      const wrapper = document.createElement('div');
-      container.append(wrapper);
-
-      const root = createRoot(wrapper);
-      root.render(
-        <QueryClientProvider client={queryClient}>
-          <ReadButton type={type} />
-        </QueryClientProvider>,
-      );
-
-      return { root, wrapper };
-    },
-  });
-};
-
-interface Props {
-  type: ReaderType;
+        return root;
+      },
+      onRemove: (root) => {
+        root?.unmount();
+      },
+    });
+  }
 }
 
-const ReadButton: FC<Props> = ({ type }) => {
+const ReadButton = () => {
   const { enabled } = useSettings().features.reader;
 
-  const { data, isLoading, isError } = useReadData(type);
+  const { data, isLoading, isError } = useReadData();
 
   const openReader = () => {
     document.body.classList.toggle('h-full');
     document.body.classList.toggle('overflow-hidden');
-    reader(type).then((ui) => ui.mount());
+    reader().then((ui) => ui.mount());
   };
 
   const statusMessage = isLoading
@@ -133,5 +128,3 @@ const Indicator = ({ isLoading }: IndicatorProps) => {
     </div>
   );
 };
-
-export default readButton;
