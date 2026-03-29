@@ -26,7 +26,6 @@ interface AppState {
   userData?: UserDataV2;
   backendBranch: BackendBranches;
   richPresence: boolean;
-  darkMode: boolean;
 
   features: {
     aniBackground: {
@@ -114,7 +113,6 @@ export const useSettings = create<AppState>()(
         ? 'localhost'
         : 'stable',
       richPresence: false,
-      darkMode: true,
 
       // Generic setter
       setSettings: (settings) => set((state) => ({ ...state, ...settings })),
@@ -136,7 +134,6 @@ export const useSettings = create<AppState>()(
         userData: state.userData,
         backendBranch: state.backendBranch,
         richPresence: state.richPresence,
-        darkMode: state.darkMode,
       }),
       version: 0,
       onRehydrateStorage: () => () => {
@@ -171,7 +168,6 @@ const migrateFromOldStorage = async () => {
       userData: oldStorage.userData || state.userData,
       backendBranch: oldStorage.backendBranch || state.backendBranch,
       richPresence: oldStorage.richPresence ?? state.richPresence,
-      darkMode: oldStorage.darkMode ?? state.darkMode,
       features: {
         ...state.features,
         aniBackground: {

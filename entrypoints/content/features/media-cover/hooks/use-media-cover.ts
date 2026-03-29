@@ -90,7 +90,7 @@ const useMediaCover = () => {
   const { contentType: storeContentType, saved_mal_id, slug } = usePageStore();
   const { data: hikkaData, isLoading } = useHikka();
 
-  let malId = saved_mal_id ?? hikkaData?.mal_id ?? null;
+  let malId = hikkaData?.mal_id ?? saved_mal_id ?? null;
 
   return useQuery({
     queryKey: ['media-cover', malId],

@@ -36,7 +36,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { usePlayer } from '@/entrypoints/content/modules/player/context/player-context';
+import { usePlayer } from '@/entrypoints/content/features/player/context/player-context';
 
 import { Button } from '../ui/button';
 import {

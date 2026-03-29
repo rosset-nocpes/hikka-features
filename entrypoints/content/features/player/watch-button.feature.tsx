@@ -1,6 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { type FC, useEffect } from 'react';
+import { useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import MaterialSymbolsSubscriptionsOutlineRounded from '~icons/material-symbols/subscriptions-outline-rounded';
 
@@ -9,43 +9,70 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 
 import { queryClient } from '../..';
+import { BaseFeature } from '../../core/base-feature';
+import { HikkaPages } from '../../core/core.enums';
 import player from './player';
 
-export default async function watchButton(location?: Element) {
-  if (document.body.querySelectorAll('watch-button').length !== 0) {
-    return;
+// export default async function watchButton(location?: Element) {
+//   const existing = document.body.querySelectorAll(MOUNT_TAG);
+//   if (existing.length > 0) return;
+
+//   return createShadowRootUi(usePageStore.getState().ctx, {
+//     name: MOUNT_TAG,
+//     position: 'inline',
+//     append: 'first',
+//     anchor: location || 'main > div:nth-of-type(2) div.relative',
+//     css: `:host(${MOUNT_TAG}) { margin-right: -0.5rem !important; ${getThemeVariables()} }`,
+//     inheritStyles: true,
+//     async onMount(container) {
+//       const wrapper = document.createElement('div');
+//       container.append(wrapper);
+
+//       const root = createRoot(wrapper);
+//       root.render(
+//         <QueryClientProvider client={queryClient}>
+//           <WatchButton />
+//         </QueryClientProvider>,
+//       );
+
+//       return { root, wrapper };
+//     },
+//   });
+// }
+
+export default class WatchButtonFeature extends BaseFeature {
+  readonly id = 'watch-button';
+  readonly pages = [HikkaPages.AnimeContent];
+
+  async init() {
+    this.ui = await createShadowRootUi(usePageStore.getState().ctx, {
+      name: this.id,
+      position: 'inline',
+      append: 'first',
+      anchor: 'main > div:nth-of-type(2) div.relative',
+      css: `:host(${this.id}) { margin-right: -0.5rem !important; ${getThemeVariables()} }`,
+      inheritStyles: true,
+      onMount: (container) => {
+        const wrapper = document.createElement('div');
+        container.append(wrapper);
+
+        const root = createRoot(wrapper);
+        root.render(
+          <QueryClientProvider client={queryClient}>
+            <WatchButton />
+          </QueryClientProvider>,
+        );
+
+        return root;
+      },
+      onRemove: (root) => {
+        root?.unmount();
+      },
+    });
   }
-
-  return createShadowRootUi(usePageStore.getState().ctx, {
-    name: 'watch-button',
-    position: 'inline',
-    append: 'first',
-    anchor:
-      location ||
-      document.querySelector('div.sticky.bottom-3.z-10.mt-12 > div'),
-    css: `:host(watch-button) { margin-right: -0.5rem; ${getThemeVariables()} }`,
-    inheritStyles: true,
-    async onMount(container) {
-      const wrapper = document.createElement('div');
-      container.append(wrapper);
-
-      const root = createRoot(wrapper);
-      root.render(
-        <QueryClientProvider client={queryClient}>
-          <WatchButton container={container} />
-        </QueryClientProvider>,
-      );
-
-      return { root, wrapper };
-    },
-  });
 }
 
-interface Props {
-  container: HTMLElement;
-}
-
-const WatchButton: FC<Props> = ({ container }) => {
+const WatchButton = () => {
   const { enabled } = useSettings().features.player;
   const { data, isLoading, isError } = useWatchData();
 

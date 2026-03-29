@@ -2,6 +2,7 @@ import { usePageStore } from './use-page-store';
 
 const useHikka = () => {
   const contentType = usePageStore((s) => s.contentType);
+  const slug = usePageStore((s) => s.slug);
 
   const anime = useHikkaAnime({ enabled: contentType === 'anime' });
   const manga = useHikkaManga({ enabled: contentType === 'manga' });
@@ -10,7 +11,12 @@ const useHikka = () => {
     enabled: contentType === 'characters',
   });
   const person = useHikkaPerson({ enabled: contentType === 'person' });
-  const edit = useHikkaEdit({ enabled: contentType === 'edit' });
+  const edit = useHikkaEdit({
+    enabled: contentType === 'edit' && slug !== 'new',
+  });
+  const editCreating = useHikkaEditContent({
+    enabled: contentType === 'edit' && slug === 'new',
+  });
 
   if (
     contentType !== 'edit' &&
@@ -34,6 +40,10 @@ const useHikka = () => {
     person,
     edit,
   } as const;
+
+  if (contentType === 'edit' && slug === 'new') {
+    return editCreating;
+  }
 
   return map[contentType];
 };

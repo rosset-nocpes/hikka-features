@@ -76,12 +76,6 @@ export const proxyUrl = <T = any>(
 };
 
 export default defineBackground(() => {
-  browser.webNavigation.onHistoryStateUpdated.addListener(async (details) => {
-    if (!details.transitionQualifiers.includes('forward_back')) {
-      browser.tabs.sendMessage(details.tabId, { type: 'page-rendered' });
-    }
-  });
-
   browser.runtime.onMessage.addListener(
     async (request: unknown, sender): Promise<true | undefined> => {
       // Type guard for MessageRequest

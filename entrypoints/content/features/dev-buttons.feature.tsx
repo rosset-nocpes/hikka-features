@@ -7,36 +7,44 @@ import { createRoot } from 'react-dom/client';
 import { Button } from '@/components/ui/button';
 
 import { queryClient } from '..';
+import { BaseFeature } from '../core/base-feature';
+import { HikkaPages } from '../core/core.enums';
 
-const devButtons = async () => {
-  if (document.body.querySelectorAll('dev-buttons').length !== 0) {
-    return;
+export default class DevButtonsFeature extends BaseFeature {
+  readonly id = 'dev-buttons';
+  readonly pages = [
+    HikkaPages.AnimeMainPage,
+    HikkaPages.MangaMainPage,
+    HikkaPages.NovelMainPage,
+  ];
+
+  async init() {
+    this.ui = await createShadowRootUi(usePageStore.getState().ctx, {
+      name: this.id,
+      position: 'inline',
+      append: 'last',
+      anchor: '.grid.grid-cols-1 > div:nth-of-type(2) > div:nth-of-type(1)',
+      css: `:host(${this.id}) { margin-bottom: -1rem !important; ${getThemeVariables()} }`,
+      inheritStyles: true,
+      onMount(container) {
+        const wrapper = document.createElement('div');
+        container.append(wrapper);
+
+        const root = createRoot(wrapper);
+        root.render(
+          <QueryClientProvider client={queryClient}>
+            <DevButtons />
+          </QueryClientProvider>,
+        );
+
+        return root;
+      },
+      onRemove: (root) => {
+        root?.unmount();
+      },
+    });
   }
-
-  return createShadowRootUi(usePageStore.getState().ctx, {
-    name: 'dev-buttons',
-    position: 'inline',
-    append: 'last',
-    anchor: document.querySelector(
-      'main > div > div.flex.flex-col.gap-12 > div.flex.flex-col.gap-4',
-    ),
-    css: `:host(dev-buttons) { margin-bottom: -1rem; ${getThemeVariables()} }`,
-    inheritStyles: true,
-    async onMount(container) {
-      const wrapper = document.createElement('div');
-      container.append(wrapper);
-
-      const root = createRoot(wrapper);
-      root.render(
-        <QueryClientProvider client={queryClient}>
-          <DevButtons />
-        </QueryClientProvider>,
-      );
-
-      return { root, wrapper };
-    },
-  });
-};
+}
 
 const DevButtons = () => {
   const { devTools } = useSettings().features.devOptions;
@@ -61,18 +69,24 @@ const DevButtons = () => {
       {devTools && (
         <motion.div
           className="flex gap-2"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
+          initial={{ opacity: 0, height: 0, scale: 0.93, marginBottom: 0 }}
+          animate={{
+            opacity: 1,
+            height: 'auto',
+            scale: 1,
+            marginBottom: '1rem',
+          }}
+          exit={{ opacity: 0, height: 0, scale: 0.93, marginBottom: 0 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
         >
           <Button
             variant="ghost"
             size="sm"
+            className="overflow-hidden"
             onClick={() => handleCopy(slug, 'slug')}
           >
             <Indicator isCopied={copiedButton === 'slug'} />
-            {slug}
+            <span className="truncate">{slug}</span>
           </Button>
           <Button
             variant="ghost"
@@ -118,5 +132,3 @@ const Indicator = ({ isCopied }: IndicatorProps) => {
     </div>
   );
 };
-
-export default devButtons;

@@ -8,7 +8,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import MaterialSymbolsPageInfoOutlineRounded from '~icons/material-symbols/page-info-outline-rounded';
 
-import { usePlayer } from '@/entrypoints/content/modules/player/context/player-context';
+import { usePlayer } from '@/entrypoints/content/features/player/context/player-context';
 
 import { Button } from '../ui/button';
 import {

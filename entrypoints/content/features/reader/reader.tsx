@@ -18,7 +18,7 @@ import { ReaderType } from './reader.enums';
 
 const MOUNT_TAG = 'reader-ui';
 
-export default function reader(type: ReaderType) {
+export default function reader() {
   return createShadowRootUi(usePageStore.getState().ctx, {
     name: MOUNT_TAG,
     position: 'modal',
@@ -32,8 +32,10 @@ export default function reader(type: ReaderType) {
         'size-full md:backdrop-blur-sm bg-black/60 flex items-center justify-center md:p-8 duration-300';
 
       container.className = 'h-full';
-      const { darkMode } = useSettings.getState();
-      container.classList.toggle('dark', darkMode);
+      container.classList.toggle(
+        'dark',
+        getComputedStyle(document.documentElement).colorScheme === 'dark',
+      );
 
       Fonts.injectAllFonts();
 
@@ -41,10 +43,10 @@ export default function reader(type: ReaderType) {
       root.render(
         <QueryClientProvider client={queryClient}>
           <SidebarProvider className="h-full w-full">
-            <ReaderProvider type={type} container={container}>
+            <ReaderProvider container={container}>
               <div
                 className="fixed z-0 size-full"
-                onClick={() => reader(type).then((x) => x.remove())}
+                onClick={() => reader().then((x) => x.remove())}
               />
               <Reader />
               <Toaster position="top-center" />
@@ -82,7 +84,7 @@ export const Reader = () => {
       switch (e.key) {
         case 'Escape':
           e.preventDefault();
-          reader(settings.type).then((x) => x.remove());
+          reader().then((x) => x.remove());
           break;
       }
     };
