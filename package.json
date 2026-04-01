@@ -78,8 +78,11 @@
     "unplugin-icons": "^23.0.1",
     "wxt": "^0.20.20"
   },
+  "overrides": {
+    "publish-browser-extension": "4.0.4"
+  },
   "patchedDependencies": {
     "vaul@1.1.2": "patches/vaul@1.1.2.patch",
-    "publish-browser-extension@3.0.2": "patches/publish-browser-extension@3.0.2.patch"
+    "publish-browser-extension@4.0.4": "patches/publish-browser-extension@4.0.4.patch"
   }
 }
