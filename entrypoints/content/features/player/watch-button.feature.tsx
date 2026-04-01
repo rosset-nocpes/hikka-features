@@ -13,33 +13,6 @@ import { BaseFeature } from '../../core/base-feature';
 import { HikkaPages } from '../../core/core.enums';
 import player from './player';
 
-// export default async function watchButton(location?: Element) {
-//   const existing = document.body.querySelectorAll(MOUNT_TAG);
-//   if (existing.length > 0) return;
-
-//   return createShadowRootUi(usePageStore.getState().ctx, {
-//     name: MOUNT_TAG,
-//     position: 'inline',
-//     append: 'first',
-//     anchor: location || 'main > div:nth-of-type(2) div.relative',
-//     css: `:host(${MOUNT_TAG}) { margin-right: -0.5rem !important; ${getThemeVariables()} }`,
-//     inheritStyles: true,
-//     async onMount(container) {
-//       const wrapper = document.createElement('div');
-//       container.append(wrapper);
-
-//       const root = createRoot(wrapper);
-//       root.render(
-//         <QueryClientProvider client={queryClient}>
-//           <WatchButton />
-//         </QueryClientProvider>,
-//       );
-
-//       return { root, wrapper };
-//     },
-//   });
-// }
-
 export default class WatchButtonFeature extends BaseFeature {
   readonly id = 'watch-button';
   readonly pages = [HikkaPages.AnimeContent];

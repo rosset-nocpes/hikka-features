@@ -37,7 +37,7 @@ export default defineConfig({
     },
   }),
   webExt: {
-    startUrls: ['https://dev.hikka.io'],
+    startUrls: ['https://hikka.io'],
     chromiumArgs:
       !isWindows && isPersistent ? ['--user-data-dir=./.wxt/chrome-data'] : [],
     chromiumProfile: isWindows && isPersistent && resolve('.wxt/chrome-data'),

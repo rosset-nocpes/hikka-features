@@ -25,11 +25,17 @@ export default class ReadButtonFeature extends BaseFeature {
       position: 'inline',
       append: 'first',
       anchor: 'div.sticky.bottom-3.z-10.mt-12 > div',
-      css: `:host(${id}) { margin-right: -0.5rem !important; ${getThemeVariables()} }`,
+      css: `:host(${id}) { margin-right: -0.5rem !important; }`,
       inheritStyles: true,
       onMount: (container) => {
         const wrapper = document.createElement('div');
         container.append(wrapper);
+
+        container.style = getThemeVariables();
+        container.classList.toggle(
+          'dark',
+          getComputedStyle(document.documentElement).colorScheme === 'dark',
+        );
 
         const root = createRoot(wrapper);
         root.render(
