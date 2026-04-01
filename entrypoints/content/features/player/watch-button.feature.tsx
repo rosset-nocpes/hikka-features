@@ -50,11 +50,17 @@ export default class WatchButtonFeature extends BaseFeature {
       position: 'inline',
       append: 'first',
       anchor: 'main > div:nth-of-type(2) div.relative',
-      css: `:host(${this.id}) { margin-right: -0.5rem !important; ${getThemeVariables()} }`,
+      css: `:host(${this.id}) { margin-right: -0.5rem !important; }`,
       inheritStyles: true,
       onMount: (container) => {
         const wrapper = document.createElement('div');
         container.append(wrapper);
+
+        container.style = getThemeVariables();
+        container.classList.toggle(
+          'dark',
+          getComputedStyle(document.documentElement).colorScheme === 'dark',
+        );
 
         const root = createRoot(wrapper);
         root.render(

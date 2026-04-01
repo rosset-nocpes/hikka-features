@@ -23,10 +23,16 @@ export default class CharacterSuggestionFeature extends BaseFeature {
         document.querySelector('input[placeholder*="українською"]')
           ?.parentElement,
       inheritStyles: true,
-      css: `:host(${this.id}) { margin-top: -1rem !important; width: 100% !important; ${getThemeVariables()} }`,
+      css: `:host(${this.id}) { margin-top: -1rem !important; width: 100% !important; }`,
       onMount(container) {
         const wrapper = document.createElement('div');
         container.append(wrapper);
+
+        container.style = getThemeVariables();
+        container.classList.toggle(
+          'dark',
+          getComputedStyle(document.documentElement).colorScheme === 'dark',
+        );
 
         if (container.parentElement) {
           container.parentElement.style.right = '0.25rem';

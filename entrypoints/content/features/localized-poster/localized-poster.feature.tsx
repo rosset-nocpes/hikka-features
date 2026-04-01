@@ -29,11 +29,16 @@ export default class LocalizedPosterFeature extends BaseFeature {
       append: 'first',
       anchor:
         '.grid.grid-cols-1 > div:nth-of-type(1) > div:nth-of-type(1) div.relative div.relative',
-      css: `:host(${this.id}) { ${getThemeVariables()} }`,
       inheritStyles: true,
       onMount: (container) => {
         const wrapper = document.createElement('div');
         container.append(wrapper);
+
+        container.style = getThemeVariables();
+        container.classList.toggle(
+          'dark',
+          getComputedStyle(document.documentElement).colorScheme === 'dark',
+        );
 
         container.style.position = 'absolute';
         container.style.zIndex = '1';

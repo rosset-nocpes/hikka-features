@@ -30,10 +30,15 @@ export default class FandubBlockFeature extends BaseFeature {
       append: 'last',
       anchor: '.grid.grid-cols-1 > div:nth-of-type(1) > div:nth-of-type(2)',
       inheritStyles: true,
-      css: `:host(${this.id}) { ${getThemeVariables()} }`,
       onMount(container) {
         const wrapper = document.createElement('div');
         container.append(wrapper);
+
+        container.style = getThemeVariables();
+        container.classList.toggle(
+          'dark',
+          getComputedStyle(document.documentElement).colorScheme === 'dark',
+        );
 
         const root = createRoot(wrapper);
         root.render(

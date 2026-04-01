@@ -28,11 +28,17 @@ export default class RecommendationBlockFeature extends BaseFeature {
       position: 'inline',
       append: 'after',
       anchor: '.grid.grid-cols-1 > div:nth-of-type(2) > section:last-of-type',
-      css: `:host(${this.id}) { margin-top: -2rem !important; ${getThemeVariables()} }`,
+      css: `:host(${this.id}) { margin-top: -2rem !important; }`,
       inheritStyles: true,
       onMount(container) {
         const wrapper = document.createElement('div');
         container.append(wrapper);
+
+        container.style = getThemeVariables();
+        container.classList.toggle(
+          'dark',
+          getComputedStyle(document.documentElement).colorScheme === 'dark',
+        );
 
         const root = createRoot(wrapper);
         root.render(

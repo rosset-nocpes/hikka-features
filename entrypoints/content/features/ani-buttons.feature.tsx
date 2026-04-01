@@ -50,11 +50,17 @@ export default class AniButtonsFeature extends BaseFeature {
         isEdit()
           ? `div.gap-12:nth-child(2) > section:nth-child(${creatingEdit() ? 1 : 2})`
           : '.grid.grid-cols-1 > div:nth-of-type(3) > div',
-      css: `:host(${this.id}) { margin-bottom: -2rem !important; ${getThemeVariables()} }`,
+      css: `:host(${this.id}) { margin-bottom: -2rem !important; }`,
       inheritStyles: true,
       onMount(container) {
         const wrapper = document.createElement('div');
         container.append(wrapper);
+
+        container.style = getThemeVariables();
+        container.classList.toggle(
+          'dark',
+          getComputedStyle(document.documentElement).colorScheme === 'dark',
+        );
 
         const root = createRoot(wrapper);
         root.render(
