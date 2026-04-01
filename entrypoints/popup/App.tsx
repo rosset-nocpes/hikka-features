@@ -6,6 +6,7 @@ import { version } from '@/package.json';
 import '../app.css';
 import AniBackgroundSettings from './options/anibackground-settings';
 import AniButtonsSettings from './options/anibuttons-settings';
+import CharacterSuggestionsSettings from './options/character-suggestion-settings';
 import ExperimentalSettings from './options/experimental-settings';
 import FandubSettings from './options/fandub-settings';
 import LocalizedPosterSettings from './options/localized-poster-settings';
@@ -38,7 +39,7 @@ function App() {
       </style>
       <div
         className={cn(
-          'flex h-[600px] w-[400px] flex-col gap-7 rounded-none p-[30px] font-inter font-semibold',
+          'flex h-[600px] w-[400px] flex-col gap-4 rounded-none p-7 font-inter font-semibold',
           burunyaaMode
             ? 'bg-[url(https://media1.tenor.com/m/PDzKPqFw6f8AAAAC/neco-neco-arc.gif)] bg-cover bg-center bg-no-repeat'
             : 'bg-black',
@@ -51,7 +52,7 @@ function App() {
           </span>
           <UserOptions />
         </h3>
-        <div className="flex h-full flex-col gap-5">
+        <div className="flex h-full flex-col gap-4 overflow-y-auto">
           <PlayerSettings />
           <ReaderSettings />
           <AniButtonsSettings />
@@ -59,6 +60,7 @@ function App() {
           <RecommendationBlockSettings />
           <AniBackgroundSettings />
           <LocalizedPosterSettings />
+          <CharacterSuggestionsSettings />
         </div>
         <div className="flex items-center justify-center gap-3 text-xs text-[#5C5C5C]">
           <a

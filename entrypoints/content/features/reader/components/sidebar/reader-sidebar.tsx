@@ -13,7 +13,6 @@ import ReaderSettings from './settings/reader-settings';
 import SortOptions from './sort-options';
 
 const ReaderSidebar = () => {
-  const { settings } = useReader();
   const { data } = useReadData();
 
   return (
@@ -24,7 +23,7 @@ const ReaderSidebar = () => {
             <Button
               variant="ghost"
               size="icon-sm"
-              onClick={() => reader(settings.type).then((x) => x.remove())}
+              onClick={() => reader().then((x) => x.remove())}
             >
               <MaterialSymbolsCloseRounded />
             </Button>

@@ -57,7 +57,7 @@ const ReaderNavbar: FC<Props> = ({ showControls = true }) => {
           variant="ghost"
           size="icon-sm"
           className="bg-sidebar"
-          onClick={() => reader(settings.type).then((x) => x.remove())}
+          onClick={() => reader().then((x) => x.remove())}
         >
           <MaterialSymbolsCloseRounded />
         </Button>

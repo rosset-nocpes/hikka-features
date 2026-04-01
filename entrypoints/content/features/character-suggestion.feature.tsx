@@ -57,6 +57,7 @@ export default class CharacterSuggestionFeature extends BaseFeature {
 
 const CharacterSuggestionButton = () => {
   const { data } = useEditorCharacters();
+  const { enabled } = useSettings().features.editorCharacters;
 
   const targetInput: HTMLInputElement | null = document.querySelector(
     'input[placeholder*="українською"]',
@@ -74,7 +75,7 @@ const CharacterSuggestionButton = () => {
   }, [targetInput, data]);
 
   useEffect(() => {
-    if (!targetInput) return;
+    if (!targetInput || !enabled) return;
 
     const handleKeydown = (e: KeyboardEvent) => {
       if (
@@ -98,7 +99,7 @@ const CharacterSuggestionButton = () => {
       targetInput.removeEventListener('input', handleInput);
       document.removeEventListener('keydown', handleKeydown);
     };
-  }, [targetInput, inputValue, applySuggestion]);
+  }, [enabled, targetInput, inputValue, applySuggestion]);
 
   const MotionButton = motion.create(Button);
 
@@ -106,7 +107,7 @@ const CharacterSuggestionButton = () => {
 
   return (
     <AnimatePresence>
-      {isVisible && (
+      {enabled && isVisible && (
         <MotionButton
           layout
           variant="secondary"

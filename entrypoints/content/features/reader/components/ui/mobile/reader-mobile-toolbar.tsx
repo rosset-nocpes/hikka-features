@@ -85,7 +85,7 @@ const ReaderMobileToolbar = () => {
         <Button
           variant="secondary"
           size="md"
-          onClick={() => reader(settings.type).then((x) => x.remove())}
+          onClick={() => reader().then((x) => x.remove())}
         >
           <MaterialSymbolsCloseRounded />
         </Button>

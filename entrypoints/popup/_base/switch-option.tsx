@@ -1,20 +1,38 @@
 import type { FC, PropsWithChildren } from 'react';
 
+import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 
 interface Props extends PropsWithChildren {
   label: string;
+  beta?: boolean;
   description?: string;
   checked: boolean;
   onClick?: () => void;
 }
 
-const SwitchOption: FC<Props> = ({ label, description, checked, onClick }) => {
+const SwitchOption: FC<Props> = ({
+  label,
+  description,
+  checked,
+  onClick,
+  beta = false,
+}) => {
   return (
     <div className="flex items-center justify-between">
       <div className="mr-10 flex flex-col gap-1">
-        <Label>{label}</Label>
+        <Label className="flex gap-1">
+          {label}
+          {beta && (
+            <Badge
+              variant="outline"
+              className="cursor-default bg-yellow-500 px-2 py-0 text-primary-foreground"
+            >
+              Beta
+            </Badge>
+          )}
+        </Label>
         {description && (
           <p className="text-xs font-medium text-[#A1A1A1]">{description}</p>
         )}
