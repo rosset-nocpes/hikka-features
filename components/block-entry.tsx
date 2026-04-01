@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { type ReactNode } from 'react';
 
 interface Props extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
   children?: ReactNode;
@@ -9,10 +9,7 @@ const BlockEntry = React.forwardRef<HTMLAnchorElement, Props>(
   ({ children, className, ...props }, ref) => {
     return (
       <a
-        className={cn(
-          'flex items-center gap-2 rounded-sm p-1 text-sm font-medium transition hover:bg-secondary/60',
-          className,
-        )}
+        className={cn('flex items-center gap-4', className)}
         target="_blank"
         ref={ref}
         {...props}

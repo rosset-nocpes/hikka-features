@@ -5,10 +5,11 @@ import biuScraper from '../services/bakainua';
 import miuScraper from '../services/miu';
 import { useReader } from './use-reader';
 
-const useReadData = (type?: ReaderType) => {
-  type = type || useReader.getState().settings.type;
-  const { data } = useHikka();
-  const { slug } = usePageStore();
+const useReadData = () => {
+  const { slug, contentType } = usePageStore();
+  const { data, isLoading } = useHikka();
+
+  const type = contentType || useReader.getState().settings.type;
 
   return useQuery({
     queryKey: ['read-data', type, slug],
@@ -27,6 +28,7 @@ const useReadData = (type?: ReaderType) => {
 
       return r;
     },
+    enabled: !isLoading && !!data,
     retry: false,
     staleTime: Infinity,
   });

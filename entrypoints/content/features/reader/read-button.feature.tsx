@@ -1,83 +1,69 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { type FC, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import MaterialSymbolsSubscriptionsOutlineRounded from '~icons/material-symbols/subscriptions-outline-rounded';
+import MaterialSymbolsMenuBookOutlineRounded from '~icons/material-symbols/menu-book-outline-rounded';
 
 import { RotatingText } from '@/components/animate-ui/text/rotating';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 
 import { queryClient } from '../..';
-import player from './player';
+import { BaseFeature } from '../../core/base-feature';
+import { HikkaPages } from '../../core/core.enums';
+import useReadData from './hooks/use-read-data';
+import reader from './reader';
 
-export default async function watchButton(location?: Element) {
-  if (document.body.querySelectorAll('watch-button').length !== 0) {
-    return;
+export default class ReadButtonFeature extends BaseFeature {
+  readonly id = 'read-button';
+  readonly pages = [HikkaPages.MangaContent, HikkaPages.NovelContent];
+
+  async init() {
+    const id = this.id;
+
+    this.ui = await createShadowRootUi(usePageStore.getState().ctx, {
+      name: id,
+      position: 'inline',
+      append: 'first',
+      anchor: 'div.sticky.bottom-3.z-10.mt-12 > div',
+      css: `:host(${id}) { margin-right: -0.5rem !important; ${getThemeVariables()} }`,
+      inheritStyles: true,
+      onMount: (container) => {
+        const wrapper = document.createElement('div');
+        container.append(wrapper);
+
+        const root = createRoot(wrapper);
+        root.render(
+          <QueryClientProvider client={queryClient}>
+            <ReadButton />
+          </QueryClientProvider>,
+        );
+
+        return root;
+      },
+      onRemove: (root) => {
+        root?.unmount();
+      },
+    });
   }
-
-  return createShadowRootUi(usePageStore.getState().ctx, {
-    name: 'watch-button',
-    position: 'inline',
-    append: 'first',
-    anchor:
-      location ||
-      document.querySelector('div.sticky.bottom-3.z-10.mt-12 > div'),
-    css: `:host(watch-button) { margin-right: -0.5rem; ${getThemeVariables()} }`,
-    inheritStyles: true,
-    async onMount(container) {
-      const wrapper = document.createElement('div');
-      container.append(wrapper);
-
-      const root = createRoot(wrapper);
-      root.render(
-        <QueryClientProvider client={queryClient}>
-          <WatchButton container={container} />
-        </QueryClientProvider>,
-      );
-
-      return { root, wrapper };
-    },
-  });
 }
 
-interface Props {
-  container: HTMLElement;
-}
+const ReadButton = () => {
+  const { enabled } = useSettings().features.reader;
 
-const WatchButton: FC<Props> = ({ container }) => {
-  const { enabled } = useSettings().features.player;
-  const { data, isLoading, isError } = useWatchData();
+  const { data, isLoading, isError } = useReadData();
 
-  const openPlayer = () => {
+  const openReader = () => {
     document.body.classList.toggle('h-full');
     document.body.classList.toggle('overflow-hidden');
-    player().then((ui) => ui.mount());
+    reader().then((ui) => ui.mount());
   };
-
-  useEffect(() => {
-    if (data === null || data === undefined) return;
-
-    const path_params = new URLSearchParams(document.location.search);
-
-    if (
-      path_params.has('room') ||
-      (path_params.has('playerProvider') &&
-        path_params.has('playerTeam') &&
-        path_params.has('playerEpisode'))
-    ) {
-      document.body.classList.toggle('h-full');
-      document.body.classList.toggle('overflow-hidden');
-      player().then((ui) => ui.mount());
-    }
-  }, [data]);
 
   const statusMessage = isLoading
     ? 'Шукаю'
     : isError
       ? 'Немає'
       : data
-        ? 'Перегляд'
+        ? 'Читати'
         : '';
 
   return (
@@ -100,7 +86,7 @@ const WatchButton: FC<Props> = ({ container }) => {
             size="md"
             className="gap-2"
             disabled={isLoading || isError}
-            onClick={openPlayer}
+            onClick={openReader}
           >
             <Indicator isLoading={isLoading} />
             <RotatingText text={statusMessage} />
@@ -127,7 +113,7 @@ const Indicator = ({ isLoading }: IndicatorProps) => {
             : 'scale-100 opacity-100 blur-0',
         )}
       >
-        <MaterialSymbolsSubscriptionsOutlineRounded className="size-full" />
+        <MaterialSymbolsMenuBookOutlineRounded className="size-full" />
       </div>
       <div
         className={cn(

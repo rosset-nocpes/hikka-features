@@ -7,52 +7,60 @@ import { Button } from '@/components/ui/button';
 import { Kbd } from '@/components/ui/kbd';
 
 import { queryClient } from '..';
+import { BaseFeature } from '../core/base-feature';
+import { HikkaPages } from '../core/core.enums';
 
-const INPUT_SELECTOR = 'input[placeholder*="українською"]';
-const MOUNT_TAG = 'character-suggestion';
+export default class CharacterSuggestionFeature extends BaseFeature {
+  readonly id = 'character-suggestion';
+  readonly pages = [HikkaPages.EditCreateCharacter];
 
-let isMounting = false;
+  async init() {
+    this.ui = await createShadowRootUi(usePageStore.getState().ctx, {
+      name: this.id,
+      position: 'overlay',
+      alignment: 'bottom-right',
+      anchor: () =>
+        document.querySelector('input[placeholder*="українською"]')
+          ?.parentElement,
+      inheritStyles: true,
+      css: `:host(${this.id}) { margin-top: -1rem !important; width: 100% !important; }`,
+      onMount(container) {
+        const wrapper = document.createElement('div');
+        container.append(wrapper);
 
-export const characterSuggestion = async () => {
-  const existing = document.body.querySelectorAll(MOUNT_TAG);
-  if (existing.length > 0 || isMounting) return;
+        container.style = getThemeVariables();
+        container.classList.toggle(
+          'dark',
+          getComputedStyle(document.documentElement).colorScheme === 'dark',
+        );
 
-  isMounting = true;
+        if (container.parentElement) {
+          container.parentElement.style.right = '0.25rem';
+          container.parentElement.style.bottom = '0.25rem';
+        }
 
-  return createShadowRootUi(usePageStore.getState().ctx, {
-    name: MOUNT_TAG,
-    position: 'overlay',
-    alignment: 'bottom-right',
-    anchor: () => document.querySelector(INPUT_SELECTOR)?.parentElement,
-    inheritStyles: true,
-    css: `:host(${MOUNT_TAG}) { margin-top: -1rem; width: 100% !important; ${getThemeVariables()} }`,
-    async onMount(container) {
-      const wrapper = document.createElement('div');
-      container.append(wrapper);
+        const root = createRoot(wrapper);
+        root.render(
+          <QueryClientProvider client={queryClient}>
+            <CharacterSuggestionButton />
+          </QueryClientProvider>,
+        );
 
-      if (container.parentElement) {
-        container.parentElement.style.right = '0.5rem';
-        container.parentElement.style.bottom = '0.5rem';
-      }
-
-      const root = createRoot(wrapper);
-      root.render(
-        <QueryClientProvider client={queryClient}>
-          <CharacterSuggestionButton />
-        </QueryClientProvider>,
-      );
-
-      isMounting = false;
-      return { root, wrapper };
-    },
-  });
-};
+        return root;
+      },
+      onRemove: (root) => {
+        root?.unmount();
+      },
+    });
+  }
+}
 
 const CharacterSuggestionButton = () => {
   const { data } = useEditorCharacters();
 
-  const targetInput: HTMLInputElement | null =
-    document.querySelector(INPUT_SELECTOR);
+  const targetInput: HTMLInputElement | null = document.querySelector(
+    'input[placeholder*="українською"]',
+  );
 
   const [inputValue, setInputValue] = useState(targetInput?.value);
 
@@ -116,5 +124,3 @@ const CharacterSuggestionButton = () => {
     </AnimatePresence>
   );
 };
-
-export default characterSuggestion;

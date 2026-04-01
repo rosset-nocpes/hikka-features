@@ -11,6 +11,11 @@ export const getThemeVariables = (): string => {
   const isDark = document.documentElement.classList.contains('dark');
   const variables = new Map<string, string>();
 
+  const unwrapHsl = (value: string): string => {
+    const match = value.match(/hsl\((.*)\)/i);
+    return match ? match[1].trim() : value;
+  };
+
   try {
     const rules = Array.from(userStyles.sheet.cssRules);
 
@@ -24,13 +29,18 @@ export const getThemeVariables = (): string => {
         Array.from(rule.style)
           .filter((prop) => prop.startsWith('--'))
           .map((prop) =>
-            variables.set(prop, rule.style.getPropertyValue(prop).trim()),
+            variables.set(
+              prop,
+              unwrapHsl(rule.style.getPropertyValue(prop).trim()),
+            ),
           );
       }
     };
 
     extractVariables(':root');
-    if (isDark) extractVariables('.dark');
+    extractVariables(':root:root');
+    extractVariables('.dark');
+    if (isDark) extractVariables('.dark.dark');
 
     return Array.from(variables.entries())
       .map(([key, value]) => `${key}: ${value};`)

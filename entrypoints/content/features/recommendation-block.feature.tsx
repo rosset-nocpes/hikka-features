@@ -11,44 +11,56 @@ import HFLogoSmallDark from '@/public/hikka-features-small-dark.svg';
 import HFLogoSmall from '@/public/hikka-features-small.svg';
 
 import { queryClient } from '..';
+import { BaseFeature } from '../core/base-feature';
+import { HikkaPages } from '../core/core.enums';
 
-const recommendationBlock = async (location?: Element) => {
-  if (document.body.querySelectorAll('recommendation-block').length !== 0) {
-    return;
+export default class RecommendationBlockFeature extends BaseFeature {
+  readonly id = 'recommendation-block';
+  readonly pages = [
+    HikkaPages.AnimeMainPage,
+    HikkaPages.MangaMainPage,
+    HikkaPages.NovelMainPage,
+  ];
+
+  async init() {
+    this.ui = await createShadowRootUi(usePageStore.getState().ctx, {
+      name: this.id,
+      position: 'inline',
+      append: 'after',
+      anchor: '.grid.grid-cols-1 > div:nth-of-type(2) > section:last-of-type',
+      css: `:host(${this.id}) { margin-top: -2rem !important; }`,
+      inheritStyles: true,
+      onMount(container) {
+        const wrapper = document.createElement('div');
+        container.append(wrapper);
+
+        container.style = getThemeVariables();
+        container.classList.toggle(
+          'dark',
+          getComputedStyle(document.documentElement).colorScheme === 'dark',
+        );
+
+        const root = createRoot(wrapper);
+        root.render(
+          <QueryClientProvider client={queryClient}>
+            <RecommendationBlock />
+          </QueryClientProvider>,
+        );
+
+        return root;
+      },
+      onRemove: (root) => {
+        root?.unmount();
+      },
+    });
   }
-
-  return createShadowRootUi(usePageStore.getState().ctx, {
-    name: 'recommendation-block',
-    position: 'inline',
-    append: 'last',
-    anchor: location || document.querySelector('.grid > div:nth-of-type(2)'),
-    css: `:host(recommendation-block) { margin-top: -3rem; ${getThemeVariables()} }`,
-    inheritStyles: true,
-    async onMount(container) {
-      const wrapper = document.createElement('div');
-      container.append(wrapper);
-
-      const root = createRoot(wrapper);
-      root.render(
-        <QueryClientProvider client={queryClient}>
-          <RecommendationBlock container={container} />
-        </QueryClientProvider>,
-      );
-
-      return { root, wrapper };
-    },
-  });
-};
-
-interface Props {
-  container: HTMLElement;
 }
 
-const RecommendationBlock: FC<Props> = ({ container }) => {
+const RecommendationBlock: FC = () => {
   const { enabled } = useSettings().features.recommendationBlock;
 
   const { contentType } = usePageStore();
-  const content_data = useHikka()?.data;
+  const { data: content_data } = useHikka();
   const { data, isLoading } = useRecommendation();
 
   const mal_id = content_data.mal_id;
@@ -62,14 +74,14 @@ const RecommendationBlock: FC<Props> = ({ container }) => {
             opacity: 1,
             height: 'auto',
             scale: 1,
-            marginTop: '3rem',
+            marginTop: '2rem',
           }}
           exit={{ opacity: 0, height: 0, scale: 0.93, marginTop: 0 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
-          className="flex flex-col gap-4 lg:gap-8"
+          className="flex flex-col gap-4 lg:gap-6"
         >
           <div className="flex items-center justify-between gap-2">
-            <h3 className="flex scroll-m-20 items-center justify-between gap-2 text-xl font-bold tracking-normal">
+            <h3 className="flex items-center justify-between gap-2">
               Схожий контент
               <img
                 src={
@@ -85,9 +97,9 @@ const RecommendationBlock: FC<Props> = ({ container }) => {
               disabled={isLoading || data?.recommendations.length === 0}
             />
           </div>
-          <div className="no-scrollbar grid-min-6 relative -mx-4 -my-4 grid auto-cols-scroll grid-flow-col grid-cols-scroll gap-4 overflow-x-scroll px-4 py-4 md:grid-cols-5 md:gradient-mask-none lg:gap-8">
+          <div className="no-scrollbar grid-min-6 relative -mx-4 -my-4 grid auto-cols-scroll grid-flow-col grid-cols-scroll gap-4 overflow-x-scroll p-4 md:grid-cols-5 md:gradient-mask-none lg:gap-6">
             {isLoading &&
-              Array.from({ length: 4 }).map((_, index) => (
+              Array.from({ length: 5 }).map((_, index) => (
                 <div key={index} className="flex flex-col gap-2">
                   <AspectRatio
                     ratio={0.7}
@@ -97,7 +109,7 @@ const RecommendationBlock: FC<Props> = ({ container }) => {
                 </div>
               ))}
             {data?.recommendations.length === 0 &&
-              Array.from({ length: 4 }).map((_, index) => (
+              Array.from({ length: 5 }).map((_, index) => (
                 <div key={index} className="flex flex-col gap-2">
                   <AspectRatio
                     ratio={0.7}
@@ -148,5 +160,3 @@ const RecommendationBlock: FC<Props> = ({ container }) => {
     </AnimatePresence>
   );
 };
-
-export default recommendationBlock;

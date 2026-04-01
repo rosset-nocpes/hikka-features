@@ -2,18 +2,16 @@ import { useQuery } from '@tanstack/react-query';
 
 import { ProviderIFrame, ProviderTeamIFrame } from '@/utils/provider_classes';
 
-import useHikkaAnime from './use-hikka-anime';
-
 // TODO: add types for api
 const useWatchData = () => {
-  const { data: anime_data } = useHikkaAnime();
   const { backendBranch } = useSettings();
+  const { slug } = usePageStore();
 
   return useQuery({
-    queryKey: ['watch-data', anime_data.slug],
+    queryKey: ['watch-data', slug],
     queryFn: async () => {
       const r = await fetch(
-        `${BACKEND_BRANCHES[backendBranch]}/watch/v2/${anime_data.slug}`,
+        `${BACKEND_BRANCHES[backendBranch]}/watch/v2/${slug}`,
       );
 
       if (!r.ok) {
