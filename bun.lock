@@ -17,7 +17,7 @@
         "@types/react-transition-group": "^4.4.12",
         "@vidstack/react": "^1.12.13",
         "@vitejs/plugin-react": "^6.0.1",
-        "axios": "^1.13.6",
+        "axios": "1.13.6",
         "cheerio": "^1.2.0",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
