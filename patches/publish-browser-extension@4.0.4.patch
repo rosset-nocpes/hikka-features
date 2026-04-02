@@ -1,20 +1,22 @@
 diff --git a/dist/init-D1800OqA.mjs b/dist/init-D1800OqA.mjs
-index c3167954ca4adf019742b71c56eb7d73abf41a86..834df8bbe46c83683b1699b183150562d545663c 100644
+index c3167954ca4adf019742b71c56eb7d73abf41a86..a3bc0ccbb5a2f04335293330993ce37bdd126539 100644
 --- a/dist/init-D1800OqA.mjs
 +++ b/dist/init-D1800OqA.mjs
-@@ -307,6 +307,7 @@ var AddonsApi = class {
+@@ -307,6 +307,8 @@ var AddonsApi = class {
  		const form = new FormData();
  		form.set("channel", params.channel);
  		form.set("upload", await fileFromPath(params.file));
-+		form.set("compatibility", ['firefox', 'android']);
++		const compatibility = ['firefox', 'android'];
++		compatibility.forEach(item => form.append("compatibility", item));
  		const encoder = new FormDataEncoder(form);
  		return await fetch(endpoint.href, {
  			method: "POST",
-@@ -329,6 +330,7 @@ var AddonsApi = class {
+@@ -329,6 +331,8 @@ var AddonsApi = class {
  		form.set("upload", params.uploadUuid);
  		if (params.sourceFile) form.set("source", await fileFromPath(params.sourceFile));
  		else form.set("source", "");
-+		form.set("compatibility", ['firefox', 'android']);
++		const compatibility = ['firefox', 'android'];
++		compatibility.forEach(item => form.append("compatibility", item));
  		const encoder = new FormDataEncoder(form);
  		return await fetch(endpoint.href, {
  			method: "POST",
