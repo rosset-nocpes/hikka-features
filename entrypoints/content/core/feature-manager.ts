@@ -64,6 +64,7 @@ export class FeatureManager {
    */
   private startObserving() {
     this.observer = new MutationObserver(() => {
+      usePageStore.getState().updateFromUrl(new URL(location.href));
       this.reconcile();
     });
 

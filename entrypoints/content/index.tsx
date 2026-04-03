@@ -14,12 +14,7 @@ export default defineContentScript({
     usePageStore.getState().setCTX(ctx);
 
     const manager = new FeatureManager();
-
     manager.init();
-
-    ctx.addEventListener(window, 'wxt:locationchange', ({ newUrl }) => {
-      usePageStore.getState().updateFromUrl(newUrl);
-    });
 
     ctx.onInvalidated(() => {
       manager.stop();
