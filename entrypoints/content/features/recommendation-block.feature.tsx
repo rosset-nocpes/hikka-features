@@ -63,11 +63,9 @@ const RecommendationBlock: FC = () => {
   const { data: content_data } = useHikka();
   const { data, isLoading } = useRecommendation();
 
-  const mal_id = content_data.mal_id;
-
   return (
     <AnimatePresence>
-      {enabled && (
+      {enabled && content_data && (
         <motion.div
           initial={{ opacity: 0, height: 0, scale: 0.93, marginTop: 0 }}
           animate={{
@@ -93,7 +91,7 @@ const RecommendationBlock: FC = () => {
               />
             </h3>
             <BlockButton
-              href={`https://myanimelist.net/${contentType === 'novel' ? 'manga' : contentType}/${mal_id}`}
+              href={`https://myanimelist.net/${contentType === 'novel' ? 'manga' : contentType}/${content_data.mal_id}`}
               disabled={isLoading || data?.recommendations.length === 0}
             />
           </div>

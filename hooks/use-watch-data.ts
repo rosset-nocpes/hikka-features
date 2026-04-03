@@ -37,6 +37,7 @@ const useWatchData = () => {
     },
     retry: false,
     staleTime: Infinity,
+    enabled: !!slug,
   });
 };
 

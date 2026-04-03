@@ -4,13 +4,15 @@ const useHikka = () => {
   const contentType = usePageStore((s) => s.contentType);
   const slug = usePageStore((s) => s.slug);
 
-  const anime = useHikkaAnime({ enabled: contentType === 'anime' });
-  const manga = useHikkaManga({ enabled: contentType === 'manga' });
-  const novel = useHikkaNovel({ enabled: contentType === 'novel' });
+  const anime = useHikkaAnime({ enabled: contentType === 'anime' && !!slug });
+  const manga = useHikkaManga({ enabled: contentType === 'manga' && !!slug });
+  const novel = useHikkaNovel({ enabled: contentType === 'novel' && !!slug });
   const character = useHikkaCharacter({
-    enabled: contentType === 'characters',
+    enabled: contentType === 'characters' && !!slug,
   });
-  const person = useHikkaPerson({ enabled: contentType === 'person' });
+  const person = useHikkaPerson({
+    enabled: contentType === 'person' && !!slug,
+  });
   const edit = useHikkaEdit({
     enabled: contentType === 'edit' && slug !== 'new',
   });

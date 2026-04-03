@@ -20,6 +20,7 @@ const useNotionData = () => {
     retry: false,
     staleTime: 0,
     gcTime: 0,
+    enabled: !!slug,
   });
 };
 
