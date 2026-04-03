@@ -1,6 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { queryClient } from '../..';
@@ -13,10 +13,8 @@ export default class MediaCoverFeature extends BaseFeature {
   readonly pages = [HikkaPages.All];
 
   async init() {
-    const id = this.id;
-
     this.ui = await createShadowRootUi(usePageStore.getState().ctx, {
-      name: id,
+      name: this.id,
       position: 'inline',
       append: 'last',
       anchor: 'main',
