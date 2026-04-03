@@ -1,6 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, type FC } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import HFLogoSmallDark from '@/public/hikka-features-small-dark.svg';
@@ -43,13 +42,13 @@ export default class AniButtonsFeature extends BaseFeature {
         if (isEdit()) {
           anchor.append(ui);
         } else {
-          anchor.parentElement?.insertBefore(ui, anchor.nextElementSibling);
+          anchor.parentElement?.insertBefore(ui, anchor);
         }
       },
       anchor: () =>
         isEdit()
           ? `div.gap-12:nth-child(2) > section:nth-child(${creatingEdit() ? 1 : 2})`
-          : '.grid.grid-cols-1 > div:nth-of-type(3) > div',
+          : '.grid.grid-cols-1 > div:nth-of-type(3) > #content-stats',
       css: `:host(${this.id}) { margin-bottom: -2rem !important; }`,
       inheritStyles: true,
       onMount(container) {
@@ -95,12 +94,16 @@ const AniButtons = () => {
   };
 
   const isMedia = Object.keys(MediaEnum).includes(content_type);
-  const title =
-    data?.title_ja ||
-    data?.title_en ||
-    data?.title_original ||
-    data?.name_en ||
-    data?.content.name_en;
+  const title = [
+    data?.title_ja,
+    data?.title_en,
+    data?.title_original,
+    data?.content?.title_ja,
+    data?.content?.title_en,
+    data?.content?.title_original,
+    data?.name_en,
+    data?.content?.name_en,
+  ].find(Boolean);
 
   const hosts: Record<SourcesType, string> = {
     mal: 'myanimelist.net',
