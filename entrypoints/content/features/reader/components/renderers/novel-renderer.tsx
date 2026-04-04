@@ -239,7 +239,7 @@ const ZoomableImage = ({ src, alt }: ZoomableImageProps) => {
                   layoutId={src}
                   src={src}
                   alt={alt}
-                  className="max-h-[90vh] max-w-[90vw] rounded-lg border"
+                  className="h-full max-h-[90vh] max-w-[90vw] rounded-lg border"
                 />
               </motion.div>
             )}
