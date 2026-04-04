@@ -176,7 +176,7 @@ const PageParser = memo(
 
       return (
         <motion.div
-          className="[&_img]:rounded-md [&_img]:border [&_p:not(:first-child)]:mt-6 [&_p]:leading-7 [&_span]:inline"
+          className="mb-48 [&_img]:rounded-md [&_img]:border [&_p:not(:first-child)]:mt-6 [&_p]:leading-7 [&_span]:inline"
           ref={ref}
           {...layoutAnimation}
           {...props}
