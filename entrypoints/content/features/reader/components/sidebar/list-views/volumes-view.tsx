@@ -1,5 +1,5 @@
 import { ChevronRight } from 'lucide-react';
-import { useLayoutEffect, useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 
 import {
   Collapsible,
@@ -22,25 +22,36 @@ import { useReader } from '../../../hooks/use-reader';
 import { ReaderContentMode } from '../../../reader.enums';
 
 const VolumesView = () => {
-  const { container, currentChapter, setChapter, getRead } = useReader();
+  const { currentChapter, setChapter, getRead } = useReader();
   const { data } = useReadData();
 
   const currentChapterRef = useRef<HTMLButtonElement>(null);
+  const [openVolumes, setOpenVolumes] = useState<Record<number, boolean>>(
+    () => {
+      const initial: Record<number, boolean> = {};
+      if (data?.displayMode === ReaderContentMode.Volumes && data.volumes) {
+        data.volumes.forEach((v) => {
+          initial[v.number] = v.number === currentChapter?.volume;
+        });
+      }
+      return initial;
+    },
+  );
+
+  useEffect(() => {
+    setOpenVolumes((prev) => ({
+      ...prev,
+      [currentChapter?.volume ?? 0]: true,
+    }));
+  }, [currentChapter?.volume]);
+
+  const handleOpenChange = (volumeNumber: number, isOpen: boolean) => {
+    setOpenVolumes((prev) => ({ ...prev, [volumeNumber]: isOpen }));
+  };
 
   const handleSelectChapter = (value: Chapter) => {
     setChapter(value);
   };
-
-  // initial scroll to current chapter
-  useLayoutEffect(() => {
-    if (!currentChapterRef.current) return;
-    if (data?.displayMode !== ReaderContentMode.Volumes) return;
-
-    currentChapterRef.current.scrollIntoView({
-      behavior: 'auto',
-      block: 'center',
-    });
-  }, [container]);
 
   if (data?.displayMode !== ReaderContentMode.Volumes) return;
 
@@ -51,7 +62,8 @@ const VolumesView = () => {
           <Collapsible
             key={volume.number}
             asChild
-            defaultOpen={volume.number === currentChapter?.volume}
+            open={openVolumes[volume.number]}
+            onOpenChange={(isOpen) => handleOpenChange(volume.number, isOpen)}
             className="group/collapsible"
           >
             <SidebarMenuItem>

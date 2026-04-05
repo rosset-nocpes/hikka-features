@@ -120,13 +120,22 @@ export const useReader = create<ReaderState & ReaderActions>((set, get) => ({
         (v) => v.number === currentChapter.volume,
       );
       if (volumeIndex === -1) return;
+
       const volume = data.volumes[volumeIndex];
       const chapterIndex = volume.chapters.findIndex(
         (c) => c.id === currentChapter.id,
       );
       if (chapterIndex === -1) return;
-      const nextChapter = volume.chapters[chapterIndex + 1];
-      if (!nextChapter) return;
+
+      let nextChapter = volume.chapters[chapterIndex + 1];
+
+      if (!nextChapter) {
+        const nextVolume = data.volumes[volumeIndex + 1];
+        if (!nextVolume) return;
+
+        nextChapter = nextVolume.chapters[0];
+      }
+
       set({ currentChapter: nextChapter });
     }
   },
@@ -153,13 +162,22 @@ export const useReader = create<ReaderState & ReaderActions>((set, get) => ({
         (v) => v.number === currentChapter.volume,
       );
       if (volumeIndex === -1) return;
+
       const volume = data.volumes[volumeIndex];
       const chapterIndex = volume.chapters.findIndex(
         (c) => c.id === currentChapter.id,
       );
       if (chapterIndex === -1) return;
-      const previousChapter = volume.chapters[chapterIndex - 1];
-      if (!previousChapter) return;
+
+      let previousChapter = volume.chapters[chapterIndex - 1];
+      if (!previousChapter) {
+        const previousVolume = data.volumes[volumeIndex - 1];
+        if (!previousVolume) return;
+
+        previousChapter =
+          previousVolume.chapters[previousVolume.chapters.length - 1];
+      }
+
       set({ currentChapter: previousChapter });
     }
   },
