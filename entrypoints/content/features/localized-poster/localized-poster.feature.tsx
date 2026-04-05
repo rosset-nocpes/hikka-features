@@ -1,6 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import MaterialSymbolsPlannerBannerAdPtOutlineRounded from '~icons/material-symbols/planner-banner-ad-pt-outline-rounded';
 import MaterialSymbolsPlannerBannerAdPtRounded from '~icons/material-symbols/planner-banner-ad-pt-rounded';
@@ -82,26 +82,24 @@ const LocalizedPoster = ({ container }: Props) => {
 
   return (
     <AnimatePresence>
-      {visible && data?.poster && (
-        <motion.img
-          key="poster"
-          alt="Localized Poster"
-          decoding="async"
-          className="size-full object-cover [overflow-clip-margin:unset]"
-          style={{ color: 'transparent' }}
-          src={data.poster}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: imageLoaded ? 1 : 0 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2, ease: 'easeInOut' }}
-          ref={(img) => {
-            if (img) setImageLoaded(img.complete);
-          }}
-          onLoad={() => setImageLoaded(true)}
-          onError={() => setImageLoaded(false)}
-        />
-      )}
-      {enabled && data?.poster && (
+      <motion.img
+        key="poster"
+        alt="Localized Poster"
+        decoding="async"
+        className="size-full object-cover [overflow-clip-margin:unset]"
+        style={{ color: 'transparent' }}
+        src={data?.poster}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: imageLoaded && visible ? 1 : 0 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2, ease: 'easeInOut' }}
+        ref={(img) => {
+          if (img) setImageLoaded(img.complete);
+        }}
+        onLoad={() => setImageLoaded(true)}
+        onError={() => setImageLoaded(false)}
+      />
+      {enabled && data?.poster && imageLoaded && (
         <motion.div
           key="poster-button"
           className="absolute bottom-2 right-2"
