@@ -100,7 +100,7 @@ const MangaRenderer = () => {
       window.removeEventListener('keydown', handleKeyDown);
       // carouselApi.off('scroll', handleScroll);
     };
-  }, [carouselApi]);
+  }, [carouselApi, isLoading]);
 
   useEffect(() => {
     if (!currentChapter || !carouselApi) return;
