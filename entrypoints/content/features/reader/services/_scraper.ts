@@ -1,4 +1,4 @@
-import axios from 'axios';
+import ky from 'ky';
 
 import type { ReaderContent } from '../reader.types';
 
@@ -26,8 +26,8 @@ abstract class BaseScraper {
   ) {
     const proxyUrl = this.getProxyUrl(url);
     try {
-      const response = await axios({ method, url: proxyUrl, data });
-      return response.data;
+      const response = await ky(proxyUrl, { method, body: data }).text();
+      return response;
     } catch (error) {
       console.error(`[${this.name}] Error during ${method} ${url}:`, error);
       throw new Error(`${this.name} failed to communicate with ${url}`);

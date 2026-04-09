@@ -1,4 +1,4 @@
-import axios from 'axios';
+import ky from 'ky';
 
 interface LoginRequest {
   type: 'login';
@@ -215,16 +215,12 @@ export default defineBackground(() => {
         case 'proxy': {
           const { method, url, data, requestId } = typedRequest;
 
-          const r = await axios({
-            method,
-            url,
-            data,
-          });
+          const r = await ky(url, { method, body: data }).json();
 
           browser.tabs.sendMessage(sender.tab!.id!, {
             type: 'proxy-response',
             requestId,
-            data: r.data,
+            data: r,
           });
           return true;
         }
