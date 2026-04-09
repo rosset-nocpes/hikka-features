@@ -1,22 +1,42 @@
 diff --git a/dist/init-D1800OqA.mjs b/dist/init-D1800OqA.mjs
-index c3167954ca4adf019742b71c56eb7d73abf41a86..a3bc0ccbb5a2f04335293330993ce37bdd126539 100644
+index c3167954ca4adf019742b71c56eb7d73abf41a86..d789376dfb3d84893c345ba6829874a4291b88a4 100644
 --- a/dist/init-D1800OqA.mjs
 +++ b/dist/init-D1800OqA.mjs
-@@ -307,6 +307,8 @@ var AddonsApi = class {
- 		const form = new FormData();
- 		form.set("channel", params.channel);
- 		form.set("upload", await fileFromPath(params.file));
-+		const compatibility = ['firefox', 'android'];
-+		compatibility.forEach(item => form.append("compatibility", item));
- 		const encoder = new FormDataEncoder(form);
- 		return await fetch(endpoint.href, {
- 			method: "POST",
-@@ -329,6 +331,8 @@ var AddonsApi = class {
- 		form.set("upload", params.uploadUuid);
+@@ -293,6 +293,9 @@ var AddonsApi = class {
+ 	addonVersionCreateEndpoint(extensionId) {
+ 		return new URL(`https://addons.mozilla.org/api/v5/addons/addon/${extensionId}/versions/`);
+ 	}
++	addonVersionEditEndpoint(extensionId, versionId) {
++		return new URL(`https://addons.mozilla.org/api/v5/addons/addon/${extensionId}/versions/${versionId}`)
++	}
+ 	/**
+ 	* Docs: https://addons-server.readthedocs.io/en/latest/topics/api/addons.html#detail
+ 	*/
+@@ -330,7 +333,7 @@ var AddonsApi = class {
  		if (params.sourceFile) form.set("source", await fileFromPath(params.sourceFile));
  		else form.set("source", "");
-+		const compatibility = ['firefox', 'android'];
-+		compatibility.forEach(item => form.append("compatibility", item));
  		const encoder = new FormDataEncoder(form);
- 		return await fetch(endpoint.href, {
+-		return await fetch(endpoint.href, {
++		const createResponse = await fetch(endpoint.href, {
  			method: "POST",
+ 			body: Readable.from(encoder),
+ 			headers: {
+@@ -338,6 +341,18 @@ var AddonsApi = class {
+ 				Authorization: this.getAuthHeader()
+ 			}
+ 		});
++		const patchEndpoint = this.addonVersionEditEndpoint(params.extensionId, createResponse.id);
++		await fetch(patchEndpoint.href, {
++			method: "PATCH",
++			body: JSON.stringify({
++				compatibility: ['firefox', 'android']
++			}),
++			headers: {
++				Authorization: this.getAuthHeader(),
++				"Content-Type": "application/json"
++			}
++		});
++		return createResponse;
+ 	}
+ 	/**
+ 	* See https://addons-server.readthedocs.io/en/latest/topics/api/auth.html
