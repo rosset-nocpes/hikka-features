@@ -45,7 +45,6 @@
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-hook-form": "^7.72.1",
-    "react-transition-group": "^4.4.5",
     "sonner": "^2.0.7",
     "tailwind-gradient-mask-image": "^1.2.0",
     "tailwind-merge": "^3.4.0",

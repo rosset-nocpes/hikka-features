@@ -45,7 +45,7 @@ export default defineWxtModule({
         let css = fs.readFileSync(cssPath, 'utf-8');
 
         const urlRegex = /url\(["']?(\.\/files\/[^"']+)["']?\)/g;
-        const safePkgName = pkgName.replace(/[@/]/g, '-');
+        const safePkgName = pkgName.slice(1).replace('/', '-');
         const fontDestDir = path.join(tempAssetsDir, 'fonts', safePkgName);
         fs.mkdirSync(fontDestDir, { recursive: true });
 
