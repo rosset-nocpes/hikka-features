@@ -1,5 +1,3 @@
-import * as cheerio from 'cheerio';
-
 import type { Chapter, ReaderContent, Volume } from '../reader.types';
 
 import { ReaderContentMode } from '../reader.enums';
@@ -23,13 +21,12 @@ class BIUScraper extends BaseScraper {
           `${this.endpoints.search}=${encodeURIComponent(title)}`,
         );
 
-        const $page = cheerio.load(r);
-        const novels = $page('#fictions-section .group a.block')
-          .map((_i, el) => {
-            const $novelElement = $page(el);
-            return $novelElement.attr('href');
-          })
-          .toArray();
+        const page = new DOMParser().parseFromString(r, 'text/html');
+        const novels = [
+          ...page.querySelectorAll('#fictions-section .group a.block'),
+        ]
+          .map((el) => el.getAttribute('href') || '')
+          .filter(Boolean);
 
         if (novels.length > 0) {
           return novels[0].startsWith('http')
@@ -46,66 +43,65 @@ class BIUScraper extends BaseScraper {
 
   async getChapterList(url: string): Promise<ReaderContent> {
     const r = await this.request(url);
-    const $ = cheerio.load(r);
+    const page = new DOMParser().parseFromString(r, 'text/html');
 
-    const $accordions = $('.accordion');
-    const $alternativeTabs = $('#alternative-tabs');
+    const accordions = page.querySelectorAll('.accordion');
+    const alternativeTabs = page.querySelector('#alternative-tabs');
     const regex: RegExp = /(?<=- ).*/;
 
-    const hasVolumes = $accordions
-      .find('.accordion-header h3')
-      .toArray()
-      .some((el) => $(el).text().includes('Том'));
+    const hasVolumes = [
+      ...page.querySelectorAll('.accordion .accordion-header h3'),
+    ].some((el) => el.textContent?.includes('Том'));
 
-    const translators = $('a[href^="/scanlators"]')
-      .map((_i, el) => $(el).text())
-      .toArray();
+    const translators = [...page.querySelectorAll('a[href^="/scanlators"]')]
+      .map((el) => el.textContent?.trim())
+      .filter((t): t is string => Boolean(t));
 
     let translator =
-      translators.length > 1 && $alternativeTabs.length === 0
-        ? ''
-        : translators[0];
+      translators.length > 1 && !alternativeTabs ? '' : translators[0];
 
-    if ($alternativeTabs.length > 0) {
-      const $tabsWithSvg = $alternativeTabs.find(':has(svg)');
-      const $selectedTab =
-        $tabsWithSvg.length > 0
-          ? $tabsWithSvg.first()
-          : $alternativeTabs.first();
-      translator = $selectedTab.text().trim();
+    if (alternativeTabs) {
+      const tabsWithSvg = [...alternativeTabs.querySelectorAll('*')].filter(
+        (el) => el.querySelector('svg'),
+      );
+
+      const selectedTab =
+        tabsWithSvg.length > 0 ? tabsWithSvg[0] : alternativeTabs;
+
+      translator = selectedTab.textContent?.trim() ?? '';
     }
 
     if (hasVolumes) {
       const volumes: Volume[] = [];
 
-      $accordions.each((_i, accordion) => {
-        const $header = $(accordion).find('.accordion-header');
-        const $content = $(accordion).find('.accordion-content');
-        const headerText = $header.find('h3').text();
+      accordions.forEach((accordion, _i) => {
+        const content = accordion.querySelector('.accordion-content')!;
+        const headerText = accordion
+          .querySelector('.accordion-header h3')
+          ?.textContent?.trim()!;
 
         const volumeMatch = headerText.match(/Том\s+(\d+(?:\.\d+)?$)/i);
         const volumeNumber = volumeMatch ? Number(volumeMatch[1]) : 0;
 
-        const chapters = $content
-          .find('li.group a')
-          .map((_j, el) => {
-            const $link = $(el);
-            const chNum = Number($link.find('span').eq(0).text().trim());
-            const href = $link.attr('href') || '';
+        const chapters = [...content.querySelectorAll('li.group a')].map(
+          (el, _j) => {
+            const spans = el.querySelectorAll('span');
+
+            const chNum = Number(spans[0].textContent);
+            const href = el.getAttribute('href') || '';
             return {
               id: `vol${volumeNumber}-ch${chNum}`,
               volume: volumeNumber,
               chapter: chNum,
-              title:
-                $link.find('span').eq(1).text().trim().match(regex)?.[0] || '',
+              title: spans[1].textContent.trim().match(regex)?.[0] || '',
               translator,
-              date_upload: $link.find('span').eq(2).text().trim(),
+              date_upload: spans[2].textContent.trim().match(regex)?.[0] || '',
               url: href.startsWith('http')
                 ? href
                 : `${this.baseUrl}/${href.replace(/^\//, '')}`,
             };
-          })
-          .toArray();
+          },
+        );
 
         volumes.push({
           number: volumeNumber,
@@ -120,28 +116,27 @@ class BIUScraper extends BaseScraper {
     } else {
       const chapters: Chapter[] = [];
 
-      $accordions.each((_i, accordion) => {
-        const $content = $(accordion).find('.accordion-content');
+      accordions.forEach((accordion, _i) => {
+        const content = accordion.querySelector('.accordion-content')!;
 
-        const accordionChapters = $content
-          .find('li.group a')
-          .map((_j, el) => {
-            const $link = $(el);
-            const chNum = Number($link.find('span').eq(0).text().trim());
-            const href = $link.attr('href') || '';
-            return {
-              id: `ch${chNum}`,
-              chapter: chNum,
-              title:
-                $link.find('span').eq(1).text().trim().match(regex)?.[0] || '',
-              translator,
-              date_upload: $link.find('span').eq(2).text().trim(),
-              url: href.startsWith('http')
-                ? href
-                : `${this.baseUrl}/${href.replace(/^\//, '')}`,
-            };
-          })
-          .toArray();
+        const accordionChapters = [
+          ...content.querySelectorAll('li.group a'),
+        ].map((el, _j) => {
+          const spans = el.querySelectorAll('span');
+
+          const chNum = Number(spans[0].textContent?.trim());
+          const href = el.getAttribute('href') || '';
+          return {
+            id: `ch${chNum}`,
+            chapter: chNum,
+            title: spans[1].textContent.trim().match(regex)?.[0] || '',
+            translator,
+            date_upload: spans[2].textContent.trim(),
+            url: href.startsWith('http')
+              ? href
+              : `${this.baseUrl}/${href.replace(/^\//, '')}`,
+          };
+        });
 
         chapters.push(...accordionChapters);
       });
@@ -155,9 +150,9 @@ class BIUScraper extends BaseScraper {
 
   async getChapter(url: string) {
     const r = await this.request(url);
-    const $ = cheerio.load(r);
+    const page = new DOMParser().parseFromString(r, 'text/html');
 
-    return $('#user-content').html();
+    return page.querySelector('#user-content')?.innerHTML ?? '';
   }
 }
 

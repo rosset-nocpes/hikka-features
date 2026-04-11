@@ -1,5 +1,3 @@
-import * as cheerio from 'cheerio';
-
 import type { Chapter, ReaderContent } from '../reader.types';
 
 import { ReaderContentMode } from '../reader.enums';
@@ -47,7 +45,7 @@ class MIUScraper extends BaseScraper {
 
   public async search(data: any) {
     const title = data.title_ua || data.title_en;
-    let mangaUrl = data.external.find(
+    let mangaUrl: string = data.external.find(
       (link: any) => link.text === 'Manga.in.ua',
     )?.url;
 
@@ -65,11 +63,12 @@ class MIUScraper extends BaseScraper {
         searchData,
       );
 
-      const $search = cheerio.load(searchHtml);
+      const search = new DOMParser().parseFromString(searchHtml, 'text/html');
 
-      mangaUrl = $search('main.main article.item h3.card__title a')
-        .first()
-        .attr('href');
+      mangaUrl =
+        search
+          .querySelector('main.main article.item h3.card__title a')
+          ?.getAttribute('href') || '';
     }
     if (!mangaUrl) throw new Error(`Manga "${title}" not found.`);
 
@@ -82,13 +81,13 @@ class MIUScraper extends BaseScraper {
   public async getChapterList(url: string): Promise<ReaderContent> {
     // 1. Parse Manga Page for AJAX details
     const pageHtml = await this.request(url);
-    const $page = cheerio.load(pageHtml);
-    const container = $page('div#linkstocomics');
+    const page = new DOMParser().parseFromString(pageHtml, 'text/html');
+    const container = page.querySelector('div#linkstocomics');
 
     const params = new URLSearchParams({
       action: 'show',
-      news_id: container.attr('data-news_id') || '',
-      news_category: container.attr('data-news_category') || '',
+      news_id: container?.getAttribute('data-news_id') || '',
+      news_category: container?.getAttribute('data-news_category') || '',
       [this.extractQueryKey(pageHtml, this.endpoints.loadChapters)]:
         this.extractUserHash(pageHtml),
     });
@@ -99,26 +98,25 @@ class MIUScraper extends BaseScraper {
       'POST',
       params,
     );
-    const $list = cheerio.load(listHtml);
+    const list = new DOMParser().parseFromString(listHtml, 'text/html');
     const chapters: Chapter[] = [];
 
-    $list('body > *').each((_, el) => {
-      const $el = $list(el);
-      const $link = $el.find('a').first();
-      const href = $link.attr('href') || '';
-      const text = $link.text().trim();
+    list.querySelectorAll('body > *').forEach((el) => {
+      const linkEl = el.querySelector('a');
+      const href = linkEl?.getAttribute('href') || '';
+      const text = linkEl?.textContent?.trim() || '';
 
       if (text.includes('Альтернативний переклад')) return;
 
       chapters.push({
         id:
           href.split('/').pop()?.split('-')[0] ||
-          $el.attr('manga-chappter') ||
+          el.getAttribute('manga-chappter') ||
           '0',
-        translator: $el.attr('translate') || '',
-        date_upload: $el.children().first().text().trim(),
-        volume: Number($el.attr('manga-tom') || 0),
-        chapter: Number($el.attr('manga-chappter') || 0),
+        translator: el.getAttribute('translate') || '',
+        date_upload: el.children[0]?.textContent?.trim() || '',
+        volume: Number(el.getAttribute('manga-tom') || 0),
+        chapter: Number(el.getAttribute('manga-chappter') || 0),
         title: text.includes('-') ? text.split('-')[1].trim() : '',
         url: href,
       });
@@ -132,10 +130,11 @@ class MIUScraper extends BaseScraper {
    */
   public async getChapter(url: string) {
     const html = await this.request(url);
-    const $ = cheerio.load(html);
+    const page = new DOMParser().parseFromString(html, 'text/html');
 
     const params = new URLSearchParams({
-      news_id: $('div#comics').attr('data-news_id') || '',
+      news_id:
+        page.querySelector('div#comics')?.getAttribute('data-news_id') || '',
       action: 'show',
       [this.extractQueryKey(html, this.endpoints.loadImages)]:
         this.extractUserHash(html),
@@ -144,11 +143,11 @@ class MIUScraper extends BaseScraper {
     const imgListHtml = await this.request(
       `${this.endpoints.loadImages}&${params.toString()}`,
     );
-    const $imgs = cheerio.load(imgListHtml);
+    const imgs = new DOMParser().parseFromString(imgListHtml, 'text/html');
 
     const images: string[] = [];
-    $imgs('img').each((_, img) => {
-      const src = $(img).attr('data-src');
+    imgs.querySelectorAll('img').forEach((img) => {
+      const src = img.getAttribute('data-src');
       if (src) images.push(src);
     });
 
