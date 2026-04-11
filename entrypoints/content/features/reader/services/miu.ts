@@ -145,13 +145,11 @@ class MIUScraper extends BaseScraper {
       `${this.endpoints.loadImages}&${params.toString()}`,
     );
     const $imgs = cheerio.load(imgListHtml);
-    const { backendBranch } = useSettings.getState();
-    const backendBase = BACKEND_BRANCHES[backendBranch];
 
     const images: string[] = [];
     $imgs('img').each((_, img) => {
       const src = $(img).attr('data-src');
-      if (src) images.push(`${backendBase}/proxy?r=${encodeURIComponent(src)}`);
+      if (src) images.push(src);
     });
 
     return images;

@@ -9,15 +9,11 @@ const useAmanogawaUrl = (anime_data: any) => {
       const title_ja = anime_data.title_ja;
       const title_year = anime_data.year;
 
-      const url_cors_proxy_amanogawa =
-        'https://corsproxy.io/?url=' +
-        encodeURIComponent(
-          `https://amanogawa.space/api/search?s="${encodeURIComponent(
-            title_ja.replaceAll('"', "'"),
-          )}"`,
-        );
+      const url = `https://amanogawa.space/api/search?s="${encodeURIComponent(
+        title_ja.replaceAll('"', "'"),
+      )}"`;
 
-      const r = await fetch(url_cors_proxy_amanogawa);
+      const r = await fetch(url);
 
       if (!r.ok) {
         throw new Error('Not found');
