@@ -2,8 +2,6 @@ import { useQuery } from '@tanstack/react-query';
 
 import { queryClient } from '@/entrypoints/content';
 
-import { usePageStore } from './use-page-store';
-
 // todo: add edit_id param
 export const hikkaEditContentFetcher = async () => {
   const split_path = document.location.pathname.split('/'); // still needed for edit logic
@@ -39,9 +37,11 @@ export const hikkaEditContentFetcher = async () => {
 const useHikkaEditContent = ({
   enabled = true,
 }: { enabled?: boolean } = {}) => {
+  const slug = new URLSearchParams(document.location.search).get('slug');
+
   return useQuery({
-    queryKey: ['hikka-edit-data', usePageStore.getState().slug!],
-    queryFn: ({ queryKey }) => hikkaEditContentFetcher(),
+    queryKey: ['hikka-edit-data-content', slug],
+    queryFn: () => hikkaEditContentFetcher(),
     retry: false,
     staleTime: Infinity,
     enabled,
@@ -49,9 +49,11 @@ const useHikkaEditContent = ({
 };
 
 export const prefetchHikkaEditContent = () => {
+  const slug = new URLSearchParams(document.location.search).get('slug');
+
   return queryClient.prefetchQuery({
-    queryKey: ['hikka-edit-data', usePageStore.getState().slug!],
-    queryFn: ({ queryKey }) => hikkaEditContentFetcher(),
+    queryKey: ['hikka-edit-data-content', slug],
+    queryFn: () => hikkaEditContentFetcher(),
   });
 };
 

@@ -32,8 +32,6 @@ export default class AniButtonsFeature extends BaseFeature {
 
   async init() {
     const isEdit = () => document.location.pathname.startsWith('/edit/');
-    const creatingEdit = () =>
-      document.location.pathname.startsWith('/edit/new');
 
     this.ui = await createShadowRootUi(usePageStore.getState().ctx, {
       name: this.id,
@@ -47,7 +45,7 @@ export default class AniButtonsFeature extends BaseFeature {
       },
       anchor: () =>
         isEdit()
-          ? `div.gap-12:nth-child(2) > section:nth-child(${creatingEdit() ? 1 : 2})`
+          ? 'div.grid > div > section:last-of-type > div:last-of-type'
           : '.grid.grid-cols-1 > div:nth-of-type(3) > #content-stats',
       css: `:host(${this.id}) { margin-bottom: -2rem !important; }`,
       inheritStyles: true,
@@ -94,6 +92,7 @@ const AniButtons = () => {
   };
 
   const isMedia = Object.keys(MediaEnum).includes(content_type);
+  const isEdit = document.location.pathname.startsWith('/edit/');
   const title = [
     data?.title_ja,
     data?.title_en,
@@ -191,7 +190,6 @@ const AniButtons = () => {
       searchUrls.anilist,
       searchUrls.anidb,
       searchUrls.ann,
-      searchUrls.wiki,
     ],
     person: [
       searchUrls.mal,
@@ -215,7 +213,10 @@ const AniButtons = () => {
     <AnimatePresence>
       {enabled && data && (
         <motion.div
-          className="overflow-hidden rounded-lg border border-border bg-secondary/20"
+          className={cn(
+            'overflow-hidden rounded-lg border border-border',
+            !isEdit && 'bg-secondary/20',
+          )}
           initial={{ opacity: 0, height: 0, scale: 0.93, marginBottom: 0 }}
           animate={{
             opacity: 1,
