@@ -215,6 +215,21 @@ const ZoomableImage = ({ src, alt }: ZoomableImageProps) => {
     };
   }, [zoomed]);
 
+  const isGecko =
+    /Gecko\//.test(navigator.userAgent) &&
+    !/like Gecko/.test(navigator.userAgent) &&
+    !/Trident\//.test(navigator.userAgent);
+  const motionProps = isGecko
+    ? {
+        initial: { opacity: 0, scale: 0.9 },
+        animate: { opacity: 1, scale: 1 },
+        exit: { opacity: 0, scale: 0.9 },
+        transition: { type: 'spring', stiffness: 300, damping: 30 } as const,
+      }
+    : {
+        layoutId: src,
+      };
+
   return (
     <>
       <motion.img
@@ -236,7 +251,7 @@ const ZoomableImage = ({ src, alt }: ZoomableImageProps) => {
                 onClick={() => setZoomed(false)}
               >
                 <motion.img
-                  layoutId={src}
+                  {...motionProps}
                   src={src}
                   alt={alt}
                   className="h-full max-h-[90vh] max-w-[90vw] rounded-lg border"
