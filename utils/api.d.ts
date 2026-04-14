@@ -72,7 +72,7 @@ declare global {
       video_url: string;
     };
 
-    interface EditorCharacters {
+    interface EditorContent {
       suggestion: {
         name: string;
       };

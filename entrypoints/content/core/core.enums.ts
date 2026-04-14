@@ -16,4 +16,5 @@ export enum HikkaPages {
   EditContent = 'edit-content',
   EditCreate = 'edit-create',
   EditCreateCharacter = 'edit-create-character',
+  EditCreatePerson = 'edit-create-person',
 }

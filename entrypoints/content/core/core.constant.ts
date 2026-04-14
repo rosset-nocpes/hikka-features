@@ -19,4 +19,7 @@ export const HIKKA_PAGE_CHECKERS: Record<
   [HikkaPages.EditCreateCharacter]: (p) =>
     p.startsWith('/edit/new') &&
     new URLSearchParams(location.search).get('content_type') === 'character',
+  [HikkaPages.EditCreatePerson]: (p) =>
+    p.startsWith('/edit/new') &&
+    new URLSearchParams(location.search).get('content_type') === 'person',
 };

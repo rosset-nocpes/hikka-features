@@ -10,9 +10,12 @@ import { queryClient } from '..';
 import { BaseFeature } from '../core/base-feature';
 import { HikkaPages } from '../core/core.enums';
 
-export default class CharacterSuggestionFeature extends BaseFeature {
-  readonly id = 'character-suggestion';
-  readonly pages = [HikkaPages.EditCreateCharacter];
+export default class NameSuggestionFeature extends BaseFeature {
+  readonly id = 'name-suggestion';
+  readonly pages = [
+    HikkaPages.EditCreateCharacter,
+    HikkaPages.EditCreatePerson,
+  ];
 
   async init() {
     this.ui = await createShadowRootUi(usePageStore.getState().ctx, {
@@ -42,7 +45,7 @@ export default class CharacterSuggestionFeature extends BaseFeature {
         const root = createRoot(wrapper);
         root.render(
           <QueryClientProvider client={queryClient}>
-            <CharacterSuggestionButton />
+            <NameSuggestionButton />
           </QueryClientProvider>,
         );
 
@@ -55,8 +58,8 @@ export default class CharacterSuggestionFeature extends BaseFeature {
   }
 }
 
-const CharacterSuggestionButton = () => {
-  const { data } = useEditorCharacters();
+const NameSuggestionButton = () => {
+  const { data } = useEditorContent();
   const { enabled } = useSettings().features.editorCharacters;
 
   const targetInput: HTMLInputElement | null = document.querySelector(
