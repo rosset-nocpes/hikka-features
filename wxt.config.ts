@@ -35,9 +35,6 @@ export default defineConfig({
       'https://manga.in.ua/*',
       'https://baka.in.ua/*',
       'https://api.jikan.moe/v4/*',
-      'https://*.ashdi.vip/*',
-      'https://*.moonanime.art/*',
-      'https://*.tortuga.tw/*',
     ],
     browser_specific_settings: {
       gecko: {
