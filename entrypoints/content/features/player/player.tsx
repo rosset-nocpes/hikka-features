@@ -18,6 +18,7 @@ import {
 } from './context/player-context';
 import PlayerMobileToolbar from './mobile-toolbar/player-mobile-toolbar';
 import PlayerNavbar from './player-navbar';
+import PlayerOverlay from './player-overlay/player-overlay';
 import PlayerSidebar from './sidebar/player-sidebar';
 import PlayerToolbar from './toolbar/player-toolbar';
 
@@ -270,47 +271,23 @@ export const Player = () => {
   return (
     <Card
       className={cn(
-        'relative z-10 flex size-full overflow-hidden rounded-none border-none duration-300 md:max-h-[722px] md:max-w-[1282px] md:rounded-lg md:border',
+        'border-overlay relative z-10 box-content flex size-full overflow-hidden rounded-none border-none duration-300 md:max-h-[720px] md:max-w-[1280px] md:rounded-[calc(var(--radius)_+_8px)] md:border',
         getTheatreState && 'md:max-h-full md:max-w-full',
       )}
     >
       <PlayerMobileToolbar toggleWatchedState={toggleWatchedState} />
       <PlayerNavbar showControls={showControls} />
-      <CardContent
-        className={cn(
-          'flex min-h-0 min-w-0 flex-1 flex-col gap-2 p-0 pb-2 duration-300',
-          !open && 'gap-0 pb-0',
-        )}
-      >
-        <div
-          className={cn(
-            'relative h-[81.1%] w-full duration-300',
-            isFullscreen ? 'fixed inset-0 z-20 size-full' : 'flex border-b',
-            (!open || getTheatreState) && 'h-full',
-            !open && 'border-0',
-          )}
-        >
-          <iframe
-            id="player-iframe"
-            src={`${currentEpisode?.video_url}?site=hikka.io`} // todo: move params to backend
-            loading="lazy"
-            className="z-[2] size-full"
-            allow="fullscreen; accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
-            allowFullScreen
-          ></iframe>
-        </div>
-        <PlayerToolbar
-          time={time}
-          isTimecodeLink={isTimecodeLink}
-          timecodeLink={timecodeLink}
-          setTimecodeLink={setTimecodeLink}
-          toggleTimestampLink={toggleTimestampLink}
-          toggleTheatreState={toggleTheatreState}
-          getTheatreState={getTheatreState}
-          handleEnterFullscreen={handleEnterFullscreen}
-        />
+      <CardContent className="flex min-h-0 min-w-0 flex-1 flex-col p-0 duration-300">
+        <iframe
+          id="player-iframe"
+          src={`${currentEpisode?.video_url}?site=hikka.io`} // todo: move params to backend
+          loading="lazy"
+          className="size-full"
+          allow="fullscreen; accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+          allowFullScreen
+        ></iframe>
       </CardContent>
-      <PlayerSidebar toggleWatchedState={toggleWatchedState} />
+      <PlayerOverlay toggleWatchedState={toggleWatchedState} />
     </Card>
   );
 };

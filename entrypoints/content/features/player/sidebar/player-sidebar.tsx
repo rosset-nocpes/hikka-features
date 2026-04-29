@@ -13,7 +13,6 @@ import {
 } from '@/components/ui/sidebar';
 import { cn } from '@/utils/cn';
 
-import { usePlayer } from '../context/player-context';
 import player from '../player';
 import EpisodeList from './episode-list';
 import ProviderSelect from './provider-select';
@@ -21,13 +20,13 @@ import TeamSelect from './team-select';
 
 interface Props {
   toggleWatchedState: (state: boolean) => void;
+  className?: string;
 }
 
-const PlayerSidebar: FC<Props> = ({ toggleWatchedState }) => {
+const PlayerSidebar: FC<Props> = ({ toggleWatchedState, className }) => {
   const [isScrolled, setIsScrolled] = useState({ top: false, bottom: false });
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const { sidebarMode } = usePlayer();
   const { open } = useSidebar();
 
   useEffect(() => {
@@ -51,33 +50,16 @@ const PlayerSidebar: FC<Props> = ({ toggleWatchedState }) => {
 
   return (
     <Sidebar
-      collapsible={sidebarMode}
+      variant="floating"
       side="right"
-      className="flex overflow-hidden"
+      blur
+      className={cn('flex overflow-hidden', className)}
       // onMouseLeave={toggleSidebar}
     >
       <SidebarHeader>
         <SidebarMenu>
-          <SidebarMenuItem className="flex items-center justify-end">
-            <div
-              className={cn(
-                'flex min-w-8 flex-1 items-center gap-2 truncate duration-300',
-                !open && 'text-transparent',
-              )}
-            >
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className={cn(
-                  'transition-[margin] duration-300',
-                  !open && '-ml-2',
-                )}
-                onClick={() => player().then((x) => x.remove())}
-              >
-                <MaterialSymbolsCloseRounded />
-              </Button>
-              <span className="cursor-default font-medium">Програвач</span>
-            </div>
+          <SidebarMenuItem className="flex items-center justify-between">
+            <span className="ml-2 cursor-default font-medium">Програвач</span>
             <div className="h-8 w-8" />
           </SidebarMenuItem>
         </SidebarMenu>
