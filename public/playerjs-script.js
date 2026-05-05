@@ -51,16 +51,16 @@ window.addEventListener('message', function (event) {
       'vars',
     ];
 
-    // if (getters.includes(command)) {
-    //   window.top.postMessage(
-    //     {
-    //       event: 'playerjs-response',
-    //       command: command,
-    //       data: result,
-    //     },
-    //     '*',
-    //   );
-    // }
+    if (getters.includes(command)) {
+      window.top.postMessage(
+        {
+          type: 'playerjs-response',
+          command: command,
+          data: result,
+        },
+        '*',
+      );
+    }
   }
 });
 

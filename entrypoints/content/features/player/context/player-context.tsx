@@ -13,7 +13,7 @@ interface PlayerState {
   favoriteTeam?: FavoriteTeam;
   episodeData?: API.EpisodeData[];
   currentEpisode?: API.EpisodeData;
-  sidebarMode: 'offcanvas' | 'icon';
+  fullscreen: boolean;
   /* Temporary */
   sharedParams?: SharedPlayerParams;
   isShared?: boolean;
@@ -26,204 +26,229 @@ interface PlayerActions {
   setFavoriteTeam: (team: string) => void;
   removeFavoriteTeam: () => void;
   setEpisode: (episode: API.EpisodeData) => void;
-  setSidebarMode: (mode: PlayerState['sidebarMode']) => void;
+  toggleFullscreen: () => void;
   setSharedStatus: (status: boolean) => void;
   setContainer: (container: HTMLElement) => void;
   reset: () => void;
 }
 
-export const usePlayer = create<PlayerState & PlayerActions>((set, get) => ({
-  container: undefined,
-  watchData: undefined,
-  provider: undefined,
-  team: undefined,
-  favoriteTeam: undefined,
-  episodeData: undefined,
-  currentEpisode: undefined,
-  sidebarMode: 'offcanvas',
+export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
+  const handleFullscreenChange = () => {
+    if (!document.fullscreenElement) {
+      set({ fullscreen: false });
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    }
+  };
 
-  initialize: async (data) => {
-    const { defaultProvider, favoriteTeams } =
-      useSettings.getState().features.player;
+  return {
+    container: undefined,
+    watchData: undefined,
+    provider: undefined,
+    team: undefined,
+    favoriteTeam: undefined,
+    episodeData: undefined,
+    currentEpisode: undefined,
+    fullscreen: false,
 
-    const providers_avaliable = getAvailablePlayers(data).map((e) => e.title);
-    const { slug } = usePageStore.getState();
-    const favoriteTeam = favoriteTeams[slug!];
+    initialize: async (data) => {
+      const { defaultProvider, favoriteTeams } =
+        useSettings.getState().features.player;
 
-    const params = new URLSearchParams(window.location.search);
-    const sharedParams: SharedPlayerParams = {
-      provider: params.get('playerProvider'),
-      team: params.get('playerTeam'),
-      episode: params.get('playerEpisode'),
-      time: params.get('time'),
-    };
+      const providers_avaliable = getAvailablePlayers(data).map((e) => e.title);
+      const { slug } = usePageStore.getState();
+      const favoriteTeam = favoriteTeams[slug!];
 
-    const isShared = !!(
-      sharedParams.provider &&
-      sharedParams.team &&
-      sharedParams.episode
-    );
+      const params = new URLSearchParams(window.location.search);
+      const sharedParams: SharedPlayerParams = {
+        provider: params.get('playerProvider'),
+        team: params.get('playerTeam'),
+        episode: params.get('playerEpisode'),
+        time: params.get('time'),
+      };
 
-    // cleanup url
-    const url = new URL(window.location.href);
-    ['playerProvider', 'playerTeam', 'playerEpisode', 'time'].map((param) =>
-      url.searchParams.delete(param),
-    );
+      const isShared = !!(
+        sharedParams.provider &&
+        sharedParams.team &&
+        sharedParams.episode
+      );
 
-    history.replaceState(history.state, '', url.href);
+      // cleanup url
+      const url = new URL(window.location.href);
+      ['playerProvider', 'playerTeam', 'playerEpisode', 'time'].map((param) =>
+        url.searchParams.delete(param),
+      );
 
-    // Determine provider
-    const provider =
-      isShared && providers_avaliable.includes(sharedParams.provider!)
-        ? sharedParams.provider!
-        : favoriteTeam
-          ? favoriteTeam.provider
-          : providers_avaliable.includes(defaultProvider)
-            ? defaultProvider
-            : providers_avaliable[0];
+      history.replaceState(history.state, '', url.href);
 
-    // Determine team
-    let team: API.TeamData = {
-      title: '',
-      logo: '',
-    };
-    if (data[provider] instanceof ProviderTeamIFrame) {
-      const first_team = data[provider].getTeams()[0];
+      // Determine provider
+      const provider =
+        isShared && providers_avaliable.includes(sharedParams.provider!)
+          ? sharedParams.provider!
+          : favoriteTeam
+            ? favoriteTeam.provider
+            : providers_avaliable.includes(defaultProvider)
+              ? defaultProvider
+              : providers_avaliable[0];
 
-      if (isShared && data[provider].teams[sharedParams.team!]) {
-        team = data[provider].getTeam(sharedParams.team!);
-      } else if (
-        favoriteTeam &&
-        (data[favoriteTeam.provider] as ProviderTeamIFrame).teams[
-          favoriteTeam.team
-        ]
-      ) {
-        team = (data[favoriteTeam.provider] as ProviderTeamIFrame).getTeam(
-          favoriteTeam.team,
+      // Determine team
+      let team: API.TeamData = {
+        title: '',
+        logo: '',
+      };
+      if (data[provider] instanceof ProviderTeamIFrame) {
+        const first_team = data[provider].getTeams()[0];
+
+        if (isShared && data[provider].teams[sharedParams.team!]) {
+          team = data[provider].getTeam(sharedParams.team!);
+        } else if (
+          favoriteTeam &&
+          (data[favoriteTeam.provider] as ProviderTeamIFrame).teams[
+            favoriteTeam.team
+          ]
+        ) {
+          team = (data[favoriteTeam.provider] as ProviderTeamIFrame).getTeam(
+            favoriteTeam.team,
+          );
+        } else {
+          team = first_team;
+        }
+      }
+
+      const episodeData =
+        data[provider] instanceof ProviderTeamIFrame
+          ? data[provider].teams[team.title].episodes
+          : data[provider].episodes;
+
+      const targetEpisode = isShared
+        ? episodeData?.find((ep) => ep.episode === Number(sharedParams.episode))
+        : episodeData?.find((ep) => ep.episode === getWatched() + 1);
+
+      set({
+        watchData: data,
+        provider,
+        team,
+        favoriteTeam,
+        episodeData,
+        currentEpisode: targetEpisode ?? episodeData[0],
+        sharedParams,
+        isShared,
+      });
+    },
+    setProvider: (provider) => {
+      const { watchData } = get();
+      if (!watchData) return;
+
+      const newTeamName =
+        watchData[provider] instanceof ProviderTeamIFrame
+          ? {
+              title: Object.keys(watchData[provider].teams)[0],
+              logo: watchData[provider].teams[
+                Object.keys(watchData[provider].teams)[0]
+              ].logo,
+            }
+          : { title: '', logo: '' };
+      const newEpisode =
+        watchData[provider] instanceof ProviderTeamIFrame
+          ? watchData[provider].teams[newTeamName.title].episodes.find(
+              (ep) => ep.episode === getWatched() + 1,
+            ) || watchData[provider].teams[newTeamName.title].episodes[0]
+          : watchData[provider].episodes.find(
+              (ep) => ep.episode === getWatched() + 1,
+            ) || watchData[provider].episodes[0];
+
+      const newEpisodeData =
+        watchData[provider] instanceof ProviderTeamIFrame
+          ? watchData[provider].teams[newTeamName.title].episodes
+          : watchData[provider].episodes;
+
+      set({
+        provider,
+        team: newTeamName,
+        episodeData: newEpisodeData,
+        currentEpisode: newEpisode,
+      });
+    },
+    setTeam: (team) => {
+      const { watchData, provider } = get();
+      if (!watchData || !provider) return;
+      if (!(watchData[provider] instanceof ProviderTeamIFrame)) return;
+
+      const newEpisodeData = watchData[provider].teams[team.title].episodes;
+
+      const newEpisode =
+        newEpisodeData.find(
+          (episode) => episode.episode === getWatched() + 1,
+        ) || newEpisodeData[0];
+
+      set({ team, episodeData: newEpisodeData, currentEpisode: newEpisode });
+    },
+    setFavoriteTeam: (team) => {
+      const { slug } = usePageStore.getState();
+      const provider = get().provider!;
+      if (!slug) return;
+
+      const newTeam = {
+        provider,
+        team,
+      };
+
+      const { favoriteTeams } = useSettings.getState().features.player;
+      const { updateFeatureSettings } = useSettings.getState();
+
+      const updated = { ...favoriteTeams, [slug]: newTeam };
+      updateFeatureSettings('player', { favoriteTeams: updated });
+
+      set({ favoriteTeam: newTeam });
+    },
+    removeFavoriteTeam: () => {
+      const { favoriteTeams } = useSettings.getState().features.player;
+      const { updateFeatureSettings } = useSettings.getState();
+      const { slug } = usePageStore.getState();
+      if (!slug) return;
+
+      const updated = { ...favoriteTeams };
+      delete updated[slug];
+      updateFeatureSettings('player', { favoriteTeams: updated });
+
+      set({ favoriteTeam: undefined });
+    },
+    setEpisode: (episode) => set({ currentEpisode: episode }),
+    toggleFullscreen: () => {
+      const { fullscreen } = get();
+
+      if (fullscreen) {
+        set({ fullscreen: false });
+        document.exitFullscreen();
+        document.removeEventListener(
+          'fullscreenchange',
+          handleFullscreenChange,
         );
       } else {
-        team = first_team;
+        set({ fullscreen: true });
+        document.documentElement.requestFullscreen();
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
       }
-    }
+    },
 
-    const episodeData =
-      data[provider] instanceof ProviderTeamIFrame
-        ? data[provider].teams[team.title].episodes
-        : data[provider].episodes;
-
-    const targetEpisode = isShared
-      ? episodeData?.find((ep) => ep.episode === Number(sharedParams.episode))
-      : episodeData?.find((ep) => ep.episode === getWatched() + 1);
-
-    set({
-      watchData: data,
-      provider,
-      team,
-      favoriteTeam,
-      episodeData,
-      currentEpisode: targetEpisode ?? episodeData[0],
-      sidebarMode: 'offcanvas',
-      sharedParams,
-      isShared,
-    });
-  },
-  setProvider: (provider) => {
-    const { watchData } = get();
-    if (!watchData) return;
-
-    const newTeamName =
-      watchData[provider] instanceof ProviderTeamIFrame
-        ? {
-            title: Object.keys(watchData[provider].teams)[0],
-            logo: watchData[provider].teams[
-              Object.keys(watchData[provider].teams)[0]
-            ].logo,
-          }
-        : { title: '', logo: '' };
-    const newEpisode =
-      watchData[provider] instanceof ProviderTeamIFrame
-        ? watchData[provider].teams[newTeamName.title].episodes.find(
-            (ep) => ep.episode === getWatched() + 1,
-          ) || watchData[provider].teams[newTeamName.title].episodes[0]
-        : watchData[provider].episodes.find(
-            (ep) => ep.episode === getWatched() + 1,
-          ) || watchData[provider].episodes[0];
-
-    const newEpisodeData =
-      watchData[provider] instanceof ProviderTeamIFrame
-        ? watchData[provider].teams[newTeamName.title].episodes
-        : watchData[provider].episodes;
-
-    set({
-      provider,
-      team: newTeamName,
-      episodeData: newEpisodeData,
-      currentEpisode: newEpisode,
-    });
-  },
-  setTeam: (team) => {
-    const { watchData, provider } = get();
-    if (!watchData || !provider) return;
-    if (!(watchData[provider] instanceof ProviderTeamIFrame)) return;
-
-    const newEpisodeData = watchData[provider].teams[team.title].episodes;
-
-    const newEpisode =
-      newEpisodeData.find((episode) => episode.episode === getWatched() + 1) ||
-      newEpisodeData[0];
-
-    set({ team, episodeData: newEpisodeData, currentEpisode: newEpisode });
-  },
-  setFavoriteTeam: (team) => {
-    const { slug } = usePageStore.getState();
-    const provider = get().provider!;
-    if (!slug) return;
-
-    const newTeam = {
-      provider,
-      team,
-    };
-
-    const { favoriteTeams } = useSettings.getState().features.player;
-    const { updateFeatureSettings } = useSettings.getState();
-
-    const updated = { ...favoriteTeams, [slug]: newTeam };
-    updateFeatureSettings('player', { favoriteTeams: updated });
-
-    set({ favoriteTeam: newTeam });
-  },
-  removeFavoriteTeam: () => {
-    const { favoriteTeams } = useSettings.getState().features.player;
-    const { updateFeatureSettings } = useSettings.getState();
-    const { slug } = usePageStore.getState();
-    if (!slug) return;
-
-    const updated = { ...favoriteTeams };
-    delete updated[slug];
-    updateFeatureSettings('player', { favoriteTeams: updated });
-
-    set({ favoriteTeam: undefined });
-  },
-  setEpisode: (episode) => set({ currentEpisode: episode }),
-  setSidebarMode: (mode) => set({ sidebarMode: mode }),
-  setSharedStatus: (status) => set({ isShared: status }),
-  setContainer: (container) => set({ container }),
-  reset: () => {
-    set({
-      container: undefined,
-      /* Player-related  */
-      watchData: undefined,
-      provider: undefined,
-      team: undefined,
-      episodeData: undefined,
-      currentEpisode: undefined,
-      sidebarMode: 'offcanvas',
-      /* Temporary */
-      sharedParams: undefined,
-      isShared: undefined,
-    });
-  },
-}));
+    setSharedStatus: (status) => set({ isShared: status }),
+    setContainer: (container) => set({ container }),
+    reset: () => {
+      set({
+        container: undefined,
+        /* Player-related  */
+        watchData: undefined,
+        provider: undefined,
+        team: undefined,
+        episodeData: undefined,
+        currentEpisode: undefined,
+        fullscreen: false,
+        /* Temporary */
+        sharedParams: undefined,
+        isShared: undefined,
+      });
+    },
+  };
+});
 
 interface SharedPlayerParams {
   provider: string | null;

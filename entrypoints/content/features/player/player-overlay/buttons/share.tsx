@@ -21,8 +21,7 @@ import { usePlayer } from '../../context/player-context';
 
 const Share = () => {
   const { container, provider, team, currentEpisode } = usePlayer();
-  // const { currentTime } = useMediaStore();
-  // const player = useMediaPlayer();
+  const { currentTime } = useIFramePlayer();
 
   const [showTooltip, setShowTooltip] = useState(false);
   const [isTimecodeLink, toggleTimestampLink] = useState(false);
@@ -47,12 +46,12 @@ const Share = () => {
 
   return (
     <Popover
-    // onOpenChange={(open) => {
-    //   if (open) {
-    //     toggleTimestampLink(false);
-    //     setTimecodeLink(Math.floor(currentTime));
-    //   }
-    // }}
+      onOpenChange={(open) => {
+        if (open) {
+          toggleTimestampLink(false);
+          setTimecodeLink(Math.floor(currentTime));
+        }
+      }}
     >
       <PopoverTrigger>
         <Tooltip>

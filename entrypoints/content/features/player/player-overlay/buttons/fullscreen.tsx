@@ -8,17 +8,16 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-const Fullscreen = () => {
-  // const player = useMediaPlayer();
-  // const isActive = useMediaState('fullscreen');
+import { usePlayer } from '../../context/player-context';
 
-  const isActive = false;
+const Fullscreen = () => {
+  const { fullscreen, toggleFullscreen } = usePlayer();
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button variant="ghost" size="icon-sm">
-          {isActive ? (
+        <Button variant="ghost" size="icon-sm" onClick={toggleFullscreen}>
+          {fullscreen ? (
             <MaterialSymbolsFullscreenExitRounded />
           ) : (
             <MaterialSymbolsFullscreenRounded />
@@ -33,7 +32,7 @@ const Fullscreen = () => {
         // collisionBoundary={player?.el}
         // collisionPadding={8}
       >
-        {isActive ? 'Вийти з повноекранного режиму' : 'Повноекранний режим'}
+        {fullscreen ? 'Вийти з повноекранного режиму' : 'Повноекранний режим'}
       </TooltipContent>
     </Tooltip>
   );

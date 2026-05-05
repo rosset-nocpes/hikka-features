@@ -2,6 +2,7 @@ import Fullscreen from './buttons/fullscreen';
 import Mute from './buttons/mute';
 import Play from './buttons/play';
 import Share from './buttons/share';
+import Settings from './settings';
 import Volume from './sliders/volume';
 import TimeGroup from './time-group';
 
@@ -28,7 +29,7 @@ const VideoToolbar = () => {
       </div>
       <div className="flex gap-1 rounded-lg bg-background/60 p-1 backdrop-blur-xl">
         <Share />
-        {/*<Settings />*/}
+        <Settings />
         <Fullscreen />
       </div>
     </>

@@ -3,7 +3,11 @@ import { create } from 'zustand';
 interface IFramePlayerState {
   isPlaying: boolean;
   isMuted: boolean;
+  qualities: string[];
+  currentQuality: string;
   currentTime: number;
+  currentSpeed: number;
+  speedOptions: number[];
   volume: number;
   duration: number;
 }
@@ -15,14 +19,20 @@ interface IFramePlayerActions {
   toggleMute: () => void;
   mute: () => void;
   unmute: () => void;
+  setCurrentQuality: (quality: string) => void;
   changeVolume: (volume: number) => void;
+  changeSpeed: (speed: number) => void;
 }
 
 export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
   (set, get) => ({
     isPlaying: false,
     isMuted: false,
+    qualities: [],
+    currentQuality: '',
     currentTime: 0,
+    currentSpeed: 1,
+    speedOptions: [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2],
     volume: 1,
     duration: 0,
 
@@ -76,6 +86,17 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
       });
     },
 
+    setCurrentQuality: (quality: string) => {
+      const { qualities } = get();
+      const index = qualities.findIndex((q) => q === quality).toString();
+
+      browser.runtime.sendMessage({
+        type: 'playerjs-command',
+        api: 'quality',
+        param: index,
+      });
+    },
+
     changeVolume: (volume: number) => {
       browser.runtime.sendMessage({
         type: 'playerjs-command',
@@ -83,12 +104,22 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
         param: volume,
       });
     },
+
+    changeSpeed: (speed: number) => {
+      const { speedOptions } = get();
+      const index = speedOptions.findIndex((q) => q === speed).toString();
+
+      browser.runtime.sendMessage({
+        type: 'playerjs-command',
+        api: 'speed',
+        param: index,
+      });
+    },
   }),
 );
 
 window.addEventListener('message', (event: MessageEvent) => {
   if (event.data?.type === 'playerjs-event') {
-    console.log(event.data);
     switch (event.data.event) {
       case 'playing':
         useIFramePlayer.setState({ isPlaying: event.data.state });
@@ -104,6 +135,48 @@ window.addEventListener('message', (event: MessageEvent) => {
         break;
       case 'volume':
         useIFramePlayer.setState({ volume: Number(event.data.data) });
+        break;
+      case 'start':
+        browser.runtime.sendMessage({
+          type: 'playerjs-command',
+          api: 'quality',
+        });
+        browser.runtime.sendMessage({
+          type: 'playerjs-command',
+          api: 'qualities',
+        });
+        break;
+      case 'quality':
+        useIFramePlayer.setState({ currentQuality: event.data.data });
+        break;
+      case 'speed':
+        useIFramePlayer.setState({ currentSpeed: Number(event.data.data) });
+        break;
+    }
+  }
+  if (event.data?.type === 'playerjs-response') {
+    switch (event.data.command) {
+      case 'qualities':
+        if (event.data.data[0] === 1) {
+          browser.runtime.sendMessage({
+            type: 'playerjs-command',
+            api: 'qualities',
+          });
+        }
+
+        useIFramePlayer.setState({ qualities: event.data.data });
+        break;
+      case 'quality':
+        if (!event.data.data) break;
+
+        if (event.data.data === '1') {
+          browser.runtime.sendMessage({
+            type: 'playerjs-command',
+            api: 'quality',
+          });
+        }
+
+        useIFramePlayer.setState({ currentQuality: event.data.data });
         break;
     }
   }

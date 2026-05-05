@@ -19,8 +19,6 @@ import {
 import PlayerMobileToolbar from './mobile-toolbar/player-mobile-toolbar';
 import PlayerNavbar from './player-navbar';
 import PlayerOverlay from './player-overlay/player-overlay';
-import PlayerSidebar from './sidebar/player-sidebar';
-import PlayerToolbar from './toolbar/player-toolbar';
 
 export default function player() {
   return createShadowRootUi(usePageStore.getState().ctx, {
@@ -90,6 +88,7 @@ export const Player = () => {
     team,
     currentEpisode,
     setEpisode,
+    fullscreen,
   } = usePlayer();
   const { data } = useWatchData();
 
@@ -100,7 +99,6 @@ export const Player = () => {
   const [getNextEpState, setNextEpState] = useState(false);
   const [getWatchedState, toggleWatchedState] = useState(false);
   const [getTheatreState, toggleTheatreState] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [isTimecodeLink, toggleTimestampLink] = useState(false);
   const [timecodeLink, setTimecodeLink] = useState(0);
 
@@ -111,24 +109,6 @@ export const Player = () => {
     setEpisode(value);
     toggleWatchedState(false);
     togglePlayerReady(false);
-  };
-
-  const handleFullscreenChange = () => {
-    if (!document.fullscreenElement) {
-      handleExitFullscreen();
-    }
-  };
-
-  const handleEnterFullscreen = () => {
-    setIsFullscreen(true);
-    document.documentElement.requestFullscreen();
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-  };
-
-  const handleExitFullscreen = () => {
-    setIsFullscreen(false);
-    document.exitFullscreen();
-    document.removeEventListener('fullscreenchange', handleFullscreenChange);
   };
 
   const [time, setTime] = useState(0);
@@ -273,6 +253,8 @@ export const Player = () => {
       className={cn(
         'border-overlay relative z-10 box-content flex size-full overflow-hidden rounded-none border-none duration-300 md:max-h-[720px] md:max-w-[1280px] md:rounded-[calc(var(--radius)_+_8px)] md:border',
         getTheatreState && 'md:max-h-full md:max-w-full',
+        fullscreen &&
+          'fixed inset-0 z-20 md:max-h-full md:max-w-full md:rounded-none',
       )}
     >
       <PlayerMobileToolbar toggleWatchedState={toggleWatchedState} />
