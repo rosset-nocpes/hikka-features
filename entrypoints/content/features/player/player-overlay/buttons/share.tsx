@@ -20,7 +20,7 @@ import {
 import { usePlayer } from '../../context/player-context';
 
 const Share = () => {
-  const { container, provider, team, currentEpisode } = usePlayer();
+  const { container, overlayRef, provider, team, currentEpisode } = usePlayer();
   const { currentTime } = useIFramePlayer();
 
   const [showTooltip, setShowTooltip] = useState(false);
@@ -61,10 +61,9 @@ const Share = () => {
             </Button>
           </TooltipTrigger>
           <TooltipContent
-            // className={tooltipClass}
             side="top"
             sideOffset={32}
-            // collisionBoundary={player?.el}
+            collisionBoundary={overlayRef.current}
             collisionPadding={8}
           >
             Поділитися
@@ -76,6 +75,7 @@ const Share = () => {
         container={container}
         side="top"
         sideOffset={32}
+        collisionBoundary={overlayRef.current}
         collisionPadding={8}
       >
         <div className="flex items-center gap-2 rounded-md bg-muted py-1 pl-2 pr-1">

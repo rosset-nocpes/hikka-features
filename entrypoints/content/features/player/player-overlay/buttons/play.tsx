@@ -8,8 +8,10 @@ import {
   Tooltip,
 } from '@/components/ui/tooltip';
 
+import { usePlayer } from '../../context/player-context';
+
 const Play = () => {
-  // const player = useMediaPlayer();
+  const { overlayRef } = usePlayer();
   const { isPlaying, play, pause } = useIFramePlayer();
 
   const handlePlay = () => {
@@ -32,11 +34,10 @@ const Play = () => {
         </Button>
       </TooltipTrigger>
       <TooltipContent
-        // className={tooltipClass}
         side="top"
         align="center"
         sideOffset={32}
-        // collisionBoundary={}
+        collisionBoundary={overlayRef.current}
         collisionPadding={8}
       >
         {isPlaying ? 'Призупинити' : 'Відтворити'}

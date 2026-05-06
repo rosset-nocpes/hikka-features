@@ -1,4 +1,10 @@
-import { type FC, type PropsWithChildren, useEffect } from 'react';
+import {
+  createRef,
+  type FC,
+  type PropsWithChildren,
+  RefObject,
+  useEffect,
+} from 'react';
 import { create } from 'zustand';
 
 import { ProviderTeamIFrame } from '@/utils/provider_classes';
@@ -14,6 +20,7 @@ interface PlayerState {
   episodeData?: API.EpisodeData[];
   currentEpisode?: API.EpisodeData;
   fullscreen: boolean;
+  overlayRef: RefObject<HTMLDivElement | null>;
   /* Temporary */
   sharedParams?: SharedPlayerParams;
   isShared?: boolean;
@@ -29,6 +36,7 @@ interface PlayerActions {
   toggleFullscreen: () => void;
   setSharedStatus: (status: boolean) => void;
   setContainer: (container: HTMLElement) => void;
+  setOverlayRef: (ref: HTMLDivElement | null) => void;
   reset: () => void;
 }
 
@@ -49,6 +57,7 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
     episodeData: undefined,
     currentEpisode: undefined,
     fullscreen: false,
+    overlayRef: createRef<HTMLDivElement>(),
 
     initialize: async (data) => {
       const { defaultProvider, favoriteTeams } =
@@ -232,6 +241,12 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
 
     setSharedStatus: (status) => set({ isShared: status }),
     setContainer: (container) => set({ container }),
+    setOverlayRef: (el) => {
+      const ref = createRef<HTMLDivElement>();
+      ref.current = el;
+      set({ overlayRef: ref });
+    },
+
     reset: () => {
       set({
         container: undefined,

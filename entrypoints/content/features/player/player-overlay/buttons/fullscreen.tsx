@@ -11,7 +11,7 @@ import {
 import { usePlayer } from '../../context/player-context';
 
 const Fullscreen = () => {
-  const { fullscreen, toggleFullscreen } = usePlayer();
+  const { overlayRef, fullscreen, toggleFullscreen } = usePlayer();
 
   return (
     <Tooltip>
@@ -29,8 +29,8 @@ const Fullscreen = () => {
         side="top"
         align="center"
         sideOffset={32}
-        // collisionBoundary={player?.el}
-        // collisionPadding={8}
+        collisionBoundary={overlayRef.current}
+        collisionPadding={8}
       >
         {fullscreen ? 'Вийти з повноекранного режиму' : 'Повноекранний режим'}
       </TooltipContent>

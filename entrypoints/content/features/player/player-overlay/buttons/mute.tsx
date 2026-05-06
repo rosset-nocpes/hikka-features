@@ -9,7 +9,10 @@ import {
   Tooltip,
 } from '@/components/ui/tooltip';
 
+import { usePlayer } from '../../context/player-context';
+
 const Mute = () => {
+  const { overlayRef } = usePlayer();
   const { isMuted, toggleMute, volume } = useIFramePlayer();
 
   const handleToggleMute = () => {
@@ -30,11 +33,10 @@ const Mute = () => {
         </Button>
       </TooltipTrigger>
       <TooltipContent
-        // className={tooltipClass}
         side="top"
         align="center"
         sideOffset={32}
-        // collisionBoundary={player?.el}
+        collisionBoundary={overlayRef.current}
         collisionPadding={8}
       >
         {isMuted ? 'Увімкнути звук' : 'Вимкнути звук'}

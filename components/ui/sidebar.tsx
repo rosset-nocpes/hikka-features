@@ -265,7 +265,9 @@ const Sidebar = React.forwardRef<
             data-sidebar="sidebar"
             className={cn(
               'flex h-full w-full flex-col group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow',
-              blur ? 'bg-sidebar/60 backdrop-blur-xl' : 'bg-sidebar',
+              blur
+                ? 'group-data-[variant=floating]:border-shadow bg-sidebar/60 backdrop-blur-xl group-data-[variant=floating]:border-none'
+                : 'bg-sidebar',
             )}
           >
             {children}
