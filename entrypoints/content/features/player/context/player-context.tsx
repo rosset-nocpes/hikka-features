@@ -252,6 +252,7 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
           useIFramePlayer.setState({ uiShown: true });
           clearTimeout(hideTimer);
           hideTimer = setTimeout(() => {
+            if (!useIFramePlayer.getState().isPlaying) return;
             useIFramePlayer.setState({ uiShown: false });
           }, 4000);
         };
@@ -261,6 +262,7 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
         el.addEventListener('mouseleave', () => {
           clearTimeout(hideTimer);
           hideTimer = setTimeout(() => {
+            if (!useIFramePlayer.getState().isPlaying) return;
             useIFramePlayer.setState({ uiShown: false });
           }, 4000);
         });
