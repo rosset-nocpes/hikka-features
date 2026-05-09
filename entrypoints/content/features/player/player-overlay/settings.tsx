@@ -29,10 +29,8 @@ enum Views {
 const MotionDropdownMenuGroup = motion.create(DropdownMenuGroup);
 
 const Settings = () => {
-  const { container } = usePlayer();
+  const { container, overlayRef } = usePlayer();
   const {
-    pause,
-    play,
     currentQuality,
     qualities,
     setCurrentQuality,
@@ -85,10 +83,10 @@ const Settings = () => {
             </Button>
           </TooltipTrigger>
           <TooltipContent
-            className="parent-data-[open]:hidden z-10 px-2 py-0.5 text-sm font-medium"
+            className="parent-data-[open]:hidden"
             side="top"
             sideOffset={32}
-            // collisionBoundary={player?.el}
+            collisionBoundary={overlayRef.current}
             collisionPadding={8}
           >
             Налаштування
@@ -164,7 +162,7 @@ const Settings = () => {
                   {'< Налаштування'}
                 </DropdownMenuItem>
                 <DropdownMenuRadioGroup value={currentQuality}>
-                  {qualities.map((value) => (
+                  {qualities.toReversed().map((value) => (
                     <DropdownMenuRadioItem
                       key={value}
                       value={value}
