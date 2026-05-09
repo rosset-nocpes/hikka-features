@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+import { usePlayer } from '@/entrypoints/content/features/player/context/player-context';
+
 interface IFramePlayerState {
   isPlaying: boolean;
   isMuted: boolean;
@@ -13,6 +15,7 @@ interface IFramePlayerState {
   isBuffering: boolean;
   bufferedTime: number;
   adInProgress: boolean;
+  uiShown: boolean;
 }
 
 interface IFramePlayerActions {
@@ -43,6 +46,7 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
     isBuffering: false,
     bufferedTime: 0,
     adInProgress: false,
+    uiShown: true,
 
     play: () => {
       browser.runtime.sendMessage({
@@ -144,6 +148,7 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
         isBuffering: false,
         bufferedTime: 0,
         adInProgress: false,
+        uiShown: true,
       });
     },
   }),
@@ -198,6 +203,15 @@ window.addEventListener('message', (event: MessageEvent) => {
         break;
       case 'buffered':
         useIFramePlayer.setState({ isBuffering: false });
+        break;
+      case 'ui':
+        const shouldShow = Boolean(event.data.data);
+        if (!shouldShow) {
+          const overlayRef = usePlayer.getState().overlayRef;
+          const isOverlayHovered = overlayRef?.current?.matches(':hover');
+          if (isOverlayHovered) break;
+        }
+        useIFramePlayer.setState({ uiShown: shouldShow });
         break;
     }
   }

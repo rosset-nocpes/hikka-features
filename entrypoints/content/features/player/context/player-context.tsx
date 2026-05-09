@@ -244,6 +244,28 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
     setOverlayRef: (el) => {
       const ref = createRef<HTMLDivElement>();
       ref.current = el;
+
+      if (el) {
+        let hideTimer: NodeJS.Timeout;
+
+        const resetTimer = () => {
+          useIFramePlayer.setState({ uiShown: true });
+          clearTimeout(hideTimer);
+          hideTimer = setTimeout(() => {
+            useIFramePlayer.setState({ uiShown: false });
+          }, 4000);
+        };
+
+        el.addEventListener('mouseenter', resetTimer);
+        el.addEventListener('mousemove', resetTimer);
+        el.addEventListener('mouseleave', () => {
+          clearTimeout(hideTimer);
+          hideTimer = setTimeout(() => {
+            useIFramePlayer.setState({ uiShown: false });
+          }, 4000);
+        });
+      }
+
       set({ overlayRef: ref });
     },
 

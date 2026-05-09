@@ -100,11 +100,6 @@ export const Player = () => {
   const [getNextEpState, setNextEpState] = useState(false);
   const [getWatchedState, toggleWatchedState] = useState(false);
   const [getTheatreState, toggleTheatreState] = useState(false);
-  const [isTimecodeLink, toggleTimestampLink] = useState(false);
-  const [timecodeLink, setTimecodeLink] = useState(0);
-
-  const VidStackPlayerRef = useRef<MediaPlayerInstance>(null);
-  const [showControls, setShowControls] = useState(true);
 
   const handleSelectEpisode = (value: API.EpisodeData) => {
     setEpisode(value);
@@ -195,9 +190,6 @@ export const Player = () => {
           }
           break;
         }
-
-        case 'ui':
-          setShowControls(Boolean(event.data.data));
       }
     };
 
@@ -215,23 +207,6 @@ export const Player = () => {
     data,
     getWatchedState,
   ]);
-
-  useEffect(() => {
-    const player = VidStackPlayerRef.current;
-    if (!player) return;
-
-    const handleControlsChange = () => {
-      setShowControls(player.controls.showing);
-    };
-
-    player.addEventListener('controls-change', handleControlsChange);
-
-    setShowControls(player.controls.showing);
-
-    return () => {
-      player.removeEventListener('controls-change', handleControlsChange);
-    };
-  }, [VidStackPlayerRef.current]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -264,7 +239,7 @@ export const Player = () => {
       )}
     >
       <PlayerMobileToolbar toggleWatchedState={toggleWatchedState} />
-      <PlayerNavbar showControls={showControls} />
+      <PlayerNavbar />
       <CardContent className="flex min-h-0 min-w-0 flex-1 flex-col p-0 duration-300">
         <iframe
           id="player-iframe"

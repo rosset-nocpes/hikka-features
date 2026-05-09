@@ -11,7 +11,7 @@ interface Props {
 }
 
 const PlayerOverlay = ({ toggleWatchedState }: Props) => {
-  const { adInProgress } = useIFramePlayer();
+  const { adInProgress, uiShown } = useIFramePlayer();
   const { setOverlayRef } = usePlayer();
 
   return (
@@ -20,7 +20,8 @@ const PlayerOverlay = ({ toggleWatchedState }: Props) => {
         ref={setOverlayRef}
         className={cn(
           'relative flex flex-1 flex-col justify-end duration-300',
-          adInProgress && 'opacity-0',
+          (adInProgress || !uiShown) && 'opacity-0',
+          !uiShown && 'cursor-none',
         )}
       >
         <BufferingIndicator />
