@@ -248,6 +248,11 @@ export const Player = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (!currentEpisode) return;
+    useIFramePlayer.getState().reset();
+  }, [currentEpisode]);
+
   return (
     <Card
       className={cn(

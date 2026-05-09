@@ -10,6 +10,9 @@ interface IFramePlayerState {
   speedOptions: number[];
   volume: number;
   duration: number;
+  isBuffering: boolean;
+  bufferedTime: number;
+  adInProgress: boolean;
 }
 
 interface IFramePlayerActions {
@@ -22,6 +25,8 @@ interface IFramePlayerActions {
   setCurrentQuality: (quality: string) => void;
   changeVolume: (volume: number) => void;
   changeSpeed: (speed: number) => void;
+  checkBuffering: () => void;
+  reset: () => void;
 }
 
 export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
@@ -35,6 +40,9 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
     speedOptions: [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2],
     volume: 1,
     duration: 0,
+    isBuffering: false,
+    bufferedTime: 0,
+    adInProgress: false,
 
     play: () => {
       browser.runtime.sendMessage({
@@ -115,6 +123,29 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
         param: index,
       });
     },
+
+    checkBuffering: () => {
+      browser.runtime.sendMessage({
+        type: 'playerjs-command',
+        api: 'buffered',
+      });
+    },
+
+    reset: () => {
+      set({
+        isPlaying: false,
+        isMuted: false,
+        qualities: [],
+        currentQuality: '',
+        currentTime: 0,
+        currentSpeed: 1,
+        volume: 1,
+        duration: 0,
+        isBuffering: false,
+        bufferedTime: 0,
+        adInProgress: false,
+      });
+    },
   }),
 );
 
@@ -152,6 +183,18 @@ window.addEventListener('message', (event: MessageEvent) => {
       case 'speed':
         useIFramePlayer.setState({ currentSpeed: Number(event.data.data) });
         break;
+      case 'vast_start':
+        useIFramePlayer.setState({ adInProgress: true });
+        break;
+      case 'vast_finish':
+        useIFramePlayer.setState({ adInProgress: false });
+        break;
+      case 'buffering':
+        useIFramePlayer.setState({ isBuffering: true });
+        break;
+      case 'buffered':
+        useIFramePlayer.setState({ isBuffering: false });
+        break;
     }
   }
   if (event.data?.type === 'playerjs-response') {
@@ -177,6 +220,9 @@ window.addEventListener('message', (event: MessageEvent) => {
         }
 
         useIFramePlayer.setState({ currentQuality: event.data.data });
+        break;
+      case 'buffered':
+        useIFramePlayer.setState({ bufferedTime: event.data.data });
         break;
     }
   }

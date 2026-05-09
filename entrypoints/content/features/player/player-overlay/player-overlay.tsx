@@ -2,6 +2,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 
 import { usePlayer } from '../context/player-context';
 import PlayerSidebar from '../sidebar/player-sidebar';
+import BufferingIndicator from './buffering-indicator';
 import Time from './sliders/time';
 import VideoToolbar from './video-toolbar';
 
@@ -10,17 +11,23 @@ interface Props {
 }
 
 const PlayerOverlay = ({ toggleWatchedState }: Props) => {
+  const { adInProgress } = useIFramePlayer();
   const { setOverlayRef } = usePlayer();
 
   return (
     <div className="pointer-events-none absolute flex size-full">
       <div
         ref={setOverlayRef}
-        className="relative flex flex-1 flex-col justify-end"
+        className={cn(
+          'relative flex flex-1 flex-col justify-end duration-300',
+          adInProgress && 'opacity-0',
+        )}
       >
+        <BufferingIndicator />
         <div
           className={cn(
             'pointer-events-auto relative flex flex-col bg-gradient-to-t from-black/10 to-transparent opacity-100 transition-opacity duration-300',
+            adInProgress && 'pointer-events-none',
           )}
         >
           <TooltipProvider>
