@@ -73,6 +73,7 @@ export default function player() {
       document.body.classList.toggle('h-full');
       document.body.classList.toggle('overflow-hidden');
 
+      useIFramePlayer.getState().reset();
       usePlayer.getState().reset();
     },
   });
