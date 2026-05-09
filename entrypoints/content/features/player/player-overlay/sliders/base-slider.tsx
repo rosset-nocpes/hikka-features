@@ -31,7 +31,6 @@ const BaseSlider = forwardRef<
       ))}
       <SliderPrimitive.Range className="absolute h-full bg-primary" />
     </SliderPrimitive.Track>
-    <SliderPrimitive.Thumb className="block size-3 rounded-full border-2 border-primary bg-background duration-100 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-ring focus-visible:ring-offset-0 disabled:pointer-events-none disabled:opacity-50 group-hover:scale-150" />
     {children}
   </SliderPrimitive.Root>
 ));

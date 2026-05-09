@@ -164,9 +164,9 @@ window.addEventListener('message', (event: MessageEvent) => {
       case 'muted':
         useIFramePlayer.setState({ isMuted: event.data.state });
         break;
-      // case 'volume':
-      //   useIFramePlayer.setState({ volume: Number(event.data.data) });
-      //   break;
+      case 'volume':
+        useIFramePlayer.setState({ volume: Number(event.data.data) });
+        break;
       case 'start':
         browser.runtime.sendMessage({
           type: 'playerjs-command',
