@@ -13,6 +13,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   SidebarMenuButton,
   SidebarMenuItem,
@@ -128,87 +129,89 @@ const TeamSelect: FC<Props> = ({ toggleWatchedState }) => {
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-            align={open ? 'end' : 'start'}
-            side={open ? 'bottom' : 'left'}
-            sideOffset={open ? 4 : 12}
+            align="end"
+            side="bottom"
+            sideOffset={4}
             container={container}
           >
             <DropdownMenuLabel className="text-xs text-muted-foreground">
               Команди
             </DropdownMenuLabel>
-            {orderedTeams.map((team) => (
-              <motion.div
-                key={team.title}
-                layoutId={team.title}
-                layout
-                transition={{
-                  type: 'spring',
-                  stiffness: 600,
-                  damping: 40,
-                }}
-              >
-                <DropdownMenuItem
-                  onClick={() => handleSelectTeam(team)}
-                  className="group/item p-0 font-normal"
+            <ScrollArea className="max-h-96">
+              {orderedTeams.map((team) => (
+                <motion.div
+                  key={team.title}
+                  layoutId={team.title}
+                  layout
+                  transition={{
+                    type: 'spring',
+                    stiffness: 600,
+                    damping: 40,
+                  }}
                 >
-                  <div className="flex w-full items-center justify-between gap-2 px-1 py-1.5 text-left text-sm">
-                    <Avatar className="h-8 w-8 rounded-md">
-                      <AvatarImage src={team.logo} alt={team.title} />
-                      <AvatarFallback>{team.title[0]}</AvatarFallback>
-                    </Avatar>
-                    <div className="grid flex-1 text-left text-sm leading-tight">
-                      <span className="truncate font-semibold">
-                        {team.title}
-                      </span>
-                      <span className="truncate text-xs">
-                        {getEpisodeRanges(
-                          (data[provider] as ProviderTeamIFrame).teams[
-                            team.title
-                          ].episodes,
-                        )}
-                      </span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      className={cn(
-                        'group',
-                        !(
-                          favoriteTeam?.provider === provider &&
-                          favoriteTeam?.team === team.title
-                        ) && 'hidden group-hover/item:inline-flex',
-                      )}
-                      onClick={(e) => handleFavorite(e, team)}
-                    >
-                      <div className="relative">
-                        <div
-                          className={cn(
-                            'absolute inset-0 flex items-center justify-center transition-all duration-300 ease-in-out will-change-[transform,opacity,filter]',
-                            favoriteTeam?.provider === provider &&
-                              favoriteTeam?.team === team.title
-                              ? 'scale-100 opacity-100 blur-0'
-                              : 'scale-[0.25] opacity-0 blur-sm',
+                  <DropdownMenuItem
+                    onClick={() => handleSelectTeam(team)}
+                    className="group/item p-0 font-normal"
+                  >
+                    <div className="flex w-full items-center justify-between gap-2 px-1 py-1.5 text-left text-sm">
+                      <Avatar className="h-8 w-8 rounded-md">
+                        <AvatarImage src={team.logo} alt={team.title} />
+                        <AvatarFallback>{team.title[0]}</AvatarFallback>
+                      </Avatar>
+                      <div className="grid flex-1 text-left text-sm leading-tight">
+                        <span className="truncate font-semibold">
+                          {team.title}
+                        </span>
+                        <span className="truncate text-xs">
+                          {getEpisodeRanges(
+                            (data[provider] as ProviderTeamIFrame).teams[
+                              team.title
+                            ].episodes,
                           )}
-                        >
-                          <MaterialSymbolsStarRounded className="!size-5 text-yellow-400 transition-transform duration-300 group-hover:scale-125" />
-                        </div>
-                        <div
-                          className={cn(
-                            'opacity transition-[transform,filter] duration-300 ease-in-out will-change-[transform,opacity,filter]',
-                            favoriteTeam?.provider === provider &&
-                              favoriteTeam?.team === team.title
-                              ? 'scale-[0.25] opacity-0 blur-sm'
-                              : 'scale-100 opacity-100 blur-0',
-                          )}
-                        >
-                          <MaterialSymbolsStarRateOutlineRounded className="!size-5 text-muted-foreground transition-transform duration-300 group-hover:scale-125 group-hover:text-foreground" />
-                        </div>
+                        </span>
                       </div>
-                    </Button>
-                  </div>
-                </DropdownMenuItem>
-              </motion.div>
-            ))}
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        className={cn(
+                          'group',
+                          !(
+                            favoriteTeam?.provider === provider &&
+                            favoriteTeam?.team === team.title
+                          ) && 'hidden group-hover/item:inline-flex',
+                        )}
+                        onClick={(e) => handleFavorite(e, team)}
+                      >
+                        <div className="relative">
+                          <div
+                            className={cn(
+                              'absolute inset-0 flex items-center justify-center transition-all duration-300 ease-in-out will-change-[transform,opacity,filter]',
+                              favoriteTeam?.provider === provider &&
+                                favoriteTeam?.team === team.title
+                                ? 'scale-100 opacity-100 blur-0'
+                                : 'scale-[0.25] opacity-0 blur-sm',
+                            )}
+                          >
+                            <MaterialSymbolsStarRounded className="!size-5 text-yellow-400 transition-transform duration-300 group-hover:scale-125" />
+                          </div>
+                          <div
+                            className={cn(
+                              'opacity transition-[transform,filter] duration-300 ease-in-out will-change-[transform,opacity,filter]',
+                              favoriteTeam?.provider === provider &&
+                                favoriteTeam?.team === team.title
+                                ? 'scale-[0.25] opacity-0 blur-sm'
+                                : 'scale-100 opacity-100 blur-0',
+                            )}
+                          >
+                            <MaterialSymbolsStarRateOutlineRounded className="!size-5 text-muted-foreground transition-transform duration-300 group-hover:scale-125 group-hover:text-foreground" />
+                          </div>
+                        </div>
+                      </Button>
+                    </div>
+                  </DropdownMenuItem>
+                </motion.div>
+              ))}
+            </ScrollArea>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
