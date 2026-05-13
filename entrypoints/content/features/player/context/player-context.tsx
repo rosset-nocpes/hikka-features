@@ -7,6 +7,7 @@ import {
 } from 'react';
 import { create } from 'zustand';
 
+import { useSidebar } from '@/components/ui/sidebar';
 import { ProviderTeamIFrame } from '@/utils/provider_classes';
 
 interface PlayerState {
@@ -323,7 +324,8 @@ interface PlayerProviderProps extends PropsWithChildren {
 }
 
 export const PlayerProvider: FC<PlayerProviderProps> = ({ children }) => {
-  const { initialize } = usePlayer();
+  const { initialize, fullscreen } = usePlayer();
+  const { setOpen } = useSidebar();
   const { data } = useWatchData();
 
   useEffect(() => {
@@ -331,6 +333,10 @@ export const PlayerProvider: FC<PlayerProviderProps> = ({ children }) => {
 
     initialize(data);
   }, [data]);
+
+  useEffect(() => {
+    setOpen(!fullscreen);
+  }, [fullscreen]);
 
   return <>{children}</>;
 };

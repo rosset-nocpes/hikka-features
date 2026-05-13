@@ -18,16 +18,16 @@ const VideoToolbar = () => {
   return (
     <>
       <div className="flex gap-2">
-        <div className="flex gap-1 rounded-lg bg-background/60 p-1 backdrop-blur-xl">
+        <div className="border-shadow flex gap-1 rounded-lg bg-background/60 p-1 backdrop-blur-xl">
           <Play />
           <Mute />
           <Volume />
         </div>
-        <div className="flex gap-1 rounded-lg bg-background/60 px-2 backdrop-blur-xl">
+        <div className="border-shadow flex gap-1 rounded-lg bg-background/60 px-2 backdrop-blur-xl">
           <TimeGroup />
         </div>
       </div>
-      <div className="flex gap-1 rounded-lg bg-background/60 p-1 backdrop-blur-xl">
+      <div className="border-shadow flex gap-1 rounded-lg bg-background/60 p-1 backdrop-blur-xl">
         <Share />
         <Settings />
         <Fullscreen />
