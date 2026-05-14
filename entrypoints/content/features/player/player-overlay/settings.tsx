@@ -22,6 +22,7 @@ import { usePlayer } from '@/entrypoints/content/features/player/context/player-
 enum Views {
   Settings = 'settings',
   Quality = 'quality',
+  Subtitles = 'subtitles',
   PlaybackRate = 'playback-rate',
   AudioGain = 'audio-gain',
 }
@@ -37,6 +38,9 @@ const Settings = () => {
     currentSpeed,
     speedOptions,
     changeSpeed,
+    currentSubtitle,
+    setCurrentSubtitle,
+    subtitles,
   } = useIFramePlayer();
   // const player = useMediaPlayer();
   // const videoQualityOptions = useVideoQualityOptions();
@@ -117,7 +121,7 @@ const Settings = () => {
                 exit="exit"
                 transition={{ duration: 0.2, ease: 'easeInOut' }}
               >
-                {currentQuality && (
+                {qualities.length > 0 && (
                   <DropdownMenuItem
                     // disabled={videoQualityOptions.disabled}
                     onClick={(e) => {
@@ -126,6 +130,16 @@ const Settings = () => {
                     }}
                   >
                     Якість ({currentQuality})
+                  </DropdownMenuItem>
+                )}
+                {subtitles.length > 0 && (
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setView(Views.Subtitles);
+                    }}
+                  >
+                    Субтитри ({currentSubtitle})
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem
@@ -141,6 +155,37 @@ const Settings = () => {
                 >
                   Швидкість ({currentSpeed})
                 </DropdownMenuItem>
+              </MotionDropdownMenuGroup>
+            )}
+            {activeView === Views.Subtitles && (
+              <MotionDropdownMenuGroup
+                key="subtitles"
+                custom={direction}
+                variants={menuVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.2, ease: 'easeInOut' }}
+              >
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setView(Views.Settings);
+                  }}
+                >
+                  {'< Налаштування'}
+                </DropdownMenuItem>
+                <DropdownMenuRadioGroup value={currentSubtitle}>
+                  {subtitles.map((value) => (
+                    <DropdownMenuRadioItem
+                      key={value}
+                      value={value}
+                      onSelect={() => setCurrentSubtitle(value)}
+                    >
+                      {value}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
               </MotionDropdownMenuGroup>
             )}
             {activeView === Views.Quality && (

@@ -9,6 +9,8 @@ interface IFramePlayerState {
   currentQuality: string;
   currentTime: number;
   currentSpeed: number;
+  currentSubtitle: string;
+  subtitles: string[];
   speedOptions: number[];
   volume: number;
   duration: number;
@@ -26,6 +28,7 @@ interface IFramePlayerActions {
   mute: () => void;
   unmute: () => void;
   setCurrentQuality: (quality: string) => void;
+  setCurrentSubtitle: (subtitle: string) => void;
   changeVolume: (volume: number) => void;
   changeSpeed: (speed: number) => void;
   checkBuffering: () => void;
@@ -40,6 +43,8 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
     currentQuality: '',
     currentTime: 0,
     currentSpeed: 1,
+    currentSubtitle: '',
+    subtitles: [],
     speedOptions: [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2],
     volume: 1,
     duration: 0,
@@ -105,6 +110,17 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
       browser.runtime.sendMessage({
         type: 'playerjs-command',
         api: 'quality',
+        param: index,
+      });
+    },
+
+    setCurrentSubtitle: (subtitle: string) => {
+      const { subtitles } = get();
+      const index = subtitles.findIndex((s) => s === subtitle).toString();
+
+      browser.runtime.sendMessage({
+        type: 'playerjs-command',
+        api: 'subtitle',
         param: index,
       });
     },
@@ -183,6 +199,10 @@ window.addEventListener('message', (event: MessageEvent) => {
         });
         browser.runtime.sendMessage({
           type: 'playerjs-command',
+          api: 'subtitles',
+        });
+        browser.runtime.sendMessage({
+          type: 'playerjs-command',
           api: 'volume',
         });
         break;
@@ -203,6 +223,10 @@ window.addEventListener('message', (event: MessageEvent) => {
         break;
       case 'buffered':
         useIFramePlayer.setState({ isBuffering: false });
+        break;
+      case 'subtitle':
+      case 'subtitles':
+        useIFramePlayer.setState({ currentSubtitle: event.data.data });
         break;
       case 'ui':
         const shouldShow = Boolean(event.data.data);
@@ -238,6 +262,9 @@ window.addEventListener('message', (event: MessageEvent) => {
         }
 
         useIFramePlayer.setState({ currentQuality: event.data.data });
+        break;
+      case 'subtitles':
+        useIFramePlayer.setState({ subtitles: event.data.data });
         break;
       case 'buffered':
         useIFramePlayer.setState({ bufferedTime: event.data.data });
