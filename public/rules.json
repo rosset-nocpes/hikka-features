@@ -8,6 +8,11 @@
         {
           "header": "Referer",
           "operation": "remove"
+        },
+        {
+          "header": "X-Requested-With",
+          "operation": "set",
+          "value": "XMLHttpRequest"
         }
       ],
       "responseHeaders": [

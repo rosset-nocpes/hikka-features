@@ -80,7 +80,6 @@ class MIUScraper extends BaseScraper {
    * Public API: Fetches all chapters for a manga
    */
   public async getChapterList(url: string): Promise<ReaderContent> {
-    // 1. Parse Manga Page for AJAX details
     const pageHtml = await this.request(url);
     const $page = cheerio.load(pageHtml);
     const container = $page('div#linkstocomics');
@@ -89,11 +88,11 @@ class MIUScraper extends BaseScraper {
       action: 'show',
       news_id: container.attr('data-news_id') || '',
       news_category: container.attr('data-news_category') || '',
+      this_link: container.attr('data-this_link') || '',
       [this.extractQueryKey(pageHtml, this.endpoints.loadChapters)]:
         this.extractUserHash(pageHtml),
     });
 
-    // 2. Fetch Chapter List via AJAX
     const listHtml = await this.request(
       this.endpoints.loadChapters,
       'POST',
@@ -102,13 +101,13 @@ class MIUScraper extends BaseScraper {
     const $list = cheerio.load(listHtml);
     const chapters: Chapter[] = [];
 
-    $list('body > *').each((_, el) => {
+    $list('div.ltcitems').each((_, el) => {
       const $el = $list(el);
       const $link = $el.find('a').first();
       const href = $link.attr('href') || '';
       const text = $link.text().trim();
 
-      if (text.includes('Альтернативний переклад')) return;
+      if (text.includes('Альтернативний')) return;
 
       chapters.push({
         id:
