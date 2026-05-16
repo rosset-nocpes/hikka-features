@@ -171,6 +171,7 @@ const Sidebar = React.forwardRef<
     side?: 'left' | 'right';
     variant?: 'sidebar' | 'floating' | 'inset';
     collapsible?: 'offcanvas' | 'icon' | 'none';
+    blur?: boolean;
   }
 >(
   (
@@ -178,6 +179,7 @@ const Sidebar = React.forwardRef<
       side = 'left',
       variant = 'sidebar',
       collapsible = 'offcanvas',
+      blur = false,
       className,
       children,
       ...props
@@ -233,20 +235,24 @@ const Sidebar = React.forwardRef<
         {/* This is what handles the sidebar gap on desktop */}
         <div
           className={cn(
-            'relative w-[--sidebar-width] bg-transparent transition-[width] duration-300',
+            'relative bg-transparent transition-[width] duration-300',
             'group-data-[collapsible=offcanvas]:w-0',
             'group-data-[side=right]:rotate-180',
             variant === 'floating' || variant === 'inset'
-              ? 'group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]'
-              : 'group-data-[collapsible=icon]:w-[--sidebar-width-icon]',
+              ? 'w-[calc(var(--sidebar-width)+1rem)] group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]'
+              : 'w-[--sidebar-width] group-data-[collapsible=icon]:w-[--sidebar-width-icon]',
           )}
         />
         <div
           className={cn(
             'absolute inset-y-0 z-10 box-content hidden w-[--sidebar-width] transition-[left,right,width] duration-300 md:flex',
             side === 'left'
-              ? 'left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]'
-              : 'right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]',
+              ? variant === 'floating'
+                ? 'left-0 group-data-[collapsible=offcanvas]:left-[calc((var(--sidebar-width)+1rem)*-1)]'
+                : 'left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]'
+              : variant === 'floating'
+                ? 'right-0 group-data-[collapsible=offcanvas]:right-[calc((var(--sidebar-width)+1rem)*-1)]'
+                : 'right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]',
             // Adjust the padding for floating and inset variants.
             variant === 'floating' || variant === 'inset'
               ? 'p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]'
@@ -257,7 +263,12 @@ const Sidebar = React.forwardRef<
         >
           <div
             data-sidebar="sidebar"
-            className="flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
+            className={cn(
+              'flex h-full w-full flex-col group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow',
+              blur
+                ? 'group-data-[variant=floating]:border-shadow bg-sidebar/60 backdrop-blur-xl group-data-[variant=floating]:border-none'
+                : 'bg-sidebar',
+            )}
           >
             {children}
           </div>

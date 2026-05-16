@@ -1,56 +1,47 @@
-import { Copy, CopyCheck, Link } from 'lucide-react';
-import { type FC, useState } from 'react';
+import { Link, Copy, CopyCheck } from 'lucide-react';
+import { useState } from 'react';
 import MaterialSymbolsShareOutline from '~icons/material-symbols/share-outline';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import {
-  Popover,
-  PopoverContent,
   PopoverTrigger,
+  PopoverContent,
+  Popover,
 } from '@/components/ui/popover';
 import {
-  Tooltip,
+  TooltipTrigger,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  Tooltip,
 } from '@/components/ui/tooltip';
 
-import { usePlayer } from '../context/player-context';
+import { usePlayer } from '../../context/player-context';
 
-interface Props {
-  time: number;
-  isTimecodeLink: boolean;
-  timecodeLink: number;
-  setTimecodeLink: (value: number) => void;
-  toggleTimestampLink: (value: boolean) => void;
-}
-
-const ShareLinkButton: FC<Props> = ({
-  time,
-  isTimecodeLink,
-  timecodeLink,
-  setTimecodeLink,
-  toggleTimestampLink,
-}) => {
-  const { container, provider, team, currentEpisode } = usePlayer();
+const Share = () => {
+  const { container, overlayRef, provider, team, currentEpisode } = usePlayer();
+  const { currentTime } = useIFramePlayer();
 
   const [showTooltip, setShowTooltip] = useState(false);
+  const [isTimecodeLink, toggleTimestampLink] = useState(false);
+  const [timecodeLink, setTimecodeLink] = useState(0);
 
   const handleCopyShareLink = () => {
-    const query_params = new URLSearchParams();
-    query_params.append('playerProvider', provider!);
-    query_params.append('playerTeam', team?.title!);
-    query_params.append('playerEpisode', currentEpisode!.episode.toString());
+    if (!provider || !team || !currentEpisode) return;
+
+    const url = new URL(`${window.location.origin}${window.location.pathname}`);
+    const searchParams = url.searchParams;
+
+    searchParams.append('playerProvider', provider);
+    searchParams.append('playerTeam', team.title);
+    searchParams.append('playerEpisode', currentEpisode.episode.toString());
 
     if (isTimecodeLink) {
-      query_params.append('time', timecodeLink.toString());
+      searchParams.append('time', timecodeLink.toString());
     }
 
-    navigator.clipboard.writeText(
-      `${window.location.origin}${window.location.pathname}?${query_params.toString()}`,
-    );
+    navigator.clipboard.writeText(url.href);
   };
 
   return (
@@ -58,7 +49,7 @@ const ShareLinkButton: FC<Props> = ({
       onOpenChange={(open) => {
         if (open) {
           toggleTimestampLink(false);
-          setTimecodeLink(Math.floor(time));
+          setTimecodeLink(Math.floor(currentTime));
         }
       }}
     >
@@ -69,10 +60,24 @@ const ShareLinkButton: FC<Props> = ({
               <MaterialSymbolsShareOutline className="flex-1" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Поділитися</TooltipContent>
+          <TooltipContent
+            side="top"
+            sideOffset={32}
+            collisionBoundary={overlayRef.current}
+            collisionPadding={8}
+          >
+            Поділитися
+          </TooltipContent>
         </Tooltip>
       </PopoverTrigger>
-      <PopoverContent className="flex flex-col gap-2" container={container}>
+      <PopoverContent
+        className="flex flex-col gap-2"
+        container={container}
+        side="top"
+        sideOffset={32}
+        collisionBoundary={overlayRef.current}
+        collisionPadding={8}
+      >
         <div className="flex items-center gap-2 rounded-md bg-muted py-1 pl-2 pr-1">
           <Link className="size-3.5 shrink-0 text-muted-foreground" />
           <span className="cursor-default overflow-hidden text-nowrap text-xs font-medium gradient-mask-r-90">
@@ -137,4 +142,4 @@ const ShareLinkButton: FC<Props> = ({
   );
 };
 
-export default ShareLinkButton;
+export default Share;

@@ -34,11 +34,18 @@ interface ProxyRequest {
   data?: any;
 }
 
+interface PlayerCommandRequest {
+  type: 'playerjs-command';
+  api: string;
+  param?: any;
+}
+
 type MessageRequest =
   | LoginRequest
   | RichPresenceCheckRequest
   | WatchTogetherRequest
-  | ProxyRequest;
+  | ProxyRequest
+  | PlayerCommandRequest;
 
 export const proxyUrl = <T = any>(
   url: string,
@@ -221,6 +228,16 @@ export default defineBackground(() => {
             type: 'proxy-response',
             requestId,
             data: r,
+          });
+          return true;
+        }
+        case 'playerjs-command': {
+          const { api, param } = typedRequest;
+
+          browser.tabs.sendMessage(sender.tab!.id!, {
+            type: 'playerjs-command',
+            api,
+            param,
           });
           return true;
         }
