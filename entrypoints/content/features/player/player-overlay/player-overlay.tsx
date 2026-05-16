@@ -18,13 +18,18 @@ const PlayerOverlay = ({ toggleWatchedState }: Props) => {
   const { setOverlayRef, provider } = usePlayer();
 
   return (
-    <div className="absolute flex size-full">
+    <div
+      className={cn(
+        'absolute flex size-full',
+        adInProgress && 'pointer-events-none',
+      )}
+    >
       {provider !== 'vidking' && (
         <div
           ref={setOverlayRef}
           className={cn(
             'relative flex flex-1 flex-col justify-end duration-300',
-            adInProgress && 'pointer-events-none opacity-0',
+            adInProgress && 'opacity-0',
             !uiShown && 'cursor-none',
           )}
         >

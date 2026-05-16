@@ -53,7 +53,7 @@ const PlayerSidebar: FC<Props> = ({ toggleWatchedState, className }) => {
       variant="floating"
       side="right"
       blur
-      className={cn('flex overflow-hidden', className)}
+      className={cn('pointer-events-auto flex overflow-hidden', className)}
       // onMouseLeave={toggleSidebar}
     >
       <SidebarHeader>
