@@ -21,6 +21,7 @@ interface PlayerState {
   episodeData?: API.EpisodeData[];
   currentEpisode?: API.EpisodeData;
   fullscreen: boolean;
+  theatreMode: boolean;
   overlayRef: RefObject<HTMLDivElement | null>;
   /* Temporary */
   sharedParams?: SharedPlayerParams;
@@ -35,6 +36,7 @@ interface PlayerActions {
   removeFavoriteTeam: () => void;
   setEpisode: (episode: API.EpisodeData) => void;
   toggleFullscreen: () => void;
+  toggleTheatreMode: () => void;
   setSharedStatus: (status: boolean) => void;
   setContainer: (container: HTMLElement) => void;
   setOverlayRef: (ref: HTMLDivElement | null) => void;
@@ -58,6 +60,7 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
     episodeData: undefined,
     currentEpisode: undefined,
     fullscreen: false,
+    theatreMode: false,
     overlayRef: createRef<HTMLDivElement>(),
 
     initialize: async (data) => {
@@ -239,7 +242,10 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
         document.addEventListener('fullscreenchange', handleFullscreenChange);
       }
     },
-
+    toggleTheatreMode: () => {
+      const { theatreMode } = get();
+      set({ theatreMode: !theatreMode });
+    },
     setSharedStatus: (status) => set({ isShared: status }),
     setContainer: (container) => set({ container }),
     setOverlayRef: (el) => {

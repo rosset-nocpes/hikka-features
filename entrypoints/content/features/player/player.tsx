@@ -90,6 +90,7 @@ export const Player = () => {
     currentEpisode,
     setEpisode,
     fullscreen,
+    theatreMode,
   } = usePlayer();
   const { data } = useWatchData();
 
@@ -99,7 +100,6 @@ export const Player = () => {
   const [isPlayerReady, togglePlayerReady] = useState(false);
   const [getNextEpState, setNextEpState] = useState(false);
   const [getWatchedState, toggleWatchedState] = useState(false);
-  const [getTheatreState, toggleTheatreState] = useState(false);
 
   const handleSelectEpisode = (value: API.EpisodeData) => {
     setEpisode(value);
@@ -233,7 +233,7 @@ export const Player = () => {
     <Card
       className={cn(
         'border-overlay relative z-10 box-content flex size-full overflow-hidden rounded-none border-none duration-300 md:max-h-[720px] md:max-w-[1280px] md:rounded-[calc(var(--radius)_+_8px)] md:border',
-        getTheatreState && 'md:max-h-full md:max-w-full',
+        theatreMode && 'md:max-h-full md:max-w-full',
         fullscreen &&
           'fixed inset-0 z-20 md:max-h-full md:max-w-full md:rounded-none',
       )}

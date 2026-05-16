@@ -2,6 +2,7 @@ import Fullscreen from './buttons/fullscreen';
 import Mute from './buttons/mute';
 import Play from './buttons/play';
 import Share from './buttons/share';
+import TheatreMode from './buttons/theatre-mode';
 import Settings from './settings';
 import Volume from './sliders/volume';
 import TimeGroup from './time-group';
@@ -30,6 +31,7 @@ const VideoToolbar = () => {
       <div className="border-shadow flex gap-1 rounded-lg bg-background/60 p-1 backdrop-blur-xl">
         <Share />
         <Settings />
+        <TheatreMode />
         <Fullscreen />
       </div>
     </>
