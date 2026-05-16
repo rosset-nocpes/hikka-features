@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import MaterialSymbolsArrowBackRounded from '~icons/material-symbols/arrow-back-rounded';
 import MaterialSymbolsPageInfoOutlineRounded from '~icons/material-symbols/page-info-outline-rounded';
 
 import { Button } from '@/components/ui/button';
@@ -102,8 +103,9 @@ const Settings = () => {
         container={container}
         side="top"
         sideOffset={24}
-        align="end"
-        alignOffset={-40}
+        align="start"
+        collisionBoundary={overlayRef.current}
+        collisionPadding={8}
       >
         <motion.div
           layout
@@ -173,14 +175,28 @@ const Settings = () => {
                     setView(Views.Settings);
                   }}
                 >
-                  {'< Налаштування'}
+                  <MaterialSymbolsArrowBackRounded />
+                  Субтитри
                 </DropdownMenuItem>
                 <DropdownMenuRadioGroup value={currentSubtitle}>
+                  <DropdownMenuRadioItem
+                    key="off"
+                    value="off"
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      setCurrentSubtitle('');
+                    }}
+                  >
+                    Вимк.
+                  </DropdownMenuRadioItem>
                   {subtitles.map((value) => (
                     <DropdownMenuRadioItem
                       key={value}
                       value={value}
-                      onSelect={() => setCurrentSubtitle(value)}
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        setCurrentSubtitle(value);
+                      }}
                     >
                       {value}
                     </DropdownMenuRadioItem>
@@ -204,14 +220,18 @@ const Settings = () => {
                     setView(Views.Settings);
                   }}
                 >
-                  {'< Налаштування'}
+                  <MaterialSymbolsArrowBackRounded />
+                  Якість
                 </DropdownMenuItem>
                 <DropdownMenuRadioGroup value={currentQuality}>
                   {qualities.toReversed().map((value) => (
                     <DropdownMenuRadioItem
                       key={value}
                       value={value}
-                      onSelect={() => setCurrentQuality(value)}
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        setCurrentQuality(value);
+                      }}
                     >
                       {value}
                     </DropdownMenuRadioItem>
@@ -236,14 +256,18 @@ const Settings = () => {
                     setView(Views.Settings);
                   }}
                 >
-                  {'< Налаштування'}
+                  <MaterialSymbolsArrowBackRounded />
+                  Швидкість
                 </DropdownMenuItem>
                 <DropdownMenuRadioGroup value={currentSpeed.toString()}>
                   {speedOptions.map((value) => (
                     <DropdownMenuRadioItem
                       key={value}
                       value={value.toString()}
-                      onSelect={() => changeSpeed(value)}
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        changeSpeed(value);
+                      }}
                     >
                       {value}
                     </DropdownMenuRadioItem>
