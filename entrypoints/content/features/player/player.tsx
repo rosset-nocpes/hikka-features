@@ -1,23 +1,23 @@
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
 
 import { QueryClientProvider } from '@tanstack/react-query';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { toast } from 'sonner';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
+import { useIFramePlayer } from '@/hooks/use-iframe-player';
 
 import { queryClient } from '../..';
 import drawerStyles from '../../../../node_modules/vaul/style.css?inline';
 import {
-  getWatched,
   type MiniPlayerCorner,
   PlayerProvider,
   usePlayer,
 } from './context/player-context';
 import PlayerMobileToolbar from './mobile-toolbar/player-mobile-toolbar';
+import PlayerIFrameEffects from './player-iframe-effects';
 import PlayerNavbar from './player-navbar';
 import PlayerOverlay from './player-overlay/player-overlay';
 
@@ -164,15 +164,7 @@ const PlayerFrame = () => {
 
 export const Player = () => {
   const {
-    container,
-    watchData: data,
-    sharedParams,
-    isShared,
-    setSharedStatus,
-    provider,
-    team,
     currentEpisode,
-    setEpisode,
     fullscreen,
     theatreMode,
     miniPlayer,
@@ -180,156 +172,13 @@ export const Player = () => {
     setMiniPlayerCorner,
   } = usePlayer();
 
-  const { setOpen } = useSidebar();
-
-  const [isPlayerReady, togglePlayerReady] = useState(false);
-  const [getNextEpState, setNextEpState] = useState(false);
   const [getWatchedState, toggleWatchedState] = useState(false);
-
-  const handleSelectEpisode = useCallback(
-    (value: API.EpisodeData) => {
-      setEpisode(value);
-      toggleWatchedState(false);
-      togglePlayerReady(false);
-    },
-    [setEpisode],
-  );
-
-  const [, setTime] = useState(0);
-  const isHandlingNext = useRef(false);
   const [dragPosition, setDragPosition] = useState<{
     left: number;
     top: number;
   } | null>(null);
   const [isDraggingMiniPlayer, setIsDraggingMiniPlayer] = useState(false);
   const miniPlayerSnapTimeout = useRef<number | null>(null);
-
-  useEffect(() => {
-    if (!isShared) return;
-
-    setOpen(false);
-  }, [isShared, setOpen]);
-
-  useEffect(() => {
-    if (!container || !data || !provider || !team || !currentEpisode) return;
-
-    const playerIframe = container.querySelector(
-      '#player-iframe',
-    ) as HTMLIFrameElement;
-
-    const messageHandler = (event: MessageEvent) => {
-      switch (event.data.event) {
-        case 'init': {
-          togglePlayerReady(true);
-
-          if (getNextEpState && !isHandlingNext.current) {
-            isHandlingNext.current = true;
-            setNextEpState(false);
-            playerIframe.contentWindow?.postMessage({ api: 'play' }, '*');
-
-            setTimeout(() => {
-              isHandlingNext.current = false;
-            }, 1000);
-          }
-
-          if (isShared) {
-            setSharedStatus(false);
-            playerIframe.contentWindow?.postMessage(
-              { api: 'play', set: `[seek:${sharedParams?.time}]` },
-              '*',
-            );
-          }
-          break;
-        }
-
-        case 'time': {
-          const message = event.data;
-          setTime(message.time);
-
-          if (
-            message.time / message.duration > 0.88 &&
-            !getWatchedState &&
-            isPlayerReady
-          ) {
-            if (getWatched() + 1 === currentEpisode.episode) {
-              (
-                document.body.querySelector(
-                  '.grid > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) button',
-                ) as HTMLButtonElement
-              )?.click();
-              toggleWatchedState(true);
-            }
-          }
-          break;
-        }
-
-        case 'end': {
-          const providerData = data[provider];
-          let nextEpisode: API.EpisodeData | undefined;
-
-          if (providerData instanceof ProviderTeamIFrame) {
-            const teamEpisodes = providerData.teams[team.title].episodes;
-            nextEpisode = teamEpisodes.find(
-              (episode: API.EpisodeData) =>
-                episode.episode === currentEpisode.episode + 1,
-            );
-          } else if (providerData instanceof ProviderIFrame) {
-            nextEpisode = providerData.episodes.find(
-              (episode: API.EpisodeData) =>
-                episode.episode === currentEpisode.episode + 1,
-            );
-          }
-
-          if (!getNextEpState && nextEpisode) {
-            setNextEpState(true);
-            handleSelectEpisode(nextEpisode);
-
-            toast(
-              `Зараз ви переглядаєте ${nextEpisode.episode} епізод в озвучці ${team?.title}`,
-            );
-          }
-          break;
-        }
-      }
-    };
-
-    window.addEventListener('message', messageHandler);
-    return () => window.removeEventListener('message', messageHandler);
-  }, [
-    container,
-    getNextEpState,
-    isPlayerReady,
-    sharedParams,
-    isShared,
-    provider,
-    team,
-    currentEpisode,
-    data,
-    getWatchedState,
-    handleSelectEpisode,
-    setSharedStatus,
-  ]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      switch (e.key) {
-        case 'Escape':
-          e.preventDefault();
-          removePlayer();
-          break;
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!currentEpisode) return;
-    useIFramePlayer.getState().reset();
-  }, [currentEpisode]);
 
   useEffect(
     () => () => {
@@ -448,6 +297,10 @@ export const Player = () => {
         isDraggingMiniPlayer && 'duration-0',
       )}
     >
+      <PlayerIFrameEffects
+        toggleWatchedState={toggleWatchedState}
+        watched={getWatchedState}
+      />
       {miniPlayer && (
         <div
           className="absolute inset-x-0 top-0 z-10 h-9 cursor-grab active:cursor-grabbing"

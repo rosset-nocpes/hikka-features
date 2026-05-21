@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { usePlayer } from '@/entrypoints/content/features/player/context/player-context';
 
 interface IFramePlayerState {
+  isReady: boolean;
   isPlaying: boolean;
   isMuted: boolean;
   qualities: string[];
@@ -18,6 +19,7 @@ interface IFramePlayerState {
   bufferedTime: number;
   adInProgress: boolean;
   uiShown: boolean;
+  endedCount: number;
 }
 
 interface IFramePlayerActions {
@@ -37,6 +39,7 @@ interface IFramePlayerActions {
 
 export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
   (set, get) => ({
+    isReady: false,
     isPlaying: false,
     isMuted: false,
     qualities: [],
@@ -52,6 +55,7 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
     bufferedTime: 0,
     adInProgress: false,
     uiShown: true,
+    endedCount: 0,
 
     play: () => {
       browser.runtime.sendMessage({
@@ -153,18 +157,22 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
 
     reset: () => {
       set({
+        isReady: false,
         isPlaying: false,
         isMuted: false,
         qualities: [],
         currentQuality: '',
         currentTime: 0,
         currentSpeed: 1,
+        currentSubtitle: '',
+        subtitles: [],
         volume: 1,
         duration: 0,
         isBuffering: false,
         bufferedTime: 0,
         adInProgress: false,
         uiShown: true,
+        endedCount: 0,
       });
     },
   }),
@@ -188,6 +196,9 @@ window.addEventListener('message', (event: MessageEvent) => {
       case 'volume':
         useIFramePlayer.setState({ volume: Number(event.data.data) });
         break;
+      case 'init':
+        useIFramePlayer.setState({ isReady: true });
+        break;
       case 'start':
         browser.runtime.sendMessage({
           type: 'playerjs-command',
@@ -205,6 +216,12 @@ window.addEventListener('message', (event: MessageEvent) => {
           type: 'playerjs-command',
           api: 'volume',
         });
+        break;
+      case 'end':
+        useIFramePlayer.setState((state) => ({
+          endedCount: state.endedCount + 1,
+          isPlaying: false,
+        }));
         break;
       case 'quality':
         useIFramePlayer.setState({ currentQuality: event.data.data });

@@ -17,6 +17,8 @@ export default defineContentScript({
       newScript.src = browser.runtime.getURL('/playerjs-script.js');
       document.head.appendChild(newScript);
 
+      window.top?.postMessage({ type: 'playerjs-event', event: 'init' }, '*');
+
       browser.runtime.onMessage.addListener((message) => {
         if (message.type === 'playerjs-command') {
           window.postMessage(

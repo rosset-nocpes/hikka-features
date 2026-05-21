@@ -4,6 +4,7 @@ import { useSidebar } from '@/components/ui/sidebar';
 import { useIFramePlayer } from '@/hooks/use-iframe-player';
 
 import { usePlayer } from '../context/player-context';
+import { removePlayer } from '../player';
 
 const Gestrues = () => {
   const gestrueRef = useRef<HTMLDivElement>(null);
@@ -83,6 +84,10 @@ const Gestrues = () => {
         case 'arrowdown':
           e.preventDefault();
           changeVolume(-0.1);
+          break;
+        case 'escape':
+          e.preventDefault();
+          removePlayer();
           break;
       }
     };
