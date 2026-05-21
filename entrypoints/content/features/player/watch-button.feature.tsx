@@ -11,7 +11,8 @@ import { Spinner } from '@/components/ui/spinner';
 import { queryClient } from '../..';
 import { BaseFeature } from '../../core/base-feature';
 import { HikkaPages } from '../../core/core.enums';
-import player from './player';
+import { usePlayer } from './context/player-context';
+import player, { isPlayerMounted } from './player';
 
 export default class WatchButtonFeature extends BaseFeature {
   readonly id = 'watch-button';
@@ -56,8 +57,18 @@ const WatchButton = () => {
   const { data, isLoading, isError } = useWatchData();
 
   const openPlayer = () => {
-    document.body.classList.toggle('h-full');
-    document.body.classList.toggle('overflow-hidden');
+    if (!data) return;
+
+    if (isPlayerMounted()) {
+      const { initialize, setMiniPlayer } = usePlayer.getState();
+
+      initialize(data);
+      setMiniPlayer(false);
+      return;
+    }
+
+    document.body.classList.add('h-full');
+    document.body.classList.add('overflow-hidden');
     player().then((ui) => ui.mount());
   };
 
@@ -72,8 +83,16 @@ const WatchButton = () => {
         path_params.has('playerTeam') &&
         path_params.has('playerEpisode'))
     ) {
-      document.body.classList.toggle('h-full');
-      document.body.classList.toggle('overflow-hidden');
+      if (isPlayerMounted()) {
+        const { initialize, setMiniPlayer } = usePlayer.getState();
+
+        initialize(data);
+        setMiniPlayer(false);
+        return;
+      }
+
+      document.body.classList.add('h-full');
+      document.body.classList.add('overflow-hidden');
       player().then((ui) => ui.mount());
     }
   }, [data]);

@@ -17,7 +17,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from '@/components/ui/sidebar';
 import { ProviderTeamIFrame } from '@/utils/provider_classes';
 
@@ -63,10 +62,8 @@ const TeamSelect: FC<Props> = ({ toggleWatchedState }) => {
     setFavoriteTeam,
     removeFavoriteTeam,
     episodeData,
+    watchData: data,
   } = usePlayer();
-  const { data } = useWatchData();
-
-  const { open } = useSidebar();
 
   const orderedTeams = useMemo<API.TeamData[]>(() => {
     if (!data || !provider) return [];

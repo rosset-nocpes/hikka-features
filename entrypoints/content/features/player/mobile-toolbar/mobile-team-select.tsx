@@ -8,32 +8,6 @@ import { Button } from '@/components/ui/button';
 
 import { usePlayer } from '../context/player-context';
 
-const getEpisodeRanges = (episodes: { episode: number }[]) => {
-  if (!episodes.length) return '';
-
-  const episodeNumbers = [...new Set(episodes.map((e) => e.episode))].sort(
-    (a, b) => a - b,
-  );
-
-  const ranges = [];
-  let start = episodeNumbers[0];
-  let end = episodeNumbers[0];
-
-  for (let i = 1; i < episodeNumbers.length; i++) {
-    if (episodeNumbers[i] === end + 1) {
-      end = episodeNumbers[i];
-    } else {
-      ranges.push(start === end ? `${start}` : `${start}-${end}`);
-      start = episodeNumbers[i];
-      end = episodeNumbers[i];
-    }
-  }
-
-  ranges.push(start === end ? `${start}` : `${start}-${end}`);
-
-  return ranges.join(', ');
-};
-
 const MobileTeamSelect = () => {
   const {
     provider,
@@ -42,8 +16,8 @@ const MobileTeamSelect = () => {
     removeFavoriteTeam,
     team,
     setTeam,
+    watchData: data,
   } = usePlayer();
-  const { data } = useWatchData();
 
   const orderedTeams = useMemo<API.TeamData[]>(() => {
     if (!data || !provider) return [];

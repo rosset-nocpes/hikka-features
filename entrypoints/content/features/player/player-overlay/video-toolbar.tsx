@@ -1,4 +1,6 @@
+import { usePlayer } from '../context/player-context';
 import Fullscreen from './buttons/fullscreen';
+import MiniPlayer from './buttons/mini-player';
 import Mute from './buttons/mute';
 import Play from './buttons/play';
 import Share from './buttons/share';
@@ -8,6 +10,23 @@ import Volume from './sliders/volume';
 import TimeGroup from './time-group';
 
 const VideoToolbar = () => {
+  const { miniPlayer } = usePlayer();
+
+  if (miniPlayer) {
+    return (
+      <div className="border-shadow flex max-w-full items-center gap-1 rounded-md bg-background/70 p-1 backdrop-blur-xl">
+        <Play />
+        <Mute />
+        <div className="mx-1 h-5 w-px bg-border/70" />
+        <div className="px-1">
+          <TimeGroup />
+        </div>
+        <div className="mx-1 h-5 w-px bg-border/70" />
+        <MiniPlayer />
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="flex gap-2">
@@ -23,6 +42,7 @@ const VideoToolbar = () => {
       <div className="border-shadow flex gap-1 rounded-lg bg-background/60 p-1 backdrop-blur-xl">
         <Share />
         <Settings />
+        <MiniPlayer />
         <TheatreMode />
         <Fullscreen />
       </div>

@@ -4,10 +4,10 @@ import {
   type PropsWithChildren,
   RefObject,
   useEffect,
+  useRef,
 } from 'react';
 import { create } from 'zustand';
 
-import { useSidebar } from '@/components/ui/sidebar';
 import { ProviderTeamIFrame } from '@/utils/provider_classes';
 
 interface PlayerState {
@@ -22,6 +22,8 @@ interface PlayerState {
   currentEpisode?: API.EpisodeData;
   fullscreen: boolean;
   theatreMode: boolean;
+  miniPlayer: boolean;
+  miniPlayerCorner: MiniPlayerCorner;
   overlayRef: RefObject<HTMLDivElement | null>;
   /* Temporary */
   sharedParams?: SharedPlayerParams;
@@ -37,6 +39,9 @@ interface PlayerActions {
   setEpisode: (episode: API.EpisodeData) => void;
   toggleFullscreen: () => void;
   toggleTheatreMode: () => void;
+  toggleMiniPlayer: () => void;
+  setMiniPlayer: (status: boolean) => void;
+  setMiniPlayerCorner: (corner: MiniPlayerCorner) => void;
   setSharedStatus: (status: boolean) => void;
   setContainer: (container: HTMLElement) => void;
   setOverlayRef: (ref: HTMLDivElement | null) => void;
@@ -61,6 +66,8 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
     currentEpisode: undefined,
     fullscreen: false,
     theatreMode: false,
+    miniPlayer: false,
+    miniPlayerCorner: 'bottom-right',
     overlayRef: createRef<HTMLDivElement>(),
 
     initialize: async (data) => {
@@ -237,15 +244,36 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
           handleFullscreenChange,
         );
       } else {
-        set({ fullscreen: true });
+        set({ fullscreen: true, miniPlayer: false });
         document.documentElement.requestFullscreen();
         document.addEventListener('fullscreenchange', handleFullscreenChange);
       }
     },
     toggleTheatreMode: () => {
       const { theatreMode } = get();
-      set({ theatreMode: !theatreMode });
+      set({ theatreMode: !theatreMode, miniPlayer: false });
     },
+    toggleMiniPlayer: () => {
+      const { fullscreen, miniPlayer, toggleFullscreen } = get();
+
+      if (fullscreen) toggleFullscreen();
+
+      set({
+        theatreMode: false,
+        miniPlayer: !miniPlayer,
+      });
+    },
+    setMiniPlayer: (status) => {
+      const { fullscreen, theatreMode, toggleFullscreen } = get();
+
+      if (status && fullscreen) toggleFullscreen();
+
+      set({
+        theatreMode: status ? false : theatreMode,
+        miniPlayer: status,
+      });
+    },
+    setMiniPlayerCorner: (corner) => set({ miniPlayerCorner: corner }),
     setSharedStatus: (status) => set({ isShared: status }),
     setContainer: (container) => set({ container }),
     setOverlayRef: (el) => {
@@ -288,6 +316,9 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
         episodeData: undefined,
         currentEpisode: undefined,
         fullscreen: false,
+        theatreMode: false,
+        miniPlayer: false,
+        miniPlayerCorner: 'bottom-right',
         /* Temporary */
         sharedParams: undefined,
         isShared: undefined,
@@ -307,6 +338,12 @@ interface FavoriteTeam {
   provider: string;
   team: string;
 }
+
+export type MiniPlayerCorner =
+  | 'top-left'
+  | 'top-right'
+  | 'bottom-left'
+  | 'bottom-right';
 
 export const getAvailablePlayers = (data: API.WatchData) =>
   Object.entries(data)
@@ -330,19 +367,16 @@ interface PlayerProviderProps extends PropsWithChildren {
 }
 
 export const PlayerProvider: FC<PlayerProviderProps> = ({ children }) => {
-  const { initialize, fullscreen } = usePlayer();
-  const { setOpen } = useSidebar();
+  const { initialize } = usePlayer();
   const { data } = useWatchData();
+  const initializedRef = useRef(false);
 
   useEffect(() => {
-    if (!data) return;
+    if (!data || initializedRef.current) return;
 
+    initializedRef.current = true;
     initialize(data);
-  }, [data]);
-
-  useEffect(() => {
-    setOpen(!fullscreen);
-  }, [fullscreen]);
+  }, [data, initialize]);
 
   return <>{children}</>;
 };

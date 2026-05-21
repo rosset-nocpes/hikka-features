@@ -15,7 +15,7 @@ interface Props {
 
 const PlayerOverlay = ({ toggleWatchedState }: Props) => {
   const { adInProgress, uiShown } = useIFramePlayer();
-  const { setOverlayRef, provider } = usePlayer();
+  const { setOverlayRef, provider, miniPlayer } = usePlayer();
 
   return (
     <div
@@ -38,22 +38,35 @@ const PlayerOverlay = ({ toggleWatchedState }: Props) => {
           <BufferingIndicator />
           <div
             className={cn(
-              'relative flex flex-col bg-gradient-to-t from-black/10 to-transparent opacity-100 transition-opacity duration-300',
+              'relative flex flex-col bg-gradient-to-t opacity-100 transition-opacity duration-300',
+              miniPlayer ? 'from-black/45 to-transparent' : 'from-black/10 to-transparent',
               !uiShown && 'opacity-0',
             )}
           >
             <TooltipProvider>
-              <div className="flex w-full items-center px-2">
+              <div
+                className={cn(
+                  'flex w-full items-center',
+                  miniPlayer ? 'px-2' : 'px-2',
+                )}
+              >
                 <Time />
               </div>
-              <div className="flex w-full items-center justify-between p-2">
+              <div
+                className={cn(
+                  'flex w-full items-center',
+                  miniPlayer ? 'justify-center p-1 pt-0' : 'justify-between p-2',
+                )}
+              >
                 <VideoToolbar />
               </div>
             </TooltipProvider>
           </div>
         </div>
       )}
-      <PlayerSidebar toggleWatchedState={toggleWatchedState} />
+      {!miniPlayer && (
+        <PlayerSidebar toggleWatchedState={toggleWatchedState} />
+      )}
     </div>
   );
 };

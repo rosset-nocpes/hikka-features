@@ -1,5 +1,5 @@
 import { Slider as SliderPrimitive } from 'radix-ui';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { usePlayer } from '../../context/player-context';
 import { formatTime } from '../time-group';
@@ -14,12 +14,12 @@ const useSeeking = (duration: number, seek: (t: number) => void) => {
     seek(target);
   };
 
-  const shouldSkipSync = (currentTime: number): boolean => {
+  const shouldSkipSync = useCallback((currentTime: number): boolean => {
     if (seekTargetRef.current === null) return false;
     if (Math.abs(currentTime - seekTargetRef.current) > 1) return true;
     seekTargetRef.current = null;
     return false;
-  };
+  }, []);
 
   return { isSeeking, setIsSeeking, commit, shouldSkipSync };
 };
@@ -43,7 +43,7 @@ const useSliderTooltip = ({
 
   const COLLISION_PADDING = 8;
 
-  const updateFromClientX = (clientX: number) => {
+  const updateFromClientX = useCallback((clientX: number) => {
     if (!trackRef.current) return;
     const rect = trackRef.current.getBoundingClientRect();
     const percent = Math.max(
@@ -54,7 +54,7 @@ const useSliderTooltip = ({
     const stepped = Math.round(raw / step) * step;
     setHoverTime(Math.max(0, Math.min(duration, stepped)));
     setHoverX(clientX);
-  };
+  }, [duration, step]);
 
   const handleMouseMove = (e: React.MouseEvent) => updateFromClientX(e.clientX);
 
@@ -80,7 +80,7 @@ const useSliderTooltip = ({
       document.removeEventListener('pointermove', onMove);
       document.removeEventListener('pointerup', onUp);
     };
-  }, [isSeeking]);
+  }, [isSeeking, updateFromClientX]);
 
   // Collision-aware positioning
   useEffect(() => {
@@ -124,7 +124,7 @@ const useSliderTooltip = ({
 const Time = () => {
   const { currentTime, duration, seek, bufferedTime, checkBuffering } =
     useIFramePlayer();
-  const { overlayRef } = usePlayer();
+  const { overlayRef, miniPlayer } = usePlayer();
 
   const step = duration > 0 ? (1 / duration) * 100 : 1;
   const [value, setValue] = useState(0);
@@ -146,12 +146,12 @@ const Time = () => {
 
   useEffect(() => {
     checkBuffering();
-  }, [currentTime]);
+  }, [checkBuffering, currentTime]);
 
   useEffect(() => {
     if (isSeeking || shouldSkipSync(currentTime)) return;
     setValue(duration > 0 ? (currentTime / duration) * 100 : 0);
-  }, [currentTime, duration, isSeeking]);
+  }, [currentTime, duration, isSeeking, shouldSkipSync]);
 
   useEffect(() => {
     if (duration === 0) setValue(0);
@@ -170,7 +170,10 @@ const Time = () => {
     <div className="relative flex w-full">
       <SliderPrimitive.Root
         ref={trackRef}
-        className="group relative inline-flex w-full cursor-pointer touch-none select-none pb-1 pt-4 outline-none"
+        className={cn(
+          'group relative inline-flex w-full cursor-pointer touch-none select-none outline-none',
+          miniPlayer ? 'pb-1 pt-2' : 'pb-1 pt-4',
+        )}
         value={[value]}
         disabled={duration === 0}
         step={step}
@@ -181,7 +184,12 @@ const Time = () => {
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
-        <SliderPrimitive.Track className="border-shadow relative h-1 w-full grow overflow-hidden rounded-full bg-secondary duration-100 group-hover:scale-y-150">
+        <SliderPrimitive.Track
+          className={cn(
+            'border-shadow relative w-full grow overflow-hidden rounded-full bg-secondary duration-100 group-hover:scale-y-150',
+            miniPlayer ? 'h-0.5' : 'h-1',
+          )}
+        >
           <div
             className="absolute h-full bg-secondary-foreground/30"
             style={{ width: `${bufferedPercent}%` }}

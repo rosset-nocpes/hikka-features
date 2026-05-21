@@ -17,7 +17,7 @@ const Gestrues = () => {
     toggleMute,
     changeVolume,
   } = useIFramePlayer();
-  const { toggleFullscreen, overlayRef } = usePlayer();
+  const { toggleFullscreen, overlayRef, miniPlayer } = usePlayer();
   const { open, setOpen } = useSidebar();
 
   const togglePlayPause = useCallback(() => {
@@ -50,6 +50,7 @@ const Gestrues = () => {
 
       switch (e.key.toLowerCase()) {
         case 'f':
+          if (miniPlayer) break;
           e.preventDefault();
           toggleFullscreen();
           break;
@@ -63,6 +64,7 @@ const Gestrues = () => {
           toggleMute();
           break;
         case 's':
+          if (miniPlayer) break;
           e.preventDefault();
           setOpen(!open);
           break;
@@ -92,6 +94,7 @@ const Gestrues = () => {
     };
   }, [
     open,
+    miniPlayer,
     setOpen,
     togglePlayPause,
     toggleFullscreen,

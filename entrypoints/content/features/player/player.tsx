@@ -1,7 +1,7 @@
-import type { MediaPlayerInstance } from '@vidstack/react';
+import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
 
 import { QueryClientProvider } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { toast } from 'sonner';
 
@@ -13,6 +13,7 @@ import { queryClient } from '../..';
 import drawerStyles from '../../../../node_modules/vaul/style.css?inline';
 import {
   getWatched,
+  type MiniPlayerCorner,
   PlayerProvider,
   usePlayer,
 } from './context/player-context';
@@ -26,14 +27,13 @@ export default function player() {
     position: 'modal',
     zIndex: 100,
     inheritStyles: true,
-    async onMount(container) {
+    onMount(container) {
       usePlayer.getState().setContainer(container);
 
       const wrapper = document.createElement('div');
       container.append(wrapper);
 
-      wrapper.className =
-        'size-full backdrop-blur-sm bg-black/60 flex items-center justify-center md:p-8';
+      wrapper.className = 'size-full';
 
       container.className = 'h-full';
       container.classList.toggle(
@@ -50,28 +50,20 @@ export default function player() {
         <QueryClientProvider client={queryClient}>
           <SidebarProvider className="h-full w-full">
             <PlayerProvider container={container}>
-              <div
-                className="fixed z-0 size-full"
-                onClick={() => player().then((x) => x.remove())}
-              />
-              <Player />
+              <PlayerFrame />
               <Toaster position="top-center" />
             </PlayerProvider>
           </SidebarProvider>
         </QueryClientProvider>,
       );
 
-      return { root, wrapper };
+      return root;
     },
-    onRemove: (elements) => {
-      elements?.then((x) => {
-        x?.root.unmount();
-        x?.wrapper.remove();
-      });
+    onRemove: (root) => {
+      root?.unmount();
 
-      document.body.removeChild(document.getElementsByTagName('player-ui')[0]);
-      document.body.classList.toggle('h-full');
-      document.body.classList.toggle('overflow-hidden');
+      document.body.classList.remove('h-full');
+      document.body.classList.remove('overflow-hidden');
 
       useIFramePlayer.getState().reset();
       usePlayer.getState().reset();
@@ -79,9 +71,89 @@ export default function player() {
   });
 }
 
+export const isPlayerMounted = () =>
+  !!document.getElementsByTagName('player-ui')[0];
+
+const MINI_PLAYER_MARGIN = 16;
+
+const getMiniPlayerCornerStyle = (corner: MiniPlayerCorner): CSSProperties => {
+  const style: CSSProperties = {};
+
+  if (corner.includes('top')) style.top = MINI_PLAYER_MARGIN + 64;
+  else style.bottom = MINI_PLAYER_MARGIN;
+
+  if (corner.includes('left')) style.left = MINI_PLAYER_MARGIN;
+  else style.right = MINI_PLAYER_MARGIN;
+
+  return style;
+};
+
+const getMiniPlayerCornerPosition = (
+  corner: MiniPlayerCorner,
+  width: number,
+  height: number,
+): { left: number; top: number } => ({
+  left: corner.includes('left')
+    ? MINI_PLAYER_MARGIN
+    : window.innerWidth - width - MINI_PLAYER_MARGIN,
+  top: corner.includes('top')
+    ? MINI_PLAYER_MARGIN + 64
+    : window.innerHeight - height - MINI_PLAYER_MARGIN,
+});
+
+const getNearestMiniPlayerCorner = (
+  left: number,
+  top: number,
+  width: number,
+  height: number,
+): MiniPlayerCorner => {
+  const centerX = left + width / 2;
+  const centerY = top + height / 2;
+  const horizontal = centerX < window.innerWidth / 2 ? 'left' : 'right';
+  const vertical = centerY < window.innerHeight / 2 ? 'top' : 'bottom';
+
+  return `${vertical}-${horizontal}` as MiniPlayerCorner;
+};
+
+const PlayerFrame = () => {
+  const { miniPlayer, container } = usePlayer();
+  const { setOpen } = useSidebar();
+
+  useEffect(() => {
+    setOpen(!miniPlayer);
+    container?.parentElement?.classList.toggle(
+      'pointer-events-none',
+      miniPlayer,
+    );
+    document.body.classList.toggle('h-full', !miniPlayer);
+    document.body.classList.toggle('overflow-hidden', !miniPlayer);
+    // oxlint-disable-next-line eslint-plugin-react-hooks/exhaustive-deps
+  }, [miniPlayer, container]);
+
+  return (
+    <div
+      className={cn(
+        'relative size-full',
+        miniPlayer
+          ? 'pointer-events-none'
+          : 'flex items-center justify-center bg-black/60 backdrop-blur-sm md:p-8',
+      )}
+    >
+      {!miniPlayer && (
+        <div
+          className="fixed z-0 size-full"
+          onClick={() => player().then((x) => x.remove())}
+        />
+      )}
+      <Player />
+    </div>
+  );
+};
+
 export const Player = () => {
   const {
     container,
+    watchData: data,
     sharedParams,
     isShared,
     setSharedStatus,
@@ -91,24 +163,40 @@ export const Player = () => {
     setEpisode,
     fullscreen,
     theatreMode,
+    miniPlayer,
+    miniPlayerCorner,
+    setMiniPlayerCorner,
   } = usePlayer();
-  const { data } = useWatchData();
 
-  const { open, setOpen } = useSidebar();
-  if (isShared) setOpen(false);
+  const { setOpen } = useSidebar();
 
   const [isPlayerReady, togglePlayerReady] = useState(false);
   const [getNextEpState, setNextEpState] = useState(false);
   const [getWatchedState, toggleWatchedState] = useState(false);
 
-  const handleSelectEpisode = (value: API.EpisodeData) => {
-    setEpisode(value);
-    toggleWatchedState(false);
-    togglePlayerReady(false);
-  };
+  const handleSelectEpisode = useCallback(
+    (value: API.EpisodeData) => {
+      setEpisode(value);
+      toggleWatchedState(false);
+      togglePlayerReady(false);
+    },
+    [setEpisode],
+  );
 
-  const [time, setTime] = useState(0);
+  const [, setTime] = useState(0);
   const isHandlingNext = useRef(false);
+  const [dragPosition, setDragPosition] = useState<{
+    left: number;
+    top: number;
+  } | null>(null);
+  const [isDraggingMiniPlayer, setIsDraggingMiniPlayer] = useState(false);
+  const miniPlayerSnapTimeout = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!isShared) return;
+
+    setOpen(false);
+  }, [isShared, setOpen]);
 
   useEffect(() => {
     if (!container || !data || !provider || !team || !currentEpisode) return;
@@ -206,6 +294,8 @@ export const Player = () => {
     currentEpisode,
     data,
     getWatchedState,
+    handleSelectEpisode,
+    setSharedStatus,
   ]);
 
   useEffect(() => {
@@ -229,16 +319,132 @@ export const Player = () => {
     useIFramePlayer.getState().reset();
   }, [currentEpisode]);
 
+  useEffect(
+    () => () => {
+      if (miniPlayerSnapTimeout.current) {
+        window.clearTimeout(miniPlayerSnapTimeout.current);
+      }
+    },
+    [],
+  );
+
+  const handleMiniPlayerDragStart = (
+    event: ReactPointerEvent<HTMLDivElement>,
+  ) => {
+    if (!miniPlayer) return;
+
+    const card = event.currentTarget.parentElement;
+    if (!card) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const rect = card.getBoundingClientRect();
+    const offsetX = event.clientX - rect.left;
+    const offsetY = event.clientY - rect.top;
+
+    if (miniPlayerSnapTimeout.current) {
+      window.clearTimeout(miniPlayerSnapTimeout.current);
+      miniPlayerSnapTimeout.current = null;
+    }
+
+    setIsDraggingMiniPlayer(true);
+    setDragPosition({ left: rect.left, top: rect.top });
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      const maxLeft = window.innerWidth - rect.width - MINI_PLAYER_MARGIN;
+      const maxTop = window.innerHeight - rect.height - MINI_PLAYER_MARGIN;
+
+      setDragPosition({
+        left: Math.min(
+          Math.max(MINI_PLAYER_MARGIN, moveEvent.clientX - offsetX),
+          maxLeft,
+        ),
+        top: Math.min(
+          Math.max(MINI_PLAYER_MARGIN, moveEvent.clientY - offsetY),
+          maxTop,
+        ),
+      });
+    };
+
+    const handlePointerUp = (upEvent: PointerEvent) => {
+      const left = Math.min(
+        Math.max(MINI_PLAYER_MARGIN, upEvent.clientX - offsetX),
+        window.innerWidth - rect.width - MINI_PLAYER_MARGIN,
+      );
+      const top = Math.min(
+        Math.max(MINI_PLAYER_MARGIN, upEvent.clientY - offsetY),
+        window.innerHeight - rect.height - MINI_PLAYER_MARGIN,
+      );
+
+      const nextCorner = getNearestMiniPlayerCorner(
+        left,
+        top,
+        rect.width,
+        rect.height,
+      );
+
+      setIsDraggingMiniPlayer(false);
+      setMiniPlayerCorner(nextCorner);
+      setDragPosition(
+        getMiniPlayerCornerPosition(nextCorner, rect.width, rect.height),
+      );
+      miniPlayerSnapTimeout.current = window.setTimeout(() => {
+        setDragPosition(null);
+        miniPlayerSnapTimeout.current = null;
+      }, 200);
+
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener('pointercancel', handlePointerUp);
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+    window.addEventListener('pointercancel', handlePointerUp);
+  };
+
+  const miniPlayerStyle: CSSProperties | undefined = miniPlayer
+    ? (dragPosition ?? getMiniPlayerCornerStyle(miniPlayerCorner))
+    : undefined;
+
   return (
     <Card
+      style={miniPlayerStyle}
+      onTransitionEnd={(event) => {
+        if (
+          event.currentTarget === event.target &&
+          miniPlayer &&
+          dragPosition &&
+          !isDraggingMiniPlayer &&
+          (event.propertyName === 'left' || event.propertyName === 'top')
+        ) {
+          if (miniPlayerSnapTimeout.current) {
+            window.clearTimeout(miniPlayerSnapTimeout.current);
+            miniPlayerSnapTimeout.current = null;
+          }
+          setDragPosition(null);
+        }
+      }}
       className={cn(
-        'border-overlay relative z-10 box-content flex size-full overflow-hidden rounded-none border-none duration-300 md:max-h-[720px] md:max-w-[1280px] md:rounded-[calc(var(--radius)_+_8px)] md:border',
+        'border-overlay relative z-10 box-content flex size-full overflow-hidden rounded-none border-none transition-all duration-300 md:max-h-[720px] md:max-w-[1280px] md:rounded-[calc(var(--radius)_+_8px)] md:border',
         theatreMode && 'md:max-h-full md:max-w-full',
         fullscreen &&
           'fixed inset-0 z-20 md:max-h-full md:max-w-full md:rounded-none',
+        miniPlayer &&
+          'pointer-events-auto fixed z-30 aspect-video h-auto w-[min(calc(100vw-1rem),420px)] cursor-default rounded-lg border shadow-2xl duration-150 md:w-[420px]',
+        isDraggingMiniPlayer && 'duration-0',
       )}
     >
-      <PlayerMobileToolbar toggleWatchedState={toggleWatchedState} />
+      {miniPlayer && (
+        <div
+          className="absolute inset-x-0 top-0 z-10 h-9 cursor-grab active:cursor-grabbing"
+          onPointerDown={handleMiniPlayerDragStart}
+        />
+      )}
+      {!miniPlayer && (
+        <PlayerMobileToolbar toggleWatchedState={toggleWatchedState} />
+      )}
       <PlayerNavbar />
       <CardContent className="flex min-h-0 min-w-0 flex-1 flex-col p-0 duration-300">
         <iframe

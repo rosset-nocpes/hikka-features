@@ -28,8 +28,13 @@ interface Props {
 const ProviderSelect: FC<Props> = ({ toggleWatchedState }) => {
   const { open } = useSidebar();
 
-  const { container, provider, setProvider, favoriteTeam } = usePlayer();
-  const { data } = useWatchData();
+  const {
+    container,
+    provider,
+    setProvider,
+    favoriteTeam,
+    watchData: data,
+  } = usePlayer();
 
   if (!data) return;
 
