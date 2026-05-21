@@ -104,6 +104,7 @@ const Settings = () => {
         side="top"
         sideOffset={24}
         align="start"
+        alignOffset={32}
         collisionBoundary={overlayRef.current}
         collisionPadding={8}
       >
