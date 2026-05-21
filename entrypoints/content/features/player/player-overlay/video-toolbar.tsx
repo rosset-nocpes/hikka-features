@@ -8,14 +8,6 @@ import Volume from './sliders/volume';
 import TimeGroup from './time-group';
 
 const VideoToolbar = () => {
-  // const options = useVideoQualityOptions({ auto: false, sort: 'descending' });
-
-  // useEffect(() => {
-  //   if (options.length === 0) return;
-
-  //   options[0].select();
-  // }, [options]);
-
   return (
     <>
       <div className="flex gap-2">

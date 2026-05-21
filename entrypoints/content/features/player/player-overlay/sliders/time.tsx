@@ -181,7 +181,7 @@ const Time = () => {
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
-        <SliderPrimitive.Track className="relative h-1 w-full grow overflow-hidden rounded-full bg-secondary duration-100 group-hover:scale-y-150">
+        <SliderPrimitive.Track className="border-shadow relative h-1 w-full grow overflow-hidden rounded-full bg-secondary duration-100 group-hover:scale-y-150">
           <div
             className="absolute h-full bg-secondary-foreground/30"
             style={{ width: `${bufferedPercent}%` }}
