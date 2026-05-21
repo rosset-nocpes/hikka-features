@@ -281,7 +281,9 @@ window.addEventListener('message', (event: MessageEvent) => {
         useIFramePlayer.setState({ currentQuality: event.data.data });
         break;
       case 'subtitles':
-        useIFramePlayer.setState({ subtitles: event.data.data });
+        useIFramePlayer.setState({
+          subtitles: event.data.data.filter(Boolean),
+        });
         break;
       case 'buffered':
         useIFramePlayer.setState({ bufferedTime: event.data.data });
