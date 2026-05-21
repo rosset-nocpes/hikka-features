@@ -1,7 +1,5 @@
 import { type FC, useEffect, useRef, useState } from 'react';
-import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
 
-import { Button } from '@/components/ui/button';
 import {
   Sidebar,
   SidebarContent,
@@ -9,11 +7,9 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarSeparator,
-  useSidebar,
 } from '@/components/ui/sidebar';
 import { cn } from '@/utils/cn';
 
-import player from '../player';
 import EpisodeList from './episode-list';
 import ProviderSelect from './provider-select';
 import TeamSelect from './team-select';
@@ -26,8 +22,6 @@ interface Props {
 const PlayerSidebar: FC<Props> = ({ toggleWatchedState, className }) => {
   const [isScrolled, setIsScrolled] = useState({ top: false, bottom: false });
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  const { open } = useSidebar();
 
   useEffect(() => {
     const element = scrollRef.current;

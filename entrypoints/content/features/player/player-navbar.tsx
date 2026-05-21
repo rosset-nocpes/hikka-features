@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 
 import { usePlayer } from './context/player-context';
-import player from './player';
+import { removePlayer } from './player';
 
 const PlayerNavbar = () => {
   const { currentEpisode, miniPlayer } = usePlayer();
@@ -24,7 +24,7 @@ const PlayerNavbar = () => {
             variant="ghost"
             size="icon-sm"
             className="bg-background/60 backdrop-blur-xl"
-            onClick={() => player().then((x) => x.remove())}
+            onClick={removePlayer}
           >
             <MaterialSymbolsCloseRounded />
           </Button>
@@ -51,7 +51,7 @@ const PlayerNavbar = () => {
             variant="ghost"
             size="icon-xs"
             className="bg-background/60 backdrop-blur-xl"
-            onClick={() => player().then((x) => x.remove())}
+            onClick={removePlayer}
           >
             <MaterialSymbolsCloseRounded />
           </Button>

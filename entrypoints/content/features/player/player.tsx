@@ -2,7 +2,7 @@ import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
 
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createRoot } from 'react-dom/client';
+import { createRoot, type Root } from 'react-dom/client';
 import { toast } from 'sonner';
 
 import { Card, CardContent } from '@/components/ui/card';
@@ -21,9 +21,13 @@ import PlayerMobileToolbar from './mobile-toolbar/player-mobile-toolbar';
 import PlayerNavbar from './player-navbar';
 import PlayerOverlay from './player-overlay/player-overlay';
 
+const MOUNT_TAG = 'player-ui';
+
+let playerUiPromise: Promise<ShadowRootContentScriptUi<Root>> | undefined;
+
 export default function player() {
-  return createShadowRootUi(usePageStore.getState().ctx, {
-    name: 'player-ui',
+  playerUiPromise ??= createShadowRootUi<Root>(usePageStore.getState().ctx, {
+    name: MOUNT_TAG,
     position: 'modal',
     zIndex: 100,
     inheritStyles: true,
@@ -67,12 +71,23 @@ export default function player() {
 
       useIFramePlayer.getState().reset();
       usePlayer.getState().reset();
+      playerUiPromise = undefined;
     },
   });
+
+  return playerUiPromise;
 }
 
 export const isPlayerMounted = () =>
-  !!document.getElementsByTagName('player-ui')[0];
+  !!document.getElementsByTagName(MOUNT_TAG)[0];
+
+export const removePlayer = () => {
+  playerUiPromise?.then((ui) => {
+    if (ui.mounted || document.getElementsByTagName(MOUNT_TAG)[0]) {
+      ui.remove();
+    }
+  });
+};
 
 const MINI_PLAYER_MARGIN = 16;
 
@@ -140,10 +155,7 @@ const PlayerFrame = () => {
       )}
     >
       {!miniPlayer && (
-        <div
-          className="fixed z-0 size-full"
-          onClick={() => player().then((x) => x.remove())}
-        />
+        <div className="fixed z-0 size-full" onClick={removePlayer} />
       )}
       <Player />
     </div>
@@ -303,7 +315,7 @@ export const Player = () => {
       switch (e.key) {
         case 'Escape':
           e.preventDefault();
-          player().then((x) => x.remove());
+          removePlayer();
           break;
       }
     };
