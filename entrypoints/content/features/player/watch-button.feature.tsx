@@ -22,7 +22,7 @@ export default class WatchButtonFeature extends BaseFeature {
       name: this.id,
       position: 'inline',
       append: 'first',
-      anchor: 'main > div:nth-of-type(2) div.relative',
+      anchor: '#navbar-card',
       css: `:host(${this.id}) { margin-right: -0.5rem !important; }`,
       inheritStyles: true,
       onMount: (container) => {

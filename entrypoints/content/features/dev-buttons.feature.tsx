@@ -23,7 +23,7 @@ export default class DevButtonsFeature extends BaseFeature {
       name: this.id,
       position: 'inline',
       append: 'last',
-      anchor: '.grid.grid-cols-1 > div:nth-of-type(2) > div:nth-of-type(1)',
+      anchor: '#content-center > div:nth-of-type(1)',
       css: `:host(${this.id}) { margin-bottom: -1rem !important; }`,
       inheritStyles: true,
       onMount(container) {

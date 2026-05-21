@@ -27,7 +27,7 @@ export default class RecommendationBlockFeature extends BaseFeature {
       name: this.id,
       position: 'inline',
       append: 'after',
-      anchor: '.grid.grid-cols-1 > div:nth-of-type(2) > section:last-of-type',
+      anchor: '#content-center > section:last-of-type',
       css: `:host(${this.id}) { margin-top: -2rem !important; }`,
       inheritStyles: true,
       onMount(container) {

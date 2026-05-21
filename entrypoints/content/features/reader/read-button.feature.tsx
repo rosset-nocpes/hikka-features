@@ -24,7 +24,7 @@ export default class ReadButtonFeature extends BaseFeature {
       name: id,
       position: 'inline',
       append: 'first',
-      anchor: 'div.sticky.bottom-3.z-10.mt-12 > div',
+      anchor: '#navbar-card',
       css: `:host(${id}) { margin-right: -0.5rem !important; }`,
       inheritStyles: true,
       onMount: (container) => {

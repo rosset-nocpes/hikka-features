@@ -27,8 +27,7 @@ export default class LocalizedPosterFeature extends BaseFeature {
       name: this.id,
       position: 'inline',
       append: 'first',
-      anchor:
-        '.grid.grid-cols-1 > div:nth-of-type(1) > div:nth-of-type(1) div.relative div.relative',
+      anchor: '#content-cover div.relative div.relative',
       inheritStyles: true,
       onMount: (container) => {
         const wrapper = document.createElement('div');

@@ -28,7 +28,7 @@ export default class FandubBlockFeature extends BaseFeature {
       name: this.id,
       position: 'inline',
       append: 'last',
-      anchor: '.grid.grid-cols-1 > div:nth-of-type(1) > div:nth-of-type(2)',
+      anchor: '#content-left-side',
       inheritStyles: true,
       onMount(container) {
         const wrapper = document.createElement('div');
