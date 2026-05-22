@@ -4,17 +4,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Sidebar, SidebarFooter, SidebarHeader } from '@/components/ui/sidebar';
 
-import useReadData from '../../hooks/use-read-data';
-import { useReader } from '../../hooks/use-reader';
 import reader from '../../reader';
-import { ReaderContentMode } from '../../reader.enums';
 import ChapterList from './chapter-list';
 import ReaderSettings from './settings/reader-settings';
 import SortOptions from './sort-options';
 
 const ReaderSidebar = () => {
-  const { data } = useReadData();
-
   return (
     <Sidebar side="right" className="flex overflow-hidden">
       <SidebarHeader>
@@ -37,8 +32,7 @@ const ReaderSidebar = () => {
           </div>
           <div className="h-8 w-8" />
         </div>
-        {/* todo: add support for volumes */}
-        {data?.displayMode === ReaderContentMode.Chapters && <SortOptions />}
+        <SortOptions />
       </SidebarHeader>
       <ChapterList />
       <SidebarFooter>

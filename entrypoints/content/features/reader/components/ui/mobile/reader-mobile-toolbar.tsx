@@ -16,7 +16,6 @@ import useReadData from '../../../hooks/use-read-data';
 import { useReader } from '../../../hooks/use-reader';
 import reader from '../../../reader';
 import { READER_POWERED_BY } from '../../../reader.constants';
-import { ReaderContentMode } from '../../../reader.enums';
 import ChapterList from '../../sidebar/chapter-list';
 import { SettingsItems } from '../../sidebar/settings/reader-settings';
 import SortOptions from '../../sidebar/sort-options';
@@ -73,9 +72,7 @@ const ReaderMobileToolbar = () => {
           >
             <SheetHeader>
               <SheetTitle>Оберіть розділ</SheetTitle>
-              {mangaData?.displayMode === ReaderContentMode.Chapters && (
-                <SortOptions />
-              )}
+              <SortOptions />
             </SheetHeader>
             <div className="flex h-full flex-col gap-1 overflow-y-auto">
               <ChapterList />

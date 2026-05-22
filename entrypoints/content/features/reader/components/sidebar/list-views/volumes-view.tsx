@@ -1,5 +1,5 @@
 import { ChevronRight } from 'lucide-react';
-import { useRef, useState, useEffect } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   Collapsible,
@@ -19,10 +19,24 @@ import type { Chapter } from '../../../reader.types';
 
 import useReadData from '../../../hooks/use-read-data';
 import { useReader } from '../../../hooks/use-reader';
-import { ReaderContentMode } from '../../../reader.enums';
+import {
+  ReaderContentMode,
+  ReaderOrderBy,
+  ReaderSortBy,
+} from '../../../reader.enums';
+
+const isTranslatorMatch = (chapter: Chapter, translator: string) =>
+  !translator ||
+  chapter.translator
+    .split(',')
+    .map((value) => value.trim())
+    .includes(translator);
+
+const getDateTime = (value: string) =>
+  new Date(value.split('.').reverse().join('-')).getTime();
 
 const VolumesView = () => {
-  const { currentChapter, setChapter, getRead } = useReader();
+  const { currentChapter, settings, setChapter, getRead } = useReader();
   const { data } = useReadData();
 
   const currentChapterRef = useRef<HTMLButtonElement>(null);
@@ -53,12 +67,54 @@ const VolumesView = () => {
     setChapter(value);
   };
 
+  const sortedVolumes = useMemo(() => {
+    if (data?.displayMode !== ReaderContentMode.Volumes) return [];
+
+    const { field, order } = settings.sortBy;
+    const multiplier = order === ReaderOrderBy.Ascending ? 1 : -1;
+
+    return data.volumes
+      .map((volume) => ({
+        ...volume,
+        chapters: volume.chapters
+          .filter((chapter) => isTranslatorMatch(chapter, settings.translator))
+          .sort((a, b) => {
+            if (field === ReaderSortBy.Chapter) {
+              return (a.chapter - b.chapter) * multiplier;
+            }
+
+            if (field === ReaderSortBy.DateUpload) {
+              return (
+                (getDateTime(a.date_upload) - getDateTime(b.date_upload)) *
+                multiplier
+              );
+            }
+
+            return 0;
+          }),
+      }))
+      .filter((volume) => volume.chapters.length > 0)
+      .sort((a, b) => {
+        if (field === ReaderSortBy.Chapter) {
+          return (a.number - b.number) * multiplier;
+        }
+
+        if (field === ReaderSortBy.DateUpload) {
+          const dateA = getDateTime(a.chapters[0].date_upload);
+          const dateB = getDateTime(b.chapters[0].date_upload);
+          return (dateA - dateB) * multiplier;
+        }
+
+        return 0;
+      });
+  }, [data, settings.sortBy, settings.translator]);
+
   if (data?.displayMode !== ReaderContentMode.Volumes) return;
 
   return (
     <SidebarGroup>
       <SidebarMenu>
-        {data.volumes.map((volume) => (
+        {sortedVolumes.map((volume) => (
           <Collapsible
             key={volume.number}
             asChild
@@ -94,7 +150,7 @@ const VolumesView = () => {
                           <span
                             className={cn(
                               (() => {
-                                const allChapters = data.volumes.flatMap(
+                                const allChapters = sortedVolumes.flatMap(
                                   (vol) => vol.chapters,
                                 );
                                 const chapterIndex = allChapters.findIndex(

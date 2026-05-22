@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import MaterialSymbolsArrowDownwardRounded from '~icons/material-symbols/arrow-downward-rounded';
 import MaterialSymbolsMoreHoriz from '~icons/material-symbols/more-horiz';
 
@@ -11,17 +12,45 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useSidebar } from '@/components/ui/sidebar';
 
+import useReadData from '../../hooks/use-read-data';
 import { useReader } from '../../hooks/use-reader';
-import { ReaderOrderBy, ReaderSortBy } from '../../reader.enums';
+import {
+  ReaderContentMode,
+  ReaderOrderBy,
+  ReaderSortBy,
+} from '../../reader.enums';
 
 const SortOptions = () => {
+  const { data } = useReadData();
   const { container, settings, setSettings } = useReader();
   const { open } = useSidebar();
+
+  const translators = useMemo(() => {
+    const chapters =
+      data?.displayMode === ReaderContentMode.Chapters
+        ? data.chapters
+        : data?.displayMode === ReaderContentMode.Volumes
+          ? data.volumes.flatMap((volume) => volume.chapters)
+          : [];
+
+    return [
+      ...new Set(
+        chapters.flatMap((chapter) =>
+          chapter.translator
+            .split(',')
+            .map((translator) => translator.trim())
+            .filter(Boolean),
+        ),
+      ),
+    ].sort((a, b) => a.localeCompare(b));
+  }, [data]);
 
   const handleOrderChange = () => {
     setSettings({
@@ -70,7 +99,6 @@ const SortOptions = () => {
           <DropdownMenuItem
             onSelect={() =>
               setSettings({
-                ...settings,
                 sortBy: { ...settings.sortBy, field: ReaderSortBy.Chapter },
               })
             }
@@ -80,13 +108,33 @@ const SortOptions = () => {
           <DropdownMenuItem
             onSelect={() =>
               setSettings({
-                ...settings,
                 sortBy: { ...settings.sortBy, field: ReaderSortBy.DateUpload },
               })
             }
           >
             За датою
           </DropdownMenuItem>
+          {translators.length > 0 && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Перекладач</DropdownMenuLabel>
+              <DropdownMenuRadioGroup
+                value={settings.translator || 'all'}
+                onValueChange={(translator) =>
+                  setSettings({
+                    translator: translator === 'all' ? '' : translator,
+                  })
+                }
+              >
+                <DropdownMenuRadioItem value="all">Усі</DropdownMenuRadioItem>
+                {translators.map((translator) => (
+                  <DropdownMenuRadioItem key={translator} value={translator}>
+                    {translator}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </ButtonGroup>

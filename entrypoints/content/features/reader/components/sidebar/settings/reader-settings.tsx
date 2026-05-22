@@ -82,7 +82,13 @@ const ReaderSettings = () => {
 
 export const SettingsItems = () => {
   const { settings, setSettings } = useReader();
-  const { type, sortBy, fullscreen, ...dynamicFields } = settings;
+  const {
+    type: _type,
+    sortBy: _sortBy,
+    fullscreen: _fullscreen,
+    translator: _translator,
+    ...dynamicFields
+  } = settings;
 
   return (
     <div className="flex flex-col gap-3 p-3 pb-0">

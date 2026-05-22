@@ -19,6 +19,16 @@ import {
   ReaderType,
 } from '../../../reader.enums';
 
+const isTranslatorMatch = (chapter: Chapter, translator: string) =>
+  !translator ||
+  chapter.translator
+    .split(',')
+    .map((value) => value.trim())
+    .includes(translator);
+
+const getDateTime = (value: string) =>
+  new Date(value.split('.').reverse().join('-')).getTime();
+
 interface Props {
   scrollRef: RefObject<HTMLDivElement | null>;
 }
@@ -47,8 +57,32 @@ const ChaptersView: FC<Props> = ({ scrollRef }) => {
     }
   };
 
+  const sorted = useMemo(() => {
+    if (data?.displayMode !== ReaderContentMode.Chapters) return [];
+    if (!data?.chapters) return [];
+
+    const { field, order } = settings.sortBy;
+    const multiplier = order === ReaderOrderBy.Ascending ? 1 : -1;
+
+    return data.chapters
+      .filter((chapter) => isTranslatorMatch(chapter, settings.translator))
+      .sort((a, b) => {
+        if (field === ReaderSortBy.Chapter) {
+          return (a.chapter - b.chapter) * multiplier;
+        }
+
+        if (field === ReaderSortBy.DateUpload) {
+          const dateA = getDateTime(a.date_upload);
+          const dateB = getDateTime(b.date_upload);
+          return (dateA - dateB) * multiplier;
+        }
+
+        return 0;
+      });
+  }, [data, settings.sortBy, settings.translator]);
+
   const rowVirtualizer = useVirtualizer({
-    count: (data as any).chapters.length || 0,
+    count: sorted.length,
     getScrollElement: () => scrollRef.current,
     estimateSize: () => 52,
     overscan: 5,
@@ -59,7 +93,7 @@ const ChaptersView: FC<Props> = ({ scrollRef }) => {
     if (!currentChapter) return;
     if (data?.displayMode !== ReaderContentMode.Chapters) return;
 
-    const currentIndex = data.chapters.findIndex(
+    const currentIndex = sorted.findIndex(
       (chapter) => chapter.id === currentChapter.id,
     );
 
@@ -69,33 +103,7 @@ const ChaptersView: FC<Props> = ({ scrollRef }) => {
         behavior: 'auto',
       });
     }
-  }, [container]);
-
-  const sorted = useMemo(() => {
-    if (data?.displayMode !== ReaderContentMode.Chapters) return [];
-    if (!data?.chapters) return [];
-
-    const { field, order } = settings.sortBy;
-    const multiplier = order === ReaderOrderBy.Ascending ? 1 : -1;
-
-    return [...data.chapters].sort((a, b) => {
-      if (field === ReaderSortBy.Chapter) {
-        return (a.chapter - b.chapter) * multiplier;
-      }
-
-      if (field === ReaderSortBy.DateUpload) {
-        const dateA = new Date(
-          a.date_upload.split('.').reverse().join('-'),
-        ).getTime();
-        const dateB = new Date(
-          b.date_upload.split('.').reverse().join('-'),
-        ).getTime();
-        return (dateA - dateB) * multiplier;
-      }
-
-      return 0;
-    });
-  }, [data, settings.sortBy]);
+  }, [container, currentChapter, data?.displayMode, rowVirtualizer, sorted]);
 
   if (data?.displayMode !== ReaderContentMode.Chapters) return;
 

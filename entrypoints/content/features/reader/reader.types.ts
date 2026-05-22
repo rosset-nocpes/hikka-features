@@ -43,6 +43,7 @@ export interface BaseReaderSettings {
     field: ReaderSortBy;
     order: ReaderOrderBy;
   };
+  translator: string;
 }
 
 export interface MangaSettings extends BaseReaderSettings {

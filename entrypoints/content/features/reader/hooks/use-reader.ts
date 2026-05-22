@@ -50,6 +50,38 @@ interface ReaderActions {
   reset: () => void;
 }
 
+const isTranslatorMatch = (chapter: Chapter, translator: string) =>
+  !translator ||
+  chapter.translator
+    .split(',')
+    .map((value) => value.trim())
+    .includes(translator);
+
+const getDateTime = (value: string) =>
+  new Date(value.split('.').reverse().join('-')).getTime();
+
+const sortChapters = (
+  chapters: Chapter[],
+  field: ReaderSortBy,
+  order: ReaderOrderBy,
+) => {
+  const multiplier = order === ReaderOrderBy.Ascending ? 1 : -1;
+
+  return [...chapters].sort((a, b) => {
+    if (field === ReaderSortBy.Chapter) {
+      return (a.chapter - b.chapter) * multiplier;
+    }
+
+    if (field === ReaderSortBy.DateUpload) {
+      return (
+        (getDateTime(a.date_upload) - getDateTime(b.date_upload)) * multiplier
+      );
+    }
+
+    return 0;
+  });
+};
+
 export const useReader = create<ReaderState & ReaderActions>((set, get) => ({
   settings: {
     fullscreen: false,
@@ -57,6 +89,7 @@ export const useReader = create<ReaderState & ReaderActions>((set, get) => ({
       field: ReaderSortBy.Chapter,
       order: ReaderOrderBy.Ascending,
     },
+    translator: '',
   } as ReaderSettings,
 
   initialize: (type, data, container) => {
@@ -108,35 +141,54 @@ export const useReader = create<ReaderState & ReaderActions>((set, get) => ({
     if (!data || !currentChapter) return;
 
     if (data.displayMode === ReaderContentMode.Chapters) {
-      const index = data.chapters.findIndex((c) => c.id === currentChapter.id);
+      const chapters = data.chapters.filter((c) =>
+        isTranslatorMatch(c, settings.translator),
+      );
+      const index = chapters.findIndex((c) => c.id === currentChapter.id);
       if (index === -1) return;
-      const nextChapter = data.chapters[index + 1];
-      if (!nextChapter) return;
-      set({ currentChapter: nextChapter });
+      const next = chapters[index + 1];
+      if (!next) return;
+      set({ currentChapter: next });
     }
 
     if (data.displayMode === ReaderContentMode.Volumes) {
-      const volumeIndex = data.volumes.findIndex(
-        (v) => v.number === currentChapter.volume,
-      );
-      if (volumeIndex === -1) return;
+      const allChapters = data.volumes
+        .map((volume) => ({
+          ...volume,
+          chapters: sortChapters(
+            volume.chapters.filter((c) =>
+              isTranslatorMatch(c, settings.translator),
+            ),
+            settings.sortBy.field,
+            settings.sortBy.order,
+          ),
+        }))
+        .filter((volume) => volume.chapters.length > 0)
+        .sort((a, b) => {
+          if (settings.sortBy.field === ReaderSortBy.Chapter) {
+            return (
+              (a.number - b.number) *
+              (settings.sortBy.order === ReaderOrderBy.Ascending ? 1 : -1)
+            );
+          }
 
-      const volume = data.volumes[volumeIndex];
-      const chapterIndex = volume.chapters.findIndex(
-        (c) => c.id === currentChapter.id,
-      );
-      if (chapterIndex === -1) return;
+          if (settings.sortBy.field === ReaderSortBy.DateUpload) {
+            return (
+              (getDateTime(a.chapters[0].date_upload) -
+                getDateTime(b.chapters[0].date_upload)) *
+              (settings.sortBy.order === ReaderOrderBy.Ascending ? 1 : -1)
+            );
+          }
 
-      let nextChapter = volume.chapters[chapterIndex + 1];
+          return 0;
+        })
+        .flatMap((volume) => volume.chapters);
 
-      if (!nextChapter) {
-        const nextVolume = data.volumes[volumeIndex + 1];
-        if (!nextVolume) return;
-
-        nextChapter = nextVolume.chapters[0];
-      }
-
-      set({ currentChapter: nextChapter });
+      const index = allChapters.findIndex((c) => c.id === currentChapter.id);
+      if (index === -1) return;
+      const next = allChapters[index + 1];
+      if (!next) return;
+      set({ currentChapter: next });
     }
   },
   prevChapter: () => {
@@ -150,35 +202,54 @@ export const useReader = create<ReaderState & ReaderActions>((set, get) => ({
     if (!data || !currentChapter) return;
 
     if (data.displayMode === ReaderContentMode.Chapters) {
-      const index = data.chapters.findIndex((c) => c.id === currentChapter.id);
+      const chapters = data.chapters.filter((c) =>
+        isTranslatorMatch(c, settings.translator),
+      );
+      const index = chapters.findIndex((c) => c.id === currentChapter.id);
       if (index === -1) return;
-      const previousChapter = data.chapters[index - 1];
-      if (!previousChapter) return;
-      set({ currentChapter: previousChapter });
+      const prev = chapters[index - 1];
+      if (index <= 0 || !prev) return;
+      set({ currentChapter: prev });
     }
 
     if (data.displayMode === ReaderContentMode.Volumes) {
-      const volumeIndex = data.volumes.findIndex(
-        (v) => v.number === currentChapter.volume,
-      );
-      if (volumeIndex === -1) return;
+      const allChapters = data.volumes
+        .map((volume) => ({
+          ...volume,
+          chapters: sortChapters(
+            volume.chapters.filter((c) =>
+              isTranslatorMatch(c, settings.translator),
+            ),
+            settings.sortBy.field,
+            settings.sortBy.order,
+          ),
+        }))
+        .filter((volume) => volume.chapters.length > 0)
+        .sort((a, b) => {
+          if (settings.sortBy.field === ReaderSortBy.Chapter) {
+            return (
+              (a.number - b.number) *
+              (settings.sortBy.order === ReaderOrderBy.Ascending ? 1 : -1)
+            );
+          }
 
-      const volume = data.volumes[volumeIndex];
-      const chapterIndex = volume.chapters.findIndex(
-        (c) => c.id === currentChapter.id,
-      );
-      if (chapterIndex === -1) return;
+          if (settings.sortBy.field === ReaderSortBy.DateUpload) {
+            return (
+              (getDateTime(a.chapters[0].date_upload) -
+                getDateTime(b.chapters[0].date_upload)) *
+              (settings.sortBy.order === ReaderOrderBy.Ascending ? 1 : -1)
+            );
+          }
 
-      let previousChapter = volume.chapters[chapterIndex - 1];
-      if (!previousChapter) {
-        const previousVolume = data.volumes[volumeIndex - 1];
-        if (!previousVolume) return;
+          return 0;
+        })
+        .flatMap((volume) => volume.chapters);
 
-        previousChapter =
-          previousVolume.chapters[previousVolume.chapters.length - 1];
-      }
-
-      set({ currentChapter: previousChapter });
+      const index = allChapters.findIndex((c) => c.id === currentChapter.id);
+      if (index === -1) return;
+      const prev = allChapters[index - 1];
+      if (index <= 0 || !prev) return;
+      set({ currentChapter: prev });
     }
   },
   setSettings: (settings) =>
@@ -227,6 +298,7 @@ export const useReader = create<ReaderState & ReaderActions>((set, get) => ({
           field: ReaderSortBy.Chapter,
           order: ReaderOrderBy.Ascending,
         },
+        translator: '',
       } as ReaderSettings,
       carouselApi: undefined,
     });
