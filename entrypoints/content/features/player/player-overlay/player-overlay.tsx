@@ -1,3 +1,4 @@
+import { useIsMobile } from '@/components/hooks/use-mobile';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useIFramePlayer } from '@/hooks/use-iframe-player';
 
@@ -16,6 +17,7 @@ interface Props {
 const PlayerOverlay = ({ toggleWatchedState }: Props) => {
   const { adInProgress, uiShown } = useIFramePlayer();
   const { setOverlayRef, provider, miniPlayer } = usePlayer();
+  const isMobile = useIsMobile();
 
   return (
     <div
@@ -39,7 +41,10 @@ const PlayerOverlay = ({ toggleWatchedState }: Props) => {
           <div
             className={cn(
               'relative flex flex-col bg-gradient-to-t opacity-100 transition-opacity duration-300',
-              miniPlayer ? 'from-black/45 to-transparent' : 'from-black/10 to-transparent',
+              miniPlayer
+                ? 'from-black/45 to-transparent'
+                : 'from-black/10 to-transparent',
+              !miniPlayer && 'pb-20 md:pb-0',
               !uiShown && 'opacity-0',
             )}
           >
@@ -47,7 +52,7 @@ const PlayerOverlay = ({ toggleWatchedState }: Props) => {
               <div
                 className={cn(
                   'flex w-full items-center',
-                  miniPlayer ? 'px-2' : 'px-2',
+                  miniPlayer ? 'px-2' : 'px-3 md:px-2',
                 )}
               >
                 <Time />
@@ -55,7 +60,9 @@ const PlayerOverlay = ({ toggleWatchedState }: Props) => {
               <div
                 className={cn(
                   'flex w-full items-center',
-                  miniPlayer ? 'justify-center p-1 pt-0' : 'justify-between p-2',
+                  miniPlayer
+                    ? 'justify-center p-1 pt-0'
+                    : 'justify-between p-3 pt-1 md:p-2',
                 )}
               >
                 <VideoToolbar />
@@ -64,7 +71,7 @@ const PlayerOverlay = ({ toggleWatchedState }: Props) => {
           </div>
         </div>
       )}
-      {!miniPlayer && (
+      {!miniPlayer && !isMobile && (
         <PlayerSidebar toggleWatchedState={toggleWatchedState} />
       )}
     </div>
