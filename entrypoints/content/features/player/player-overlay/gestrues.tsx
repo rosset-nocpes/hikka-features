@@ -5,18 +5,25 @@ import { useIFramePlayer } from '@/hooks/use-iframe-player';
 
 import { usePlayer } from '../context/player-context';
 import { removePlayer } from '../player';
+import { dispatchPlayerOverlayAction } from './action-popup';
 
 const Gestrues = () => {
   const gestrueRef = useRef<HTMLDivElement>(null);
   const speedupRef = useRef(false);
+  const pendingSeekTimeRef = useRef<number | null>(null);
+  const skipTotalRef = useRef(0);
+  const skipResetTimerRef = useRef<NodeJS.Timeout>(null);
   const {
     play,
     pause,
     isPlaying,
     currentTime,
+    duration,
     seek,
     toggleMute,
     changeVolume,
+    isMuted,
+    volume,
   } = useIFramePlayer();
   const { toggleFullscreen, overlayRef, miniPlayer } = usePlayer();
   const { open, setOpen } = useSidebar();
@@ -24,18 +31,59 @@ const Gestrues = () => {
   const togglePlayPause = useCallback(() => {
     if (isPlaying) {
       pause();
+      dispatchPlayerOverlayAction(overlayRef.current, { type: 'pause' });
     } else {
       play();
+      dispatchPlayerOverlayAction(overlayRef.current, { type: 'play' });
     }
-  }, [isPlaying, play, pause]);
+  }, [isPlaying, overlayRef, play, pause]);
 
   const handleSkip = useCallback(
     (seconds: number) => {
-      const newTime = Math.max(0, currentTime + seconds);
+      const baseTime = pendingSeekTimeRef.current ?? currentTime;
+      const newTime =
+        duration > 0
+          ? Math.min(Math.max(0, baseTime + seconds), duration)
+          : Math.max(0, baseTime + seconds);
+      const nextSkipTotal =
+        Math.sign(skipTotalRef.current) === Math.sign(seconds)
+          ? skipTotalRef.current + seconds
+          : seconds;
+
+      pendingSeekTimeRef.current = newTime;
+      skipTotalRef.current = nextSkipTotal;
       seek(newTime);
+      dispatchPlayerOverlayAction(overlayRef.current, {
+        type: 'skip',
+        seconds: nextSkipTotal,
+      });
+
+      if (skipResetTimerRef.current) {
+        clearTimeout(skipResetTimerRef.current);
+      }
+
+      skipResetTimerRef.current = setTimeout(() => {
+        pendingSeekTimeRef.current = null;
+        skipTotalRef.current = 0;
+      }, 750);
     },
-    [currentTime, seek],
+    [currentTime, duration, overlayRef, seek],
   );
+
+  const handleToggleMute = useCallback(() => {
+    toggleMute();
+    dispatchPlayerOverlayAction(overlayRef.current, {
+      type: isMuted || volume === 0 ? 'unmute' : 'mute',
+    });
+  }, [isMuted, overlayRef, toggleMute, volume]);
+
+  useEffect(() => {
+    return () => {
+      if (skipResetTimerRef.current) {
+        clearTimeout(skipResetTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -62,7 +110,7 @@ const Gestrues = () => {
           break;
         case 'm':
           e.preventDefault();
-          toggleMute();
+          handleToggleMute();
           break;
         case 's':
           if (miniPlayer) break;
@@ -103,9 +151,9 @@ const Gestrues = () => {
     setOpen,
     togglePlayPause,
     toggleFullscreen,
-    toggleMute,
     changeVolume,
     handleSkip,
+    handleToggleMute,
   ]);
 
   useEffect(() => {

@@ -4,6 +4,7 @@ import { useIFramePlayer } from '@/hooks/use-iframe-player';
 
 import { usePlayer } from '../context/player-context';
 import PlayerSidebar from '../sidebar/player-sidebar';
+import ActionPopup from './action-popup';
 import BufferingIndicator from './buffering-indicator';
 import Gestrues from './gestrues';
 import Time from './sliders/time';
@@ -37,6 +38,7 @@ const PlayerOverlay = ({ toggleWatchedState }: Props) => {
         >
           <Gestrues />
           <SpeedupPopup />
+          <ActionPopup />
           <BufferingIndicator />
           <div
             className={cn(
