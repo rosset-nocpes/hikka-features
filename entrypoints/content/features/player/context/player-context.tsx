@@ -3,18 +3,17 @@ import {
   type FC,
   type PropsWithChildren,
   RefObject,
-  useEffect,
-  useRef,
 } from 'react';
 import { create } from 'zustand';
 
-import { ProviderTeamIFrame } from '@/utils/provider_classes';
+import { ProviderIFrame, ProviderTeamIFrame } from '@/utils/provider_classes';
 
 interface PlayerState {
   /* Base */
   container?: HTMLElement;
   /* Player-related  */
   watchData?: API.WatchData; // todo: remove it from there
+  watchDataKey?: string;
   provider?: string;
   team?: API.TeamData;
   favoriteTeam?: FavoriteTeam;
@@ -71,6 +70,9 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
     overlayRef: createRef<HTMLDivElement>(),
 
     initialize: async (data) => {
+      const watchDataKey = getWatchDataKey(data);
+      if (get().watchDataKey === watchDataKey) return;
+
       const { defaultProvider, favoriteTeams } =
         useSettings.getState().features.player;
 
@@ -145,6 +147,7 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
 
       set({
         watchData: data,
+        watchDataKey,
         provider,
         team,
         favoriteTeam,
@@ -311,6 +314,7 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
         container: undefined,
         /* Player-related  */
         watchData: undefined,
+        watchDataKey: undefined,
         provider: undefined,
         team: undefined,
         episodeData: undefined,
@@ -353,6 +357,46 @@ export const getAvailablePlayers = (data: API.WatchData) =>
       lang: entry.lang as ProviderLanguage,
     }));
 
+const getEpisodeKey = (episode: API.EpisodeData) => [
+  episode.episode,
+  episode.video_url,
+];
+
+const getWatchDataKey = (data: API.WatchData) =>
+  JSON.stringify([
+    data.type,
+    ...Object.entries(data)
+      .filter(([key]) => key !== 'type')
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([provider, entry]) => {
+        if (entry instanceof ProviderTeamIFrame) {
+          return [
+            provider,
+            entry.type,
+            entry.lang,
+            Object.entries(entry.teams)
+              .sort(([a], [b]) => a.localeCompare(b))
+              .map(([team, teamData]) => [
+                team,
+                teamData.logo,
+                teamData.episodes.map(getEpisodeKey),
+              ]),
+          ];
+        }
+
+        if (entry instanceof ProviderIFrame) {
+          return [
+            provider,
+            entry.type,
+            entry.lang,
+            entry.episodes.map(getEpisodeKey),
+          ];
+        }
+
+        return [provider, entry];
+      }),
+  ]);
+
 export const getWatched = (): number => {
   const selector =
     '.grid > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(2) > div:nth-of-type(2) span';
@@ -367,16 +411,5 @@ interface PlayerProviderProps extends PropsWithChildren {
 }
 
 export const PlayerProvider: FC<PlayerProviderProps> = ({ children }) => {
-  const { initialize } = usePlayer();
-  const { data } = useWatchData();
-  const initializedRef = useRef(false);
-
-  useEffect(() => {
-    if (!data || initializedRef.current) return;
-
-    initializedRef.current = true;
-    initialize(data);
-  }, [data, initialize]);
-
   return <>{children}</>;
 };

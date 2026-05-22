@@ -67,6 +67,7 @@ const WatchButton = () => {
       return;
     }
 
+    usePlayer.getState().initialize(data);
     document.body.classList.add('h-full');
     document.body.classList.add('overflow-hidden');
     player().then((ui) => ui.mount());
@@ -91,6 +92,7 @@ const WatchButton = () => {
         return;
       }
 
+      usePlayer.getState().initialize(data);
       document.body.classList.add('h-full');
       document.body.classList.add('overflow-hidden');
       player().then((ui) => ui.mount());

@@ -70,7 +70,6 @@ export default function player() {
       document.body.classList.remove('overflow-hidden');
 
       useIFramePlayer.getState().reset();
-      usePlayer.getState().reset();
       playerUiPromise = undefined;
     },
   });
