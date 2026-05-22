@@ -9,7 +9,7 @@ class BIUScraper extends BaseScraper {
   name = 'BIUScraper';
   baseUrl = 'https://baka.in.ua';
   endpoints = {
-    search: `${this.baseUrl}/search?search%5B%5D`,
+    search: `${this.baseUrl}/search?filter=fiction&search[]`,
   };
 
   async search(data: any) {
@@ -49,7 +49,6 @@ class BIUScraper extends BaseScraper {
     const $ = cheerio.load(r);
 
     const $accordions = $('.accordion');
-    const $alternativeTabs = $('#alternative-tabs');
     const regex: RegExp = /(?<=- ).*/;
 
     const hasVolumes = $accordions
@@ -57,48 +56,36 @@ class BIUScraper extends BaseScraper {
       .toArray()
       .some((el) => $(el).text().includes('Том'));
 
-    const translators = $('a[href^="/scanlators"]')
-      .map((_i, el) => $(el).text())
-      .toArray();
-
-    let translator =
-      translators.length > 1 && $alternativeTabs.length === 0
-        ? ''
-        : translators[0];
-
-    if ($alternativeTabs.length > 0) {
-      const $tabsWithSvg = $alternativeTabs.find(':has(svg)');
-      const $selectedTab =
-        $tabsWithSvg.length > 0
-          ? $tabsWithSvg.first()
-          : $alternativeTabs.first();
-      translator = $selectedTab.text().trim();
-    }
-
     if (hasVolumes) {
       const volumes: Volume[] = [];
 
       $accordions.each((_i, accordion) => {
         const $header = $(accordion).find('.accordion-header');
         const $content = $(accordion).find('.accordion-content');
-        const headerText = $header.find('h3').text();
+        const headerText = $header.find('h3').text().trim();
 
         const volumeMatch = headerText.match(/Том\s+(\d+(?:\.\d+)?$)/i);
         const volumeNumber = volumeMatch ? Number(volumeMatch[1]) : 0;
 
         const chapters = $content
-          .find('li.group a')
+          .find('li.group a[href*="/chapters/"]')
           .map((_j, el) => {
             const $link = $(el);
             const chNum = Number($link.find('span').eq(0).text().trim());
             const href = $link.attr('href') || '';
+            const translator = $link
+              .parent()
+              .find('a[href^="/scanlators"]')
+              .map((_k, e) => $(e).text().trim())
+              .toArray();
+
             return {
-              id: `vol${volumeNumber}-ch${chNum}`,
+              id: `vol${volumeNumber}-ch${chNum}-${translator.map((t) => t.toLowerCase()).join('_')}`,
               volume: volumeNumber,
               chapter: chNum,
               title:
                 $link.find('span').eq(1).text().trim().match(regex)?.[0] || '',
-              translator,
+              translator: translator.join(', '),
               date_upload: $link.find('span').eq(2).text().trim(),
               url: href.startsWith('http')
                 ? href
@@ -124,17 +111,23 @@ class BIUScraper extends BaseScraper {
         const $content = $(accordion).find('.accordion-content');
 
         const accordionChapters = $content
-          .find('li.group a')
+          .find('li.group a[href*="/chapters/"]')
           .map((_j, el) => {
             const $link = $(el);
             const chNum = Number($link.find('span').eq(0).text().trim());
             const href = $link.attr('href') || '';
+            const translator = $link
+              .parent()
+              .find('a[href^="/scanlators"]')
+              .map((_k, e) => $(e).text().trim())
+              .toArray();
+
             return {
-              id: `ch${chNum}`,
+              id: `ch${chNum}-${translator.map((t) => t.toLowerCase()).join('_')}`,
               chapter: chNum,
               title:
                 $link.find('span').eq(1).text().trim().match(regex)?.[0] || '',
-              translator,
+              translator: translator.join(', '),
               date_upload: $link.find('span').eq(2).text().trim(),
               url: href.startsWith('http')
                 ? href
