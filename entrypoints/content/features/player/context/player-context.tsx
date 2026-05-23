@@ -295,15 +295,30 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
           }, 4000);
         };
 
-        el.addEventListener('mouseenter', resetTimer);
-        el.addEventListener('mousemove', resetTimer);
-        el.addEventListener('mouseleave', () => {
+        const resetTimerForMouse = (event: PointerEvent) => {
+          if (event.pointerType !== 'mouse') return;
+          resetTimer();
+        };
+
+        const resetTimerForVisibleTouchUi = (event: PointerEvent) => {
+          if (event.pointerType === 'mouse') return;
+          if (!useIFramePlayer.getState().uiShown) return;
+          resetTimer();
+        };
+
+        const handlePointerLeave = (event: PointerEvent) => {
+          if (event.pointerType !== 'mouse') return;
           clearTimeout(hideTimer);
           hideTimer = setTimeout(() => {
             if (!useIFramePlayer.getState().isPlaying) return;
             useIFramePlayer.setState({ uiShown: false });
           }, 4000);
-        });
+        };
+
+        el.addEventListener('pointerenter', resetTimerForMouse);
+        el.addEventListener('pointermove', resetTimerForMouse);
+        el.addEventListener('pointerdown', resetTimerForVisibleTouchUi);
+        el.addEventListener('pointerleave', handlePointerLeave);
       }
 
       set({ overlayRef: ref });

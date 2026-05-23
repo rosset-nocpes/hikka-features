@@ -22,6 +22,12 @@ const SpeedupPopup = () => {
     }, 1000);
   };
 
+  const handleContextMenu = (e: Event) => {
+    if (timerRef.current || isSpeedupTriggeredRef.current) {
+      e.preventDefault();
+    }
+  };
+
   const handleMouseUp = () => {
     if (timerRef.current) {
       clearTimeout(timerRef.current);
@@ -39,13 +45,19 @@ const SpeedupPopup = () => {
     if (!ref) return;
 
     ref.addEventListener('mousedown', handleMouseDown);
+    ref.addEventListener('touchstart', handleMouseDown);
     ref.addEventListener('mouseup', handleMouseUp);
+    ref.addEventListener('touchend', handleMouseUp);
     ref.addEventListener('mouseleave', handleMouseUp);
+    ref.addEventListener('contextmenu', handleContextMenu);
 
     return () => {
       ref.removeEventListener('mousedown', handleMouseDown);
+      ref.removeEventListener('touchstart', handleMouseDown);
       ref.removeEventListener('mouseup', handleMouseUp);
+      ref.removeEventListener('touchend', handleMouseUp);
       ref.removeEventListener('mouseleave', handleMouseUp);
+      ref.removeEventListener('contextmenu', handleContextMenu);
     };
   }, [overlayRef, currentSpeed]);
 

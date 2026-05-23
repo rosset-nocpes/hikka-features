@@ -10,6 +10,8 @@ import { dispatchPlayerOverlayAction } from './action-popup';
 const Gestrues = () => {
   const gestrueRef = useRef<HTMLDivElement>(null);
   const speedupRef = useRef(false);
+  const pointerTypeRef = useRef<string | null>(null);
+  const hideUiTimerRef = useRef<NodeJS.Timeout>(null);
   const pendingSeekTimeRef = useRef<number | null>(null);
   const skipTotalRef = useRef(0);
   const skipResetTimerRef = useRef<NodeJS.Timeout>(null);
@@ -17,6 +19,7 @@ const Gestrues = () => {
     play,
     pause,
     isPlaying,
+    uiShown,
     currentTime,
     duration,
     seek,
@@ -27,6 +30,17 @@ const Gestrues = () => {
   } = useIFramePlayer();
   const { toggleFullscreen, overlayRef, miniPlayer } = usePlayer();
   const { open, setOpen } = useSidebar();
+
+  const showOverlayUi = useCallback(() => {
+    useIFramePlayer.setState({ uiShown: true });
+    if (hideUiTimerRef.current) {
+      clearTimeout(hideUiTimerRef.current);
+    }
+    hideUiTimerRef.current = setTimeout(() => {
+      if (!useIFramePlayer.getState().isPlaying) return;
+      useIFramePlayer.setState({ uiShown: false });
+    }, 4000);
+  }, []);
 
   const togglePlayPause = useCallback(() => {
     if (isPlaying) {
@@ -81,6 +95,9 @@ const Gestrues = () => {
     return () => {
       if (skipResetTimerRef.current) {
         clearTimeout(skipResetTimerRef.current);
+      }
+      if (hideUiTimerRef.current) {
+        clearTimeout(hideUiTimerRef.current);
       }
     };
   }, []);
@@ -164,15 +181,28 @@ const Gestrues = () => {
       speedupRef.current = false;
     };
 
+    const handlePointerDown = (event: PointerEvent) => {
+      pointerTypeRef.current = event.pointerType;
+    };
+
+    const handleTouchStart = () => {
+      pointerTypeRef.current = 'touch';
+      handleMouseDown();
+    };
+
     const handleSpeedupStart = () => {
       speedupRef.current = true;
     };
 
+    el.addEventListener('pointerdown', handlePointerDown);
     el.addEventListener('mousedown', handleMouseDown);
+    el.addEventListener('touchstart', handleTouchStart);
     el.addEventListener('speedupstart', handleSpeedupStart);
 
     return () => {
+      el.removeEventListener('pointerdown', handlePointerDown);
       el.removeEventListener('mousedown', handleMouseDown);
+      el.removeEventListener('touchstart', handleTouchStart);
       el.removeEventListener('speedupstart', handleSpeedupStart);
     };
   }, [overlayRef]);
@@ -183,6 +213,10 @@ const Gestrues = () => {
       className="flex flex-1 focus:outline-none focus:ring-0"
       onClick={() => {
         if (speedupRef.current) return;
+        if (pointerTypeRef.current !== 'mouse' && !uiShown) {
+          showOverlayUi();
+          return;
+        }
         togglePlayPause();
       }}
       tabIndex={0}
