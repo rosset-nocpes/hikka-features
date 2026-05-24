@@ -22,7 +22,7 @@ import SwitchOption from '../_base/switch-option';
 
 const PlayerSettings = () => {
   const { features, updateFeatureSettings } = useSettings();
-  const { enabled, defaultProvider } = features.player;
+  const { enabled, defaultProvider, disableBlur } = features.player;
 
   return (
     <Drawer>
@@ -51,6 +51,16 @@ const PlayerSettings = () => {
               description="Кнопка для відображення програвача"
               onClick={() => {
                 updateFeatureSettings('player', { enabled: !enabled });
+              }}
+            />
+            <SwitchOption
+              checked={disableBlur}
+              label="Вимкнути блюр"
+              description="Прибирає розмиття фону в програвачі"
+              onClick={() => {
+                updateFeatureSettings('player', {
+                  disableBlur: !disableBlur,
+                });
               }}
             />
             <div className="flex items-center justify-between">

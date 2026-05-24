@@ -154,6 +154,22 @@
   scrollbar-width: none; /* Firefox */
 }
 
+.border-shadow {
+  box-shadow:
+    0px 0px 0px 1px rgba(0, 0, 0, 0.06),
+    0px 1px 2px -1px rgba(0, 0, 0, 0.06),
+    0px 2px 4px 0px rgba(0, 0, 0, 0.04);
+}
+
+.border-overlay {
+  outline: 1px solid rgba(0, 0, 0, 0.1);
+  outline-offset: -1px;
+}
+
+.dark .border-overlay {
+  outline-color: rgba(255, 255, 255, 0.1);
+}
+
 .fullscreen {
   padding: 0 !important;
 }

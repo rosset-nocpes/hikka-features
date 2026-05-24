@@ -1,30 +1,29 @@
-import {
-  useAudioGainOptions,
-  useMediaPlayer,
-  usePlaybackRateOptions,
-  useVideoQualityOptions,
-} from '@vidstack/react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import MaterialSymbolsArrowBackRounded from '~icons/material-symbols/arrow-back-rounded';
 import MaterialSymbolsPageInfoOutlineRounded from '~icons/material-symbols/page-info-outline-rounded';
 
-import { usePlayer } from '@/entrypoints/content/features/player/context/player-context';
-
-import { Button } from '../ui/button';
+import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
   DropdownMenuGroup,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from '../ui/dropdown-menu';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
+  DropdownMenu,
+} from '@/components/ui/dropdown-menu';
+import {
+  TooltipTrigger,
+  TooltipContent,
+  Tooltip,
+} from '@/components/ui/tooltip';
+import { usePlayer } from '@/entrypoints/content/features/player/context/player-context';
 
 enum Views {
   Settings = 'settings',
   Quality = 'quality',
+  Subtitles = 'subtitles',
   PlaybackRate = 'playback-rate',
   AudioGain = 'audio-gain',
 }
@@ -32,22 +31,33 @@ enum Views {
 const MotionDropdownMenuGroup = motion.create(DropdownMenuGroup);
 
 const Settings = () => {
-  const { container } = usePlayer();
-  const player = useMediaPlayer();
-  const videoQualityOptions = useVideoQualityOptions();
-  const currentQualityHeight = videoQualityOptions.selectedQuality?.height;
-  const videoQualityHint =
-    videoQualityOptions.selectedValue !== 'auto' && currentQualityHeight
-      ? `${currentQualityHeight}p`
-      : `Auto${currentQualityHeight ? ` (${currentQualityHeight}p)` : ''}`;
+  const { container, overlayRef } = usePlayer();
+  const {
+    currentQuality,
+    qualities,
+    setCurrentQuality,
+    currentSpeed,
+    speedOptions,
+    changeSpeed,
+    currentSubtitle,
+    setCurrentSubtitle,
+    subtitles,
+  } = useIFramePlayer();
+  // const player = useMediaPlayer();
+  // const videoQualityOptions = useVideoQualityOptions();
+  // const currentQualityHeight = videoQualityOptions.selectedQuality?.height;
+  // const videoQualityHint =
+  //   videoQualityOptions.selectedValue !== 'auto' && currentQualityHeight
+  //     ? `${currentQualityHeight}p`
+  //     : `Auto${currentQualityHeight ? ` (${currentQualityHeight}p)` : ''}`;
 
-  const playbackRateOptions = usePlaybackRateOptions();
-  const playbackRateHint =
-    playbackRateOptions.selectedValue === '1'
-      ? 'Normal'
-      : `${playbackRateOptions.selectedValue}x`;
+  // const playbackRateOptions = usePlaybackRateOptions();
+  // const playbackRateHint =
+  //   playbackRateOptions.selectedValue === '1'
+  //     ? 'Normal'
+  //     : `${playbackRateOptions.selectedValue}x`;
 
-  const audioGainOptions = useAudioGainOptions();
+  // const audioGainOptions = useAudioGainOptions();
 
   const [activeView, setView] = useState<Views>(Views.Settings);
   const [open, setOpen] = useState(false);
@@ -68,14 +78,6 @@ const Settings = () => {
     }),
   };
 
-  useEffect(() => {
-    if (open) {
-      player?.controls.pause();
-    } else {
-      player?.controls.resume();
-    }
-  }, [open]);
-
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
       <DropdownMenuTrigger>
@@ -86,10 +88,10 @@ const Settings = () => {
             </Button>
           </TooltipTrigger>
           <TooltipContent
-            className="parent-data-[open]:hidden z-10 px-2 py-0.5 text-sm font-medium"
+            className="parent-data-[open]:hidden"
             side="top"
             sideOffset={32}
-            collisionBoundary={player?.el}
+            collisionBoundary={overlayRef.current}
             collisionPadding={8}
           >
             Налаштування
@@ -97,11 +99,14 @@ const Settings = () => {
         </Tooltip>
       </DropdownMenuTrigger>
       <DropdownMenuContent
+        className="bg-popover/60 backdrop-blur-xl"
         container={container}
         side="top"
         sideOffset={24}
-        align="end"
-        alignOffset={-40}
+        align="start"
+        alignOffset={32}
+        collisionBoundary={overlayRef.current}
+        collisionPadding={8}
       >
         <motion.div
           layout
@@ -119,33 +124,85 @@ const Settings = () => {
                 exit="exit"
                 transition={{ duration: 0.2, ease: 'easeInOut' }}
               >
+                {qualities.length > 0 && (
+                  <DropdownMenuItem
+                    // disabled={videoQualityOptions.disabled}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setView(Views.Quality);
+                    }}
+                  >
+                    Якість ({currentQuality})
+                  </DropdownMenuItem>
+                )}
+                {subtitles.length > 0 && (
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setView(Views.Subtitles);
+                    }}
+                  >
+                    Субтитри ({currentSubtitle})
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem
-                  disabled={videoQualityOptions.disabled}
+                  // disabled={playbackRateOptions.disabled}
                   onClick={(e) => {
                     e.preventDefault();
-                    setView(Views.Quality);
-                  }}
-                >
-                  Якість ({videoQualityHint})
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  disabled={playbackRateOptions.disabled}
-                  onClick={(e) => {
-                    e.preventDefault();
+                    browser.runtime.sendMessage({
+                      type: 'playerjs-command',
+                      api: 'qualities',
+                    });
                     setView(Views.PlaybackRate);
                   }}
                 >
-                  Швидкість ({playbackRateHint})
+                  Швидкість ({currentSpeed})
                 </DropdownMenuItem>
+              </MotionDropdownMenuGroup>
+            )}
+            {activeView === Views.Subtitles && (
+              <MotionDropdownMenuGroup
+                key="subtitles"
+                custom={direction}
+                variants={menuVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.2, ease: 'easeInOut' }}
+              >
                 <DropdownMenuItem
-                  disabled={audioGainOptions.disabled}
                   onClick={(e) => {
                     e.preventDefault();
-                    setView(Views.AudioGain);
+                    setView(Views.Settings);
                   }}
                 >
-                  Audio Boost
+                  <MaterialSymbolsArrowBackRounded />
+                  Субтитри
                 </DropdownMenuItem>
+                <DropdownMenuRadioGroup value={currentSubtitle}>
+                  <DropdownMenuRadioItem
+                    key="off"
+                    value="off"
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      setCurrentSubtitle('');
+                    }}
+                  >
+                    Вимк.
+                  </DropdownMenuRadioItem>
+                  {subtitles.map((value) => (
+                    <DropdownMenuRadioItem
+                      key={value}
+                      value={value}
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        setCurrentSubtitle(value);
+                      }}
+                    >
+                      {value}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
               </MotionDropdownMenuGroup>
             )}
             {activeView === Views.Quality && (
@@ -164,18 +221,20 @@ const Settings = () => {
                     setView(Views.Settings);
                   }}
                 >
-                  {'< Налаштування'}
+                  <MaterialSymbolsArrowBackRounded />
+                  Якість
                 </DropdownMenuItem>
-                <DropdownMenuRadioGroup
-                  value={videoQualityOptions.selectedValue}
-                >
-                  {videoQualityOptions.map(({ label, value, select }) => (
+                <DropdownMenuRadioGroup value={currentQuality}>
+                  {qualities.toReversed().map((value) => (
                     <DropdownMenuRadioItem
                       key={value}
                       value={value}
-                      onSelect={select}
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        setCurrentQuality(value);
+                      }}
                     >
-                      {label}
+                      {value}
                     </DropdownMenuRadioItem>
                   ))}
                 </DropdownMenuRadioGroup>
@@ -198,50 +257,20 @@ const Settings = () => {
                     setView(Views.Settings);
                   }}
                 >
-                  {'< Налаштування'}
+                  <MaterialSymbolsArrowBackRounded />
+                  Швидкість
                 </DropdownMenuItem>
-                <DropdownMenuRadioGroup
-                  value={playbackRateOptions.selectedValue}
-                >
-                  {playbackRateOptions.map(({ label, value, select }) => (
+                <DropdownMenuRadioGroup value={currentSpeed.toString()}>
+                  {speedOptions.map((value) => (
                     <DropdownMenuRadioItem
                       key={value}
-                      value={value}
-                      onSelect={select}
+                      value={value.toString()}
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        changeSpeed(value);
+                      }}
                     >
-                      {label}
-                    </DropdownMenuRadioItem>
-                  ))}
-                </DropdownMenuRadioGroup>
-              </MotionDropdownMenuGroup>
-            )}
-
-            {activeView === Views.AudioGain && (
-              <MotionDropdownMenuGroup
-                key="audio-gain"
-                custom={direction}
-                variants={menuVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.2, ease: 'easeInOut' }}
-              >
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setView(Views.Settings);
-                  }}
-                >
-                  {'< Налаштування'}
-                </DropdownMenuItem>
-                <DropdownMenuRadioGroup value={audioGainOptions.selectedValue}>
-                  {audioGainOptions.map(({ label, value, select }) => (
-                    <DropdownMenuRadioItem
-                      key={value}
-                      value={value}
-                      onSelect={select}
-                    >
-                      {label}
+                      {value}
                     </DropdownMenuRadioItem>
                   ))}
                 </DropdownMenuRadioGroup>

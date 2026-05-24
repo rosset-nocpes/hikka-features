@@ -38,6 +38,7 @@ interface AppState {
     player: {
       enabled: boolean;
       defaultProvider: string;
+      disableBlur: boolean;
       favoriteTeams: Record<string, { provider: string; team: string }>;
     };
     reader: {
@@ -84,6 +85,7 @@ export const useSettings = create<AppState>()(
         player: {
           enabled: true,
           defaultProvider: 'moon',
+          disableBlur: false,
           favoriteTeams: {},
         },
         reader: {
@@ -186,6 +188,7 @@ const migrateFromOldStorage = async () => {
           enabled: oldStorage.watchButtonState ?? state.features.player.enabled,
           defaultProvider:
             oldStorage.defaultPlayer || state.features.player.defaultProvider,
+          disableBlur: state.features.player.disableBlur,
           favoriteTeams:
             oldStorage.playerAnimeFavoriteTeam ||
             state.features.player.favoriteTeams,

@@ -21,8 +21,13 @@ interface Props {
 }
 
 const MobileTeamProviderDrawer: FC<Props> = ({ toggleWatchedState }) => {
-  const { container, provider, setProvider, team } = usePlayer();
-  const { data } = useWatchData();
+  const {
+    container,
+    provider,
+    setProvider,
+    team,
+    watchData: data,
+  } = usePlayer();
 
   if (!data) return;
 
