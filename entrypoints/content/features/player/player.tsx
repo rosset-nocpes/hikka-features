@@ -131,6 +131,7 @@ const getNearestMiniPlayerCorner = (
 
 const PlayerFrame = () => {
   const { miniPlayer, container } = usePlayer();
+  const { disableBlur } = useSettings().features.player;
   const { setOpen } = useSidebar();
 
   useEffect(() => {
@@ -148,6 +149,7 @@ const PlayerFrame = () => {
     <div
       className={cn(
         'relative size-full',
+        disableBlur && '[&_[class*=backdrop-blur]]:backdrop-blur-none',
         miniPlayer
           ? 'pointer-events-none'
           : 'flex items-center justify-center bg-black/60 backdrop-blur-sm md:p-8',
