@@ -178,8 +178,27 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
   }),
 );
 
+const getCurrentPlayerIFrameWindow = () => {
+  const container = usePlayer.getState().container;
+  const iframe = (container?.querySelector('#player-iframe') ??
+    document.getElementById('player-iframe')) as HTMLIFrameElement | null;
+
+  return iframe?.contentWindow;
+};
+
+const shouldHandlePlayerMessage = (event: MessageEvent) => {
+  const currentIFrameWindow = getCurrentPlayerIFrameWindow();
+
+  return !!currentIFrameWindow && event.source === currentIFrameWindow;
+};
+
 window.addEventListener('message', (event: MessageEvent) => {
   if (event.data?.type === 'playerjs-event') {
+    if (!shouldHandlePlayerMessage(event)) return;
+    if (event.data.event !== 'init' && !useIFramePlayer.getState().isReady) {
+      return;
+    }
+
     switch (event.data.event) {
       case 'playing':
         useIFramePlayer.setState({ isPlaying: event.data.state });
@@ -257,6 +276,9 @@ window.addEventListener('message', (event: MessageEvent) => {
     }
   }
   if (event.data?.type === 'playerjs-response') {
+    if (!shouldHandlePlayerMessage(event)) return;
+    if (!useIFramePlayer.getState().isReady) return;
+
     switch (event.data.command) {
       case 'qualities':
         if (event.data.data[0] === 1) {

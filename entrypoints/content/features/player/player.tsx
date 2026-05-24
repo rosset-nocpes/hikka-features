@@ -315,6 +315,7 @@ export const Player = () => {
       <CardContent className="flex min-h-0 min-w-0 flex-1 flex-col p-0 duration-300">
         <iframe
           id="player-iframe"
+          key={`${currentEpisode?.episode}:${currentEpisode?.video_url}`}
           src={`${currentEpisode?.video_url}?site=hikka.io`} // todo: move params to backend
           loading="lazy"
           className="size-full"
