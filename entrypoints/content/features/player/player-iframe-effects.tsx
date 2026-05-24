@@ -43,6 +43,9 @@ const markCurrentEpisodeWatched = () => {
   )?.click();
 };
 
+const getEpisodeKey = (episode: API.EpisodeData) =>
+  `${episode.episode}:${episode.video_url}`;
+
 const PlayerIFrameEffects = ({ toggleWatchedState, watched }: Props) => {
   const {
     isReady,
@@ -55,6 +58,7 @@ const PlayerIFrameEffects = ({ toggleWatchedState, watched }: Props) => {
   } = useIFramePlayer();
   const pendingAutoPlayRef = useRef(false);
   const handledEndCountRef = useRef(0);
+  const skipWatchedCheckEpisodeKeyRef = useRef<string | undefined>(undefined);
   const {
     watchData,
     sharedParams,
@@ -76,6 +80,7 @@ const PlayerIFrameEffects = ({ toggleWatchedState, watched }: Props) => {
   useEffect(() => {
     if (!currentEpisode) return;
 
+    skipWatchedCheckEpisodeKeyRef.current = getEpisodeKey(currentEpisode);
     toggleWatchedState(false);
     resetIFramePlayer();
   }, [currentEpisode, resetIFramePlayer, toggleWatchedState]);
@@ -100,13 +105,15 @@ const PlayerIFrameEffects = ({ toggleWatchedState, watched }: Props) => {
   }, [isReady, play]);
 
   useEffect(() => {
-    if (
-      !isReady ||
-      !duration ||
-      !currentEpisode ||
-      watched ||
-      currentTime / duration <= 0.88
-    ) {
+    if (!currentEpisode) return;
+
+    const episodeKey = getEpisodeKey(currentEpisode);
+    if (skipWatchedCheckEpisodeKeyRef.current === episodeKey) {
+      skipWatchedCheckEpisodeKeyRef.current = undefined;
+      return;
+    }
+
+    if (!isReady || !duration || watched || currentTime / duration <= 0.88) {
       return;
     }
 
