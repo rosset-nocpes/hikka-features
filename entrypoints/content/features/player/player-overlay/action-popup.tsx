@@ -105,7 +105,7 @@ const ActionPopup = () => {
   return (
     <div
       key={action.id}
-      className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center"
+      className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center"
     >
       <div className="flex size-24 flex-col items-center justify-center rounded-full bg-black/65 text-white shadow-lg duration-150 animate-in fade-in-0 zoom-in-95">
         <ActionIcon action={action} />
