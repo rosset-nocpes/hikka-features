@@ -3,9 +3,11 @@ import {
   type FC,
   type PropsWithChildren,
   RefObject,
+  useEffect,
 } from 'react';
 import { create } from 'zustand';
 
+import { useSidebar } from '@/components/ui/sidebar';
 import { ProviderIFrame, ProviderTeamIFrame } from '@/utils/provider_classes';
 
 interface PlayerState {
@@ -426,5 +428,11 @@ interface PlayerProviderProps extends PropsWithChildren {
 }
 
 export const PlayerProvider: FC<PlayerProviderProps> = ({ children }) => {
+  const { fullscreen } = usePlayer();
+  const { setOpen } = useSidebar();
+
+  // oxlint-disable-next-line eslint-plugin-react-hooks/exhaustive-deps
+  useEffect(() => setOpen(!fullscreen), [fullscreen]);
+
   return <>{children}</>;
 };

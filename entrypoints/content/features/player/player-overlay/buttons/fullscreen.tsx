@@ -25,7 +25,6 @@ const Fullscreen = () => {
         </Button>
       </TooltipTrigger>
       <TooltipContent
-        // className={tooltipClass}
         side="top"
         align="center"
         sideOffset={32}
