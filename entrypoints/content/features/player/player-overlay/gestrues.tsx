@@ -11,7 +11,7 @@ const Gestrues = () => {
   const gestrueRef = useRef<HTMLDivElement>(null);
   const speedupRef = useRef(false);
   const pointerTypeRef = useRef<string | null>(null);
-  const hideUiTimerRef = useRef<NodeJS.Timeout>(null);
+  const hideUiTimerRef = useRef<NodeJS.Timeout | null>(null);
   const pendingSeekTimeRef = useRef<number | null>(null);
   const skipTotalRef = useRef(0);
   const skipResetTimerRef = useRef<NodeJS.Timeout>(null);
@@ -31,8 +31,7 @@ const Gestrues = () => {
   const { toggleFullscreen, overlayRef, miniPlayer } = usePlayer();
   const { open, setOpen } = useSidebar();
 
-  const showOverlayUi = useCallback(() => {
-    useIFramePlayer.setState({ uiShown: true });
+  const scheduleHideOverlayUi = useCallback(() => {
     if (hideUiTimerRef.current) {
       clearTimeout(hideUiTimerRef.current);
     }
@@ -41,6 +40,11 @@ const Gestrues = () => {
       useIFramePlayer.setState({ uiShown: false });
     }, 4000);
   }, []);
+
+  const showOverlayUi = useCallback(() => {
+    useIFramePlayer.setState({ uiShown: true });
+    scheduleHideOverlayUi();
+  }, [scheduleHideOverlayUi]);
 
   const togglePlayPause = useCallback(() => {
     if (isPlaying) {
@@ -101,6 +105,18 @@ const Gestrues = () => {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (!isPlaying || !uiShown) {
+      if (hideUiTimerRef.current) {
+        clearTimeout(hideUiTimerRef.current);
+        hideUiTimerRef.current = null;
+      }
+      return;
+    }
+
+    scheduleHideOverlayUi();
+  }, [isPlaying, scheduleHideOverlayUi, uiShown]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -168,6 +184,7 @@ const Gestrues = () => {
     setOpen,
     togglePlayPause,
     toggleFullscreen,
+    showOverlayUi,
     changeVolume,
     handleSkip,
     handleToggleMute,
