@@ -9,11 +9,11 @@ abstract class BaseScraper {
   abstract readonly endpoints: Record<string, string>;
 
   protected async request(
-    url: string,
+    url: string | URL | Request,
     method: 'GET' | 'POST' = 'GET',
     data?: any,
   ) {
-    const absoluteUrl = url.startsWith('http') ? url : `${this.baseUrl}/${url}`;
+    const absoluteUrl = typeof url === 'string' && !url.startsWith('http') ? `${this.baseUrl}/${url}` : url;
 
     try {
       const response = await ky(absoluteUrl, { method, body: data }).text();

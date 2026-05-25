@@ -59,24 +59,36 @@ class BIUScraper extends BaseScraper {
     if (hasVolumes) {
       const volumes: Volume[] = [];
 
-      $accordions.each((_i, accordion) => {
+      for (const accordion of $accordions.toArray()) {
         const $header = $(accordion).find('.accordion-header');
-        const $content = $(accordion).find('.accordion-content');
+        const $sectionData = $(accordion).find('[data-chapter-section-url]');
         const headerText = $header.find('h3').text().trim();
 
         const volumeMatch = headerText.match(/Том\s+(\d+(?:\.\d+)?$)/i);
         const volumeNumber = volumeMatch ? Number(volumeMatch[1]) : 0;
 
-        const chapters = $content
-          .find('li.group a[href*="/chapters/"]')
+        const sectionUrl = new URL(
+          `${this.baseUrl}${$sectionData.attr('data-chapter-section-url')}`,
+        );
+        const params = JSON.parse(
+          $sectionData.attr('data-chapter-section-params') || '{}',
+        );
+        Object.keys(params).forEach((key) => {
+          sectionUrl.searchParams.append(key, params[key]);
+        });
+
+        const chaptersPage = await this.request(sectionUrl.toString());
+        const $chapters = cheerio.load(chaptersPage);
+
+        const chapters = $chapters('li.group a[href*="/chapters/"]')
           .map((_j, el) => {
-            const $link = $(el);
+            const $link = $chapters(el);
             const chNum = Number($link.find('span').eq(0).text().trim());
             const href = $link.attr('href') || '';
             const translator = $link
               .parent()
               .find('a[href^="/scanlators"]')
-              .map((_k, e) => $(e).text().trim())
+              .map((_k, e) => $chapters(e).text().trim())
               .toArray();
 
             return {
@@ -98,7 +110,7 @@ class BIUScraper extends BaseScraper {
           number: volumeNumber,
           chapters: chapters.sort((a, b) => a.chapter - b.chapter),
         });
-      });
+      }
 
       return {
         displayMode: ReaderContentMode.Volumes,
@@ -107,19 +119,31 @@ class BIUScraper extends BaseScraper {
     } else {
       const chapters: Chapter[] = [];
 
-      $accordions.each((_i, accordion) => {
-        const $content = $(accordion).find('.accordion-content');
+      for (const accordion of $accordions.toArray()) {
+        const $sectionData = $(accordion).find('[data-chapter-section-url]');
 
-        const accordionChapters = $content
-          .find('li.group a[href*="/chapters/"]')
+        const sectionUrl = new URL(
+          `${this.baseUrl}${$sectionData.attr('data-chapter-section-url')}`,
+        );
+        const params = JSON.parse(
+          $sectionData.attr('data-chapter-section-params') || '{}',
+        );
+        Object.keys(params).forEach((key) => {
+          sectionUrl.searchParams.append(key, params[key]);
+        });
+
+        const chaptersPage = await this.request(sectionUrl.toString());
+        const $chapters = cheerio.load(chaptersPage);
+
+        const sectionChapters = $chapters('li.group a[href*="/chapters/"]')
           .map((_j, el) => {
-            const $link = $(el);
+            const $link = $chapters(el);
             const chNum = Number($link.find('span').eq(0).text().trim());
             const href = $link.attr('href') || '';
             const translator = $link
               .parent()
               .find('a[href^="/scanlators"]')
-              .map((_k, e) => $(e).text().trim())
+              .map((_k, e) => $chapters(e).text().trim())
               .toArray();
 
             return {
@@ -136,8 +160,8 @@ class BIUScraper extends BaseScraper {
           })
           .toArray();
 
-        chapters.push(...accordionChapters);
-      });
+        chapters.push(...sectionChapters);
+      }
 
       return {
         displayMode: ReaderContentMode.Chapters,
