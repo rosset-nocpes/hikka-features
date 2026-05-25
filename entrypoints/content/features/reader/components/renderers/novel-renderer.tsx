@@ -75,7 +75,7 @@ const NovelRenderer = () => {
 
       <div
         className={cn(
-          'flex w-full flex-1 justify-center overflow-y-auto bg-background px-3 text-foreground',
+          'flex w-full flex-1 justify-center overflow-y-auto bg-background px-3 text-foreground [&_*]:font-[inherit]',
           settings.type === ReaderType.Novel && settings.fontFamily,
           settings.type === ReaderType.Novel && settings.theme,
         )}
