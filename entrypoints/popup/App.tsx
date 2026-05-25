@@ -39,7 +39,7 @@ function App() {
       </style>
       <div
         className={cn(
-          'flex h-[600px] w-[400px] flex-col gap-4 rounded-none p-7 font-inter font-semibold',
+          'flex h-[600px] w-[400px] flex-col gap-4 rounded-none p-7 font-sans font-semibold',
           burunyaaMode
             ? 'bg-[url(https://media1.tenor.com/m/PDzKPqFw6f8AAAAC/neco-neco-arc.gif)] bg-cover bg-center bg-no-repeat'
             : 'bg-black',

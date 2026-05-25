@@ -34,7 +34,7 @@ export const SETTINGS_CONFIG: Partial<
     label: 'Шрифт',
     type: 'select',
     options: [
-      { value: 'font-sans', label: 'Inter' },
+      { value: 'font-sans', label: 'Geist' },
       { value: 'font-nunitosans', label: 'Nunito Sans' },
       { value: 'font-roboto', label: 'Roboto' },
       { value: 'font-literata', label: 'Literata' },

@@ -136,7 +136,7 @@ export default {
         roboto: ['Roboto Variable', 'sans-serif'],
         literata: ['Literata Variable', 'serif'],
         ebgaramond: ['EB Garamond Variable', 'serif'],
-        sans: ['Inter Variable', 'system-ui', 'sans-serif'],
+        sans: ['Geist Variable', 'system-ui', 'sans-serif'],
         mono: ['ui-monospace', 'monospace'],
       },
     },

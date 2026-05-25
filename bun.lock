@@ -6,7 +6,7 @@
       "name": "hikka-features",
       "dependencies": {
         "@fontsource-variable/eb-garamond": "^5.2.7",
-        "@fontsource-variable/inter": "^5.2.8",
+        "@fontsource-variable/geist": "^5.2.9",
         "@fontsource-variable/literata": "^5.2.8",
         "@fontsource-variable/nunito-sans": "^5.2.7",
         "@fontsource-variable/roboto": "^5.2.10",
@@ -187,7 +187,7 @@
 
     "@fontsource-variable/eb-garamond": ["@fontsource-variable/eb-garamond@5.2.7", "", {}, "sha512-TbR+Pun4k5g85lgdxRNSbWka5vJgi9pzdFzFswgf7/7NRhKssvoumft1+ZGz3n91YYet96JcnjWrgPGGj6JTzg=="],
 
-    "@fontsource-variable/inter": ["@fontsource-variable/inter@5.2.8", "", {}, "sha512-kOfP2D+ykbcX/P3IFnokOhVRNoTozo5/JxhAIVYLpea/UBmCQ/YWPBfWIDuBImXX/15KH+eKh4xpEUyS2sQQGQ=="],
+    "@fontsource-variable/geist": ["@fontsource-variable/geist@5.2.9", "", {}, "sha512-TP+QSBG3wxKGPE33CbMy/L0Nu3qvJ6Fy81Yc4LnQ95xH+i+cfEp8fyU8/kfV14YwszxIFPhnoMTbjL71waVpyQ=="],
 
     "@fontsource-variable/literata": ["@fontsource-variable/literata@5.2.8", "", {}, "sha512-LhxHyo0lDNu2w8FJ7OfTZl6kT8pDYhXiCmWxFAqpUmOqHz1z3OWOaaWBDVOCDOE8b+GWJQX9HYHZ2CERQjjlWA=="],
 
