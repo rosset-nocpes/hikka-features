@@ -65,6 +65,8 @@ function App() {
         <div className="flex items-center justify-center gap-3 text-xs text-[#5C5C5C]">
           <a
             href="https://github.com/rosset-nocpes/hikka-features"
+            target="_blank"
+            rel="noopener"
             className="flex flex-1 items-center justify-center gap-1 font-bold"
           >
             <MdiGithub />
@@ -88,6 +90,8 @@ function App() {
           </div>
           <a
             href="https://t.me/hikka_features"
+            target="_blank"
+            rel="noopener"
             className="flex flex-1 items-center justify-center gap-1 font-bold"
           >
             <MdiTelegram />
