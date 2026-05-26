@@ -66,6 +66,8 @@ export default function player() {
     onRemove: (root) => {
       root?.unmount();
 
+      const { fullscreen, toggleFullscreen } = usePlayer.getState();
+      if (fullscreen) toggleFullscreen();
       document.body.classList.remove('h-full');
       document.body.classList.remove('overflow-hidden');
 
@@ -147,6 +149,7 @@ const PlayerFrame = () => {
 
   return (
     <div
+      id="player-frame"
       className={cn(
         'relative size-full',
         disableBlur && '[&_[class*=backdrop-blur]]:backdrop-blur-none',
@@ -291,8 +294,7 @@ export const Player = () => {
       className={cn(
         'border-overlay relative z-10 box-content flex size-full overflow-hidden rounded-none border-none transition-all duration-300 md:max-h-[720px] md:max-w-[1280px] md:rounded-[calc(var(--radius)_+_8px)] md:border',
         theatreMode && 'md:max-h-full md:max-w-full',
-        fullscreen &&
-          'fixed inset-0 z-20 md:max-h-full md:max-w-full md:rounded-none',
+        fullscreen && '!max-h-full !max-w-full !rounded-none !border-none',
         miniPlayer &&
           'pointer-events-auto fixed z-30 aspect-video h-auto w-[min(calc(100vw-1rem),420px)] cursor-default rounded-lg border shadow-2xl duration-150 md:w-[420px]',
         isDraggingMiniPlayer && 'duration-0',

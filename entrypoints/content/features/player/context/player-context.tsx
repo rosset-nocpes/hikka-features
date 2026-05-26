@@ -51,8 +51,11 @@ interface PlayerActions {
 
 export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
   const handleFullscreenChange = () => {
+    const wrapper = get().container?.querySelector('#player-frame');
+
     if (!document.fullscreenElement) {
       set({ fullscreen: false });
+      wrapper?.classList.remove('fullscreen');
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
     }
   };
@@ -240,9 +243,11 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
     setEpisode: (episode) => set({ currentEpisode: episode }),
     toggleFullscreen: () => {
       const { fullscreen } = get();
+      const wrapper = get().container?.querySelector('#player-frame');
 
       if (fullscreen) {
         set({ fullscreen: false });
+        wrapper?.classList.remove('fullscreen');
         document.exitFullscreen();
         document.removeEventListener(
           'fullscreenchange',
@@ -250,6 +255,7 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
         );
       } else {
         set({ fullscreen: true, miniPlayer: false });
+        wrapper?.classList.add('fullscreen');
         document.documentElement.requestFullscreen();
         document.addEventListener('fullscreenchange', handleFullscreenChange);
       }
