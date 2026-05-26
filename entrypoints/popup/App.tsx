@@ -1,9 +1,11 @@
 import MdiGithub from '~icons/mdi/github';
 import MdiTelegram from '~icons/mdi/telegram';
 
-import { version } from '@/package.json';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 import '../app.css';
+import { version } from '@/package.json';
+
 import AniBackgroundSettings from './options/anibackground-settings';
 import AniButtonsSettings from './options/anibuttons-settings';
 import CharacterSuggestionsSettings from './options/character-suggestion-settings';
@@ -52,16 +54,18 @@ function App() {
           </span>
           <UserOptions />
         </h3>
-        <div className="flex h-full flex-col gap-4 overflow-y-auto">
-          <PlayerSettings />
-          <ReaderSettings />
-          <AniButtonsSettings />
-          <FandubSettings />
-          <RecommendationBlockSettings />
-          <AniBackgroundSettings />
-          <LocalizedPosterSettings />
-          <CharacterSuggestionsSettings />
-        </div>
+        <ScrollArea>
+          <div className="flex h-full flex-col gap-4">
+            <PlayerSettings />
+            <ReaderSettings />
+            <AniButtonsSettings />
+            <FandubSettings />
+            <RecommendationBlockSettings />
+            <AniBackgroundSettings />
+            <LocalizedPosterSettings />
+            <CharacterSuggestionsSettings />
+          </div>
+        </ScrollArea>
         <div className="flex items-center justify-center gap-3 text-xs text-[#5C5C5C]">
           <a
             href="https://github.com/rosset-nocpes/hikka-features"
