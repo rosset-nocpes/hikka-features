@@ -85,7 +85,7 @@ const MobileTeamProviderDrawer: FC<Props> = ({ toggleWatchedState }) => {
                     <Button
                       key={elem}
                       onClick={() => handleSelectPlayer(elem)}
-                      variant={provider === elem ? 'default' : 'outline'}
+                      variant={provider === elem ? 'default' : 'outline-solid'}
                       className="flex-[1_0_calc(33.3%-0.5rem)] text-lg font-semibold"
                     >
                       {elem.toUpperCase()}

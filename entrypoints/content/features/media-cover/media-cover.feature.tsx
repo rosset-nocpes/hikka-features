@@ -61,7 +61,7 @@ const MediaCover = () => {
             fetchPriority="high"
             decoding="async"
             sizes="100vw"
-            className="relative size-full object-cover !transition gradient-mask-b-0"
+            className="relative size-full object-cover transition! gradient-mask-b-0"
             style={{
               position: 'absolute',
               inset: 0,

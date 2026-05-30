@@ -53,3 +53,42 @@ export const getThemeVariables = (): string => {
     return '';
   }
 };
+
+export const isHikkaDarkMode = (): boolean =>
+  document.documentElement.classList.contains('dark') ||
+  getComputedStyle(document.documentElement).colorScheme === 'dark';
+
+export const syncFeatureTheme = (
+  container: HTMLElement,
+  options: { themeVariables?: boolean } = {},
+): void => {
+  const applyThemeVariables = () => {
+    for (const declaration of getThemeVariables().split(';')) {
+      const separatorIndex = declaration.indexOf(':');
+      if (separatorIndex === -1) continue;
+
+      container.style.setProperty(
+        declaration.slice(0, separatorIndex).trim(),
+        declaration.slice(separatorIndex + 1).trim(),
+      );
+    }
+  };
+
+  const applyTheme = () => {
+    if (!container.isConnected) return observer.disconnect();
+
+    if (options.themeVariables) {
+      applyThemeVariables();
+    }
+
+    container.classList.toggle('dark', isHikkaDarkMode());
+  };
+
+  const observer = new MutationObserver(applyTheme);
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['class', 'style'],
+  });
+
+  applyTheme();
+};

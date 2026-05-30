@@ -42,7 +42,7 @@ const MobileEpisodeDrawer = () => {
               variant={
                 ep.video_url === currentEpisode?.video_url
                   ? 'default'
-                  : 'outline'
+                  : 'outline-solid'
               }
               onClick={() => handleSelectEpisode(ep)}
               className={cn(

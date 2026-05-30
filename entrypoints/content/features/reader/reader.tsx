@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
+import { syncFeatureTheme } from '@/utils/utils';
 
 import { queryClient } from '../..';
 import ReaderNavbar from './components/reader-navbar';
@@ -29,13 +30,10 @@ export default function reader() {
       container.append(wrapper);
 
       wrapper.className =
-        'size-full md:backdrop-blur-sm bg-black/60 flex items-center justify-center md:p-8 duration-300';
+        'size-full md:backdrop-blur-xs bg-black/60 flex items-center justify-center md:p-8 duration-300';
 
       container.className = 'h-full';
-      container.classList.toggle(
-        'dark',
-        getComputedStyle(document.documentElement).colorScheme === 'dark',
-      );
+      syncFeatureTheme(container);
 
       Fonts.injectAllFonts();
 
@@ -97,7 +95,7 @@ export const Reader = () => {
     <Card
       className={cn(
         'relative z-10 flex size-full overflow-hidden rounded-none border-none duration-300 md:max-w-[1282px] md:rounded-lg md:border',
-        settings.fullscreen && '!max-w-full !rounded-none !border-none',
+        settings.fullscreen && 'max-w-full! rounded-none! border-none!',
       )}
     >
       <ReaderMobileToolbar />

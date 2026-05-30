@@ -125,7 +125,7 @@ const TeamSelect: FC<Props> = ({ toggleWatchedState }) => {
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
             align="end"
             side="bottom"
             sideOffset={4}
@@ -186,21 +186,21 @@ const TeamSelect: FC<Props> = ({ toggleWatchedState }) => {
                               favoriteTeam?.provider === provider &&
                                 favoriteTeam?.team === team.title
                                 ? 'scale-100 opacity-100 blur-0'
-                                : 'scale-[0.25] opacity-0 blur-sm',
+                                : 'scale-[0.25] opacity-0 blur-xs',
                             )}
                           >
-                            <MaterialSymbolsStarRounded className="!size-5 text-yellow-400 transition-transform duration-300 group-hover:scale-125" />
+                            <MaterialSymbolsStarRounded className="size-5! text-yellow-400 transition-transform duration-300 group-hover:scale-125" />
                           </div>
                           <div
                             className={cn(
                               'opacity transition-[transform,filter] duration-300 ease-in-out will-change-[transform,opacity,filter]',
                               favoriteTeam?.provider === provider &&
                                 favoriteTeam?.team === team.title
-                                ? 'scale-[0.25] opacity-0 blur-sm'
+                                ? 'scale-[0.25] opacity-0 blur-xs'
                                 : 'scale-100 opacity-100 blur-0',
                             )}
                           >
-                            <MaterialSymbolsStarRateOutlineRounded className="!size-5 text-muted-foreground transition-transform duration-300 group-hover:scale-125 group-hover:text-foreground" />
+                            <MaterialSymbolsStarRateOutlineRounded className="size-5! text-muted-foreground transition-transform duration-300 group-hover:scale-125 group-hover:text-foreground" />
                           </div>
                         </div>
                       </Button>

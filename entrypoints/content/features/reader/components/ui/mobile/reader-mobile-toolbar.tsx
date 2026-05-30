@@ -62,7 +62,7 @@ const ReaderMobileToolbar = () => {
         </Sheet>
         <Sheet modal={false} open={sheetOpen} onOpenChange={setSheetOpen}>
           <SheetTrigger
-            className="inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-secondary bg-secondary px-3 text-sm font-medium text-secondary-foreground ring-offset-background transition-colors hover:bg-secondary/80 focus-visible:outline-none"
+            className="inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-secondary bg-secondary px-3 text-sm font-medium text-secondary-foreground ring-offset-background transition-colors hover:bg-secondary/80 focus-visible:outline-hidden"
             onClick={() => setSheetOpen(true)}
           >{`Том ${currentChapter?.volume} Розділ ${currentChapter?.chapter}`}</SheetTrigger>
           <SheetContent

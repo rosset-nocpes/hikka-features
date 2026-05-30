@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client';
 
 import { Button } from '@/components/ui/button';
 import { Kbd } from '@/components/ui/kbd';
+import { syncFeatureTheme } from '@/utils/utils';
 
 import { queryClient } from '..';
 import { BaseFeature } from '../core/base-feature';
@@ -31,11 +32,7 @@ export default class NameSuggestionFeature extends BaseFeature {
         const wrapper = document.createElement('div');
         container.append(wrapper);
 
-        container.style = getThemeVariables();
-        container.classList.toggle(
-          'dark',
-          getComputedStyle(document.documentElement).colorScheme === 'dark',
-        );
+        syncFeatureTheme(container, { themeVariables: true });
 
         if (container.parentElement) {
           container.parentElement.style.right = '0.25rem';

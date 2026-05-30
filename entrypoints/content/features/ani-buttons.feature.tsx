@@ -53,11 +53,7 @@ export default class AniButtonsFeature extends BaseFeature {
         const wrapper = document.createElement('div');
         container.append(wrapper);
 
-        container.style = getThemeVariables();
-        container.classList.toggle(
-          'dark',
-          getComputedStyle(document.documentElement).colorScheme === 'dark',
-        );
+        syncFeatureTheme(container, { themeVariables: true });
 
         const root = createRoot(wrapper);
         root.render(
@@ -214,7 +210,7 @@ const AniButtons = () => {
       {enabled && data && (
         <motion.div
           className={cn(
-            'overflow-hidden rounded-lg border border-border',
+            'border-border overflow-hidden rounded-lg border',
             !isEdit && 'bg-secondary/20',
           )}
           initial={{ opacity: 0, height: 0, scale: 0.93, marginBottom: 0 }}
@@ -236,11 +232,7 @@ const AniButtons = () => {
             >
               Інші джерела
               <img
-                src={
-                  document.documentElement.classList.contains('dark')
-                    ? HFLogoSmall
-                    : HFLogoSmallDark
-                }
+                src={isHikkaDarkMode() ? HFLogoSmall : HFLogoSmallDark}
                 style={{ width: '21px', height: '20px' }}
               />
             </h4>
@@ -255,7 +247,7 @@ const AniButtons = () => {
                   href={elem.title === 'Amanogawa' ? agawaUrl : elem.url}
                   target="_blank"
                   className={cn(
-                    'flex items-center gap-2 rounded-sm p-1 text-sm font-medium transition hover:bg-secondary/60',
+                    'hover:bg-secondary/60 flex items-center gap-2 rounded-sm p-1 text-sm font-medium transition',
                     elem.title === 'Amanogawa'
                       ? agawaUrlLoading
                         ? 'animate-pulse'
@@ -263,13 +255,13 @@ const AniButtons = () => {
                           ? 'pointer-events-none opacity-50'
                           : ''
                       : '',
-                    compact && '!size-10',
+                    compact && 'size-10!',
                   )}
                 >
                   <span
                     className={cn(
-                      'size-5 overflow-hidden rounded-sm border border-secondary/60 p-px',
-                      compact && '!size-full',
+                      'border-secondary/60 size-5 overflow-hidden rounded-sm border p-px',
+                      compact && 'size-full!',
                     )}
                   >
                     <img

@@ -56,7 +56,7 @@ const ReaderSettings = () => {
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="flex w-[--radix-dropdown-menu-trigger-width] min-w-56 flex-col gap-3 rounded-lg"
+            className="flex w-(--radix-dropdown-menu-trigger-width) min-w-56 flex-col gap-3 rounded-lg"
             align="start"
             side="top"
             container={container}
@@ -247,7 +247,7 @@ const FontFamilySelect = ({
       <ScrollArea
         className={cn(
           'max-h-80 w-full overflow-y-auto',
-          isMobile && 'w-[--radix-dropdown-menu-trigger-width]',
+          isMobile && 'w-(--radix-dropdown-menu-trigger-width)',
         )}
       >
         {config.options?.map((option: any, index: number) => (

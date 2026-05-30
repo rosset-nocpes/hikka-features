@@ -75,7 +75,7 @@ const NovelRenderer = () => {
 
       <div
         className={cn(
-          'flex w-full flex-1 justify-center overflow-y-auto bg-background px-3 text-foreground [&_*]:font-[inherit]',
+          'flex w-full flex-1 justify-center overflow-y-auto bg-background px-3 text-foreground **:font-[inherit]',
           settings.type === ReaderType.Novel && settings.fontFamily,
           settings.type === ReaderType.Novel && settings.theme,
         )}
@@ -247,7 +247,7 @@ const ZoomableImage = ({ src, alt }: ZoomableImageProps) => {
                 initial={{ backgroundColor: 'hsl(var(--background) / 0)' }}
                 animate={{ backgroundColor: 'hsl(var(--background) / 0.95)' }}
                 exit={{ backgroundColor: 'hsl(var(--background) / 0)' }}
-                className="absolute inset-0 z-[9999] flex cursor-zoom-out items-center justify-center"
+                className="absolute inset-0 z-9999 flex cursor-zoom-out items-center justify-center"
                 onClick={() => setZoomed(false)}
               >
                 <motion.img

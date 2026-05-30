@@ -34,11 +34,7 @@ export default class FandubBlockFeature extends BaseFeature {
         const wrapper = document.createElement('div');
         container.append(wrapper);
 
-        container.style = getThemeVariables();
-        container.classList.toggle(
-          'dark',
-          getComputedStyle(document.documentElement).colorScheme === 'dark',
-        );
+        syncFeatureTheme(container, { themeVariables: true });
 
         const root = createRoot(wrapper);
         root.render(
@@ -66,7 +62,7 @@ const FandubBlock: FC = () => {
     <AnimatePresence>
       {enabled && (
         <motion.div
-          className="overflow-hidden rounded-lg border border-border bg-secondary/20"
+          className="border-border bg-secondary/20 overflow-hidden rounded-lg border"
           initial={{ opacity: 0, height: 0, scale: 0.93 }}
           animate={{ opacity: 1, height: 'auto', scale: 1 }}
           exit={{ opacity: 0, height: 0, scale: 0.93 }}
@@ -81,11 +77,7 @@ const FandubBlock: FC = () => {
                 rel="noopener"
               >
                 <img
-                  src={
-                    document.documentElement.classList.contains('dark')
-                      ? HFxCPRBadge
-                      : HFxCPRBadgeDark
-                  }
+                  src={isHikkaDarkMode() ? HFxCPRBadge : HFxCPRBadgeDark}
                   style={{ height: '20px' }}
                 />
               </a>
@@ -95,17 +87,17 @@ const FandubBlock: FC = () => {
                 Array.from({ length: 4 }).map((_, i) => (
                   <div
                     key={`skeleton-${i}`}
-                    className="skeleton h-10 animate-pulse bg-secondary/60"
+                    className="skeleton bg-secondary/60 h-10 animate-pulse"
                   />
                 ))}
               {(isError || (data && !data.fandub)) && (
-                <BlockEntry className="cursor-default text-muted-foreground">
+                <BlockEntry className="text-muted-foreground cursor-default">
                   <Avatar className="w-10 rounded-md">
                     <AvatarFallback>
                       <MaterialSymbolsSadTabRounded className="size-6" />
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-sm font-medium leading-tight">
+                  <span className="text-sm leading-tight font-medium">
                     Немає даних
                   </span>
                 </BlockEntry>
@@ -126,14 +118,14 @@ const FandubBlock: FC = () => {
                               {team.title[0].toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="line-clamp-1 truncate text-sm font-medium leading-tight">
+                          <span className="line-clamp-1 truncate text-sm leading-tight font-medium">
                             {team.title}
                           </span>
                         </BlockEntry>
                       ))}
                       <CollapsibleContent
                         asChild
-                        className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down"
+                        className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden"
                       >
                         <div className="flex flex-col gap-4">
                           {data.fandub.slice(4).map((team) => (
@@ -144,7 +136,7 @@ const FandubBlock: FC = () => {
                                   {team.title[0].toUpperCase()}
                                 </AvatarFallback>
                               </Avatar>
-                              <span className="line-clamp-1 truncate text-sm font-medium leading-tight">
+                              <span className="line-clamp-1 truncate text-sm leading-tight font-medium">
                                 {team.title}
                               </span>
                             </BlockEntry>
@@ -156,7 +148,7 @@ const FandubBlock: FC = () => {
                           <Button
                             variant="link"
                             size="sm"
-                            className="p-0 text-muted-foreground"
+                            className="text-muted-foreground p-0"
                           >
                             {isOpen ? 'Згорнути...' : 'Показати більше...'}
                           </Button>
@@ -174,7 +166,7 @@ const FandubBlock: FC = () => {
                               {team.title[0].toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="line-clamp-1 truncate text-sm font-medium leading-tight">
+                          <span className="line-clamp-1 truncate text-sm leading-tight font-medium">
                             {team.title}
                           </span>
                         </BlockEntry>

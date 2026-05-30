@@ -69,7 +69,7 @@ const PlayerSettings = () => {
               </label>
               {navigator.userAgent.toLowerCase().includes('firefox') ? (
                 <select
-                  className="flex h-10 w-24 cursor-pointer items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1"
+                  className="flex h-10 w-24 cursor-pointer items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1"
                   value={defaultProvider}
                   onChange={(e) => {
                     updateFeatureSettings('player', {

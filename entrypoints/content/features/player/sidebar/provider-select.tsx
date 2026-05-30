@@ -82,7 +82,7 @@ const ProviderSelect: FC<Props> = ({ toggleWatchedState }) => {
           </SidebarMenuButton>
         </DropdownMenuTrigger>
         <DropdownMenuContent
-          className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+          className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
           align={open ? 'end' : 'start'}
           side={open ? 'bottom' : 'left'}
           sideOffset={open ? 4 : 12}
@@ -108,7 +108,7 @@ const ProviderSelect: FC<Props> = ({ toggleWatchedState }) => {
                       )}
                     >
                       {favoriteTeam?.provider === elem && (
-                        <Avatar className="!size-5 rounded-sm duration-150">
+                        <Avatar className="size-5! rounded-sm duration-150">
                           <AvatarImage
                             src={
                               (

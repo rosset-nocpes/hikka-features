@@ -224,7 +224,7 @@ const MangaRenderer = () => {
               className="flex h-full"
               {...layoutAnimation}
             >
-              <CarouselContent className="!m-0 h-full">
+              <CarouselContent className="m-0! h-full">
                 {chapterImages?.map((img_url, index) => {
                   return (
                     <CarouselItem key={index} className="h-full">

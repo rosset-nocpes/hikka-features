@@ -13,6 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { syncFeatureTheme } from '@/utils/utils';
 
 import { queryClient } from '../..';
 import { BaseFeature } from '../../core/base-feature';
@@ -33,11 +34,7 @@ export default class LocalizedPosterFeature extends BaseFeature {
         const wrapper = document.createElement('div');
         container.append(wrapper);
 
-        container.style = getThemeVariables();
-        container.classList.toggle(
-          'dark',
-          getComputedStyle(document.documentElement).colorScheme === 'dark',
-        );
+        syncFeatureTheme(container, { themeVariables: true });
 
         container.style.position = 'absolute';
         container.style.zIndex = '1';

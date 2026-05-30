@@ -171,7 +171,7 @@ const Time = () => {
       <SliderPrimitive.Root
         ref={trackRef}
         className={cn(
-          'group relative inline-flex w-full cursor-pointer touch-none select-none outline-none',
+          'group relative inline-flex w-full cursor-pointer touch-none select-none outline-hidden',
           miniPlayer ? 'pb-1 pt-2' : 'pb-1 pt-4',
         )}
         value={[value]}
@@ -196,7 +196,7 @@ const Time = () => {
           />
           <SliderPrimitive.Range className="absolute h-full bg-primary" />
         </SliderPrimitive.Track>
-        <div className="pointer-events-none absolute flex flex-col items-center opacity-0 transition-opacity duration-200 will-change-[left] data-[visible]:opacity-100" />
+        <div className="pointer-events-none absolute flex flex-col items-center opacity-0 transition-opacity duration-200 will-change-[left] data-visible:opacity-100" />
       </SliderPrimitive.Root>
 
       {showTooltip && (
