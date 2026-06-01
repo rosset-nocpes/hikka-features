@@ -24,7 +24,7 @@ const PlayerOverlay = ({ toggleWatchedState }: Props) => {
     <div
       className={cn(
         'absolute flex size-full',
-        adInProgress && 'pointer-events-none',
+        (adInProgress || provider === 'vidking') && 'pointer-events-none',
       )}
     >
       {provider !== 'vidking' && (
