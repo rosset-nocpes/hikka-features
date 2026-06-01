@@ -318,7 +318,7 @@ export const Player = () => {
         <iframe
           id="player-iframe"
           key={`${currentEpisode?.episode}:${currentEpisode?.video_url}`}
-          src={`${currentEpisode?.video_url}?site=hikka.io`} // todo: move params to backend
+          src={currentEpisode?.video_url}
           loading="lazy"
           className="size-full"
           allow="fullscreen; accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
