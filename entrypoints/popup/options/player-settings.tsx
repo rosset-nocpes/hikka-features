@@ -13,6 +13,7 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -33,18 +34,20 @@ const PlayerSettings = () => {
             Налаштування програвача
           </div>
         </div>
-        <DrawerTrigger asChild>
-          <Button size="icon-sm">
-            <MaterialSymbolsExpandAllRounded />
-          </Button>
-        </DrawerTrigger>
+        <DrawerTrigger
+          render={
+            <Button size="icon-sm">
+              <MaterialSymbolsExpandAllRounded />
+            </Button>
+          }
+        />
       </div>
       <DrawerContent>
         <div className="mx-auto w-full max-w-sm">
           <DrawerHeader>
             <DrawerTitle>Налаштування програвача</DrawerTitle>
           </DrawerHeader>
-          <div className="flex flex-col gap-5 px-[30px]">
+          <div className="flex flex-col gap-5 px-7.5">
             <SwitchOption
               checked={enabled}
               label="Кнопка перегляду"
@@ -67,41 +70,29 @@ const PlayerSettings = () => {
               <label className="text-sm font-medium">
                 Програвач за замовчуванням
               </label>
-              {navigator.userAgent.toLowerCase().includes('firefox') ? (
-                <select
-                  className="flex h-10 w-24 cursor-pointer items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1"
-                  value={defaultProvider}
-                  onChange={(e) => {
-                    updateFeatureSettings('player', {
-                      defaultProvider: e.target.value,
-                    });
-                  }}
-                >
-                  {['moon', 'ashdi'].map((elem) => (
-                    <option key={elem} value={elem}>
-                      {elem.toUpperCase()}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <Select
-                  value={defaultProvider}
-                  onValueChange={(value) => {
-                    updateFeatureSettings('player', { defaultProvider: value });
-                  }}
-                >
-                  <SelectTrigger className="w-24">
-                    <SelectValue placeholder="Оберіть програвач за замовчуванням" />
-                  </SelectTrigger>
-                  <SelectContent>
+              <Select
+                value={defaultProvider}
+                onValueChange={(value) => {
+                  if (!value) return;
+                  updateFeatureSettings('player', { defaultProvider: value });
+                }}
+              >
+                <SelectTrigger className="w-24">
+                  <SelectValue
+                    className="uppercase"
+                    placeholder="Оберіть програвач за замовчуванням"
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
                     {['moon', 'ashdi'].map((elem) => (
-                      <SelectItem key={elem} value={elem}>
-                        {elem.toUpperCase()}
+                      <SelectItem className="uppercase" key={elem} value={elem}>
+                        {elem}
                       </SelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
-              )}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DrawerFooter>

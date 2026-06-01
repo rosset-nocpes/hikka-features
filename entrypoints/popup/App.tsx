@@ -17,6 +17,16 @@ import ReaderSettings from './options/reader-settings';
 import RecommendationBlockSettings from './options/recommendation-block-settings';
 import UserOptions from './options/user-options';
 
+if (navigator.userAgent.includes('Firefox')) {
+  window.addEventListener('resize', (e) => e.stopImmediatePropagation(), {
+    capture: true,
+  });
+
+  window.addEventListener('blur', (e) => e.stopImmediatePropagation(), {
+    capture: true,
+  });
+}
+
 function App() {
   const { enabled, burunyaaMode } = useSettings().features.devOptions;
   const { updateFeatureSettings } = useSettings();
@@ -24,7 +34,7 @@ function App() {
   let devClicked = 0;
 
   return (
-    <div data-vaul-drawer-wrapper>
+    <div>
       <style>
         {`:root { background-color: black; }
         .slide-fade-enter-active {

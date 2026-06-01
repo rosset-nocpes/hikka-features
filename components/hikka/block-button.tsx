@@ -18,10 +18,10 @@ const BlockButton: FC<Props> = ({ href, onClick, linkProps, disabled }) => {
 
   if (href) {
     return (
-      <Button size="icon-sm" variant="ghost" disabled={disabled} asChild>
+      <Button size="icon-sm" variant="ghost" disabled={disabled}>
         <a
           href={href}
-          className="flex items-center gap-2 text-muted-foreground"
+          className="text-muted-foreground flex items-center gap-2"
           {...linkProps}
         >
           <MaterialSymbolsArrowRightAltRounded className="text-sm" />
@@ -34,7 +34,7 @@ const BlockButton: FC<Props> = ({ href, onClick, linkProps, disabled }) => {
     <Button
       onClick={onClick}
       size="icon-sm"
-      className="flex items-center gap-2 text-muted-foreground"
+      className="text-muted-foreground flex items-center gap-2"
       variant="ghost"
       disabled={disabled}
     >

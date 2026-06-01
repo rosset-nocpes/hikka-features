@@ -55,12 +55,14 @@ const MobileTeamProviderDrawer: FC<Props> = ({ toggleWatchedState }) => {
 
   return (
     <Drawer>
-      <DrawerTrigger asChild>
-        <Avatar className="size-10 rounded-md">
-          <AvatarImage src={team?.logo} />
-          <AvatarFallback>{team?.title?.slice(0, 2)}</AvatarFallback>
-        </Avatar>
-      </DrawerTrigger>
+      <DrawerTrigger
+        render={
+          <Avatar className="size-10 rounded-md">
+            <AvatarImage src={team?.logo} />
+            <AvatarFallback>{team?.title?.slice(0, 2)}</AvatarFallback>
+          </Avatar>
+        }
+      />
       <DrawerContent
         className="flex max-h-[80%] flex-col"
         container={container}
@@ -85,7 +87,7 @@ const MobileTeamProviderDrawer: FC<Props> = ({ toggleWatchedState }) => {
                     <Button
                       key={elem}
                       onClick={() => handleSelectPlayer(elem)}
-                      variant={provider === elem ? 'default' : 'outline-solid'}
+                      variant={provider === elem ? 'default' : 'outline'}
                       className="flex-[1_0_calc(33.3%-0.5rem)] text-lg font-semibold"
                     >
                       {elem.toUpperCase()}

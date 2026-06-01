@@ -11,25 +11,28 @@ import {
 import { usePlayer } from '../../context/player-context';
 
 const MiniPlayer = () => {
-  const { overlayRef, miniPlayer, toggleMiniPlayer } = usePlayer();
+  const { container, overlayRef, miniPlayer, toggleMiniPlayer } = usePlayer();
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <Button variant="ghost" size="icon-sm" onClick={toggleMiniPlayer}>
-          {miniPlayer ? (
-            <MaterialSymbolsFitScreenOutlineRounded />
-          ) : (
-            <MaterialSymbolsPictureInPictureAltRounded />
-          )}
-        </Button>
-      </TooltipTrigger>
+      <TooltipTrigger
+        render={
+          <Button variant="ghost" size="icon-sm" onClick={toggleMiniPlayer}>
+            {miniPlayer ? (
+              <MaterialSymbolsFitScreenOutlineRounded />
+            ) : (
+              <MaterialSymbolsPictureInPictureAltRounded />
+            )}
+          </Button>
+        }
+      />
       <TooltipContent
         side="top"
         align="center"
         sideOffset={32}
-        collisionBoundary={overlayRef.current}
+        collisionBoundary={overlayRef.current as Element}
         collisionPadding={8}
+        container={container}
       >
         {miniPlayer ? 'Вийти з міні-плеєра' : 'Міні-плеєр'}
       </TooltipContent>

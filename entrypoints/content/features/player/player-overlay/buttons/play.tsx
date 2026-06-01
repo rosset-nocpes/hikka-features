@@ -11,7 +11,7 @@ import {
 import { usePlayer } from '../../context/player-context';
 
 const Play = () => {
-  const { overlayRef } = usePlayer();
+  const { container, overlayRef } = usePlayer();
   const { isPlaying, play, pause } = useIFramePlayer();
 
   const handlePlay = () => {
@@ -24,21 +24,24 @@ const Play = () => {
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <Button variant="ghost" size="icon-sm" onClick={handlePlay}>
-          {isPlaying ? (
-            <MaterialSymbolsPauseOutlineRounded className="text-lg" />
-          ) : (
-            <MaterialSymbolsPlayArrowOutlineRounded className="text-lg" />
-          )}
-        </Button>
-      </TooltipTrigger>
+      <TooltipTrigger
+        render={
+          <Button variant="ghost" size="icon-sm" onClick={handlePlay}>
+            {isPlaying ? (
+              <MaterialSymbolsPauseOutlineRounded className="size-5" />
+            ) : (
+              <MaterialSymbolsPlayArrowOutlineRounded className="size-5" />
+            )}
+          </Button>
+        }
+      />
       <TooltipContent
         side="top"
         align="center"
         sideOffset={32}
-        collisionBoundary={overlayRef.current}
+        collisionBoundary={overlayRef.current as Element}
         collisionPadding={8}
+        container={container}
       >
         {isPlaying ? 'Призупинити' : 'Відтворити'}
       </TooltipContent>

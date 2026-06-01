@@ -7,10 +7,10 @@ const Volume = () => {
 
   return (
     <BaseSlider
-      className="group mr-1 h-8 w-[80px] cursor-pointer touch-none select-none outline-hidden"
-      value={[volume * 100]}
-      onValueChange={([value]) => {
-        changeVolume(value / 100);
+      className="group mr-1 h-8 w-20 cursor-pointer touch-none outline-hidden select-none"
+      value={volume * 100}
+      onValueChange={(value) => {
+        changeVolume((value as number) / 100);
       }}
     />
   );

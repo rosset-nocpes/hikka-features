@@ -22,12 +22,14 @@ const MobileEpisodeDrawer = () => {
 
   return (
     <Drawer open={open} onOpenChange={setOpen}>
-      <DrawerTrigger asChild>
-        <Button
-          size="md"
-          variant="secondary"
-        >{`Епізод #${currentEpisode?.episode}`}</Button>
-      </DrawerTrigger>
+      <DrawerTrigger
+        render={
+          <Button
+            size="md"
+            variant="secondary"
+          >{`Епізод #${currentEpisode?.episode}`}</Button>
+        }
+      />
       <DrawerContent
         className="flex max-h-[80%] flex-col"
         container={container}
@@ -42,7 +44,7 @@ const MobileEpisodeDrawer = () => {
               variant={
                 ep.video_url === currentEpisode?.video_url
                   ? 'default'
-                  : 'outline-solid'
+                  : 'outline'
               }
               onClick={() => handleSelectEpisode(ep)}
               className={cn(

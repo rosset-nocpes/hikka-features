@@ -63,26 +63,28 @@ const ProviderSelect: FC<Props> = ({ toggleWatchedState }) => {
   return (
     <SidebarMenuItem>
       <DropdownMenu modal={false}>
-        <DropdownMenuTrigger asChild>
-          <SidebarMenuButton
-            size="lg"
-            disabled={avaliable_players.length === 1}
-          >
-            <Avatar className="size-8 rounded-md text-black">
-              <AvatarFallback className="bg-primary">
-                {provider?.[0].toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <span className="truncate text-left text-sm font-semibold leading-tight">
-              {provider?.toUpperCase()}
-            </span>
-            {avaliable_players.length > 1 && (
-              <ChevronsUpDown className="ml-auto" />
-            )}
-          </SidebarMenuButton>
-        </DropdownMenuTrigger>
+        <DropdownMenuTrigger
+          render={
+            <SidebarMenuButton
+              size="lg"
+              disabled={avaliable_players.length === 1}
+            >
+              <Avatar className="size-8 rounded-md text-black">
+                <AvatarFallback className="bg-primary">
+                  {provider?.[0].toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <span className="truncate text-left text-sm leading-tight font-semibold">
+                {provider?.toUpperCase()}
+              </span>
+              {avaliable_players.length > 1 && (
+                <ChevronsUpDown className="ml-auto" />
+              )}
+            </SidebarMenuButton>
+          }
+        />
         <DropdownMenuContent
-          className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+          className="w-(--anchor-width) min-w-56 rounded-lg"
           align={open ? 'end' : 'start'}
           side={open ? 'bottom' : 'left'}
           sideOffset={open ? 4 : 12}
@@ -93,7 +95,7 @@ const ProviderSelect: FC<Props> = ({ toggleWatchedState }) => {
               Object.entries(grouped_players) as [ProviderLanguage, string[]][]
             ).map(([lang, players]) => (
               <DropdownMenuGroup key={lang}>
-                <DropdownMenuLabel className="text-xs text-muted-foreground">
+                <DropdownMenuLabel className="text-muted-foreground text-xs">
                   {LANGUAGE_GROUP_NAMES[lang]}
                 </DropdownMenuLabel>
                 <div className="flex flex-wrap">

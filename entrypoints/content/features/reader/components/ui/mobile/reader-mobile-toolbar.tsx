@@ -32,13 +32,15 @@ const ReaderMobileToolbar = () => {
 
   return (
     <div className="absolute bottom-2 z-20 flex w-full justify-center px-2 md:hidden">
-      <div className="flex gap-2 rounded-lg bg-background/60 p-2 backdrop-blur-xl">
+      <div className="bg-background/60 flex gap-2 rounded-lg p-2 backdrop-blur-xl">
         <Sheet modal={false}>
-          <SheetTrigger asChild>
-            <Button variant="secondary" size="md">
-              <MaterialSymbolsPageInfoOutlineRounded />
-            </Button>
-          </SheetTrigger>
+          <SheetTrigger
+            render={
+              <Button variant="secondary" size="md">
+                <MaterialSymbolsPageInfoOutlineRounded />
+              </Button>
+            }
+          />
           <SheetContent
             container={container}
             side="bottom"
@@ -48,7 +50,7 @@ const ReaderMobileToolbar = () => {
               <SheetTitle>Налаштування</SheetTitle>
             </SheetHeader>
             <SettingsItems />
-            <SheetFooter className="flex flex-col text-center text-xs text-muted-foreground">
+            <SheetFooter className="text-muted-foreground flex flex-col text-center text-xs">
               <a
                 href={READER_POWERED_BY[settings.type]?.url}
                 target="_blank"
@@ -62,7 +64,7 @@ const ReaderMobileToolbar = () => {
         </Sheet>
         <Sheet modal={false} open={sheetOpen} onOpenChange={setSheetOpen}>
           <SheetTrigger
-            className="inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-secondary bg-secondary px-3 text-sm font-medium text-secondary-foreground ring-offset-background transition-colors hover:bg-secondary/80 focus-visible:outline-hidden"
+            className="border-secondary bg-secondary text-secondary-foreground ring-offset-background hover:bg-secondary/80 inline-flex h-10 items-center justify-center gap-2 rounded-md border px-3 text-sm font-medium whitespace-nowrap transition-colors focus-visible:outline-hidden"
             onClick={() => setSheetOpen(true)}
           >{`Том ${currentChapter?.volume} Розділ ${currentChapter?.chapter}`}</SheetTrigger>
           <SheetContent

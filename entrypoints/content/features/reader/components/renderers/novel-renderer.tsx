@@ -67,7 +67,7 @@ const NovelRenderer = () => {
     <>
       <motion.div
         id="scroll-indicator"
-        className="absolute left-0 right-0 top-0 z-10 h-1 origin-left bg-primary"
+        className="bg-primary absolute top-0 right-0 left-0 z-10 h-1 origin-left"
         style={{
           scaleX: animationComplete && !isLoading ? scrollYProgress : 0,
         }}
@@ -75,7 +75,7 @@ const NovelRenderer = () => {
 
       <div
         className={cn(
-          'flex w-full flex-1 justify-center overflow-y-auto bg-background px-3 text-foreground **:font-[inherit]',
+          'bg-background text-foreground flex w-full flex-1 justify-center overflow-y-auto px-3 **:font-[inherit]',
           settings.type === ReaderType.Novel && settings.fontFamily,
           settings.type === ReaderType.Novel && settings.theme,
         )}
@@ -85,14 +85,14 @@ const NovelRenderer = () => {
         }}
       >
         <ScrollArea ref={scrollRef} className="w-full max-w-4xl">
-          <div className="mb-10 mt-48 flex flex-col">
+          <div className="mt-48 mb-10 flex flex-col">
             {currentChapter?.title && (
-              <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+              <p className="text-muted-foreground text-sm font-bold tracking-widest uppercase">
                 {currentChapter?.volume && `Том ${currentChapter?.volume} `}
                 Розділ {currentChapter?.chapter}
               </p>
             )}
-            <h1 className="scroll-m-20 whitespace-nowrap text-balance text-4xl font-extrabold tracking-tight">
+            <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight text-balance whitespace-nowrap">
               {currentChapter?.title ||
                 `${currentChapter?.volume ? `Том ${currentChapter?.volume} ` : ''}Розділ ${currentChapter?.chapter}`}
             </h1>
@@ -146,16 +146,21 @@ const PageParser = memo(
               const definition = domNode.attribs['data-definition'];
 
               return (
-                <HoverCard openDelay={200} closeDelay={100}>
-                  <HoverCardTrigger asChild>
-                    <span className="cursor-help text-primary underline decoration-dotted underline-offset-4">
-                      {domToReact(domNode.children)}
-                    </span>
-                  </HoverCardTrigger>
+                <HoverCard>
+                  <HoverCardTrigger
+                    delay={200}
+                    closeDelay={100}
+                    render={
+                      <span className="text-primary cursor-help underline decoration-dotted underline-offset-4">
+                        {domToReact(domNode.children)}
+                      </span>
+                    }
+                  />
+
                   <HoverCardContent className="w-80" container={container}>
                     <div className="flex flex-col gap-2">
                       <h4 className="text-sm font-semibold">{term}</h4>
-                      <p className="text-sm leading-relaxed text-muted-foreground">
+                      <p className="text-muted-foreground text-sm leading-relaxed">
                         {definition}
                       </p>
                     </div>
@@ -176,7 +181,7 @@ const PageParser = memo(
 
       return (
         <motion.div
-          className="mb-48 [&_img]:rounded-md [&_img]:border [&_p:not(:first-child)]:mt-6 [&_p]:leading-7 [&_span]:inline"
+          className="mb-48 [&_img]:rounded-md [&_img]:border [&_p]:leading-7 [&_p:not(:first-child)]:mt-6 [&_span]:inline"
           ref={ref}
           {...layoutAnimation}
           {...props}

@@ -11,25 +11,28 @@ import {
 import { usePlayer } from '../../context/player-context';
 
 const Fullscreen = () => {
-  const { overlayRef, fullscreen, toggleFullscreen } = usePlayer();
+  const { container, overlayRef, fullscreen, toggleFullscreen } = usePlayer();
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <Button variant="ghost" size="icon-sm" onClick={toggleFullscreen}>
-          {fullscreen ? (
-            <MaterialSymbolsFullscreenExitRounded />
-          ) : (
-            <MaterialSymbolsFullscreenRounded />
-          )}
-        </Button>
-      </TooltipTrigger>
+      <TooltipTrigger
+        render={
+          <Button variant="ghost" size="icon-sm" onClick={toggleFullscreen}>
+            {fullscreen ? (
+              <MaterialSymbolsFullscreenExitRounded />
+            ) : (
+              <MaterialSymbolsFullscreenRounded />
+            )}
+          </Button>
+        }
+      />
       <TooltipContent
         side="top"
-        align="center"
         sideOffset={32}
-        collisionBoundary={overlayRef.current}
+        align="center"
+        collisionBoundary={overlayRef.current as Element}
         collisionPadding={8}
+        container={container}
       >
         {fullscreen ? 'Вийти з повноекранного режиму' : 'Повноекранний режим'}
       </TooltipContent>

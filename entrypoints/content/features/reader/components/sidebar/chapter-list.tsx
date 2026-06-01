@@ -10,26 +10,6 @@ import VolumesView from './list-views/volumes-view';
 const ChapterList = () => {
   const { data } = useReadData();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [isScrolled, setIsScrolled] = useState({ top: false, bottom: false });
-
-  useEffect(() => {
-    const element = scrollRef.current;
-    if (!element) return;
-
-    const handleScroll = () => {
-      setIsScrolled({
-        top: element.scrollTop > 0,
-        bottom: element.scrollTop + element.clientHeight < element.scrollHeight,
-      });
-    };
-
-    element.addEventListener('scroll', handleScroll);
-    handleScroll();
-
-    return () => {
-      element.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
 
   // const sorted = useMemo(() => {
   //   if (!mangaData?.chapters) return [];
@@ -59,24 +39,7 @@ const ChapterList = () => {
   return (
     <SidebarContent
       ref={scrollRef}
-      className={cn('relative group-data-[collapsible=icon]:overflow-auto', {
-        'gradient-mask-t-90-d':
-          isScrolled.top &&
-          isScrolled.bottom &&
-          data?.displayMode === ReaderContentMode.Chapters,
-        'gradient-mask-t-90':
-          isScrolled.top &&
-          !isScrolled.bottom &&
-          data?.displayMode === ReaderContentMode.Chapters,
-        'gradient-mask-b-90':
-          (!isScrolled.top && isScrolled.bottom) ||
-          (data?.displayMode === ReaderContentMode.Volumes &&
-            isScrolled.top &&
-            isScrolled.bottom),
-      })}
-      style={{
-        scrollbarWidth: 'none',
-      }}
+      className="relative group-data-[collapsible=icon]:overflow-auto"
     >
       {data?.displayMode === ReaderContentMode.Chapters && (
         <ChaptersView scrollRef={scrollRef} />

@@ -1,119 +1,124 @@
-'use client';
-
+import { Drawer as DrawerPrimitive } from '@base-ui/react/drawer';
 import * as React from 'react';
-import { Drawer as DrawerPrimitive } from 'vaul';
 
-const Drawer = ({
-  shouldScaleBackground = true,
+function Drawer({ ...props }: DrawerPrimitive.Root.Props) {
+  return <DrawerPrimitive.Root data-slot="drawer" {...props} />;
+}
+
+function DrawerTrigger({ ...props }: DrawerPrimitive.Trigger.Props) {
+  return <DrawerPrimitive.Trigger data-slot="drawer-trigger" {...props} />;
+}
+
+function DrawerPortal({ ...props }: DrawerPrimitive.Portal.Props) {
+  return <DrawerPrimitive.Portal data-slot="drawer-portal" {...props} />;
+}
+
+function DrawerClose({ ...props }: DrawerPrimitive.Close.Props) {
+  return <DrawerPrimitive.Close data-slot="drawer-close" {...props} />;
+}
+
+function DrawerOverlay({
+  className,
   ...props
-}: React.ComponentProps<typeof DrawerPrimitive.Root>) => (
-  <DrawerPrimitive.Root
-    shouldScaleBackground={shouldScaleBackground}
-    {...props}
-  />
-);
-Drawer.displayName = 'Drawer';
+}: DrawerPrimitive.Backdrop.Props) {
+  return (
+    <DrawerPrimitive.Backdrop
+      data-slot="drawer-overlay"
+      className={cn(
+        'fixed inset-0 z-50 bg-black/10 opacity-[calc(1-var(--drawer-swipe-progress))] transition-opacity duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] data-ending-style:opacity-0 data-starting-style:opacity-0 data-swiping:duration-0 supports-backdrop-filter:backdrop-blur-xs',
+        className,
+      )}
+      {...props}
+    />
+  );
+}
 
-const DrawerTrigger = DrawerPrimitive.Trigger;
-
-const DrawerPortal = DrawerPrimitive.Portal;
-
-const DrawerClose = DrawerPrimitive.Close;
-
-const DrawerOverlay = React.forwardRef<
-  React.ComponentRef<typeof DrawerPrimitive.Overlay>,
-  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Overlay>
->(({ className, ...props }, ref) => (
-  <DrawerPrimitive.Overlay
-    ref={ref}
-    className={cn('fixed inset-0 z-50 bg-black/80', className)}
-    {...props}
-  />
-));
-DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName;
-
-const DrawerContent = React.forwardRef<
-  React.ComponentRef<typeof DrawerPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content> & {
-    container?: HTMLElement;
-  }
->(({ className, children, container, ...props }, ref) => (
-  <DrawerPortal container={container}>
-    <DrawerOverlay>
-      <DrawerPrimitive.Content
-        ref={ref}
-        className={cn(
-          'fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background opacity-100!',
-          className,
-        )}
-        {...props}
+function DrawerContent({
+  className,
+  children,
+  container,
+  ...props
+}: DrawerPrimitive.Popup.Props & { container?: HTMLElement }) {
+  return (
+    <DrawerPortal data-slot="drawer-portal" container={container}>
+      <DrawerOverlay />
+      <DrawerPrimitive.Viewport
+        data-slot="drawer-viewport"
+        className="pointer-events-none fixed inset-0 z-50"
       >
-        <div className="mx-auto mt-4 flex h-2 w-[100px] shrink-0 rounded-full bg-muted" />
-        {children}
-      </DrawerPrimitive.Content>
-    </DrawerOverlay>
-  </DrawerPortal>
-));
-DrawerContent.displayName = 'DrawerContent';
+        <DrawerPrimitive.Popup
+          data-slot="drawer-content"
+          className={cn(
+            'group/drawer-content bg-popover text-popover-foreground pointer-events-auto fixed z-50 flex h-auto transform-(--drawer-transform) flex-col overflow-hidden text-sm transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform [--drawer-bleed-x:3rem] [--drawer-bleed-y:3rem] data-ending-style:transform-(--drawer-closed-transform) data-starting-style:transform-(--drawer-closed-transform) data-swiping:duration-0 data-swiping:select-none data-[swipe-direction=down]:inset-x-0 data-[swipe-direction=down]:bottom-0 data-[swipe-direction=down]:mt-24 data-[swipe-direction=down]:-mb-(--drawer-bleed-y) data-[swipe-direction=down]:max-h-[calc(80vh+var(--drawer-bleed-y))] data-[swipe-direction=down]:rounded-t-xl data-[swipe-direction=down]:border-t data-[swipe-direction=down]:pb-(--drawer-bleed-y) data-[swipe-direction=down]:[--drawer-closed-transform:translate3d(0,100%,0)] data-[swipe-direction=down]:[--drawer-transform:translate3d(0,var(--drawer-swipe-movement-y),0)] data-[swipe-direction=left]:inset-y-0 data-[swipe-direction=left]:left-0 data-[swipe-direction=left]:-ml-(--drawer-bleed-x) data-[swipe-direction=left]:w-[calc(75%+var(--drawer-bleed-x))] data-[swipe-direction=left]:rounded-r-xl data-[swipe-direction=left]:border-r data-[swipe-direction=left]:pl-(--drawer-bleed-x) data-[swipe-direction=left]:[--drawer-closed-transform:translate3d(-100%,0,0)] data-[swipe-direction=left]:[--drawer-transform:translate3d(var(--drawer-swipe-movement-x),0,0)] data-[swipe-direction=right]:inset-y-0 data-[swipe-direction=right]:right-0 data-[swipe-direction=right]:-mr-(--drawer-bleed-x) data-[swipe-direction=right]:w-[calc(75%+var(--drawer-bleed-x))] data-[swipe-direction=right]:rounded-l-xl data-[swipe-direction=right]:border-l data-[swipe-direction=right]:pr-(--drawer-bleed-x) data-[swipe-direction=right]:[--drawer-closed-transform:translate3d(100%,0,0)] data-[swipe-direction=right]:[--drawer-transform:translate3d(var(--drawer-swipe-movement-x),0,0)] data-[swipe-direction=up]:inset-x-0 data-[swipe-direction=up]:top-0 data-[swipe-direction=up]:-mt-(--drawer-bleed-y) data-[swipe-direction=up]:mb-24 data-[swipe-direction=up]:max-h-[calc(80vh+var(--drawer-bleed-y))] data-[swipe-direction=up]:rounded-b-xl data-[swipe-direction=up]:border-b data-[swipe-direction=up]:pt-(--drawer-bleed-y) data-[swipe-direction=up]:[--drawer-closed-transform:translate3d(0,-100%,0)] data-[swipe-direction=up]:[--drawer-transform:translate3d(0,var(--drawer-swipe-movement-y),0)] data-[vaul-drawer-direction=bottom]:rounded-t-xl data-[vaul-drawer-direction=bottom]:border-t data-[vaul-drawer-direction=left]:rounded-r-xl data-[vaul-drawer-direction=left]:border-r data-[vaul-drawer-direction=right]:rounded-l-xl data-[vaul-drawer-direction=right]:border-l data-[vaul-drawer-direction=top]:rounded-b-xl data-[vaul-drawer-direction=top]:border-b data-[swipe-direction=left]:sm:w-[calc(24rem+var(--drawer-bleed-x))] data-[swipe-direction=right]:sm:w-[calc(24rem+var(--drawer-bleed-x))]',
+            className,
+          )}
+          {...props}
+        >
+          <div className="bg-muted mx-auto mt-4 hidden h-1.5 w-[100px] shrink-0 rounded-full group-data-[swipe-direction=down]/drawer-content:block" />
+          <DrawerPrimitive.Content className="flex min-h-0 flex-1 flex-col">
+            {children}
+          </DrawerPrimitive.Content>
+        </DrawerPrimitive.Popup>
+      </DrawerPrimitive.Viewport>
+    </DrawerPortal>
+  );
+}
 
-const DrawerHeader = ({
+function DrawerHeader({ className, ...props }: React.ComponentProps<'div'>) {
+  return (
+    <div
+      data-slot="drawer-header"
+      className={cn(
+        'flex flex-col gap-0.5 p-4 group-data-[swipe-direction=down]/drawer-content:text-center group-data-[swipe-direction=up]/drawer-content:text-center md:gap-1.5 md:text-left',
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function DrawerFooter({ className, ...props }: React.ComponentProps<'div'>) {
+  return (
+    <div
+      data-slot="drawer-footer"
+      className={cn('mt-auto flex flex-col gap-2 p-4', className)}
+      {...props}
+    />
+  );
+}
+
+function DrawerTitle({ className, ...props }: DrawerPrimitive.Title.Props) {
+  return (
+    <DrawerPrimitive.Title
+      data-slot="drawer-title"
+      className={cn('cn-font-heading text-foreground font-medium', className)}
+      {...props}
+    />
+  );
+}
+
+function DrawerDescription({
   className,
   ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={cn('grid gap-1.5 p-4 text-center sm:text-left', className)}
-    {...props}
-  />
-);
-DrawerHeader.displayName = 'DrawerHeader';
-
-const DrawerFooter = ({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={cn('mt-auto flex flex-col gap-2 p-4', className)}
-    {...props}
-  />
-);
-DrawerFooter.displayName = 'DrawerFooter';
-
-const DrawerTitle = React.forwardRef<
-  React.ComponentRef<typeof DrawerPrimitive.Title>,
-  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Title>
->(({ className, ...props }, ref) => (
-  <DrawerPrimitive.Title
-    ref={ref}
-    className={cn(
-      'text-lg font-semibold leading-none tracking-tight',
-      className,
-    )}
-    {...props}
-  />
-));
-DrawerTitle.displayName = DrawerPrimitive.Title.displayName;
-
-const DrawerDescription = React.forwardRef<
-  React.ComponentRef<typeof DrawerPrimitive.Description>,
-  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Description>
->(({ className, ...props }, ref) => (
-  <DrawerPrimitive.Description
-    ref={ref}
-    className={cn('text-sm text-muted-foreground', className)}
-    {...props}
-  />
-));
-DrawerDescription.displayName = DrawerPrimitive.Description.displayName;
+}: DrawerPrimitive.Description.Props) {
+  return (
+    <DrawerPrimitive.Description
+      data-slot="drawer-description"
+      className={cn('text-muted-foreground text-sm', className)}
+      {...props}
+    />
+  );
+}
 
 export {
   Drawer,
+  DrawerPortal,
+  DrawerOverlay,
+  DrawerTrigger,
   DrawerClose,
   DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
   DrawerHeader,
-  DrawerOverlay,
-  DrawerPortal,
+  DrawerFooter,
   DrawerTitle,
-  DrawerTrigger,
+  DrawerDescription,
 };

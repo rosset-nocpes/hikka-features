@@ -11,7 +11,6 @@ import { useIFramePlayer } from '@/hooks/use-iframe-player';
 import { syncFeatureTheme } from '@/utils/utils';
 
 import { queryClient } from '../..';
-import drawerStyles from '../../../../node_modules/vaul/style.css?inline';
 import {
   type MiniPlayerCorner,
   PlayerProvider,
@@ -44,7 +43,6 @@ export default function player() {
       syncFeatureTheme(container);
 
       const style = document.createElement('style');
-      style.textContent = drawerStyles;
       container.appendChild(style);
 
       const root = createRoot(wrapper);

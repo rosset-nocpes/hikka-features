@@ -105,29 +105,24 @@ const FandubBlock: FC = () => {
               {data?.fandub && (
                 <Fragment>
                   {data.fandub.length > 4 && (
-                    <Collapsible
-                      open={isOpen}
-                      onOpenChange={setIsOpen}
-                      className="flex flex-col gap-4"
-                    >
-                      {data.fandub.slice(0, 4).map((team) => (
-                        <BlockEntry key={team.title} href={team.link}>
-                          <Avatar className="w-10 rounded-md">
-                            <AvatarImage loading="lazy" src={team.logo} />
-                            <AvatarFallback>
-                              {team.title[0].toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="line-clamp-1 truncate text-sm leading-tight font-medium">
-                            {team.title}
-                          </span>
-                        </BlockEntry>
-                      ))}
-                      <CollapsibleContent
-                        asChild
-                        className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden"
-                      >
-                        <div className="flex flex-col gap-4">
+                    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+                      <div className="flex flex-col gap-4">
+                        {data.fandub.slice(0, 4).map((team) => (
+                          <BlockEntry key={team.title} href={team.link}>
+                            <Avatar className="w-10 rounded-md">
+                              <AvatarImage loading="lazy" src={team.logo} />
+                              <AvatarFallback>
+                                {team.title[0].toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="line-clamp-1 truncate text-sm leading-tight font-medium">
+                              {team.title}
+                            </span>
+                          </BlockEntry>
+                        ))}
+                      </div>
+                      <CollapsibleContent className="h-(--collapsible-panel-height) overflow-hidden transition-[height] duration-150 ease-out data-ending-style:h-0 data-starting-style:h-0">
+                        <div className="flex flex-col gap-4 pt-4">
                           {data.fandub.slice(4).map((team) => (
                             <BlockEntry key={team.title} href={team.link}>
                               <Avatar className="w-10 rounded-md">
@@ -143,17 +138,17 @@ const FandubBlock: FC = () => {
                           ))}
                         </div>
                       </CollapsibleContent>
-                      <div className="footer">
-                        <CollapsibleTrigger asChild>
+                      <CollapsibleTrigger
+                        render={
                           <Button
                             variant="link"
                             size="sm"
-                            className="text-muted-foreground p-0"
+                            className="text-muted-foreground hover:text-foreground h-auto p-0 pt-2 text-sm font-medium"
                           >
                             {isOpen ? 'Згорнути...' : 'Показати більше...'}
                           </Button>
-                        </CollapsibleTrigger>
-                      </div>
+                        }
+                      />
                     </Collapsible>
                   )}
                   {data.fandub.length <= 4 && (

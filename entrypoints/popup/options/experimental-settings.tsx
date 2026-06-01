@@ -14,6 +14,7 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -45,7 +46,7 @@ const ExperimentalSettings = () => {
               <DrawerHeader>
                 <DrawerTitle>Експерементальні функції</DrawerTitle>
               </DrawerHeader>
-              <div className="flex flex-col gap-5 px-[30px]">
+              <div className="flex flex-col gap-5 px-7.5">
                 <SwitchOption
                   label="Burunyaa режим"
                   checked={burunyaaMode}
@@ -67,41 +68,27 @@ const ExperimentalSettings = () => {
                 />
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-medium">Гілка бекенду</label>
-                  {navigator.userAgent.toLowerCase().includes('firefox') ? (
-                    <select
-                      className="flex h-10 w-24 cursor-pointer items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1"
-                      value={backendBranch}
-                      onChange={(e) => {
-                        const value = e.target.value as BackendBranches;
-                        setSettings({ backendBranch: value });
-                      }}
-                    >
-                      {Object.keys(BACKEND_BRANCHES).map((elem) => (
-                        <option key={elem} value={elem}>
-                          {elem}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <Select
-                      value={backendBranch}
-                      onValueChange={(value) => {
-                        const target = value as BackendBranches;
-                        setSettings({ backendBranch: target });
-                      }}
-                    >
-                      <SelectTrigger className="w-32">
-                        <SelectValue placeholder="Оберіть гілку бекенду" />
-                      </SelectTrigger>
-                      <SelectContent>
+                  <Select
+                    value={backendBranch}
+                    onValueChange={(value) => {
+                      if (!value) return;
+                      const target = value as BackendBranches;
+                      setSettings({ backendBranch: target });
+                    }}
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder="Оберіть гілку бекенду" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
                         {Object.keys(BACKEND_BRANCHES).map((elem) => (
                           <SelectItem key={elem} value={elem}>
                             {elem}
                           </SelectItem>
                         ))}
-                      </SelectContent>
-                    </Select>
-                  )}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <DrawerFooter>
