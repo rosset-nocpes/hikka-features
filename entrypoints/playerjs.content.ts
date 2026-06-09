@@ -69,7 +69,7 @@ const isHikkaContentLoaded = async () => {
     await new Promise((resolve) => window.setTimeout(resolve, 100));
   }
 
-  return false;
+  return document.referrer === 'https://hikka.io/';
 };
 
 const isHikkaContentStatusResponse = (
