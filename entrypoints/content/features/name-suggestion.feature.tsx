@@ -1,3 +1,5 @@
+import type { Root } from 'react-dom/client';
+
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useState } from 'react';
@@ -16,66 +18,122 @@ export default class NameSuggestionFeature extends BaseFeature {
     HikkaPages.EditCreateCharacter,
     HikkaPages.EditCreatePerson,
   ];
+  private uis: {
+    target: NameSuggestionTarget;
+    ui: ShadowRootContentScriptUi<Root>;
+  }[] = [];
 
   async init() {
-    this.ui = await createShadowRootUi(usePageStore.getState().ctx, {
-      name: this.id,
-      position: 'overlay',
-      alignment: 'bottom-right',
-      anchor: () =>
-        document.querySelector('input[placeholder*="українською"]')
-          ?.parentElement,
-      inheritStyles: true,
-      css: `:host(${this.id}) { margin-top: -1rem !important; width: 100% !important; }`,
-      onMount(container) {
-        const wrapper = document.createElement('div');
-        container.append(wrapper);
+    this.uis = await Promise.all(
+      NAME_SUGGESTION_TARGETS.map(async (target) => ({
+        target,
+        ui: await createShadowRootUi(usePageStore.getState().ctx, {
+          name: this.id,
+          position: 'overlay',
+          alignment: 'bottom-right',
+          anchor: () => getNameSuggestionInput(target)?.parentElement,
+          inheritStyles: true,
+          css: `:host(${this.id}) { margin-top: -1rem !important; width: 100% !important; }`,
+          onMount(container) {
+            const wrapper = document.createElement('div');
+            container.append(wrapper);
 
-        container.style = getThemeVariables();
-        container.classList.toggle(
-          'dark',
-          getComputedStyle(document.documentElement).colorScheme === 'dark',
-        );
+            container.style = getThemeVariables();
+            container.classList.toggle(
+              'dark',
+              getComputedStyle(document.documentElement).colorScheme === 'dark',
+            );
 
-        if (container.parentElement) {
-          container.parentElement.style.right = '0.25rem';
-          container.parentElement.style.bottom = '0.25rem';
-        }
+            if (container.parentElement) {
+              container.parentElement.style.right = '0.25rem';
+              container.parentElement.style.bottom = '0.25rem';
+            }
 
-        const root = createRoot(wrapper);
-        root.render(
-          <QueryClientProvider client={queryClient}>
-            <NameSuggestionButton />
-          </QueryClientProvider>,
-        );
+            const root = createRoot(wrapper);
+            root.render(
+              <QueryClientProvider client={queryClient}>
+                <NameSuggestionButton target={target} />
+              </QueryClientProvider>,
+            );
 
-        return root;
-      },
-      onRemove: (root) => {
-        root?.unmount();
-      },
+            return root;
+          },
+          onRemove: (root) => {
+            root?.unmount();
+          },
+        }),
+      })),
+    );
+  }
+
+  override get isMounted(): boolean {
+    const availableUis = this.uis.filter(({ target }) =>
+      getNameSuggestionInput(target),
+    );
+
+    return (
+      availableUis.length > 0 &&
+      availableUis.every(({ ui }) => ui.mounted && ui.shadowHost.isConnected)
+    );
+  }
+
+  override mount() {
+    this.uis.forEach(({ target, ui }) => {
+      if (!getNameSuggestionInput(target)) {
+        return;
+      }
+
+      if (ui.mounted && ui.shadowHost.isConnected) {
+        return;
+      }
+
+      if (ui.mounted) {
+        ui.remove();
+      }
+
+      ui.mount();
+    });
+  }
+
+  override unmount() {
+    this.uis.forEach(({ ui }) => {
+      if (ui.mounted) {
+        ui.remove();
+      }
     });
   }
 }
 
-const NameSuggestionButton = () => {
+const NAME_SUGGESTION_TARGETS = [
+  { placeholder: 'українською', suggestionKey: 'name_ua' },
+  { placeholder: 'англійською', suggestionKey: 'name_en' },
+  { placeholder: 'японською', suggestionKey: 'name_ja' },
+] as const;
+
+type NameSuggestionTarget = (typeof NAME_SUGGESTION_TARGETS)[number];
+
+const getNameSuggestionInput = (target: NameSuggestionTarget) =>
+  document.querySelector<HTMLInputElement>(
+    `input[placeholder*="${target.placeholder}"]`,
+  );
+
+const NameSuggestionButton = ({ target }: { target: NameSuggestionTarget }) => {
   const { data } = useEditorContent();
   const { enabled } = useSettings().features.editorCharacters;
 
-  const targetInput: HTMLInputElement | null = document.querySelector(
-    'input[placeholder*="українською"]',
-  );
+  const targetInput = getNameSuggestionInput(target);
+  const suggestion = data?.suggestion?.[target.suggestionKey];
 
   const [inputValue, setInputValue] = useState(targetInput?.value);
 
   const applySuggestion = useCallback(() => {
-    if (targetInput && data?.suggestion) {
-      targetInput.value = data.suggestion.name;
+    if (targetInput && suggestion) {
+      targetInput.value = suggestion;
       targetInput.dispatchEvent(new Event('input', { bubbles: true }));
 
-      setInputValue(data.suggestion.name);
+      setInputValue(suggestion);
     }
-  }, [targetInput, data]);
+  }, [targetInput, suggestion]);
 
   useEffect(() => {
     if (!targetInput || !enabled) return;
@@ -106,7 +164,7 @@ const NameSuggestionButton = () => {
 
   const MotionButton = motion.create(Button);
 
-  const isVisible = data?.suggestion && !inputValue;
+  const isVisible = suggestion && !inputValue;
 
   return (
     <AnimatePresence>
@@ -121,7 +179,7 @@ const NameSuggestionButton = () => {
           animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
           exit={{ opacity: 0, x: 8, filter: 'blur(4px)' }}
         >
-          <span>{data.suggestion.name}</span>
+          <span>{suggestion}</span>
           <Kbd className="bg-background/50">Tab</Kbd>
         </MotionButton>
       )}
