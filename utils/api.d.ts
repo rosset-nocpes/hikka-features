@@ -77,6 +77,7 @@ declare global {
         name_ua: string;
         name_en?: string;
         name_ja?: string;
+        name_native?: string;
       };
     }
   }

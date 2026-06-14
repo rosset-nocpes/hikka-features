@@ -108,6 +108,7 @@ const NAME_SUGGESTION_TARGETS = [
   { placeholder: 'українською', suggestionKey: 'name_ua' },
   { placeholder: 'англійською', suggestionKey: 'name_en' },
   { placeholder: 'японською', suggestionKey: 'name_ja' },
+  { placeholder: 'оригінальне', suggestionKey: 'name_native' },
 ] as const;
 
 type NameSuggestionTarget = (typeof NAME_SUGGESTION_TARGETS)[number];
