@@ -1,5 +1,6 @@
 const SPEED_OPTIONS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2];
-const GETTERS = [
+
+const GETTERS = new Set([
   'isfullscreen',
   'playing',
   'started',
@@ -40,229 +41,177 @@ const GETTERS = [
   'geo',
   'act',
   'vars',
-];
-
-let lastEndEvent = 0;
-
-function getVideo() {
-  return document.querySelector('video');
-}
+]);
 
 const POSTER_KEYWORDS = ['poster', 'thumb', 'start', 'screen', 'bg', 'cover'];
 
+const EVENT_ALIASES = {
+  play: { event: 'playing', state: true },
+  pause: { event: 'playing', state: false },
+  mute: { event: 'muted', state: true },
+  unmute: { event: 'muted', state: false },
+};
+
+const DATA_EVENTS = new Set([
+  'time',
+  'duration',
+  'seek',
+  'userseek',
+  'volume',
+  'quality',
+  'audiotrack',
+  'subtitle',
+  'speed',
+  'height',
+  'loaderror',
+  'error',
+  'fragment',
+  'quartile',
+  'resize',
+]);
+
+let lastEndEvent = 0;
+
+const getVideo = () => document.querySelector('video');
+
+function isPosterElement(el) {
+  const cls = el.classList.toString();
+  if (cls.includes('subtitles')) return false;
+  if (POSTER_KEYWORDS.some((kw) => cls.includes(kw))) return true;
+  const bg = el.style.backgroundImage;
+  if (!bg || bg === 'none' || !bg.includes('url')) return false;
+  const { width, height } = el.getBoundingClientRect();
+  return width > 100 && height > 100;
+}
+
 function hidePoster() {
-  const toHide = [];
-  const pjsdivs = document.querySelectorAll('pjsdiv');
-
-  for (let i = 0; i < pjsdivs.length; i++) {
-    const el = pjsdivs[i];
-    const cls = el.classList.toString();
-    if (cls.indexOf('subtitles') !== -1) continue;
-
-    const hasKeyword = POSTER_KEYWORDS.some(function (kw) {
-      return cls.indexOf(kw) !== -1;
-    });
-
-    if (hasKeyword) {
-      toHide.push(el);
-    } else {
-      const bg = el.style.backgroundImage;
-      if (bg && bg !== 'none' && bg.indexOf('url') !== -1) {
-        const rect = el.getBoundingClientRect();
-        if (rect.width > 100 && rect.height > 100) toHide.push(el);
-      }
-    }
-  }
-
   const video = getVideo();
   if (video) {
     video.removeAttribute('poster');
     video.poster = '';
   }
-  for (let j = 0; j < toHide.length; j++) {
-    toHide[j].style.display = 'none';
-  }
+  document.querySelectorAll('pjsdiv').forEach((el) => {
+    if (isPosterElement(el)) el.style.display = 'none';
+  });
 }
 
-function applyVideoCommand(video, command, parameter) {
-  if (!video) return false;
-  switch (command) {
-    case 'play':
-      try {
-        player.api('play');
-      } catch {}
-      video.play().catch(function () {});
-      hidePoster();
-      return true;
-    case 'pause':
-      try {
-        player.api('pause');
-      } catch {}
-      video.pause();
-      return true;
-    case 'seek':
-      video.currentTime = Number(parameter);
-      return true;
-    case 'mute':
-      video.muted = true;
-      return true;
-    case 'unmute':
-      video.muted = false;
-      return true;
-    case 'volume':
-      video.volume = Math.max(0, Math.min(1, Number(parameter)));
-      return true;
-  }
-  return false;
-}
+const VIDEO_COMMANDS = {
+  play(video) {
+    try {
+      player.api('play');
+    } catch {}
+    video.play().catch(() => {});
+    hidePoster();
+  },
+  pause(video) {
+    try {
+      player.api('pause');
+    } catch {}
+    video.pause();
+  },
+  seek: (video, p) => {
+    video.currentTime = Number(p);
+  },
+  mute: (video) => {
+    video.muted = true;
+  },
+  unmute: (video) => {
+    video.muted = false;
+  },
+  volume: (video, p) => {
+    video.volume = Math.max(0, Math.min(1, Number(p)));
+  },
+};
 
-window.addEventListener('message', function (event) {
-  if (event.data && event.data.type === 'playerjs-command' && event.data.api) {
-    const command = event.data.api;
-    const parameter =
-      event.data.set !== undefined
-        ? event.data.set
-        : event.data.param || undefined;
+window.addEventListener('message', ({ data }) => {
+  if (data?.type !== 'playerjs-command' || !data.api) return;
 
-    const video = getVideo();
-    let result;
+  const command = data.api;
+  const parameter = data.set !== undefined ? data.set : data.param || undefined;
+  const video = getVideo();
+  let result;
 
-    if (!applyVideoCommand(video, command, parameter)) {
-      try {
-        result = player.api(command, parameter);
-      } catch {
-        if (video && command === 'speed') {
-          const idx = parseInt(parameter);
-          if (idx >= 0 && idx < SPEED_OPTIONS.length) {
-            video.playbackRate = SPEED_OPTIONS[idx];
-            result = SPEED_OPTIONS[idx];
-          }
+  if (video && VIDEO_COMMANDS[command]) {
+    VIDEO_COMMANDS[command](video, parameter);
+  } else {
+    try {
+      result = player.api(command, parameter);
+    } catch {
+      if (video && command === 'speed') {
+        const idx = parseInt(parameter);
+        if (idx >= 0 && idx < SPEED_OPTIONS.length) {
+          video.playbackRate = SPEED_OPTIONS[idx];
+          result = SPEED_OPTIONS[idx];
         }
       }
     }
+  }
 
-    if (GETTERS.includes(command)) {
-      window.top.postMessage(
-        { type: 'playerjs-response', command: command, data: result },
-        '*',
-      );
-    }
+  if (GETTERS.has(command)) {
+    window.top.postMessage(
+      { type: 'playerjs-response', command, data: result },
+      '*',
+    );
   }
 });
 
-function PlayerjsEvents(event, id, info) {
-  const message = { event: event, player_id: id };
+function postEvent(event, playerId, info) {
+  const alias = EVENT_ALIASES[event];
+  const msg = alias
+    ? { event: alias.event, player_id: playerId, state: alias.state }
+    : { event, player_id: playerId };
 
-  switch (event) {
-    case 'play':
-      message.event = 'playing';
-      message.state = true;
-      break;
-    case 'pause':
-      message.event = 'playing';
-      message.state = false;
-      break;
-    case 'mute':
-      message.event = 'muted';
-      message.state = true;
-      break;
-    case 'unmute':
-      message.event = 'muted';
-      message.state = false;
-      break;
-    case 'ui':
-      message.data = Number(info);
-      break;
-    case 'time':
-    case 'duration':
-    case 'seek':
-    case 'userseek':
-    case 'volume':
-    case 'quality':
-    case 'audiotrack':
-    case 'subtitle':
-    case 'speed':
-    case 'height':
-    case 'loaderror':
-    case 'error':
-    case 'fragment':
-    case 'quartile':
-    case 'resize':
-      message.data = info;
-      break;
-    default:
-      if (info !== undefined && info !== null && info !== '') {
-        message.data = info;
-      }
-      break;
+  if (!alias) {
+    if (event === 'ui') msg.data = Number(info);
+    else if (DATA_EVENTS.has(event) || (info != null && info !== ''))
+      msg.data = info;
   }
 
-  window.top.postMessage({ type: 'playerjs-event', ...message }, '*');
+  window.top.postMessage({ type: 'playerjs-event', ...msg }, '*');
 }
 
-function forwardEvent(eventName, info) {
-  if (eventName === 'end') {
+function forwardEvent(event, info) {
+  if (event === 'end') {
     const now = Date.now();
     if (now - lastEndEvent < 1000) return;
     lastEndEvent = now;
   }
-  PlayerjsEvents(eventName, '', info);
+  postEvent(event, '', info);
 }
 
-function isVideo(e) {
-  return e.target && e.target.tagName === 'VIDEO';
-}
+const onDuration = (e) =>
+  isFinite(e.target.duration) && forwardEvent('duration', e.target.duration);
 
 const VIDEO_EVENT_HANDLERS = {
-  play: function (e) {
+  play(e) {
     forwardEvent('play');
     hidePoster();
     e.stopPropagation();
   },
-  pause: function (_e) {
-    forwardEvent('pause');
-  },
-  playing: function () {
+  pause: () => forwardEvent('pause'),
+  playing: () => {
     forwardEvent('buffered');
     hidePoster();
   },
-  waiting: function () {
-    forwardEvent('buffering');
-  },
-  timeupdate: function (e) {
-    forwardEvent('time', e.target.currentTime);
-  },
-  seeked: function (e) {
-    forwardEvent('time', e.target.currentTime);
-  },
-  durationchange: function (e) {
-    if (isFinite(e.target.duration))
-      forwardEvent('duration', e.target.duration);
-  },
-  loadedmetadata: function (e) {
-    if (isFinite(e.target.duration))
-      forwardEvent('duration', e.target.duration);
-  },
-  loadeddata: function () {
-    forwardEvent('start');
-  },
-  ended: function () {
-    forwardEvent('end');
-  },
-  volumechange: function (e) {
+  waiting: () => forwardEvent('buffering'),
+  timeupdate: (e) => forwardEvent('time', e.target.currentTime),
+  seeked: (e) => forwardEvent('time', e.target.currentTime),
+  durationchange: onDuration,
+  loadedmetadata: onDuration,
+  loadeddata: () => forwardEvent('start'),
+  ended: () => forwardEvent('end'),
+  volumechange(e) {
     forwardEvent('volume', e.target.volume);
     forwardEvent(e.target.muted ? 'mute' : 'unmute');
   },
-  ratechange: function (e) {
-    forwardEvent('speed', e.target.playbackRate);
-  },
+  ratechange: (e) => forwardEvent('speed', e.target.playbackRate),
 };
 
-Object.keys(VIDEO_EVENT_HANDLERS).forEach(function (name) {
+Object.entries(VIDEO_EVENT_HANDLERS).forEach(([name, handler]) => {
   document.addEventListener(
     name,
-    function (e) {
-      if (isVideo(e)) VIDEO_EVENT_HANDLERS[name](e);
+    (e) => {
+      if (e.target?.tagName === 'VIDEO') handler(e);
     },
     true,
   );
@@ -272,9 +221,8 @@ function initVideoState(video) {
   if (!video || video.dataset.hikkaInit) return;
   video.dataset.hikkaInit = '1';
 
-  if (isFinite(video.duration) && video.duration > 0) {
+  if (isFinite(video.duration) && video.duration > 0)
     forwardEvent('duration', video.duration);
-  }
   if (video.readyState >= 2) forwardEvent('start');
   if (!video.paused && !video.ended) forwardEvent('play');
   if (video.currentTime > 0) forwardEvent('time', video.currentTime);
@@ -283,16 +231,18 @@ function initVideoState(video) {
   forwardEvent('speed', video.playbackRate);
 }
 
-const existingVideo = getVideo();
-if (existingVideo) initVideoState(existingVideo);
-
-let initAttempts = 0;
-const initInterval = window.setInterval(function () {
-  const video = getVideo();
-  if (video) {
-    window.clearInterval(initInterval);
-    initVideoState(video);
-  } else if (++initAttempts > 20) {
-    window.clearInterval(initInterval);
+{
+  const initial = getVideo();
+  if (initial) {
+    initVideoState(initial);
+  } else {
+    let attempts = 0;
+    const poll = setInterval(() => {
+      const v = getVideo();
+      if (v || ++attempts > 20) {
+        clearInterval(poll);
+        if (v) initVideoState(v);
+      }
+    }, 500);
   }
-}, 500);
+}
