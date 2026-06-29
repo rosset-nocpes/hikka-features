@@ -27,26 +27,10 @@ export default defineContentScript({
     });
     window.setTimeout(() => observer.disconnect(), 10_000);
 
-    if (!document.getElementById('hikka-features-playerjs-script')) {
-      const newScript = document.createElement('script');
-      newScript.id = 'hikka-features-playerjs-script';
-      newScript.src = browser.runtime.getURL('/playerjs-script.js');
-      (document.head ?? document.documentElement).appendChild(newScript);
-    }
-
-    window.top?.postMessage({ type: 'playerjs-event', event: 'init' }, '*');
-
     const handlePlayerCommand = (message: unknown) => {
       if (!isPlayerCommand(message)) return;
 
-      window.postMessage(
-        {
-          type: 'playerjs-command',
-          api: message.api,
-          param: message.param,
-        },
-        '*',
-      );
+      window.postMessage({ ...message, type: undefined }, '*');
     };
 
     browser.runtime.onMessage.addListener(handlePlayerCommand);
@@ -82,7 +66,7 @@ const isHikkaContentStatusResponse = (
 
 const isPlayerCommand = (
   message: unknown,
-): message is { type: 'playerjs-command'; api: string; param?: unknown } =>
+): message is { type: 'playerjs-command'; api: string } =>
   !!message &&
   typeof message === 'object' &&
   'type' in message &&

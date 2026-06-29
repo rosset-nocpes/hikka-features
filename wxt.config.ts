@@ -50,16 +50,6 @@ export default defineConfig({
         },
       ],
     },
-    web_accessible_resources: [
-      {
-        resources: ['/playerjs-script.js'],
-        matches: [
-          'https://moonanime.art/*',
-          'https://ashdi.vip/*',
-          'https://tortuga.tw/*',
-        ],
-      },
-    ],
   }),
   webExt: {
     startUrls: ['https://hikka.io'],

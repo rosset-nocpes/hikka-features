@@ -37,7 +37,6 @@ interface ProxyRequest {
 interface PlayerCommandRequest {
   type: 'playerjs-command';
   api: string;
-  param?: any;
 }
 
 interface HikkaContentLoadedRequest {
@@ -287,13 +286,7 @@ export default defineBackground(() => {
           return true;
         }
         case 'playerjs-command': {
-          const { api, param } = typedRequest;
-
-          browser.tabs.sendMessage(sender.tab!.id!, {
-            type: 'playerjs-command',
-            api,
-            param,
-          });
+          browser.tabs.sendMessage(sender.tab!.id!, typedRequest);
           return true;
         }
 
