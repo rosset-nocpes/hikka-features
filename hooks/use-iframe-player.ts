@@ -139,7 +139,7 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
 
     changeSpeed: (speed: number) => {
       const { speedOptions } = get();
-      const index = speedOptions.findIndex((q) => q === speed).toString();
+      const index = speedOptions.findIndex((q) => q === speed);
 
       browser.runtime.sendMessage({
         type: 'playerjs-command',
@@ -308,7 +308,9 @@ window.addEventListener('message', (event: MessageEvent) => {
         }
 
         if (event.data.answer) {
-          useIFramePlayer.setState({ subtitles: event.data.answer });
+          useIFramePlayer.setState({
+            subtitles: event.data.answer.filter(Boolean),
+          });
           break;
         }
 
