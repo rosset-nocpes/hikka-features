@@ -13,7 +13,11 @@ export default defineContentScript({
         .slice(2)
         .forEach((element) => {
           if (!element.classList.toString().includes('subtitles')) {
-            element.remove();
+            (element as HTMLElement).style.setProperty(
+              'display',
+              'none',
+              'important',
+            );
           }
         });
     };
