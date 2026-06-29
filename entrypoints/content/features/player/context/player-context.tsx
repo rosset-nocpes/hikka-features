@@ -189,6 +189,13 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
           ? watchData[provider].teams[newTeamName.title].episodes
           : watchData[provider].episodes;
 
+      useIFramePlayer.setState({
+        speedOptions:
+          provider === 'ashdi'
+            ? [1, 1.25, 1.5, 2]
+            : useIFramePlayer.getInitialState().speedOptions,
+      });
+
       set({
         provider,
         team: newTeamName,

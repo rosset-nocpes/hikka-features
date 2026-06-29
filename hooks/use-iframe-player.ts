@@ -139,7 +139,7 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
 
     changeSpeed: (speed: number) => {
       const { speedOptions } = get();
-      const index = speedOptions.findIndex((q) => q === speed);
+      const index = speedOptions.findIndex((q) => q === speed).toString();
 
       browser.runtime.sendMessage({
         type: 'playerjs-command',
