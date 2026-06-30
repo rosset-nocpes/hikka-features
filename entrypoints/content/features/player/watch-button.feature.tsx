@@ -60,10 +60,12 @@ const WatchButton = () => {
     if (!data) return;
 
     if (isPlayerMounted()) {
-      const { initialize, setMiniPlayer } = usePlayer.getState();
+      const { initialize, setMiniPlayer, setVideoPiPActive } =
+        usePlayer.getState();
 
       initialize(data);
       setMiniPlayer(false);
+      setVideoPiPActive(false);
       return;
     }
 

@@ -43,18 +43,21 @@ const useSliderTooltip = ({
 
   const COLLISION_PADDING = 8;
 
-  const updateFromClientX = useCallback((clientX: number) => {
-    if (!trackRef.current) return;
-    const rect = trackRef.current.getBoundingClientRect();
-    const percent = Math.max(
-      0,
-      Math.min(1, (clientX - rect.left) / rect.width),
-    );
-    const raw = percent * duration;
-    const stepped = Math.round(raw / step) * step;
-    setHoverTime(Math.max(0, Math.min(duration, stepped)));
-    setHoverX(clientX);
-  }, [duration, step]);
+  const updateFromClientX = useCallback(
+    (clientX: number) => {
+      if (!trackRef.current) return;
+      const rect = trackRef.current.getBoundingClientRect();
+      const percent = Math.max(
+        0,
+        Math.min(1, (clientX - rect.left) / rect.width),
+      );
+      const raw = percent * duration;
+      const stepped = Math.round(raw / step) * step;
+      setHoverTime(Math.max(0, Math.min(duration, stepped)));
+      setHoverX(clientX);
+    },
+    [duration, step],
+  );
 
   const handleMouseMove = (e: React.MouseEvent) => updateFromClientX(e.clientX);
 
@@ -121,10 +124,17 @@ const useSliderTooltip = ({
   };
 };
 
-const Time = () => {
+interface TimeProps {
+  className?: string;
+  trackClassName?: string;
+}
+
+const Time = ({ className, trackClassName }: TimeProps = {}) => {
   const { currentTime, duration, seek, bufferedTime, checkBuffering } =
     useIFramePlayer();
-  const { overlayRef, miniPlayer } = usePlayer();
+  const { overlayRef, miniPlayer, videoPiPActive } = usePlayer();
+
+  const isCompact = miniPlayer || videoPiPActive;
 
   const step = duration > 0 ? (1 / duration) * 100 : 1;
   const [value, setValue] = useState(0);
@@ -167,12 +177,13 @@ const Time = () => {
     hoverTime !== null && !isNaN(hoverTime) && hoverX !== null && duration > 0;
 
   return (
-    <div className="relative flex w-full">
+    <div className={cn('relative flex w-full', className)}>
       <SliderPrimitive.Root
         ref={trackRef}
         className={cn(
-          'group relative inline-flex w-full cursor-pointer touch-none select-none outline-none',
-          miniPlayer ? 'pb-1 pt-2' : 'pb-1 pt-4',
+          'group relative inline-flex w-full cursor-pointer touch-none select-none pb-1 outline-none',
+          isCompact ? 'pt-2' : 'pt-4',
+          trackClassName,
         )}
         value={[value]}
         disabled={duration === 0}
@@ -187,7 +198,7 @@ const Time = () => {
         <SliderPrimitive.Track
           className={cn(
             'border-shadow relative w-full grow overflow-hidden rounded-full bg-secondary duration-100 group-hover:scale-y-150',
-            miniPlayer ? 'h-0.5' : 'h-1',
+            isCompact ? 'h-0.5' : 'h-1',
           )}
         >
           <div

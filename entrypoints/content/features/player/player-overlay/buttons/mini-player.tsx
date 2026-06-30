@@ -11,13 +11,31 @@ import {
 import { usePlayer } from '../../context/player-context';
 
 const MiniPlayer = () => {
-  const { overlayRef, miniPlayer, toggleMiniPlayer } = usePlayer();
+  const { overlayRef, miniPlayer, videoPiPActive, toggleMiniPlayer } =
+    usePlayer();
+  const { miniModeType } = useSettings().features.player;
+
+  const isVideoNative = miniModeType === 'video-native';
+  const isActive = isVideoNative ? videoPiPActive : miniPlayer;
+
+  const handleClick = () => {
+    if (isVideoNative) {
+      browser.runtime.sendMessage({
+        type: 'playerjs-command',
+        api: 'piptoggle',
+      });
+    } else {
+      toggleMiniPlayer();
+    }
+  };
+
+  const tooltipText = isActive ? 'Вийти з мінірежиму' : 'Мінірежим';
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button variant="ghost" size="icon-sm" onClick={toggleMiniPlayer}>
-          {miniPlayer ? (
+        <Button variant="ghost" size="icon-sm" onClick={handleClick}>
+          {isActive ? (
             <MaterialSymbolsFitScreenOutlineRounded />
           ) : (
             <MaterialSymbolsPictureInPictureAltRounded />
@@ -31,7 +49,7 @@ const MiniPlayer = () => {
         collisionBoundary={overlayRef.current}
         collisionPadding={8}
       >
-        {miniPlayer ? 'Вийти з міні-плеєра' : 'Міні-плеєр'}
+        {tooltipText}
       </TooltipContent>
     </Tooltip>
   );

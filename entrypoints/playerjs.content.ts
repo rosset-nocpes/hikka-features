@@ -1,3 +1,5 @@
+import { usePlayer } from './content/features/player/context/player-context';
+
 export default defineContentScript({
   matches: [
     'https://moonanime.art/*',
@@ -7,6 +9,8 @@ export default defineContentScript({
   allFrames: true,
   async main(ctx) {
     if (!(await isHikkaContentLoaded())) return;
+
+    const video = document.querySelector('video') as HTMLVideoElement;
 
     const cleanupPlayerUi = () => {
       Array.from(document.querySelectorAll('pjsdiv > pjsdiv'))
@@ -34,13 +38,36 @@ export default defineContentScript({
     const handlePlayerCommand = (message: unknown) => {
       if (!isPlayerCommand(message)) return;
 
+      if (message.api === 'piptoggle') {
+        if (usePlayer.getState().videoPiPActive) {
+          document.exitPictureInPicture();
+        } else {
+          video.requestPictureInPicture();
+        }
+      }
+
       window.postMessage({ ...message, type: undefined }, '*');
     };
+
+    const handlePIPEnter = () => {
+      window.parent.postMessage({ event: 'pip', data: true }, '*');
+      usePlayer.getState().setVideoPiPActive(true);
+    };
+
+    const handlePIPLeave = () => {
+      window.parent.postMessage({ event: 'pip', data: false }, '*');
+      usePlayer.getState().setVideoPiPActive(false);
+    };
+
+    video.addEventListener('enterpictureinpicture', handlePIPEnter);
+    video.addEventListener('leavepictureinpicture', handlePIPLeave);
 
     browser.runtime.onMessage.addListener(handlePlayerCommand);
 
     ctx.onInvalidated(() => {
       observer.disconnect();
+      video.removeEventListener('enterpictureinpicture', handlePIPEnter);
+      video.removeEventListener('leavepictureinpicture', handlePIPLeave);
       browser.runtime.onMessage.removeListener(handlePlayerCommand);
     });
   },

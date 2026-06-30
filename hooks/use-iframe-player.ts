@@ -315,6 +315,16 @@ window.addEventListener('message', (event: MessageEvent) => {
         }
 
         break;
+      case 'pip':
+        if (event.data.data) {
+          const { miniModeType } = useSettings.getState().features.player;
+          if (miniModeType === 'video-native') {
+            usePlayer.getState().setVideoPiPActive(true);
+          }
+        } else {
+          usePlayer.getState().setVideoPiPActive(false);
+        }
+        break;
       case 'ui':
         const shouldShow = Boolean(event.data.data);
         if (!shouldShow) {
