@@ -1,3 +1,5 @@
+import { usePlayer } from './content/features/player/context/player-context';
+
 export default defineContentScript({
   matches: [
     'https://moonanime.art/*',
@@ -5,32 +7,100 @@ export default defineContentScript({
     'https://tortuga.tw/*',
   ],
   allFrames: true,
-  main() {
-    if (document.referrer === 'https://hikka.io/') {
+  async main(ctx) {
+    if (!(await isHikkaContentLoaded())) return;
+
+    const video = document.querySelector('video') as HTMLVideoElement;
+
+    const cleanupPlayerUi = () => {
       Array.from(document.querySelectorAll('pjsdiv > pjsdiv'))
         .slice(2)
-        .forEach(
-          (e) => !e.classList.toString().includes('subtitles') && e.remove(),
-        );
+        .forEach((element) => {
+          if (!element.classList.toString().includes('subtitles')) {
+            (element as HTMLElement).style.setProperty(
+              'display',
+              'none',
+              'important',
+            );
+          }
+        });
+    };
 
-      const newScript = document.createElement('script');
-      newScript.src = browser.runtime.getURL('/playerjs-script.js');
-      document.head.appendChild(newScript);
+    cleanupPlayerUi();
 
-      window.top?.postMessage({ type: 'playerjs-event', event: 'init' }, '*');
+    const observer = new MutationObserver(cleanupPlayerUi);
+    observer.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+    });
+    window.setTimeout(() => observer.disconnect(), 10_000);
 
-      browser.runtime.onMessage.addListener((message) => {
-        if (message.type === 'playerjs-command') {
-          window.postMessage(
-            {
-              type: 'playerjs-command',
-              api: message.api,
-              param: message.param,
-            },
-            '*',
-          );
+    const handlePlayerCommand = (message: unknown) => {
+      if (!isPlayerCommand(message)) return;
+
+      if (message.api === 'piptoggle') {
+        if (usePlayer.getState().videoPiPActive) {
+          document.exitPictureInPicture();
+        } else {
+          video.requestPictureInPicture();
         }
-      });
-    }
+      }
+
+      window.postMessage({ ...message, type: undefined }, '*');
+    };
+
+    const handlePIPEnter = () => {
+      window.parent.postMessage({ event: 'pip', data: true }, '*');
+      usePlayer.getState().setVideoPiPActive(true);
+    };
+
+    const handlePIPLeave = () => {
+      window.parent.postMessage({ event: 'pip', data: false }, '*');
+      usePlayer.getState().setVideoPiPActive(false);
+    };
+
+    video.addEventListener('enterpictureinpicture', handlePIPEnter);
+    video.addEventListener('leavepictureinpicture', handlePIPLeave);
+
+    browser.runtime.onMessage.addListener(handlePlayerCommand);
+
+    ctx.onInvalidated(() => {
+      observer.disconnect();
+      video.removeEventListener('enterpictureinpicture', handlePIPEnter);
+      video.removeEventListener('leavepictureinpicture', handlePIPLeave);
+      browser.runtime.onMessage.removeListener(handlePlayerCommand);
+    });
   },
 });
+
+const isHikkaContentLoaded = async () => {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const response = await browser.runtime
+      .sendMessage({ type: 'hikka-content-status' })
+      .catch(() => undefined);
+
+    if (isHikkaContentStatusResponse(response) && response.loaded) return true;
+
+    await new Promise((resolve) => window.setTimeout(resolve, 100));
+  }
+
+  return document.referrer === 'https://hikka.io/';
+};
+
+const isHikkaContentStatusResponse = (
+  response: unknown,
+): response is { loaded: boolean } =>
+  !!response &&
+  typeof response === 'object' &&
+  'loaded' in response &&
+  typeof response.loaded === 'boolean';
+
+const isPlayerCommand = (
+  message: unknown,
+): message is { type: 'playerjs-command'; api: string } =>
+  !!message &&
+  typeof message === 'object' &&
+  'type' in message &&
+  message.type === 'playerjs-command' &&
+  'api' in message &&
+  typeof message.api === 'string';

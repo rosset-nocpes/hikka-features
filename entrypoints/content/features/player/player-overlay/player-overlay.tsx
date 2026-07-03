@@ -17,14 +17,17 @@ interface Props {
 
 const PlayerOverlay = ({ toggleWatchedState }: Props) => {
   const { adInProgress, uiShown } = useIFramePlayer();
-  const { setOverlayRef, provider, miniPlayer } = usePlayer();
+  const { setOverlayRef, provider, miniPlayer, videoPiPActive } = usePlayer();
   const isMobile = useIsMobile();
+
+  const isCompactMode = miniPlayer || videoPiPActive;
 
   return (
     <div
       className={cn(
         'absolute flex size-full',
-        adInProgress && 'pointer-events-none',
+        (adInProgress || provider === 'vidking') && 'pointer-events-none',
+        videoPiPActive && !miniPlayer && 'flex-col justify-end',
       )}
     >
       {provider !== 'vidking' && (
@@ -43,26 +46,28 @@ const PlayerOverlay = ({ toggleWatchedState }: Props) => {
           <div
             className={cn(
               'relative flex flex-col bg-linear-to-t opacity-100 transition-opacity duration-300',
-              miniPlayer
+              isCompactMode
                 ? 'from-black/45 to-transparent'
                 : 'from-black/10 to-transparent',
-              !miniPlayer && 'pb-20 md:pb-0',
+              !isCompactMode && 'pb-20 md:pb-0',
               !uiShown && 'opacity-0',
             )}
           >
             <TooltipProvider>
+              {!videoPiPActive && (
+                <div
+                  className={cn(
+                    'flex w-full items-center',
+                    isCompactMode ? 'px-2' : 'px-3 md:px-2',
+                  )}
+                >
+                  <Time />
+                </div>
+              )}
               <div
                 className={cn(
                   'flex w-full items-center',
-                  miniPlayer ? 'px-2' : 'px-3 md:px-2',
-                )}
-              >
-                <Time />
-              </div>
-              <div
-                className={cn(
-                  'flex w-full items-center',
-                  miniPlayer
+                  isCompactMode
                     ? 'justify-center p-1 pt-0'
                     : 'justify-between p-3 pt-1 md:p-2',
                 )}
@@ -73,7 +78,7 @@ const PlayerOverlay = ({ toggleWatchedState }: Props) => {
           </div>
         </div>
       )}
-      {!miniPlayer && !isMobile && (
+      {!isCompactMode && !isMobile && (
         <PlayerSidebar toggleWatchedState={toggleWatchedState} />
       )}
     </div>

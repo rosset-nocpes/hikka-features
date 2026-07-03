@@ -19,13 +19,15 @@ export function formatTime(totalSeconds: number) {
 
 const TimeGroup = () => {
   const { currentTime, duration } = useIFramePlayer();
-  const { miniPlayer } = usePlayer();
+  const { miniPlayer, videoPiPActive } = usePlayer();
+
+  const isCompact = miniPlayer || videoPiPActive;
 
   return (
     <div
       className={cn(
         'pointer-events-none flex items-center gap-1 font-medium tabular-nums',
-        miniPlayer ? 'text-xs' : 'text-sm',
+        isCompact ? 'text-xs' : 'text-sm',
       )}
     >
       {formatTime(currentTime)}

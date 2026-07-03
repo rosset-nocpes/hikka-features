@@ -10,9 +10,11 @@ import Volume from './sliders/volume';
 import TimeGroup from './time-group';
 
 const VideoToolbar = () => {
-  const { miniPlayer } = usePlayer();
+  const { miniPlayer, videoPiPActive } = usePlayer();
 
-  if (miniPlayer) {
+  const isCompactMode = miniPlayer || videoPiPActive;
+
+  if (isCompactMode) {
     return (
       <div className="border-shadow flex max-w-full items-center gap-1 rounded-md bg-background/70 p-1 backdrop-blur-xl">
         <Play />

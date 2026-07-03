@@ -37,7 +37,18 @@ interface ProxyRequest {
 interface PlayerCommandRequest {
   type: 'playerjs-command';
   api: string;
-  param?: any;
+}
+
+interface HikkaContentLoadedRequest {
+  type: 'hikka-content-loaded';
+}
+
+interface HikkaContentUnloadedRequest {
+  type: 'hikka-content-unloaded';
+}
+
+interface HikkaContentStatusRequest {
+  type: 'hikka-content-status';
 }
 
 type MessageRequest =
@@ -45,7 +56,10 @@ type MessageRequest =
   | RichPresenceCheckRequest
   | WatchTogetherRequest
   | ProxyRequest
-  | PlayerCommandRequest;
+  | PlayerCommandRequest
+  | HikkaContentLoadedRequest
+  | HikkaContentUnloadedRequest
+  | HikkaContentStatusRequest;
 
 export const proxyUrl = <T = any>(
   url: string,
@@ -83,8 +97,29 @@ export const proxyUrl = <T = any>(
 };
 
 export default defineBackground(() => {
+  const hikkaContentTabs = new Set<number>();
+
+  browser.tabs.onRemoved.addListener((tabId) => {
+    hikkaContentTabs.delete(tabId);
+  });
+
+  browser.webNavigation.onCommitted.addListener(({ tabId, frameId, url }) => {
+    if (frameId !== 0) return;
+    if (
+      url.startsWith('https://hikka.io/') ||
+      url.startsWith('https://dev.hikka.io/')
+    ) {
+      return;
+    }
+
+    hikkaContentTabs.delete(tabId);
+  });
+
   browser.runtime.onMessage.addListener(
-    async (request: unknown, sender): Promise<true | undefined> => {
+    async (
+      request: unknown,
+      sender,
+    ): Promise<true | { loaded: boolean } | undefined> => {
       // Type guard for MessageRequest
       if (!request || typeof request !== 'object' || !('type' in request)) {
         return undefined;
@@ -92,6 +127,25 @@ export default defineBackground(() => {
 
       const typedRequest = request as MessageRequest;
       switch (typedRequest.type) {
+        case 'hikka-content-loaded':
+          if (sender.tab?.id !== undefined) {
+            hikkaContentTabs.add(sender.tab.id);
+          }
+          return { loaded: true };
+
+        case 'hikka-content-unloaded':
+          if (sender.tab?.id !== undefined) {
+            hikkaContentTabs.delete(sender.tab.id);
+          }
+          return { loaded: false };
+
+        case 'hikka-content-status':
+          return {
+            loaded:
+              sender.tab?.id !== undefined &&
+              hikkaContentTabs.has(sender.tab.id),
+          };
+
         case 'login': {
           const { setSettings } = useSettings.getState();
 
@@ -232,13 +286,7 @@ export default defineBackground(() => {
           return true;
         }
         case 'playerjs-command': {
-          const { api, param } = typedRequest;
-
-          browser.tabs.sendMessage(sender.tab!.id!, {
-            type: 'playerjs-command',
-            api,
-            param,
-          });
+          browser.tabs.sendMessage(sender.tab!.id!, typedRequest);
           return true;
         }
 

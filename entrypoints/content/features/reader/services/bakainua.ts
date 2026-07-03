@@ -9,7 +9,7 @@ class BIUScraper extends BaseScraper {
   name = 'BIUScraper';
   baseUrl = 'https://baka.in.ua';
   endpoints = {
-    search: `${this.baseUrl}/search?filter=fiction&search[]`,
+    search: `${this.baseUrl}/search`,
   };
 
   async search(data: any) {
@@ -20,21 +20,16 @@ class BIUScraper extends BaseScraper {
     for (const title of titles) {
       try {
         const r = await this.request(
-          `${this.endpoints.search}=${encodeURIComponent(title)}`,
+          `${this.endpoints.search}?filter=fiction&search[]=${encodeURIComponent(title)}`,
         );
 
         const $page = cheerio.load(r);
-        const novels = $page('#fictions-section .group a.block')
-          .map((_i, el) => {
-            const $novelElement = $page(el);
-            return $novelElement.attr('href');
-          })
-          .toArray();
+        const href = $page('#fictions-section .group a.block')
+          .first()
+          .attr('href');
 
-        if (novels.length > 0) {
-          return novels[0].startsWith('http')
-            ? novels[0]
-            : `${this.baseUrl}${novels[0]}`;
+        if (href) {
+          return this.resolveUrl(href);
         }
       } catch (e) {
         console.error(`Failed to search for ${title}`, e);
@@ -47,127 +42,46 @@ class BIUScraper extends BaseScraper {
   async getChapterList(url: string): Promise<ReaderContent> {
     const r = await this.request(url);
     const $ = cheerio.load(r);
-
     const $accordions = $('.accordion');
-    const regex: RegExp = /(?<=- ).*/;
 
     const hasVolumes = $accordions
       .find('.accordion-header h3')
       .toArray()
       .some((el) => $(el).text().includes('Том'));
 
-    if (hasVolumes) {
-      const volumes: Volume[] = [];
+    const volumes: Volume[] = [];
+    const chapters: Chapter[] = [];
 
-      for (const accordion of $accordions.toArray()) {
-        const $header = $(accordion).find('.accordion-header');
-        const $sectionData = $(accordion).find('[data-chapter-section-url]');
-        const headerText = $header.find('h3').text().trim();
+    for (const accordion of $accordions.toArray()) {
+      const $acc = $(accordion);
+      const headerText = $acc.find('.accordion-header h3').text().trim();
+      const volumeMatch = headerText.match(/Том\s+(\d+(?:\.\d+)?$)/i);
+      const volumeNumber = volumeMatch ? Number(volumeMatch[1]) : 0;
 
-        const volumeMatch = headerText.match(/Том\s+(\d+(?:\.\d+)?$)/i);
-        const volumeNumber = volumeMatch ? Number(volumeMatch[1]) : 0;
+      const $sectionData = $acc.find('[data-chapter-section-url]');
+      const accChapters =
+        $sectionData.length && !$sectionData.attr('data-chapter-section-loaded')
+          ? await this.fetchSectionChapters($, $sectionData, volumeNumber)
+          : this.parseChaptersFromElements($, $acc, volumeNumber);
 
-        const sectionUrl = new URL(
-          `${this.baseUrl}${$sectionData.attr('data-chapter-section-url')}`,
-        );
-        const params = JSON.parse(
-          $sectionData.attr('data-chapter-section-params') || '{}',
-        );
-        Object.keys(params).forEach((key) => {
-          sectionUrl.searchParams.append(key, params[key]);
-        });
+      accChapters.sort((a, b) => a.chapter - b.chapter);
 
-        const chaptersPage = await this.request(sectionUrl.toString());
-        const $chapters = cheerio.load(chaptersPage);
-
-        const chapters = $chapters('li.group a[href*="/chapters/"]')
-          .map((_j, el) => {
-            const $link = $chapters(el);
-            const chNum = Number($link.find('span').eq(0).text().trim());
-            const href = $link.attr('href') || '';
-            const translator = $link
-              .parent()
-              .find('a[href^="/scanlators"]')
-              .map((_k, e) => $chapters(e).text().trim())
-              .toArray();
-
-            return {
-              id: `vol${volumeNumber}-ch${chNum}-${translator.map((t) => t.toLowerCase()).join('_')}`,
-              volume: volumeNumber,
-              chapter: chNum,
-              title:
-                $link.find('span').eq(1).text().trim().match(regex)?.[0] || '',
-              translator: translator.join(', '),
-              date_upload: $link.find('span').eq(2).text().trim(),
-              url: href.startsWith('http')
-                ? href
-                : `${this.baseUrl}/${href.replace(/^\//, '')}`,
-            };
-          })
-          .toArray();
-
-        volumes.push({
-          number: volumeNumber,
-          chapters: chapters.sort((a, b) => a.chapter - b.chapter),
-        });
+      if (hasVolumes) {
+        volumes.push({ number: volumeNumber, chapters: accChapters });
+      } else {
+        chapters.push(...accChapters);
       }
-
-      return {
-        displayMode: ReaderContentMode.Volumes,
-        volumes: volumes.sort((a, b) => a.number - b.number),
-      };
-    } else {
-      const chapters: Chapter[] = [];
-
-      for (const accordion of $accordions.toArray()) {
-        const $sectionData = $(accordion).find('[data-chapter-section-url]');
-
-        const sectionUrl = new URL(
-          `${this.baseUrl}${$sectionData.attr('data-chapter-section-url')}`,
-        );
-        const params = JSON.parse(
-          $sectionData.attr('data-chapter-section-params') || '{}',
-        );
-        Object.keys(params).forEach((key) => {
-          sectionUrl.searchParams.append(key, params[key]);
-        });
-
-        const chaptersPage = await this.request(sectionUrl.toString());
-        const $chapters = cheerio.load(chaptersPage);
-
-        const sectionChapters = $chapters('li.group a[href*="/chapters/"]')
-          .map((_j, el) => {
-            const $link = $chapters(el);
-            const chNum = Number($link.find('span').eq(0).text().trim());
-            const href = $link.attr('href') || '';
-            const translator = $link
-              .parent()
-              .find('a[href^="/scanlators"]')
-              .map((_k, e) => $chapters(e).text().trim())
-              .toArray();
-
-            return {
-              id: `ch${chNum}-${translator.map((t) => t.toLowerCase()).join('_')}`,
-              chapter: chNum,
-              title:
-                $link.find('span').eq(1).text().trim().match(regex)?.[0] || '',
-              translator: translator.join(', '),
-              date_upload: $link.find('span').eq(2).text().trim(),
-              url: href.startsWith('http')
-                ? href
-                : `${this.baseUrl}/${href.replace(/^\//, '')}`,
-            };
-          })
-          .toArray();
-
-        chapters.push(...sectionChapters);
-      }
-
-      return {
-        displayMode: ReaderContentMode.Chapters,
-        chapters: chapters.sort((a, b) => a.chapter - b.chapter),
-      };
     }
+
+    return hasVolumes
+      ? {
+          displayMode: ReaderContentMode.Volumes,
+          volumes: volumes.sort((a, b) => a.number - b.number),
+        }
+      : {
+          displayMode: ReaderContentMode.Chapters,
+          chapters: chapters.sort((a, b) => a.chapter - b.chapter),
+        };
   }
 
   async getChapter(url: string) {
@@ -175,6 +89,78 @@ class BIUScraper extends BaseScraper {
     const $ = cheerio.load(r);
 
     return $('#user-content').html();
+  }
+
+  private resolveUrl(href: string): string {
+    return href.startsWith('http')
+      ? href
+      : `${this.baseUrl}/${href.replace(/^\//, '')}`;
+  }
+
+  private parseChaptersFromElements(
+    $: cheerio.CheerioAPI,
+    $root: cheerio.Cheerio<any>,
+    volumeNumber: number = 0,
+  ): Chapter[] {
+    return $root
+      .find('li.group a[href*="/chapters/"]')
+      .map((_j, el) => {
+        const $link = $(el);
+        const chNum = Number($link.find('span').eq(0).text().trim());
+        const href = $link.attr('href') || '';
+        const translator = $link
+          .parent()
+          .find('a[href^="/scanlators"]')
+          .map((_k, e) => $(e).text().trim())
+          .toArray();
+
+        const translatorKey = translator.map((t) => t.toLowerCase()).join('_');
+        const id = volumeNumber
+          ? `vol${volumeNumber}-ch${chNum}-${translatorKey}`
+          : `ch${chNum}-${translatorKey}`;
+
+        return {
+          id,
+          volume: volumeNumber,
+          chapter: chNum,
+          title:
+            $link
+              .find('span')
+              .eq(1)
+              .text()
+              .trim()
+              .match(/(?<=- ).*/)?.[0] || '',
+          translator: translator.join(', '),
+          date_upload: $link.find('span').eq(2).text().trim(),
+          url: this.resolveUrl(href),
+        };
+      })
+      .toArray();
+  }
+
+  private async fetchSectionChapters(
+    $: cheerio.CheerioAPI,
+    $sectionData: cheerio.Cheerio<any>,
+    volumeNumber: number = 0,
+  ): Promise<Chapter[]> {
+    const sectionUrl = new URL(
+      `${this.baseUrl}${$sectionData.attr('data-chapter-section-url')}`,
+    );
+    const params = JSON.parse(
+      $sectionData.attr('data-chapter-section-params') || '{}',
+    );
+
+    for (const [key, value] of Object.entries(params)) {
+      sectionUrl.searchParams.append(key, String(value));
+    }
+
+    const chaptersPage = await this.request(sectionUrl.toString());
+    const $chapters = cheerio.load(chaptersPage);
+    return this.parseChaptersFromElements(
+      $chapters,
+      $chapters('body'),
+      volumeNumber,
+    );
   }
 }
 

@@ -39,6 +39,7 @@ interface AppState {
       enabled: boolean;
       defaultProvider: string;
       disableBlur: boolean;
+      miniModeType: 'custom' | 'video-native';
       favoriteTeams: Record<string, { provider: string; team: string }>;
     };
     reader: {
@@ -86,6 +87,7 @@ export const useSettings = create<AppState>()(
           enabled: true,
           defaultProvider: 'moon',
           disableBlur: false,
+          miniModeType: 'custom' as 'custom' | 'video-native',
           favoriteTeams: {},
         },
         reader: {
@@ -189,6 +191,7 @@ const migrateFromOldStorage = async () => {
           defaultProvider:
             oldStorage.defaultPlayer || state.features.player.defaultProvider,
           disableBlur: state.features.player.disableBlur,
+          miniModeType: state.features.player.miniModeType,
           favoriteTeams:
             oldStorage.playerAnimeFavoriteTeam ||
             state.features.player.favoriteTeams,

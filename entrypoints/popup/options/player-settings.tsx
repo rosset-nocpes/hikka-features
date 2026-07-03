@@ -23,7 +23,8 @@ import SwitchOption from '../_base/switch-option';
 
 const PlayerSettings = () => {
   const { features, updateFeatureSettings } = useSettings();
-  const { enabled, defaultProvider, disableBlur } = features.player;
+  const { enabled, defaultProvider, disableBlur, miniModeType } =
+    features.player;
 
   return (
     <Drawer>
@@ -66,6 +67,42 @@ const PlayerSettings = () => {
                 });
               }}
             />
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium">Тип мінірежиму</label>
+              {navigator.userAgent.toLowerCase().includes('firefox') ? (
+                <select
+                  className="flex h-10 w-36 cursor-pointer items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1"
+                  value={miniModeType}
+                  onChange={(e) => {
+                    updateFeatureSettings('player', {
+                      miniModeType: e.target.value as 'custom' | 'video-native',
+                    });
+                  }}
+                >
+                  <option value="custom">Кастомний</option>
+                  <option value="video-native">Картинка в картинці</option>
+                </select>
+              ) : (
+                <Select
+                  value={miniModeType}
+                  onValueChange={(value) => {
+                    updateFeatureSettings('player', {
+                      miniModeType: value as 'custom' | 'video-native',
+                    });
+                  }}
+                >
+                  <SelectTrigger className="w-36">
+                    <SelectValue placeholder="Оберіть тип мінірежиму" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="custom">Кастомний</SelectItem>
+                    <SelectItem value="video-native">
+                      Картинка в картинці
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium">
                 Програвач за замовчуванням

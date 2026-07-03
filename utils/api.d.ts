@@ -74,7 +74,10 @@ declare global {
 
     interface EditorContent {
       suggestion: {
-        name: string;
+        name_ua: string;
+        name_en?: string;
+        name_ja?: string;
+        name_native?: string;
       };
     }
   }

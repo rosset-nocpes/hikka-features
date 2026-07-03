@@ -25,6 +25,7 @@ interface PlayerState {
   theatreMode: boolean;
   miniPlayer: boolean;
   miniPlayerCorner: MiniPlayerCorner;
+  videoPiPActive: boolean;
   overlayRef: RefObject<HTMLDivElement | null>;
   /* Temporary */
   sharedParams?: SharedPlayerParams;
@@ -43,6 +44,7 @@ interface PlayerActions {
   toggleMiniPlayer: () => void;
   setMiniPlayer: (status: boolean) => void;
   setMiniPlayerCorner: (corner: MiniPlayerCorner) => void;
+  setVideoPiPActive: (status: boolean) => void;
   setSharedStatus: (status: boolean) => void;
   setContainer: (container: HTMLElement) => void;
   setOverlayRef: (ref: HTMLDivElement | null) => void;
@@ -72,6 +74,7 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
     theatreMode: false,
     miniPlayer: false,
     miniPlayerCorner: 'bottom-right',
+    videoPiPActive: false,
     overlayRef: createRef<HTMLDivElement>(),
 
     initialize: async (data) => {
@@ -189,6 +192,13 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
           ? watchData[provider].teams[newTeamName.title].episodes
           : watchData[provider].episodes;
 
+      useIFramePlayer.setState({
+        speedOptions:
+          provider === 'ashdi'
+            ? [1, 1.25, 1.5, 2]
+            : useIFramePlayer.getInitialState().speedOptions,
+      });
+
       set({
         provider,
         team: newTeamName,
@@ -285,6 +295,13 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
       });
     },
     setMiniPlayerCorner: (corner) => set({ miniPlayerCorner: corner }),
+    setVideoPiPActive: (status) => {
+      if (status) {
+        set({ theatreMode: false, videoPiPActive: true });
+      } else {
+        set({ videoPiPActive: false });
+      }
+    },
     setSharedStatus: (status) => set({ isShared: status }),
     setContainer: (container) => set({ container }),
     setOverlayRef: (el) => {
@@ -346,6 +363,7 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
         theatreMode: false,
         miniPlayer: false,
         miniPlayerCorner: 'bottom-right',
+        videoPiPActive: false,
         /* Temporary */
         sharedParams: undefined,
         isShared: undefined,

@@ -103,7 +103,7 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
       browser.runtime.sendMessage({
         type: 'playerjs-command',
         api: 'seek',
-        param: time,
+        set: time,
       });
     },
 
@@ -114,7 +114,7 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
       browser.runtime.sendMessage({
         type: 'playerjs-command',
         api: 'quality',
-        param: index,
+        set: index,
       });
     },
 
@@ -125,7 +125,7 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
       browser.runtime.sendMessage({
         type: 'playerjs-command',
         api: 'subtitle',
-        param: index,
+        set: index,
       });
     },
 
@@ -133,7 +133,7 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
       browser.runtime.sendMessage({
         type: 'playerjs-command',
         api: 'volume',
-        param: volume,
+        set: volume,
       });
     },
 
@@ -144,7 +144,7 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
       browser.runtime.sendMessage({
         type: 'playerjs-command',
         api: 'speed',
-        param: index,
+        set: index,
       });
     },
 
@@ -193,15 +193,18 @@ const shouldHandlePlayerMessage = (event: MessageEvent) => {
 };
 
 window.addEventListener('message', (event: MessageEvent) => {
-  if (event.data?.type === 'playerjs-event') {
+  if (event.data?.event) {
     if (!shouldHandlePlayerMessage(event)) return;
-    if (event.data.event !== 'init' && !useIFramePlayer.getState().isReady) {
+    if (event.data.event !== 'inited' && !useIFramePlayer.getState().isReady) {
       return;
     }
 
     switch (event.data.event) {
-      case 'playing':
-        useIFramePlayer.setState({ isPlaying: event.data.state });
+      case 'play':
+        useIFramePlayer.setState({ isPlaying: true });
+        break;
+      case 'pause':
+        useIFramePlayer.setState({ isPlaying: false });
         break;
       case 'duration':
         useIFramePlayer.setState({ duration: Number(event.data.data) });
@@ -209,13 +212,18 @@ window.addEventListener('message', (event: MessageEvent) => {
       case 'time':
         useIFramePlayer.setState({ currentTime: Number(event.data.data) });
         break;
-      case 'muted':
-        useIFramePlayer.setState({ isMuted: event.data.state });
+      case 'mute':
+        useIFramePlayer.setState({ isMuted: true });
+        break;
+      case 'unmute':
+        useIFramePlayer.setState({ isMuted: false });
         break;
       case 'volume':
-        useIFramePlayer.setState({ volume: Number(event.data.data) });
+        useIFramePlayer.setState({
+          volume: Number(event.data.data || event.data.answer),
+        });
         break;
-      case 'init':
+      case 'inited':
         useIFramePlayer.setState({ isReady: true });
         break;
       case 'start':
@@ -243,10 +251,37 @@ window.addEventListener('message', (event: MessageEvent) => {
         }));
         break;
       case 'quality':
-        useIFramePlayer.setState({ currentQuality: event.data.data });
+        if (!event.data.data && !event.data.answer) break;
+
+        if (event.data.data === '1' || event.data.answer === '1') {
+          browser.runtime.sendMessage({
+            type: 'playerjs-command',
+            api: 'quality',
+          });
+          break;
+        }
+
+        useIFramePlayer.setState({
+          currentQuality: event.data.data || event.data.answer,
+        });
+        break;
+      case 'qualities':
+        if (event.data.answer[0] === 1) {
+          browser.runtime.sendMessage({
+            type: 'playerjs-command',
+            api: 'qualities',
+          });
+          break;
+        }
+
+        useIFramePlayer.setState({ qualities: event.data.answer });
         break;
       case 'speed':
-        useIFramePlayer.setState({ currentSpeed: Number(event.data.data) });
+        if (!event.data.data && !event.data.answer) break;
+
+        useIFramePlayer.setState({
+          currentSpeed: Number(event.data.data || event.data.answer),
+        });
         break;
       case 'vast_start':
         useIFramePlayer.setState({ adInProgress: true });
@@ -258,11 +293,37 @@ window.addEventListener('message', (event: MessageEvent) => {
         useIFramePlayer.setState({ isBuffering: true });
         break;
       case 'buffered':
-        useIFramePlayer.setState({ isBuffering: false });
+        useIFramePlayer.setState({
+          isBuffering: false,
+          bufferedTime: Number(event.data.answer),
+        });
         break;
       case 'subtitle':
       case 'subtitles':
-        useIFramePlayer.setState({ currentSubtitle: event.data.data });
+        if (!event.data.data && !event.data.answer) break;
+
+        if (event.data.data) {
+          useIFramePlayer.setState({ currentSubtitle: event.data.data });
+          break;
+        }
+
+        if (event.data.answer) {
+          useIFramePlayer.setState({
+            subtitles: event.data.answer.filter(Boolean),
+          });
+          break;
+        }
+
+        break;
+      case 'pip':
+        if (event.data.data) {
+          const { miniModeType } = useSettings.getState().features.player;
+          if (miniModeType === 'video-native') {
+            usePlayer.getState().setVideoPiPActive(true);
+          }
+        } else {
+          usePlayer.getState().setVideoPiPActive(false);
+        }
         break;
       case 'ui':
         const shouldShow = Boolean(event.data.data);
@@ -272,46 +333,6 @@ window.addEventListener('message', (event: MessageEvent) => {
           if (isOverlayHovered) break;
         }
         useIFramePlayer.setState({ uiShown: shouldShow });
-        break;
-    }
-  }
-  if (event.data?.type === 'playerjs-response') {
-    if (!shouldHandlePlayerMessage(event)) return;
-    if (!useIFramePlayer.getState().isReady) return;
-
-    switch (event.data.command) {
-      case 'qualities':
-        if (event.data.data[0] === 1) {
-          browser.runtime.sendMessage({
-            type: 'playerjs-command',
-            api: 'qualities',
-          });
-        }
-
-        useIFramePlayer.setState({ qualities: event.data.data });
-        break;
-      case 'quality':
-        if (!event.data.data) break;
-
-        if (event.data.data === '1') {
-          browser.runtime.sendMessage({
-            type: 'playerjs-command',
-            api: 'quality',
-          });
-        }
-
-        useIFramePlayer.setState({ currentQuality: event.data.data });
-        break;
-      case 'subtitles':
-        useIFramePlayer.setState({
-          subtitles: event.data.data.filter(Boolean),
-        });
-        break;
-      case 'buffered':
-        useIFramePlayer.setState({ bufferedTime: event.data.data });
-        break;
-      case 'volume':
-        useIFramePlayer.setState({ volume: event.data.data });
         break;
     }
   }

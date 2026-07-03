@@ -7,9 +7,11 @@ import { usePlayer } from './context/player-context';
 import { removePlayer } from './player';
 
 const PlayerNavbar = () => {
-  const { currentEpisode, miniPlayer } = usePlayer();
+  const { currentEpisode, miniPlayer, videoPiPActive } = usePlayer();
   const { uiShown } = useIFramePlayer();
   const { open } = useSidebar();
+
+  const isCompactMode = miniPlayer || videoPiPActive;
 
   return (
     <>
@@ -19,7 +21,7 @@ const PlayerNavbar = () => {
           uiShown ? 'opacity-100' : 'opacity-0',
         )}
       >
-        {!miniPlayer && (
+        {!isCompactMode && (
           <Button
             variant="ghost"
             size="icon-sm"
@@ -32,7 +34,7 @@ const PlayerNavbar = () => {
         <span
           className={cn(
             'flex cursor-default items-center rounded-md bg-background/60 font-medium backdrop-blur-xl',
-            miniPlayer ? 'h-7 px-2 text-xs' : 'h-8 px-2',
+            isCompactMode ? 'h-7 px-2 text-xs' : 'h-8 px-2',
           )}
         >
           Епізод {currentEpisode?.episode}
@@ -41,12 +43,12 @@ const PlayerNavbar = () => {
       <div
         className={cn(
           'absolute z-20 duration-300',
-          miniPlayer && 'right-2 top-2',
+          isCompactMode && 'right-2 top-2',
           open ? 'right-4 top-4' : 'right-2 top-2',
           !uiShown && !open ? 'opacity-0' : 'opacity-100',
         )}
       >
-        {miniPlayer ? (
+        {isCompactMode ? (
           <Button
             variant="ghost"
             size="icon-xs"

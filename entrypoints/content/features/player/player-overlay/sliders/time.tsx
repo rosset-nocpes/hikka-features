@@ -124,10 +124,17 @@ const useSliderTooltip = ({
   };
 };
 
-const Time = () => {
+interface TimeProps {
+  className?: string;
+  trackClassName?: string;
+}
+
+const Time = ({ className, trackClassName }: TimeProps = {}) => {
   const { currentTime, duration, seek, bufferedTime, checkBuffering } =
     useIFramePlayer();
-  const { overlayRef, miniPlayer } = usePlayer();
+  const { overlayRef, miniPlayer, videoPiPActive } = usePlayer();
+
+  const isCompact = miniPlayer || videoPiPActive;
 
   const step = duration > 0 ? (1 / duration) * 100 : 1;
   const [value, setValue] = useState(0);
@@ -174,10 +181,12 @@ const Time = () => {
     hoverTime !== null && !isNaN(hoverTime) && hoverX !== null && duration > 0;
 
   return (
-    <div className="relative flex w-full">
+    <div className={cn('relative flex w-full', className)}>
       <SliderPrimitive.Root
         className={cn(
-          'group relative inline-flex w-full cursor-pointer touch-none outline-hidden select-none',
+          'group relative inline-flex w-full cursor-pointer touch-none select-none pb-1 outline-none',
+          isCompact ? 'pt-2' : 'pt-4',
+          trackClassName,
         )}
         value={value}
         disabled={duration === 0}
@@ -192,14 +201,14 @@ const Time = () => {
         <SliderPrimitive.Control
           className={cn(
             'relative flex w-full touch-none items-center select-none data-disabled:opacity-50 data-vertical:h-full data-vertical:min-h-40 data-vertical:w-auto data-vertical:flex-col',
-            miniPlayer ? 'pt-2 pb-1' : 'pt-4 pb-1',
+            isCompact ? 'pt-2 pb-1' : 'pt-4 pb-1',
           )}
         >
           <SliderPrimitive.Track
             ref={trackRef}
             className={cn(
               'border-shadow bg-secondary relative w-full grow overflow-hidden rounded-full duration-100 group-hover:scale-y-150',
-              miniPlayer ? 'h-0.5' : 'h-1',
+              isCompact ? 'h-0.5' : 'h-1',
             )}
           >
             <div

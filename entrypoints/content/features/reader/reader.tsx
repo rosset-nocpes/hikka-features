@@ -47,7 +47,6 @@ export default function reader() {
                 onClick={() => reader().then((x) => x.remove())}
               />
               <Reader />
-              <Toaster position="top-center" />
             </ReaderProvider>
           </SidebarProvider>
         </QueryClientProvider>,

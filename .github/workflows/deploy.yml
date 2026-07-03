@@ -17,6 +17,9 @@ env:
   FIREFOX_EXTENSION_ID: ${{ secrets.FIREFOX_EXTENSION_ID }}
   FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
   FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
+  EDGE_PRODUCT_ID: ${{ secrets.EDGE_PRODUCT_ID }}
+  EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
+  EDGE_API_KEY: ${{ secrets.EDGE_API_KEY }}
 
 jobs:
   Build:
@@ -43,16 +46,18 @@ jobs:
         run: |
           bun wxt submit --dry-run \
             --chrome-zip .output/*-chrome.zip \
-            --firefox-zip .output/*-firefox.zip --firefox-sources-zip .output/*-sources.zip
+            --firefox-zip .output/*-firefox.zip --firefox-sources-zip .output/*-sources.zip \
+            --edge-zip .output/*-chrome.zip
 
       - name: Submit to stores
         run: |
           bun wxt submit \
             --chrome-zip .output/*-chrome.zip \
-            --firefox-zip .output/*-firefox.zip --firefox-sources-zip .output/*-sources.zip
+            --firefox-zip .output/*-firefox.zip --firefox-sources-zip .output/*-sources.zip \
+            --edge-zip .output/*-chrome.zip
 
       - name: Create Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         env:
           GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         with:

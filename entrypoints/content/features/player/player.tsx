@@ -18,6 +18,7 @@ import {
 } from './context/player-context';
 import PlayerMobileToolbar from './mobile-toolbar/player-mobile-toolbar';
 import PlayerIFrameEffects from './player-iframe-effects';
+import PlayerMiniBar from './player-mini-bar';
 import PlayerNavbar from './player-navbar';
 import PlayerOverlay from './player-overlay/player-overlay';
 
@@ -62,8 +63,10 @@ export default function player() {
     onRemove: (root) => {
       root?.unmount();
 
-      const { fullscreen, toggleFullscreen } = usePlayer.getState();
+      const { fullscreen, toggleFullscreen, setVideoPiPActive } =
+        usePlayer.getState();
       if (fullscreen) toggleFullscreen();
+      setVideoPiPActive(false);
       document.body.classList.remove('h-full');
       document.body.classList.remove('overflow-hidden');
 
@@ -128,20 +131,22 @@ const getNearestMiniPlayerCorner = (
 };
 
 const PlayerFrame = () => {
-  const { miniPlayer, container } = usePlayer();
+  const { miniPlayer, videoPiPActive, container } = usePlayer();
   const { disableBlur } = useSettings().features.player;
   const { setOpen } = useSidebar();
 
+  const isCompactMode = miniPlayer || videoPiPActive;
+
   useEffect(() => {
-    setOpen(!miniPlayer);
+    setOpen(!isCompactMode);
     container?.parentElement?.classList.toggle(
       'pointer-events-none',
-      miniPlayer,
+      isCompactMode,
     );
-    document.body.classList.toggle('h-full', !miniPlayer);
-    document.body.classList.toggle('overflow-hidden', !miniPlayer);
+    document.body.classList.toggle('h-full', !isCompactMode);
+    document.body.classList.toggle('overflow-hidden', !isCompactMode);
     // oxlint-disable-next-line eslint-plugin-react-hooks/exhaustive-deps
-  }, [miniPlayer, container]);
+  }, [isCompactMode, container]);
 
   return (
     <div
@@ -149,12 +154,12 @@ const PlayerFrame = () => {
       className={cn(
         'relative size-full',
         disableBlur && '**:[[class*=backdrop-blur]]:backdrop-blur-none',
-        miniPlayer
+        isCompactMode
           ? 'pointer-events-none'
           : 'flex items-center justify-center bg-black/60 backdrop-blur-xs md:p-8',
       )}
     >
-      {!miniPlayer && (
+      {!isCompactMode && (
         <div className="fixed z-0 size-full" onClick={removePlayer} />
       )}
       <Player />
@@ -169,6 +174,7 @@ export const Player = () => {
     theatreMode,
     miniPlayer,
     miniPlayerCorner,
+    videoPiPActive,
     setMiniPlayerCorner,
   } = usePlayer();
 
@@ -179,6 +185,10 @@ export const Player = () => {
   } | null>(null);
   const [isDraggingMiniPlayer, setIsDraggingMiniPlayer] = useState(false);
   const miniPlayerSnapTimeout = useRef<number | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const isCompactMode = miniPlayer || videoPiPActive;
+  const isVideoPiP = videoPiPActive && !miniPlayer;
 
   useEffect(
     () => () => {
@@ -189,12 +199,10 @@ export const Player = () => {
     [],
   );
 
-  const handleMiniPlayerDragStart = (
-    event: ReactPointerEvent<HTMLDivElement>,
-  ) => {
-    if (!miniPlayer) return;
+  const handleMiniPlayerDragStart = (event: ReactPointerEvent<HTMLElement>) => {
+    if (!isCompactMode) return;
 
-    const card = event.currentTarget.parentElement;
+    const card = cardRef.current;
     if (!card) return;
 
     event.preventDefault();
@@ -265,17 +273,18 @@ export const Player = () => {
     window.addEventListener('pointercancel', handlePointerUp);
   };
 
-  const miniPlayerStyle: CSSProperties | undefined = miniPlayer
+  const miniPlayerStyle: CSSProperties | undefined = isCompactMode
     ? (dragPosition ?? getMiniPlayerCornerStyle(miniPlayerCorner))
     : undefined;
 
   return (
     <Card
+      ref={cardRef}
       style={miniPlayerStyle}
       onTransitionEnd={(event) => {
         if (
           event.currentTarget === event.target &&
-          miniPlayer &&
+          isCompactMode &&
           dragPosition &&
           !isDraggingMiniPlayer &&
           (event.propertyName === 'left' || event.propertyName === 'top')
@@ -293,6 +302,8 @@ export const Player = () => {
         fullscreen && 'max-h-full! max-w-full! rounded-none! border-none!',
         miniPlayer &&
           'pointer-events-auto fixed z-30 aspect-video h-auto w-[min(calc(100vw-1rem),420px)] cursor-default rounded-lg border shadow-2xl duration-150 md:w-[420px]',
+        isVideoPiP &&
+          'pointer-events-auto fixed z-30 size-auto cursor-default overflow-hidden shadow-2xl backdrop-blur-xl duration-150 md:max-w-[min(calc(100vw-2rem),480px)] md:rounded-md',
         isDraggingMiniPlayer && 'duration-0',
       )}
     >
@@ -306,22 +317,33 @@ export const Player = () => {
           onPointerDown={handleMiniPlayerDragStart}
         />
       )}
-      {!miniPlayer && (
-        <PlayerMobileToolbar toggleWatchedState={toggleWatchedState} />
-      )}
-      <PlayerNavbar />
-      <CardContent className="flex min-h-0 min-w-0 flex-1 flex-col p-0 duration-300">
+      <CardContent
+        className={cn(
+          'flex min-h-0 min-w-0 flex-1 flex-col p-0 duration-300',
+          isVideoPiP && 'pointer-events-none invisible absolute inset-0 z-0',
+        )}
+      >
         <iframe
           id="player-iframe"
           key={`${currentEpisode?.episode}:${currentEpisode?.video_url}`}
-          src={`${currentEpisode?.video_url}?site=hikka.io`} // todo: move params to backend
+          src={currentEpisode?.video_url}
           loading="lazy"
           className="size-full"
           allow="fullscreen; accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
           allowFullScreen
         ></iframe>
       </CardContent>
-      <PlayerOverlay toggleWatchedState={toggleWatchedState} />
+      {isVideoPiP ? (
+        <PlayerMiniBar onDragStart={handleMiniPlayerDragStart} />
+      ) : (
+        <>
+          {!miniPlayer && !videoPiPActive && (
+            <PlayerMobileToolbar toggleWatchedState={toggleWatchedState} />
+          )}
+          <PlayerNavbar />
+          <PlayerOverlay toggleWatchedState={toggleWatchedState} />
+        </>
+      )}
     </Card>
   );
 };

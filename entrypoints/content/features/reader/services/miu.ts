@@ -46,7 +46,9 @@ class MIUScraper extends BaseScraper {
   }
 
   public async search(data: any) {
-    const title = data.title_ua || data.title_en;
+    const title = data.title_ua || data.title_en || data.title_original;
+    if (!title) return;
+
     let mangaUrl = data.external.find(
       (link: any) => link.text === 'Manga.in.ua',
     )?.url;
@@ -59,13 +61,23 @@ class MIUScraper extends BaseScraper {
         search_start: '1',
       });
 
-      const searchHtml = await this.request(
+      let searchHtml = await this.request(
         this.endpoints.search,
         'POST',
         searchData,
       );
 
-      const $search = cheerio.load(searchHtml);
+      let $search = cheerio.load(searchHtml);
+
+      if ($search('.berrors').length) {
+        searchData.set('story', title);
+        searchHtml = await this.request(
+          this.endpoints.search,
+          'POST',
+          searchData,
+        );
+        $search = cheerio.load(searchHtml);
+      }
 
       mangaUrl = $search('main.main article.item h3.card__title a')
         .first()
