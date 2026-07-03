@@ -4,7 +4,6 @@ import { createRoot } from 'react-dom/client';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { Toaster } from '@/components/ui/sonner';
 
 import { queryClient } from '../..';
 import ReaderNavbar from './components/reader-navbar';
@@ -49,7 +48,6 @@ export default function reader() {
                 onClick={() => reader().then((x) => x.remove())}
               />
               <Reader />
-              <Toaster position="top-center" />
             </ReaderProvider>
           </SidebarProvider>
         </QueryClientProvider>,
