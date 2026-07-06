@@ -1,40 +1,50 @@
 'use client';
 
 import { ScrollArea as ScrollAreaPrimitive } from '@base-ui/react/scroll-area';
+import { forwardRef } from 'react';
 
-function ScrollArea({
-  className,
-  children,
-  scrollFade = false,
-  scrollbarGutter = false,
-  ...props
-}: ScrollAreaPrimitive.Root.Props & {
-  scrollFade?: boolean;
-  scrollbarGutter?: boolean;
-}) {
-  return (
-    <ScrollAreaPrimitive.Root
-      data-slot="scroll-area"
-      className={cn('relative', className)}
-      {...props}
-    >
-      <ScrollAreaPrimitive.Viewport
-        data-slot="scroll-area-viewport"
-        className={cn(
-          'size-full max-h-[inherit] rounded-[inherit] transition-[color,box-shadow] outline-none',
-          scrollFade &&
-            'mask-t-from-[calc(100%-min(var(--fade-size),var(--scroll-area-overflow-y-start)))] mask-r-from-[calc(100%-min(var(--fade-size),var(--scroll-area-overflow-x-end)))] mask-b-from-[calc(100%-min(var(--fade-size),var(--scroll-area-overflow-y-end)))] mask-l-from-[calc(100%-min(var(--fade-size),var(--scroll-area-overflow-x-start)))] [--fade-size:1.5rem]',
-          scrollbarGutter &&
-            'data-has-overflow-x:pb-2.5 data-has-overflow-y:pe-2.5',
-        )}
+const ScrollArea = forwardRef<
+  HTMLDivElement,
+  ScrollAreaPrimitive.Root.Props & {
+    scrollFade?: boolean;
+    scrollbarGutter?: boolean;
+  }
+>(
+  (
+    {
+      className,
+      children,
+      scrollFade = false,
+      scrollbarGutter = false,
+      ...props
+    },
+    ref,
+  ) => {
+    return (
+      <ScrollAreaPrimitive.Root
+        data-slot="scroll-area"
+        className={cn('relative', className)}
+        {...props}
       >
-        {children}
-      </ScrollAreaPrimitive.Viewport>
-      <ScrollBar />
-      <ScrollAreaPrimitive.Corner />
-    </ScrollAreaPrimitive.Root>
-  );
-}
+        <ScrollAreaPrimitive.Viewport
+          ref={ref}
+          data-slot="scroll-area-viewport"
+          className={cn(
+            'size-full max-h-[inherit] rounded-[inherit] transition-[color,box-shadow] outline-none',
+            scrollFade &&
+              'mask-t-from-[calc(100%-min(var(--fade-size),var(--scroll-area-overflow-y-start)))] mask-r-from-[calc(100%-min(var(--fade-size),var(--scroll-area-overflow-x-end)))] mask-b-from-[calc(100%-min(var(--fade-size),var(--scroll-area-overflow-y-end)))] mask-l-from-[calc(100%-min(var(--fade-size),var(--scroll-area-overflow-x-start)))] [--fade-size:1.5rem]',
+            scrollbarGutter &&
+              'data-has-overflow-x:pb-2.5 data-has-overflow-y:pe-2.5',
+          )}
+        >
+          {children}
+        </ScrollAreaPrimitive.Viewport>
+        <ScrollBar />
+        <ScrollAreaPrimitive.Corner />
+      </ScrollAreaPrimitive.Root>
+    );
+  },
+);
 
 function ScrollBar({
   className,
