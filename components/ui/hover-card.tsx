@@ -1,5 +1,7 @@
 import { PreviewCard as PreviewCardPrimitive } from '@base-ui/react/preview-card';
 
+import { resolvePositionMethod } from '@/utils/position-method';
+
 function HoverCard({ ...props }: PreviewCardPrimitive.Root.Props) {
   return <PreviewCardPrimitive.Root data-slot="hover-card" {...props} />;
 }
@@ -16,12 +18,13 @@ function HoverCardContent({
   sideOffset = 4,
   align = 'center',
   alignOffset = 4,
+  positionMethod,
   container,
   ...props
 }: PreviewCardPrimitive.Popup.Props &
   Pick<
     PreviewCardPrimitive.Positioner.Props,
-    'align' | 'alignOffset' | 'side' | 'sideOffset'
+    'align' | 'alignOffset' | 'side' | 'sideOffset' | 'positionMethod'
   > &
   Pick<PreviewCardPrimitive.Portal.Props, 'container'>) {
   return (
@@ -34,6 +37,7 @@ function HoverCardContent({
         alignOffset={alignOffset}
         side={side}
         sideOffset={sideOffset}
+        positionMethod={resolvePositionMethod(container, positionMethod)}
         className="isolate z-50"
       >
         <PreviewCardPrimitive.Popup

@@ -4,6 +4,8 @@ import { Select as SelectPrimitive } from '@base-ui/react/select';
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from 'lucide-react';
 import * as React from 'react';
 
+import { resolvePositionMethod } from '@/utils/position-method';
+
 const Select = SelectPrimitive.Root;
 
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
@@ -62,12 +64,18 @@ function SelectContent({
   align = 'center',
   alignOffset = 0,
   alignItemWithTrigger = true,
+  positionMethod,
   container,
   ...props
 }: SelectPrimitive.Popup.Props &
   Pick<
     SelectPrimitive.Positioner.Props,
-    'align' | 'alignOffset' | 'side' | 'sideOffset' | 'alignItemWithTrigger'
+    | 'align'
+    | 'alignOffset'
+    | 'side'
+    | 'sideOffset'
+    | 'alignItemWithTrigger'
+    | 'positionMethod'
   > & { container?: HTMLElement }) {
   return (
     <SelectPrimitive.Portal container={container}>
@@ -77,6 +85,7 @@ function SelectContent({
         align={align}
         alignOffset={alignOffset}
         alignItemWithTrigger={alignItemWithTrigger}
+        positionMethod={resolvePositionMethod(container, positionMethod)}
         className="isolate z-50"
       >
         <SelectPrimitive.Popup

@@ -1,5 +1,7 @@
 import { Tooltip as TooltipPrimitive } from '@base-ui/react/tooltip';
 
+import { resolvePositionMethod } from '@/utils/position-method';
+
 function TooltipProvider({
   delay = 0,
   ...props
@@ -31,6 +33,7 @@ function TooltipContent({
   collisionAvoidance,
   collisionBoundary,
   collisionPadding,
+  positionMethod,
   children,
   ...props
 }: TooltipPrimitive.Popup.Props &
@@ -43,6 +46,7 @@ function TooltipContent({
     | 'collisionAvoidance'
     | 'collisionBoundary'
     | 'collisionPadding'
+    | 'positionMethod'
   > &
   Pick<TooltipPrimitive.Portal.Props, 'container'>) {
   return (
@@ -55,6 +59,7 @@ function TooltipContent({
         collisionAvoidance={collisionAvoidance}
         collisionBoundary={collisionBoundary}
         collisionPadding={collisionPadding}
+        positionMethod={resolvePositionMethod(container, positionMethod)}
         className="isolate z-50"
       >
         <TooltipPrimitive.Popup

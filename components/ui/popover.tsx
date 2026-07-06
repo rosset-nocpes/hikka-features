@@ -1,6 +1,8 @@
 import { Popover as PopoverPrimitive } from '@base-ui/react/popover';
 import * as React from 'react';
 
+import { resolvePositionMethod } from '@/utils/position-method';
+
 function Popover({ ...props }: PopoverPrimitive.Root.Props) {
   return <PopoverPrimitive.Root data-slot="popover" {...props} />;
 }
@@ -18,6 +20,7 @@ function PopoverContent({
   collisionAvoidance,
   collisionBoundary,
   collisionPadding,
+  positionMethod,
   container,
   ...props
 }: PopoverPrimitive.Popup.Props &
@@ -30,6 +33,7 @@ function PopoverContent({
     | 'collisionAvoidance'
     | 'collisionBoundary'
     | 'collisionPadding'
+    | 'positionMethod'
   > & {
     container?: HTMLElement;
   }) {
@@ -43,6 +47,7 @@ function PopoverContent({
         collisionAvoidance={collisionAvoidance}
         collisionBoundary={collisionBoundary}
         collisionPadding={collisionPadding}
+        positionMethod={resolvePositionMethod(container, positionMethod)}
         className="isolate z-50"
       >
         <PopoverPrimitive.Popup

@@ -4,6 +4,8 @@ import { Menu as MenuPrimitive } from '@base-ui/react/menu';
 import { ChevronRightIcon, CheckIcon } from 'lucide-react';
 import * as React from 'react';
 
+import { resolvePositionMethod } from '@/utils/position-method';
+
 function DropdownMenu({ ...props }: MenuPrimitive.Root.Props) {
   return <MenuPrimitive.Root data-slot="dropdown-menu" {...props} />;
 }
@@ -23,6 +25,7 @@ function DropdownMenuContent({
   sideOffset = 4,
   container,
   className,
+  positionMethod,
   ...props
 }: MenuPrimitive.Popup.Props &
   Pick<
@@ -34,6 +37,7 @@ function DropdownMenuContent({
     | 'collisionAvoidance'
     | 'collisionBoundary'
     | 'collisionPadding'
+    | 'positionMethod'
   > &
   Pick<MenuPrimitive.Portal.Props, 'container'>) {
   return (
@@ -47,6 +51,7 @@ function DropdownMenuContent({
         collisionAvoidance={props.collisionAvoidance}
         collisionBoundary={props.collisionBoundary}
         collisionPadding={props.collisionPadding}
+        positionMethod={resolvePositionMethod(container, positionMethod)}
       >
         <MenuPrimitive.Popup
           data-slot="dropdown-menu-content"
