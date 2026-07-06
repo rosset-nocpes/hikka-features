@@ -14,7 +14,7 @@ const ChapterList = () => {
   return (
     <SidebarContent
       ref={scrollRef}
-      className="relative group-data-[collapsible=icon]:overflow-auto"
+      className="relative overflow-visible group-data-[collapsible=icon]:overflow-auto"
     >
       {data?.displayMode === ReaderContentMode.Chapters && (
         <ChaptersView scrollRef={scrollRef} />

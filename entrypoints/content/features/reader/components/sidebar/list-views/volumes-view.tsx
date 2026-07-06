@@ -126,10 +126,10 @@ const VolumesView = () => {
               render={
                 <SidebarMenuButton
                   size="md"
-                  className="group-data-[state=open]/collapsible:bg-sidebar-accent sticky top-0 z-10 font-medium duration-200 group-data-[state=open]/collapsible:rounded-b-none"
+                  className="group-data-open/collapsible:bg-sidebar-accent sticky top-0 z-10 font-medium duration-200 group-data-open/collapsible:rounded-b-none"
                 >
                   <span>Том {volume.number}</span>
-                  <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                  <ChevronRight className="ml-auto transition-transform duration-200 group-data-open/collapsible:rotate-90" />
                 </SidebarMenuButton>
               }
             />
