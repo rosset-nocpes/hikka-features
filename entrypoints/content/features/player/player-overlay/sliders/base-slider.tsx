@@ -32,6 +32,7 @@ const BaseSlider = forwardRef<
         ))}
         <SliderPrimitive.Indicator className="bg-primary absolute h-full" />
       </SliderPrimitive.Track>
+      <SliderPrimitive.Thumb />
       {children}
     </SliderPrimitive.Control>
   </SliderPrimitive.Root>

@@ -183,6 +183,7 @@ const Time = ({ className, trackClassName }: TimeProps = {}) => {
   return (
     <div className={cn('relative flex w-full', className)}>
       <SliderPrimitive.Root
+        ref={trackRef}
         className={cn(
           'group relative inline-flex w-full cursor-pointer touch-none pb-1 outline-none select-none',
           isCompact ? 'pt-2' : 'pt-4',
@@ -198,14 +199,8 @@ const Time = ({ className, trackClassName }: TimeProps = {}) => {
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
-        <SliderPrimitive.Control
-          className={cn(
-            'relative flex w-full touch-none items-center select-none data-disabled:opacity-50 data-vertical:h-full data-vertical:min-h-40 data-vertical:w-auto data-vertical:flex-col',
-            isCompact ? 'pt-2 pb-1' : 'pt-4 pb-1',
-          )}
-        >
+        <SliderPrimitive.Control className="relative flex w-full touch-none items-center select-none data-disabled:opacity-50 data-vertical:h-full data-vertical:min-h-40 data-vertical:w-auto data-vertical:flex-col">
           <SliderPrimitive.Track
-            ref={trackRef}
             className={cn(
               'border-shadow bg-secondary relative w-full grow overflow-hidden rounded-full duration-100 group-hover:scale-y-150',
               isCompact ? 'h-0.5' : 'h-1',
@@ -217,6 +212,7 @@ const Time = ({ className, trackClassName }: TimeProps = {}) => {
             />
             <SliderPrimitive.Indicator className="bg-primary absolute h-full" />
           </SliderPrimitive.Track>
+          <SliderPrimitive.Thumb />
           <div className="pointer-events-none absolute flex flex-col items-center opacity-0 transition-opacity duration-200 will-change-[left] data-visible:opacity-100" />
         </SliderPrimitive.Control>
       </SliderPrimitive.Root>
