@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import MaterialSymbolsExitToAppRounded from '~icons/material-symbols/exit-to-app-rounded';
 import MaterialSymbolsPersonRounded from '~icons/material-symbols/person-rounded';
 import MdiBeta from '~icons/mdi/beta';
@@ -44,8 +43,7 @@ const UserOptions = () => {
           <Avatar className="pointer-events-none">
             <AvatarImage src={userData?.avatar} />
             <AvatarFallback>
-              {/* <MaterialSymbolsPersonRounded className="size-5" /> */}
-              WIP
+              <MaterialSymbolsPersonRounded className="size-5" />
             </AvatarFallback>
           </Avatar>
         }

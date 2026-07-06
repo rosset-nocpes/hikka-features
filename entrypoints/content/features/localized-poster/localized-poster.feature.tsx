@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
-  TooltipPortal,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';

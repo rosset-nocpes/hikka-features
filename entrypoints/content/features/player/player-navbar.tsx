@@ -17,7 +17,7 @@ const PlayerNavbar = () => {
     <>
       <div
         className={cn(
-          'absolute left-2 top-2 z-20 flex gap-2 duration-300',
+          'absolute top-2 left-2 z-20 flex gap-2 duration-300',
           uiShown ? 'opacity-100' : 'opacity-0',
         )}
       >
@@ -33,7 +33,7 @@ const PlayerNavbar = () => {
         )}
         <span
           className={cn(
-            'flex cursor-default items-center rounded-md bg-background/60 font-medium backdrop-blur-xl',
+            'bg-background/60 flex cursor-default items-center rounded-md font-medium backdrop-blur-xl',
             isCompactMode ? 'h-7 px-2 text-xs' : 'h-8 px-2',
           )}
         >
@@ -43,8 +43,8 @@ const PlayerNavbar = () => {
       <div
         className={cn(
           'absolute z-20 duration-300',
-          isCompactMode && 'right-2 top-2',
-          open ? 'right-4 top-4' : 'right-2 top-2',
+          isCompactMode && 'top-2 right-2',
+          open ? 'top-4 right-4' : 'top-2 right-2',
           !uiShown && !open ? 'opacity-0' : 'opacity-100',
         )}
       >

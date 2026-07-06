@@ -6,7 +6,7 @@ import { createRoot, type Root } from 'react-dom/client';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
-import { Toaster } from '@/components/ui/sonner';
+// import { Toaster } from '@/components/ui/sonner';
 import { useIFramePlayer } from '@/hooks/use-iframe-player';
 import { syncFeatureTheme } from '@/utils/utils';
 
@@ -52,7 +52,7 @@ export default function player() {
           <SidebarProvider className="h-full w-full">
             <PlayerProvider container={container}>
               <PlayerFrame />
-              <Toaster position="top-center" />
+              {/*<Toaster position="top-center" />*/}
             </PlayerProvider>
           </SidebarProvider>
         </QueryClientProvider>,

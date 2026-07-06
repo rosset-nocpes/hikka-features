@@ -4,7 +4,6 @@ import { createRoot } from 'react-dom/client';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { Toaster } from '@/components/ui/sonner';
 import { syncFeatureTheme } from '@/utils/utils';
 
 import { queryClient } from '../..';

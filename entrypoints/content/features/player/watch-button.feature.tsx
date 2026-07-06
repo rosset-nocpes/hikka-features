@@ -131,7 +131,7 @@ const WatchButton = () => {
             <Indicator isLoading={isLoading} />
             <RotatingText text={statusMessage} />
           </Button>
-          <div className="w-px bg-secondary" />
+          <div className="bg-secondary w-px" />
         </motion.div>
       )}
     </AnimatePresence>
@@ -150,7 +150,7 @@ const Indicator = ({ isLoading }: IndicatorProps) => {
           'absolute inset-0 flex items-center justify-center transition-[transform,opacity,filter] duration-200 ease-in-out will-change-[transform,opacity,filter]',
           isLoading
             ? 'scale-[0.25] opacity-0 blur-xs'
-            : 'scale-100 opacity-100 blur-0',
+            : 'blur-0 scale-100 opacity-100',
         )}
       >
         <MaterialSymbolsSubscriptionsOutlineRounded className="size-full" />
@@ -159,7 +159,7 @@ const Indicator = ({ isLoading }: IndicatorProps) => {
         className={cn(
           'transition-[transform,opacity,filter] duration-200 ease-in-out will-change-[transform,opacity,filter]',
           isLoading
-            ? 'scale-100 opacity-100 blur-0'
+            ? 'blur-0 scale-100 opacity-100'
             : 'scale-[0.25] opacity-0 blur-xs',
         )}
       >

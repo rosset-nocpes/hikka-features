@@ -1,6 +1,12 @@
+import type { FC } from 'react';
+
 import SwitchOption from '../_base/switch-option';
 
-const AniBackgroundSettings = () => {
+interface Props {
+  grouped?: boolean;
+}
+
+const AniBackgroundSettings: FC<Props> = ({ grouped }) => {
   const { features, updateFeatureSettings } = useSettings();
   const { enabled } = features.aniBackground;
 
@@ -10,6 +16,7 @@ const AniBackgroundSettings = () => {
 
   return (
     <SwitchOption
+      grouped={grouped}
       checked={enabled}
       label="Обкладинки"
       description="Покращене оформлення на сторінках тайтлів, персонажів та правок"

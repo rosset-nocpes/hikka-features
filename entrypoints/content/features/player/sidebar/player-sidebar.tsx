@@ -1,4 +1,4 @@
-import { type FC, useEffect, useRef, useState } from 'react';
+import { type FC } from 'react';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {

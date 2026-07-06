@@ -184,7 +184,7 @@ const Time = ({ className, trackClassName }: TimeProps = {}) => {
     <div className={cn('relative flex w-full', className)}>
       <SliderPrimitive.Root
         className={cn(
-          'group relative inline-flex w-full cursor-pointer touch-none select-none pb-1 outline-none',
+          'group relative inline-flex w-full cursor-pointer touch-none pb-1 outline-none select-none',
           isCompact ? 'pt-2' : 'pt-4',
           trackClassName,
         )}

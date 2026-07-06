@@ -69,7 +69,7 @@ const MobileTeamSelect = () => {
             variant="outline"
             onClick={() => handleSelectTeam(t)}
             className={cn(
-              'group/item w-full p-1 font-normal hover:bg-secondary/20',
+              'group/item hover:bg-secondary/20 w-full p-1 font-normal',
               t.title === team.title &&
                 'bg-secondary! text-secondary-foreground!',
             )}
@@ -98,7 +98,7 @@ const MobileTeamSelect = () => {
                   'absolute inset-0 flex items-center justify-center transition-all duration-300 ease-in-out will-change-[transform,opacity,filter]',
                   favoriteTeam?.provider === provider &&
                     favoriteTeam?.team === t.title
-                    ? 'scale-100 opacity-100 blur-0'
+                    ? 'blur-0 scale-100 opacity-100'
                     : 'scale-[0.25] opacity-0 blur-xs',
                 )}
               >
@@ -110,10 +110,10 @@ const MobileTeamSelect = () => {
                   favoriteTeam?.provider === provider &&
                     favoriteTeam?.team === t.title
                     ? 'scale-[0.25] opacity-0 blur-xs'
-                    : 'scale-100 opacity-100 blur-0',
+                    : 'blur-0 scale-100 opacity-100',
                 )}
               >
-                <MaterialSymbolsStarRateOutlineRounded className="size-7! text-muted-foreground transition-transform duration-300" />
+                <MaterialSymbolsStarRateOutlineRounded className="text-muted-foreground size-7! transition-transform duration-300" />
               </div>
             </Button>
             {/*<div className="flex w-full items-center justify-between gap-2  text-left text-sm">

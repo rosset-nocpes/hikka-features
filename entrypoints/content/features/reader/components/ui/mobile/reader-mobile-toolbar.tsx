@@ -12,7 +12,6 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 
-import useReadData from '../../../hooks/use-read-data';
 import { useReader } from '../../../hooks/use-reader';
 import reader from '../../../reader';
 import { READER_POWERED_BY } from '../../../reader.constants';
@@ -23,7 +22,6 @@ import SortOptions from '../../sidebar/sort-options';
 const ReaderMobileToolbar = () => {
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  const { data: mangaData } = useReadData();
   const { settings, container, currentChapter } = useReader();
 
   useEffect(() => {

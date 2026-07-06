@@ -64,7 +64,7 @@ const SpeedupPopup = () => {
   return (
     <span
       className={cn(
-        'absolute left-1/2 top-2 flex h-8 -translate-x-1/2 cursor-default items-center gap-1 rounded-md bg-background/60 px-2 font-medium backdrop-blur-xl duration-200 ease-out',
+        'bg-background/60 absolute top-2 left-1/2 flex h-8 -translate-x-1/2 cursor-default items-center gap-1 rounded-md px-2 font-medium backdrop-blur-xl duration-200 ease-out',
         !showPopup && '-translate-y-2 scale-90 opacity-0',
       )}
     >

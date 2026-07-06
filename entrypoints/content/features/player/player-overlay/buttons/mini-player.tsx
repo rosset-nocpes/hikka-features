@@ -11,12 +11,18 @@ import {
 import { usePlayer } from '../../context/player-context';
 
 const MiniPlayer = () => {
-  const { container, overlayRef, miniPlayer, videoPiPActive, toggleMiniPlayer } = usePlayer();
+  const {
+    container,
+    overlayRef,
+    miniPlayer,
+    videoPiPActive,
+    toggleMiniPlayer,
+  } = usePlayer();
   const { miniModeType } = useSettings().features.player;
-        
+
   const isVideoNative = miniModeType === 'video-native';
   const isActive = isVideoNative ? videoPiPActive : miniPlayer;
-        
+
   const handleClick = () => {
     if (isVideoNative) {
       browser.runtime.sendMessage({

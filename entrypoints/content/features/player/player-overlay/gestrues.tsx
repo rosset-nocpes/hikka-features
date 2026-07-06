@@ -227,7 +227,7 @@ const Gestrues = () => {
   return (
     <div
       ref={gestrueRef}
-      className="flex flex-1 focus:outline-hidden focus:ring-0"
+      className="flex flex-1 focus:ring-0 focus:outline-hidden"
       onClick={() => {
         if (speedupRef.current) return;
         if (pointerTypeRef.current !== 'mouse' && !uiShown) {

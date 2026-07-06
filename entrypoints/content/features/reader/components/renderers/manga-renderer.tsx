@@ -181,7 +181,7 @@ const MangaRenderer = () => {
         {(!chapterImages || isLoading) && (
           <motion.div
             key="loading"
-            className="absolute z-10 flex size-full items-center justify-center bg-card"
+            className="bg-card absolute z-10 flex size-full items-center justify-center"
             {...layoutAnimation}
           >
             <Spinner className="size-16" />

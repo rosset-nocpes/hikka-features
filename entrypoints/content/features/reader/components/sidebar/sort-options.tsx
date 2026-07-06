@@ -11,14 +11,12 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useSidebar } from '@/components/ui/sidebar';
 
 import useReadData from '../../hooks/use-read-data';
 import { useReader } from '../../hooks/use-reader';
@@ -31,7 +29,6 @@ import {
 const SortOptions = () => {
   const { data } = useReadData();
   const { container, settings, setSettings } = useReader();
-  const { open } = useSidebar();
 
   const translators = useMemo(() => {
     const chapters =

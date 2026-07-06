@@ -10,6 +10,7 @@ interface Props extends PropsWithChildren {
   description?: string;
   checked: boolean;
   onClick?: () => void;
+  grouped?: boolean;
 }
 
 const SwitchOption: FC<Props> = ({
@@ -18,29 +19,42 @@ const SwitchOption: FC<Props> = ({
   checked,
   onClick,
   beta = false,
+  grouped = false,
 }) => {
   return (
-    <div className="flex items-center justify-between">
+    <div
+      className={cn(
+        'flex items-center justify-between',
+        grouped &&
+          'hover:bg-accent/30 cursor-pointer px-4 py-3 transition-[background-color]',
+      )}
+      onClick={grouped ? onClick : undefined}
+    >
       <div className="mr-10 flex flex-col gap-1">
-        <Label className="flex gap-1">
+        <Label className="flex cursor-pointer gap-1">
           {label}
           {beta && (
             <Badge
               variant="outline"
-              className="cursor-default bg-yellow-500 px-2 py-0 text-primary-foreground"
+              className="text-primary-foreground bg-yellow-500 px-2 py-0"
             >
               Beta
             </Badge>
           )}
         </Label>
         {description && (
-          <p className="text-xs font-medium text-[#A1A1A1]">{description}</p>
+          <p className="text-xs font-medium text-pretty text-[#A1A1A1]">
+            {description}
+          </p>
         )}
       </div>
       <Switch
         checked={checked}
-        onClick={onClick}
-        className="flex items-center justify-between"
+        onClick={grouped ? undefined : onClick}
+        className={cn(
+          'flex items-center justify-between',
+          grouped && 'pointer-events-none',
+        )}
       />
     </div>
   );
