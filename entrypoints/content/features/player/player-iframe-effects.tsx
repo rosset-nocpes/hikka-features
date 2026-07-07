@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { toast } from 'sonner';
+// import { toast } from 'sonner';
 
 import { useSidebar } from '@/components/ui/sidebar';
 import { useIFramePlayer } from '@/hooks/use-iframe-player';
@@ -159,9 +159,9 @@ const PlayerIFrameEffects = ({ toggleWatchedState, watched }: Props) => {
     pendingAutoPlayRef.current = true;
     setEpisode(nextEpisode);
 
-    toast(
-      `Зараз ви переглядаєте ${nextEpisode.episode} епізод в озвучці ${team?.title}`,
-    );
+    // toast(
+    //   `Зараз ви переглядаєте ${nextEpisode.episode} епізод в озвучці ${team?.title}`,
+    // );
   }, [currentEpisode, endedCount, provider, setEpisode, team, watchData]);
 
   return null;
