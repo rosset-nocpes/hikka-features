@@ -22,12 +22,14 @@ const MobileEpisodeDrawer = () => {
 
   return (
     <Drawer open={open} onOpenChange={setOpen}>
-      <DrawerTrigger asChild>
-        <Button
-          size="md"
-          variant="secondary"
-        >{`Епізод #${currentEpisode?.episode}`}</Button>
-      </DrawerTrigger>
+      <DrawerTrigger
+        render={
+          <Button
+            size="md"
+            variant="secondary"
+          >{`Епізод #${currentEpisode?.episode}`}</Button>
+        }
+      />
       <DrawerContent
         className="flex max-h-[80%] flex-col"
         container={container}

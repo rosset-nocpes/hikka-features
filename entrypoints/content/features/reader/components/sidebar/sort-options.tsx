@@ -10,14 +10,13 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
+  DropdownMenuGroup,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useSidebar } from '@/components/ui/sidebar';
 
 import useReadData from '../../hooks/use-read-data';
 import { useReader } from '../../hooks/use-reader';
@@ -30,7 +29,6 @@ import {
 const SortOptions = () => {
   const { data } = useReadData();
   const { container, settings, setSettings } = useReader();
-  const { open } = useSidebar();
 
   const translators = useMemo(() => {
     const chapters =
@@ -69,7 +67,7 @@ const SortOptions = () => {
       <Button
         size="sm"
         variant="secondary"
-        className="flex-1"
+        className="flex-1 gap-2"
         onClick={handleOrderChange}
       >
         <MaterialSymbolsArrowDownwardRounded
@@ -82,40 +80,39 @@ const SortOptions = () => {
       </Button>
       <ButtonGroupSeparator />
       <DropdownMenu modal={false}>
-        <DropdownMenuTrigger asChild>
-          <Button size="sm" variant="secondary">
-            <MaterialSymbolsMoreHoriz />
-          </Button>
-        </DropdownMenuTrigger>
+        <DropdownMenuTrigger
+          render={
+            <Button size="sm" variant="secondary">
+              <MaterialSymbolsMoreHoriz />
+            </Button>
+          }
+        />
         <DropdownMenuContent
           className="min-w-60"
-          align={open ? 'end' : 'start'}
-          side={open ? 'bottom' : 'left'}
-          sideOffset={open ? 4 : 12}
+          align="end"
+          side="bottom"
           container={container}
         >
-          <DropdownMenuLabel>Сортування</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onSelect={() =>
-              setSettings({
-                sortBy: { ...settings.sortBy, field: ReaderSortBy.Chapter },
-              })
-            }
-          >
-            За частиною
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={() =>
-              setSettings({
-                sortBy: { ...settings.sortBy, field: ReaderSortBy.DateUpload },
-              })
-            }
-          >
-            За датою
-          </DropdownMenuItem>
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>Сортування</DropdownMenuLabel>
+            <DropdownMenuRadioGroup
+              value={settings.sortBy?.field || ReaderSortBy.Chapter}
+              onValueChange={(field) =>
+                setSettings({
+                  sortBy: { ...settings.sortBy, field },
+                })
+              }
+            >
+              <DropdownMenuRadioItem value={ReaderSortBy.Chapter}>
+                За частиною
+              </DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value={ReaderSortBy.DateUpload}>
+                За датою
+              </DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
+          </DropdownMenuGroup>
           {translators.length > 0 && (
-            <>
+            <DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuLabel>Перекладач</DropdownMenuLabel>
               <DropdownMenuRadioGroup
@@ -133,7 +130,7 @@ const SortOptions = () => {
                   </DropdownMenuRadioItem>
                 ))}
               </DropdownMenuRadioGroup>
-            </>
+            </DropdownMenuGroup>
           )}
         </DropdownMenuContent>
       </DropdownMenu>

@@ -1,6 +1,12 @@
+import type { FC } from 'react';
+
 import SwitchOption from '../_base/switch-option';
 
-const CharacterSuggestionsSettings = () => {
+interface Props {
+  grouped?: boolean;
+}
+
+const CharacterSuggestionsSettings: FC<Props> = ({ grouped }) => {
   const { features, updateFeatureSettings } = useSettings();
   const { enabled } = features.editorCharacters;
 
@@ -10,6 +16,7 @@ const CharacterSuggestionsSettings = () => {
 
   return (
     <SwitchOption
+      grouped={grouped}
       label="Пропозиції перекладу імен"
       description="Показує переклад імені українською при редагуванні персонажа"
       beta

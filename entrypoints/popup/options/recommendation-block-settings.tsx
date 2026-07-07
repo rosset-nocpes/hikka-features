@@ -1,6 +1,12 @@
+import type { FC } from 'react';
+
 import SwitchOption from '../_base/switch-option';
 
-const RecommendationBlockSettings = () => {
+interface Props {
+  grouped?: boolean;
+}
+
+const RecommendationBlockSettings: FC<Props> = ({ grouped }) => {
   const { features, updateFeatureSettings } = useSettings();
   const { enabled } = features.recommendationBlock;
 
@@ -10,6 +16,7 @@ const RecommendationBlockSettings = () => {
 
   return (
     <SwitchOption
+      grouped={grouped}
       checked={enabled}
       label="Блок рекомендацій"
       description="Блок із контентом, який схожий на той, який ви дивитеся"

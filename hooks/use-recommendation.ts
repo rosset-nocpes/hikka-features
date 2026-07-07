@@ -27,7 +27,7 @@ const useRecommendation = () => {
             const hikkaData = await fetchDetailedData(contentType!, element);
             if (element.votes > maxSingleVotes) maxSingleVotes = element.votes;
             return { ...hikkaData, mal: { ...element } };
-          } catch (error) {
+          } catch {
             await new Promise((resolve) => setTimeout(resolve, 700));
             const hikkaData = await fetchDetailedData(contentType!, element);
             if (element.votes > maxSingleVotes) maxSingleVotes = element.votes;

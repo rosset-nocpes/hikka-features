@@ -1,4 +1,4 @@
-import { Slider as SliderPrimitive } from 'radix-ui';
+import { Slider as SliderPrimitive } from '@base-ui/react/slider';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { usePlayer } from '../../context/player-context';
@@ -8,7 +8,7 @@ const useSeeking = (duration: number, seek: (t: number) => void) => {
   const [isSeeking, setIsSeeking] = useState(false);
   const seekTargetRef = useRef<number | null>(null);
 
-  const commit = (sliderValue: number) => {
+  const seekToSliderValue = (sliderValue: number) => {
     const target = (sliderValue / 100) * duration;
     seekTargetRef.current = target;
     seek(target);
@@ -21,7 +21,7 @@ const useSeeking = (duration: number, seek: (t: number) => void) => {
     return false;
   }, []);
 
-  return { isSeeking, setIsSeeking, commit, shouldSkipSync };
+  return { isSeeking, setIsSeeking, seekToSliderValue, shouldSkipSync };
 };
 
 const useSliderTooltip = ({
@@ -35,7 +35,7 @@ const useSliderTooltip = ({
   step: number;
   overlayRef: React.RefObject<HTMLElement | null>;
 }) => {
-  const trackRef = useRef<HTMLSpanElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [hoverTime, setHoverTime] = useState<number | null>(null);
   const [hoverX, setHoverX] = useState<number | null>(null);
@@ -139,10 +139,8 @@ const Time = ({ className, trackClassName }: TimeProps = {}) => {
   const step = duration > 0 ? (1 / duration) * 100 : 1;
   const [value, setValue] = useState(0);
 
-  const { isSeeking, setIsSeeking, commit, shouldSkipSync } = useSeeking(
-    duration,
-    seek,
-  );
+  const { isSeeking, setIsSeeking, seekToSliderValue, shouldSkipSync } =
+    useSeeking(duration, seek);
 
   const {
     trackRef,
@@ -167,9 +165,15 @@ const Time = ({ className, trackClassName }: TimeProps = {}) => {
     if (duration === 0) setValue(0);
   }, [duration]);
 
-  const handleValueChange = (newValue: number[]) => {
-    setValue(newValue[0]);
-    if (isSeeking) seek((newValue[0] / 100) * duration);
+  const handleValueChange = (newValue: number) => {
+    setIsSeeking(true);
+    setValue(newValue);
+    seekToSliderValue(newValue);
+  };
+
+  const handleValueCommitted = (newValue: number) => {
+    setIsSeeking(false);
+    seekToSliderValue(newValue);
   };
 
   const bufferedPercent = duration > 0 ? (bufferedTime / duration) * 100 : 0;
@@ -181,39 +185,42 @@ const Time = ({ className, trackClassName }: TimeProps = {}) => {
       <SliderPrimitive.Root
         ref={trackRef}
         className={cn(
-          'group relative inline-flex w-full cursor-pointer touch-none select-none pb-1 outline-none',
+          'group relative inline-flex w-full cursor-pointer touch-none pb-1 outline-none select-none',
           isCompact ? 'pt-2' : 'pt-4',
           trackClassName,
         )}
-        value={[value]}
+        value={value}
         disabled={duration === 0}
         step={step}
         onValueChange={handleValueChange}
         onPointerDown={() => setIsSeeking(true)}
         onPointerUp={() => setIsSeeking(false)}
-        onValueCommit={([val]) => commit(val)}
+        onValueCommitted={handleValueCommitted}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
-        <SliderPrimitive.Track
-          className={cn(
-            'border-shadow relative w-full grow overflow-hidden rounded-full bg-secondary duration-100 group-hover:scale-y-150',
-            isCompact ? 'h-0.5' : 'h-1',
-          )}
-        >
-          <div
-            className="absolute h-full bg-secondary-foreground/30"
-            style={{ width: `${bufferedPercent}%` }}
-          />
-          <SliderPrimitive.Range className="absolute h-full bg-primary" />
-        </SliderPrimitive.Track>
-        <div className="pointer-events-none absolute flex flex-col items-center opacity-0 transition-opacity duration-200 will-change-[left] data-[visible]:opacity-100" />
+        <SliderPrimitive.Control className="relative flex w-full touch-none items-center select-none data-disabled:opacity-50 data-vertical:h-full data-vertical:min-h-40 data-vertical:w-auto data-vertical:flex-col">
+          <SliderPrimitive.Track
+            className={cn(
+              'border-shadow bg-secondary relative w-full grow overflow-hidden rounded-full duration-100 group-hover:scale-y-150',
+              isCompact ? 'h-0.5' : 'h-1',
+            )}
+          >
+            <div
+              className="bg-secondary-foreground/30 absolute h-full"
+              style={{ width: `${bufferedPercent}%` }}
+            />
+            <SliderPrimitive.Indicator className="bg-primary absolute h-full" />
+          </SliderPrimitive.Track>
+          <SliderPrimitive.Thumb />
+          <div className="pointer-events-none absolute flex flex-col items-center opacity-0 transition-opacity duration-200 will-change-[left] data-visible:opacity-100" />
+        </SliderPrimitive.Control>
       </SliderPrimitive.Root>
 
       {showTooltip && (
         <div
           ref={tooltipRef}
-          className="pointer-events-none fixed z-50 -translate-x-1/2 rounded-md bg-background px-2 py-1 text-xs font-medium tabular-nums shadow-md"
+          className="bg-background pointer-events-none fixed z-50 -translate-x-1/2 rounded-md px-2 py-1 text-xs font-medium tabular-nums shadow-md"
           style={tooltipStyle}
         >
           {formatTime(hoverTime)}

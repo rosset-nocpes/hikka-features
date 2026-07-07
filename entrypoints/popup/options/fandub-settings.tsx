@@ -1,6 +1,12 @@
+import type { FC } from 'react';
+
 import SwitchOption from '../_base/switch-option';
 
-const FandubSettings = () => {
+interface Props {
+  grouped?: boolean;
+}
+
+const FandubSettings: FC<Props> = ({ grouped }) => {
   const { features, updateFeatureSettings } = useSettings();
   const { enabled } = features.fandubBlock;
 
@@ -10,6 +16,7 @@ const FandubSettings = () => {
 
   return (
     <SwitchOption
+      grouped={grouped}
       checked={enabled}
       label="Блок фандаб команд"
       description="Посилання на фандаб команди, які озвучили аніме тайтл"

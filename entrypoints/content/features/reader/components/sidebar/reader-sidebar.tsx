@@ -2,7 +2,13 @@ import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Sidebar, SidebarFooter, SidebarHeader } from '@/components/ui/sidebar';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+} from '@/components/ui/sidebar';
 
 import reader from '../../reader';
 import ChapterList from './chapter-list';
@@ -25,7 +31,7 @@ const ReaderSidebar = () => {
             <span className="cursor-default font-medium">Читалка</span>
             <Badge
               variant="outline"
-              className="cursor-default bg-yellow-500 text-primary-foreground"
+              className="text-primary-foreground cursor-default bg-yellow-500"
             >
               Beta
             </Badge>
@@ -34,7 +40,11 @@ const ReaderSidebar = () => {
         </div>
         <SortOptions />
       </SidebarHeader>
-      <ChapterList />
+      <SidebarContent>
+        <ScrollArea className="h-full" scrollFade>
+          <ChapterList />
+        </ScrollArea>
+      </SidebarContent>
       <SidebarFooter>
         <ReaderSettings />
       </SidebarFooter>

@@ -9,10 +9,10 @@ import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
-  TooltipPortal,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { syncFeatureTheme } from '@/utils/utils';
 
 import { queryClient } from '../..';
 import { BaseFeature } from '../../core/base-feature';
@@ -33,11 +33,7 @@ export default class LocalizedPosterFeature extends BaseFeature {
         const wrapper = document.createElement('div');
         container.append(wrapper);
 
-        container.style = getThemeVariables();
-        container.classList.toggle(
-          'dark',
-          getComputedStyle(document.documentElement).colorScheme === 'dark',
-        );
+        syncFeatureTheme(container, { themeVariables: true });
 
         container.style.position = 'absolute';
         container.style.zIndex = '1';
@@ -101,32 +97,35 @@ const LocalizedPoster = ({ container }: Props) => {
       {enabled && data?.poster && imageLoaded && (
         <motion.div
           key="poster-button"
-          className="absolute bottom-2 right-2"
+          className="absolute right-2 bottom-2"
           initial={{ opacity: 0, transform: 'translateX(10px)' }}
           animate={{ opacity: 1, transform: 'translateX(0px)' }}
           exit={{ opacity: 0, transform: 'translateX(10px)' }}
           transition={{ duration: 0.2 }}
         >
           <TooltipProvider>
-            <Tooltip delayDuration={0}>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon-md"
-                  className="flex"
-                  onClick={togglePoster}
-                >
-                  {visible && (
-                    <MaterialSymbolsPlannerBannerAdPtRounded className="text-lg" />
-                  )}
-                  {!visible && (
-                    <MaterialSymbolsPlannerBannerAdPtOutlineRounded className="text-lg" />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipPortal container={container}>
-                <TooltipContent side="top">Локалізувати постер</TooltipContent>
-              </TooltipPortal>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon-md"
+                    className="flex"
+                    onClick={togglePoster}
+                  >
+                    {visible && (
+                      <MaterialSymbolsPlannerBannerAdPtRounded className="text-lg" />
+                    )}
+                    {!visible && (
+                      <MaterialSymbolsPlannerBannerAdPtOutlineRounded className="text-lg" />
+                    )}
+                  </Button>
+                }
+              />
+
+              <TooltipContent side="top" container={container}>
+                Локалізувати постер
+              </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </motion.div>

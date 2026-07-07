@@ -82,17 +82,20 @@ const Settings = () => {
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
       <DropdownMenuTrigger>
         <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon-sm">
-              <MaterialSymbolsPageInfoOutlineRounded />
-            </Button>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={
+              <Button variant="ghost" size="icon-sm">
+                <MaterialSymbolsPageInfoOutlineRounded />
+              </Button>
+            }
+          />
           <TooltipContent
             className="parent-data-[open]:hidden"
             side="top"
             sideOffset={32}
-            collisionBoundary={overlayRef.current}
+            collisionBoundary={overlayRef.current as Element}
             collisionPadding={8}
+            container={container}
           >
             Налаштування
           </TooltipContent>
@@ -104,9 +107,9 @@ const Settings = () => {
         side="top"
         sideOffset={24}
         align="start"
-        alignOffset={32}
-        collisionBoundary={overlayRef.current}
-        collisionPadding={8}
+        alignOffset={16}
+        collisionBoundary={overlayRef.current as Element}
+        // collisionPadding={8}
       >
         <motion.div
           layout
@@ -128,7 +131,7 @@ const Settings = () => {
                   <DropdownMenuItem
                     // disabled={videoQualityOptions.disabled}
                     onClick={(e) => {
-                      e.preventDefault();
+                      e.stopPropagation();
                       setView(Views.Quality);
                     }}
                   >

@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { Button } from '@/components/ui/button';
+import { syncFeatureTheme } from '@/utils/utils';
 
 import { queryClient } from '..';
 import { BaseFeature } from '../core/base-feature';
@@ -30,11 +31,7 @@ export default class DevButtonsFeature extends BaseFeature {
         const wrapper = document.createElement('div');
         container.append(wrapper);
 
-        container.style = getThemeVariables();
-        container.classList.toggle(
-          'dark',
-          getComputedStyle(document.documentElement).colorScheme === 'dark',
-        );
+        syncFeatureTheme(container, { themeVariables: true });
 
         const root = createRoot(wrapper);
         root.render(
@@ -88,7 +85,7 @@ const DevButtons = () => {
           <Button
             variant="ghost"
             size="sm"
-            className="overflow-hidden"
+            className="gap-2 overflow-hidden"
             onClick={() => handleCopy(slug, 'slug')}
           >
             <Indicator isCopied={copiedButton === 'slug'} />
@@ -97,6 +94,7 @@ const DevButtons = () => {
           <Button
             variant="ghost"
             size="sm"
+            className="gap-2"
             onClick={() => handleCopy(mal_id, 'mal_id')}
           >
             <Indicator isCopied={copiedButton === 'mal_id'} />
@@ -117,20 +115,20 @@ const Indicator = ({ isCopied }: IndicatorProps) => {
     <div className="relative">
       <div
         className={cn(
-          'absolute inset-0 flex items-center justify-center transition-[transform,opacity,filter] duration-200 ease-in-out will-change-[transform,opacity,filter]',
+          'absolute inset-0 flex items-center justify-center transition-[opacity,filter,scale] duration-300 ease-in-out will-change-[opacity,filter,scale]',
           isCopied
-            ? 'scale-100 opacity-100 blur-0'
-            : 'scale-[0.25] opacity-0 blur-sm',
+            ? 'blur-0 scale-100 opacity-100'
+            : 'scale-[0.25] opacity-0 blur-xs',
         )}
       >
         <Check className="size-4" />
       </div>
       <div
         className={cn(
-          'transition-[transform,opacity,filter] duration-200 ease-in-out will-change-[transform,opacity,filter]',
+          'transition-[opacity,filter,scale] duration-300 ease-in-out will-change-[opacity,filter,scale]',
           isCopied
-            ? 'scale-[0.25] opacity-0 blur-sm'
-            : 'scale-100 opacity-100 blur-0',
+            ? 'scale-[0.25] opacity-0 blur-xs'
+            : 'blur-0 scale-100 opacity-100',
         )}
       >
         <ClipboardCopy className="size-4" />

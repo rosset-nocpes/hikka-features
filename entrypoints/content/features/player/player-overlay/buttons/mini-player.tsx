@@ -11,8 +11,13 @@ import {
 import { usePlayer } from '../../context/player-context';
 
 const MiniPlayer = () => {
-  const { overlayRef, miniPlayer, videoPiPActive, toggleMiniPlayer } =
-    usePlayer();
+  const {
+    container,
+    overlayRef,
+    miniPlayer,
+    videoPiPActive,
+    toggleMiniPlayer,
+  } = usePlayer();
   const { miniModeType } = useSettings().features.player;
 
   const isVideoNative = miniModeType === 'video-native';
@@ -33,21 +38,24 @@ const MiniPlayer = () => {
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <Button variant="ghost" size="icon-sm" onClick={handleClick}>
-          {isActive ? (
-            <MaterialSymbolsFitScreenOutlineRounded />
-          ) : (
-            <MaterialSymbolsPictureInPictureAltRounded />
-          )}
-        </Button>
-      </TooltipTrigger>
+      <TooltipTrigger
+        render={
+          <Button variant="ghost" size="icon-sm" onClick={handleClick}>
+            {isActive ? (
+              <MaterialSymbolsFitScreenOutlineRounded />
+            ) : (
+              <MaterialSymbolsPictureInPictureAltRounded />
+            )}
+          </Button>
+        }
+      />
       <TooltipContent
         side="top"
         align="center"
         sideOffset={32}
-        collisionBoundary={overlayRef.current}
+        collisionBoundary={overlayRef.current as Element}
         collisionPadding={8}
+        container={container}
       >
         {tooltipText}
       </TooltipContent>

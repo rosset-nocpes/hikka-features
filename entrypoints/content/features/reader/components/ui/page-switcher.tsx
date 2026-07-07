@@ -54,7 +54,7 @@ const PageSwitcher = () => {
   return (
     <div
       className={cn(
-        'absolute z-20 hidden w-8 cursor-default flex-col items-center justify-center gap-2 rounded-md bg-sidebar py-1 font-medium duration-300 md:flex',
+        'bg-sidebar absolute z-20 hidden w-8 cursor-default flex-col items-center justify-center gap-2 rounded-md py-1 font-medium duration-300 md:flex',
         positionClasses,
         visibilityClasses,
       )}

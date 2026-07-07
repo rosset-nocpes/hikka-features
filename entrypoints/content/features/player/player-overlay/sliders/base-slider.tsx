@@ -1,4 +1,4 @@
-import { Slider as SliderPrimitive } from 'radix-ui';
+import { Slider as SliderPrimitive } from '@base-ui/react/slider';
 import { forwardRef } from 'react';
 
 const BaseSlider = forwardRef<
@@ -13,25 +13,28 @@ const BaseSlider = forwardRef<
   <SliderPrimitive.Root
     ref={ref}
     className={cn(
-      'relative flex w-full touch-none select-none items-center',
+      'relative flex w-full touch-none items-center select-none',
       className,
     )}
     {...props}
   >
-    <SliderPrimitive.Track className="relative h-1 w-full grow overflow-hidden rounded-full bg-secondary duration-100 group-hover:scale-y-150">
-      {bufferSegments?.map((segment, index) => (
-        <div
-          key={index}
-          className="absolute h-full bg-secondary-foreground/30"
-          style={{
-            left: `${segment.start}%`,
-            width: `${segment.end - segment.start}%`,
-          }}
-        />
-      ))}
-      <SliderPrimitive.Range className="absolute h-full bg-primary" />
-    </SliderPrimitive.Track>
-    {children}
+    <SliderPrimitive.Control className="relative flex w-full touch-none items-center select-none data-disabled:opacity-50 data-vertical:h-full data-vertical:min-h-40 data-vertical:w-auto data-vertical:flex-col">
+      <SliderPrimitive.Track className="bg-secondary relative h-1 w-full grow overflow-hidden rounded-full duration-100 group-hover:scale-y-150">
+        {bufferSegments?.map((segment, index) => (
+          <div
+            key={index}
+            className="bg-secondary-foreground/30 absolute h-full"
+            style={{
+              left: `${segment.start}%`,
+              width: `${segment.end - segment.start}%`,
+            }}
+          />
+        ))}
+        <SliderPrimitive.Indicator className="bg-primary absolute h-full" />
+      </SliderPrimitive.Track>
+      <SliderPrimitive.Thumb />
+      {children}
+    </SliderPrimitive.Control>
   </SliderPrimitive.Root>
 ));
 

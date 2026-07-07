@@ -11,25 +11,28 @@ import {
 import { usePlayer } from '../../context/player-context';
 
 const TheatreMode = () => {
-  const { overlayRef, theatreMode, toggleTheatreMode } = usePlayer();
+  const { container, overlayRef, theatreMode, toggleTheatreMode } = usePlayer();
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <Button variant="ghost" size="icon-sm" onClick={toggleTheatreMode}>
-          {theatreMode ? (
-            <MaterialSymbolsFitScreenOutlineRounded />
-          ) : (
-            <MaterialSymbolsWidthFullOutline />
-          )}
-        </Button>
-      </TooltipTrigger>
+      <TooltipTrigger
+        render={
+          <Button variant="ghost" size="icon-sm" onClick={toggleTheatreMode}>
+            {theatreMode ? (
+              <MaterialSymbolsFitScreenOutlineRounded />
+            ) : (
+              <MaterialSymbolsWidthFullOutline />
+            )}
+          </Button>
+        }
+      />
       <TooltipContent
         side="top"
         align="center"
         sideOffset={32}
-        collisionBoundary={overlayRef.current}
+        collisionBoundary={overlayRef.current as Element}
         collisionPadding={8}
+        container={container}
       >
         {theatreMode ? 'Вийти з режиму теару' : 'Режим теару'}
       </TooltipContent>

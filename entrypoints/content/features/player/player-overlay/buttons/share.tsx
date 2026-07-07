@@ -63,8 +63,9 @@ const Share = () => {
           <TooltipContent
             side="top"
             sideOffset={32}
-            collisionBoundary={overlayRef.current}
+            collisionBoundary={overlayRef.current as Element}
             collisionPadding={8}
+            container={container}
           >
             Поділитися
           </TooltipContent>
@@ -75,30 +76,32 @@ const Share = () => {
         container={container}
         side="top"
         sideOffset={32}
-        collisionBoundary={overlayRef.current}
+        // collisionBoundary={overlayRef.current as Element}
         collisionPadding={8}
       >
-        <div className="flex items-center gap-2 rounded-md bg-muted py-1 pl-2 pr-1">
-          <Link className="size-3.5 shrink-0 text-muted-foreground" />
-          <span className="cursor-default overflow-hidden text-nowrap text-xs font-medium gradient-mask-r-90">
+        <div className="bg-muted flex items-center gap-2 rounded-md py-1 pr-1 pl-2">
+          <Link className="text-muted-foreground size-3.5 shrink-0" />
+          <span className="gradient-mask-r-90 cursor-default overflow-hidden text-xs font-medium text-nowrap">
             {window.location.href}
           </span>
           <TooltipProvider>
-            <Tooltip delayDuration={0} open={showTooltip}>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-6 shrink-0 rounded-sm hover:bg-background"
-                  onClick={() => {
-                    handleCopyShareLink();
-                    setShowTooltip(true);
-                    setTimeout(() => setShowTooltip(false), 1000);
-                  }}
-                >
-                  <Copy className="h-3.5 w-3.5" />
-                </Button>
-              </TooltipTrigger>
+            <Tooltip open={showTooltip}>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="hover:bg-background size-6 shrink-0 rounded-sm"
+                    onClick={() => {
+                      handleCopyShareLink();
+                      setShowTooltip(true);
+                      setTimeout(() => setShowTooltip(false), 1000);
+                    }}
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
+                }
+              />
               <TooltipContent
                 side="left"
                 className="flex items-center gap-1 text-xs font-medium"
@@ -120,7 +123,7 @@ const Share = () => {
               !isTimecodeLink && 'cursor-not-allowed opacity-70',
             )}
           >
-            <div className="text-xs text-muted-foreground">Починати з:</div>
+            <div className="text-muted-foreground text-xs">Починати з:</div>
             <Input
               disabled={!isTimecodeLink}
               defaultValue={new Date(timecodeLink * 1000)

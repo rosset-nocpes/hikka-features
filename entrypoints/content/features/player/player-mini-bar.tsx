@@ -37,7 +37,7 @@ const PlayerMiniBar = ({ onDragStart }: Props) => {
         <Button
           variant="ghost"
           size="icon-xs"
-          className="shrink-0 cursor-grab text-muted-foreground/70 active:cursor-grabbing"
+          className="text-muted-foreground/70 shrink-0 cursor-grab active:cursor-grabbing"
           onPointerDown={onDragStart}
         >
           <MaterialSymbolsDragHandleRounded />
@@ -52,7 +52,7 @@ const PlayerMiniBar = ({ onDragStart }: Props) => {
           </Avatar>
           <div className="flex min-w-0 flex-1 flex-col justify-center">
             <span
-              className="line-clamp-1 cursor-pointer truncate text-balance text-sm font-semibold leading-tight hover:underline"
+              className="line-clamp-1 cursor-pointer truncate text-sm leading-tight font-semibold text-balance hover:underline"
               onClick={() => {
                 history.pushState({}, '', `/anime/${animeData?.slug}`);
                 window.dispatchEvent(new PopStateEvent('popstate'));
@@ -60,7 +60,7 @@ const PlayerMiniBar = ({ onDragStart }: Props) => {
             >
               {title}
             </span>
-            <span className="truncate text-xs tabular-nums leading-tight text-muted-foreground">
+            <span className="text-muted-foreground truncate text-xs leading-tight tabular-nums">
               {subtitle}
             </span>
           </div>

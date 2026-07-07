@@ -44,35 +44,39 @@ const ReaderSettings = () => {
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu modal={false}>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton size="lg">
-              <div className="flex size-8 shrink-0 items-center justify-center">
-                <MaterialSymbolsPageInfoOutlineRounded className="size-5" />
-              </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">Налаштування</span>
-              </div>
-              <ChevronsUpDown className="ml-auto" />
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
+          <DropdownMenuTrigger
+            render={
+              <SidebarMenuButton size="lg">
+                <div className="flex size-8 shrink-0 items-center justify-center">
+                  <MaterialSymbolsPageInfoOutlineRounded className="size-5" />
+                </div>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold">Налаштування</span>
+                </div>
+                <ChevronsUpDown className="ml-auto" />
+              </SidebarMenuButton>
+            }
+          />
           <DropdownMenuContent
-            className="flex w-[--radix-dropdown-menu-trigger-width] min-w-56 flex-col gap-3 rounded-lg"
+            className="flex w-(--anchor-width) min-w-56 flex-col gap-3 rounded-lg"
             align="start"
             side="top"
             container={container}
           >
-            <SettingsItems />
-            <div className="flex flex-col text-center text-xs text-muted-foreground">
-              <DropdownMenuSeparator />
-              <a
-                href={READER_POWERED_BY[settings.type]?.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="py-1"
-              >
-                {READER_POWERED_BY[settings.type]?.label}
-              </a>
-            </div>
+            <DropdownMenuGroup>
+              <SettingsItems />
+              <div className="text-muted-foreground flex flex-col text-center text-xs">
+                <DropdownMenuSeparator />
+                <a
+                  href={READER_POWERED_BY[settings.type]?.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="py-1"
+                >
+                  {READER_POWERED_BY[settings.type]?.label}
+                </a>
+              </div>
+            </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
@@ -137,12 +141,11 @@ const SettingItem = ({
               {config.label}
             </DropdownMenuLabel>
             <Tabs value={value} onValueChange={onChange}>
-              <TabsList className="w-full bg-input">
+              <TabsList className="bg-input w-full">
                 {config.options?.map((option) => (
                   <TabsTrigger
                     key={option.value}
                     value={option.value}
-                    className="size-full p-0"
                     onMouseDown={(e) => e.stopPropagation()}
                   >
                     {option.label}
@@ -169,7 +172,7 @@ const SettingItem = ({
         return (
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-muted-foreground">
+              <span className="text-muted-foreground text-xs font-medium">
                 {config.label}
               </span>
               <span className="text-xs">{value}</span>
@@ -178,8 +181,8 @@ const SettingItem = ({
               min={config.min}
               max={config.max}
               step={1}
-              value={[value]}
-              onValueChange={(val) => onChange(val[0])}
+              value={value}
+              onValueChange={(val) => onChange(val)}
             />
           </div>
         );
@@ -219,24 +222,26 @@ const FontFamilySelect = ({
   fontFamily,
 }: any) => (
   <DropdownMenu>
-    <DropdownMenuTrigger asChild>
-      <Button variant="ghost" className="justify-between gap-4 pl-2">
-        <div className="flex flex-col justify-start text-left">
-          <div className="text-xs text-muted-foreground">{config.label}</div>
-          <div className="text-sm font-medium text-foreground">
-            {config.options?.find((opt: any) => opt.value === value)?.label}
+    <DropdownMenuTrigger
+      render={
+        <Button variant="ghost" className="justify-between gap-4 pl-2">
+          <div className="flex flex-col justify-start text-left">
+            <div className="text-muted-foreground text-xs">{config.label}</div>
+            <div className="text-foreground text-sm font-medium">
+              {config.options?.find((opt: any) => opt.value === value)?.label}
+            </div>
           </div>
-        </div>
-        <div
-          className={cn(
-            'pointer-events-none flex size-4 select-none items-center justify-center text-base text-foreground',
-            fontFamily,
-          )}
-        >
-          Aa
-        </div>
-      </Button>
-    </DropdownMenuTrigger>
+          <div
+            className={cn(
+              'text-foreground pointer-events-none flex size-4 items-center justify-center text-base select-none',
+              fontFamily,
+            )}
+          >
+            Aa
+          </div>
+        </Button>
+      }
+    />
     <DropdownMenuContent
       side={isMobile ? 'bottom' : 'left'}
       align="end"
@@ -245,10 +250,7 @@ const FontFamilySelect = ({
       container={container}
     >
       <ScrollArea
-        className={cn(
-          'max-h-80 w-full overflow-y-auto',
-          isMobile && 'w-[--radix-dropdown-menu-trigger-width]',
-        )}
+        className={cn('max-h-80 w-72', isMobile && 'w-(--anchor-width)')}
       >
         {config.options?.map((option: any, index: number) => (
           <>
@@ -260,7 +262,7 @@ const FontFamilySelect = ({
                 onChange(option.value);
               }}
             >
-              <div className="text-xs font-medium text-muted-foreground">
+              <div className="text-muted-foreground text-xs font-medium">
                 {option.label}
               </div>
               <div className={cn(option.value)}>
@@ -277,7 +279,7 @@ const FontFamilySelect = ({
 
 const ThemeSelect = ({ config, value, onChange }: any) => (
   <div className="flex flex-col gap-2">
-    <span className="text-xs font-medium text-muted-foreground">
+    <span className="text-muted-foreground text-xs font-medium">
       {config.label}
     </span>
     <ButtonGroup className="w-full">
@@ -286,7 +288,7 @@ const ThemeSelect = ({ config, value, onChange }: any) => (
           <Button
             key={option.value}
             className={cn(
-              'flex-1 items-center justify-center bg-background p-0',
+              'bg-background flex-1 items-center justify-center p-0',
               option.value,
             )}
             size="md"
@@ -297,7 +299,7 @@ const ThemeSelect = ({ config, value, onChange }: any) => (
             }}
           >
             {value === option.value && (
-              <Check className="size-5 text-foreground" />
+              <Check className="text-foreground size-5" />
             )}
           </Button>
           {index < config.options.length - 1 && <ButtonGroupSeparator />}

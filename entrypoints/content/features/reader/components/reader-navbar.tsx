@@ -48,7 +48,7 @@ const ReaderNavbar: FC<Props> = ({ showControls = true }) => {
     <div className="hidden md:flex">
       <div
         className={cn(
-          'absolute left-2 top-2 z-20 flex gap-2 duration-300',
+          'absolute top-2 left-2 z-20 flex gap-2 duration-300',
           showControls && !open ? 'opacity-100' : 'opacity-0',
           open && '-top-8',
         )}
@@ -62,7 +62,7 @@ const ReaderNavbar: FC<Props> = ({ showControls = true }) => {
           <MaterialSymbolsCloseRounded />
         </Button>
         {settings.type === ReaderType.Manga && (
-          <span className="flex h-8 cursor-default items-center rounded-md bg-sidebar px-2 font-medium">
+          <span className="bg-sidebar flex h-8 cursor-default items-center rounded-md px-2 font-medium">
             {`Розділ ${currentChapter?.chapter}`}
             {currentChapter?.title ? `: ${currentChapter?.title}` : ''}
           </span>
@@ -70,7 +70,7 @@ const ReaderNavbar: FC<Props> = ({ showControls = true }) => {
       </div>
       <div
         className={cn(
-          'absolute right-2 top-2 z-20 flex gap-2 duration-300',
+          'absolute top-2 right-2 z-20 flex gap-2 duration-300',
           !showControls && !open ? 'opacity-0' : 'opacity-100',
           open && 'gap-0',
         )}

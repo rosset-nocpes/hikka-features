@@ -144,13 +144,13 @@ const ChaptersView: FC<Props> = ({ scrollRef }) => {
                     Розділ {sorted[virtualItem.index].chapter}
                   </span>
                   <div className="flex items-center gap-1">
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-muted-foreground text-xs">
                       {sorted[virtualItem.index].date_upload}
                     </span>
                     {sorted[virtualItem.index].translator && (
                       <>
-                        <div className="size-1 shrink-0 rounded-full bg-muted-foreground" />
-                        <span className="truncate text-xs text-muted-foreground">
+                        <div className="bg-muted-foreground size-1 shrink-0 rounded-full" />
+                        <span className="text-muted-foreground truncate text-xs">
                           {sorted[virtualItem.index].translator}
                         </span>
                       </>

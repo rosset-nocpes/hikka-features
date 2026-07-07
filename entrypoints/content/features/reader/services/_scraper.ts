@@ -13,7 +13,10 @@ abstract class BaseScraper {
     method: 'GET' | 'POST' = 'GET',
     data?: any,
   ) {
-    const absoluteUrl = typeof url === 'string' && !url.startsWith('http') ? `${this.baseUrl}/${url}` : url;
+    const absoluteUrl =
+      typeof url === 'string' && !url.startsWith('http')
+        ? `${this.baseUrl}/${url}`
+        : url;
 
     try {
       const response = await ky(absoluteUrl, { method, body: data }).text();

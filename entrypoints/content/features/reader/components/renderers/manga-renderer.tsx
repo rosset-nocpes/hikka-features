@@ -181,7 +181,7 @@ const MangaRenderer = () => {
         {(!chapterImages || isLoading) && (
           <motion.div
             key="loading"
-            className="absolute z-10 flex size-full items-center justify-center bg-card"
+            className="bg-card absolute z-10 flex size-full items-center justify-center"
             {...layoutAnimation}
           >
             <Spinner className="size-16" />
@@ -224,7 +224,7 @@ const MangaRenderer = () => {
               className="flex h-full"
               {...layoutAnimation}
             >
-              <CarouselContent className="!m-0 h-full">
+              <CarouselContent className="m-0! h-full">
                 {chapterImages?.map((img_url, index) => {
                   return (
                     <CarouselItem key={index} className="h-full">

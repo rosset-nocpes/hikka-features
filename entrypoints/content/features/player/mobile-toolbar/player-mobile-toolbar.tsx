@@ -14,7 +14,7 @@ interface Props {
 
 const PlayerMobileToolbar: FC<Props> = ({ toggleWatchedState }) => {
   return (
-    <div className="absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 gap-2 rounded-2xl bg-secondary/60 p-2 backdrop-blur-xl md:hidden">
+    <div className="bg-secondary/60 absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 gap-2 rounded-2xl p-2 backdrop-blur-xl md:hidden">
       <MobileTeamProviderDrawer toggleWatchedState={toggleWatchedState} />
       <MobileEpisodeDrawer />
       <Button variant="secondary" size="md" onClick={removePlayer}>

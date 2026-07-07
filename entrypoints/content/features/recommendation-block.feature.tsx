@@ -34,11 +34,7 @@ export default class RecommendationBlockFeature extends BaseFeature {
         const wrapper = document.createElement('div');
         container.append(wrapper);
 
-        container.style = getThemeVariables();
-        container.classList.toggle(
-          'dark',
-          getComputedStyle(document.documentElement).colorScheme === 'dark',
-        );
+        syncFeatureTheme(container, { themeVariables: true });
 
         const root = createRoot(wrapper);
         root.render(
@@ -82,11 +78,7 @@ const RecommendationBlock: FC = () => {
             <h3 className="flex items-center justify-between gap-2">
               Схожий контент
               <img
-                src={
-                  document.documentElement.classList.contains('dark')
-                    ? HFLogoSmall
-                    : HFLogoSmallDark
-                }
+                src={isHikkaDarkMode() ? HFLogoSmall : HFLogoSmallDark}
                 style={{ width: '21px', height: '20px' }}
               />
             </h3>
@@ -95,15 +87,15 @@ const RecommendationBlock: FC = () => {
               disabled={isLoading || data?.recommendations.length === 0}
             />
           </div>
-          <div className="no-scrollbar grid-min-6 relative -mx-4 -my-4 grid auto-cols-scroll grid-flow-col grid-cols-scroll gap-4 overflow-x-scroll p-4 md:grid-cols-5 md:gradient-mask-none lg:gap-6">
+          <div className="no-scrollbar grid-min-6 auto-cols-scroll grid-cols-scroll md:gradient-mask-none relative -mx-4 -my-4 grid grid-flow-col gap-4 overflow-x-scroll p-4 md:grid-cols-5 lg:gap-6">
             {isLoading &&
               Array.from({ length: 5 }).map((_, index) => (
                 <div key={index} className="flex flex-col gap-2">
                   <AspectRatio
                     ratio={0.7}
-                    className="skeleton animate-pulse rounded-md bg-secondary/60"
+                    className="skeleton bg-secondary/60 animate-pulse rounded-md"
                   />
-                  <div className="skeleton h-5 animate-pulse rounded-full bg-secondary/60" />
+                  <div className="skeleton bg-secondary/60 h-5 animate-pulse rounded-full" />
                 </div>
               ))}
             {data?.recommendations.length === 0 &&
@@ -111,11 +103,11 @@ const RecommendationBlock: FC = () => {
                 <div key={index} className="flex flex-col gap-2">
                   <AspectRatio
                     ratio={0.7}
-                    className="skeleton flex items-center justify-center rounded-md bg-secondary/60"
+                    className="skeleton bg-secondary/60 flex items-center justify-center rounded-md"
                   >
-                    <MaterialSymbolsSadTabRounded className="size-9 text-muted-foreground" />
+                    <MaterialSymbolsSadTabRounded className="text-muted-foreground size-9" />
                   </AspectRatio>
-                  <div className="skeleton h-5 rounded-full bg-secondary/60" />
+                  <div className="skeleton bg-secondary/60 h-5 rounded-full" />
                 </div>
               ))}
             {data &&
@@ -130,10 +122,10 @@ const RecommendationBlock: FC = () => {
                 >
                   <AspectRatio
                     ratio={0.7}
-                    className="relative w-full overflow-hidden rounded-md bg-muted"
+                    className="bg-muted relative w-full overflow-hidden rounded-md"
                   >
                     <img
-                      className="absolute inset-0 h-full w-full bg-secondary/30 object-cover"
+                      className="bg-secondary/30 absolute inset-0 h-full w-full object-cover"
                       src={item.image}
                       alt={
                         item.title_ua ||
@@ -144,7 +136,7 @@ const RecommendationBlock: FC = () => {
                       loading="lazy"
                     />
                   </AspectRatio>
-                  <span className="line-clamp-2 text-sm font-medium leading-5">
+                  <span className="line-clamp-2 text-sm leading-5 font-medium">
                     {item?.title_ua ||
                       item?.title_en ||
                       item?.title_ja ||
