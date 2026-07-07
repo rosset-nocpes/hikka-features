@@ -160,26 +160,27 @@ const NameSuggestionButton = ({ target }: { target: NameSuggestionTarget }) => {
     };
   }, [enabled, targetInput, inputValue, applySuggestion]);
 
-  const MotionButton = motion.create(Button);
-
-  const isVisible = suggestion && !inputValue;
+  const isVisible = enabled && suggestion && !inputValue;
 
   return (
     <AnimatePresence>
-      {enabled && isVisible && (
-        <MotionButton
+      {isVisible && (
+        <motion.div
           layout
-          variant="secondary"
-          size="sm"
-          className="flex items-center gap-2 rounded-sm"
-          onClick={applySuggestion}
           initial={{ opacity: 0, x: 8, filter: 'blur(4px)' }}
           animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
           exit={{ opacity: 0, x: 8, filter: 'blur(4px)' }}
         >
-          <span>{suggestion}</span>
-          <Kbd className="bg-background/50">Tab</Kbd>
-        </MotionButton>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="flex items-center gap-2 rounded-sm"
+            onClick={applySuggestion}
+          >
+            <span>{suggestion}</span>
+            <Kbd className="bg-background/50">Tab</Kbd>
+          </Button>
+        </motion.div>
       )}
     </AnimatePresence>
   );
