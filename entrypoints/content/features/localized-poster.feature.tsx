@@ -5,18 +5,12 @@ import { createRoot } from 'react-dom/client';
 import MaterialSymbolsPlannerBannerAdPtOutlineRounded from '~icons/material-symbols/planner-banner-ad-pt-outline-rounded';
 import MaterialSymbolsPlannerBannerAdPtRounded from '~icons/material-symbols/planner-banner-ad-pt-rounded';
 
-import { Button } from '@/components/ui/button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { cn } from '@/utils/cn';
 import { syncFeatureTheme } from '@/utils/utils';
 
-import { queryClient } from '../..';
-import { BaseFeature } from '../../core/base-feature';
-import { HikkaPages } from '../../core/core.enums';
+import { queryClient } from '..';
+import { BaseFeature } from '../core/base-feature';
+import { HikkaPages } from '../core/core.enums';
 
 export default class LocalizedPosterFeature extends BaseFeature {
   readonly id = 'localized-poster';
@@ -47,7 +41,7 @@ export default class LocalizedPosterFeature extends BaseFeature {
         const root = createRoot(wrapper);
         root.render(
           <QueryClientProvider client={queryClient}>
-            <LocalizedPoster container={container} />
+            <LocalizedPoster />
           </QueryClientProvider>,
         );
 
@@ -60,20 +54,17 @@ export default class LocalizedPosterFeature extends BaseFeature {
   }
 }
 
-interface Props {
-  container: HTMLElement;
-}
+const EASE = [0.22, 1, 0.36, 1] as const;
 
-const LocalizedPoster = ({ container }: Props) => {
+const LocalizedPoster = () => {
   const { data } = useNotionData();
   const { enabled, autoShow } = useSettings().features.localizedPoster;
 
   const [visible, setVisible] = useState(autoShow);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const canShow = enabled && !!data?.poster;
 
-  const togglePoster = () => {
-    setVisible(!visible);
-  };
+  const togglePoster = () => setVisible((v) => !v);
 
   return (
     <AnimatePresence>
@@ -84,51 +75,57 @@ const LocalizedPoster = ({ container }: Props) => {
         className="size-full object-cover [overflow-clip-margin:unset]"
         style={{ color: 'transparent' }}
         src={data?.poster}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: imageLoaded && visible ? 1 : 0 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2, ease: 'easeInOut' }}
+        initial={{ opacity: 0, clipPath: 'inset(100% 0% 0% 0%)' }}
+        animate={{
+          opacity: imageLoaded ? 1 : 0,
+          clipPath:
+            imageLoaded && visible
+              ? 'inset(0% 0% 0% 0%)'
+              : 'inset(100% 0% 0% 0%)',
+          filter: imageLoaded && visible ? 'blur(0px)' : 'blur(6px)',
+        }}
+        exit={{ opacity: 0, clipPath: 'inset(100% 0% 0% 0%)' }}
+        transition={{ duration: 0.5, ease: EASE }}
         ref={(img) => {
           if (img) setImageLoaded(img.complete);
         }}
         onLoad={() => setImageLoaded(true)}
         onError={() => setImageLoaded(false)}
       />
-      {enabled && data?.poster && imageLoaded && (
-        <motion.div
-          key="poster-button"
-          className="absolute right-2 bottom-2"
-          initial={{ opacity: 0, transform: 'translateX(10px)' }}
-          animate={{ opacity: 1, transform: 'translateX(0px)' }}
-          exit={{ opacity: 0, transform: 'translateX(10px)' }}
+      {canShow && imageLoaded && (
+        <motion.button
+          key="poster-toggle"
+          type="button"
+          aria-pressed={visible}
+          aria-label="Локалізувати постер"
+          onClick={togglePoster}
+          className={cn(
+            'group absolute inset-x-0 bottom-0 z-10 flex cursor-pointer items-end justify-center gap-1.5 pt-8 pb-2.5',
+            'bg-linear-to-t from-black/55 via-black/25 to-transparent text-white',
+            'mask-[linear-gradient(to_top,black_55%,transparent)] backdrop-blur-[2px]',
+            'transition-[padding-top] duration-300 ease-out hover:pt-12',
+          )}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
         >
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon-md"
-                    className="flex"
-                    onClick={togglePoster}
-                  >
-                    {visible && (
-                      <MaterialSymbolsPlannerBannerAdPtRounded className="text-lg" />
-                    )}
-                    {!visible && (
-                      <MaterialSymbolsPlannerBannerAdPtOutlineRounded className="text-lg" />
-                    )}
-                  </Button>
-                }
-              />
-
-              <TooltipContent side="top" container={container}>
-                Локалізувати постер
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </motion.div>
+          <span
+            className={cn(
+              'flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-xs font-medium tracking-wide',
+              'ring-1 ring-white/15 backdrop-blur-md',
+              'translate-y-1 opacity-0 transition-all duration-200 ease-out',
+              'group-hover:translate-y-0 group-hover:opacity-100',
+            )}
+          >
+            {visible ? (
+              <MaterialSymbolsPlannerBannerAdPtRounded className="text-base" />
+            ) : (
+              <MaterialSymbolsPlannerBannerAdPtOutlineRounded className="text-base" />
+            )}
+            Локалізований постер
+          </span>
+        </motion.button>
       )}
     </AnimatePresence>
   );
