@@ -3,10 +3,11 @@ import type { FC } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { createRoot } from 'react-dom/client';
-import MaterialSymbolsSadTabRounded from '~icons/material-symbols/sad-tab-rounded';
+import MaterialSymbolsPersonalizedRecommendations from '~icons/material-symbols/personalized-recommendations';
 
 import BlockButton from '@/components/hikka/block-button';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
+import EmptyState from '@/components/ui/empty-state';
 import HFLogoSmallDark from '@/public/hikka-features-small-dark.svg';
 import HFLogoSmall from '@/public/hikka-features-small.svg';
 
@@ -87,7 +88,7 @@ const RecommendationBlock: FC = () => {
               disabled={isLoading || data?.recommendations.length === 0}
             />
           </div>
-          <div className="no-scrollbar grid-min-6 auto-cols-scroll grid-cols-scroll md:gradient-mask-none relative -mx-4 -my-4 grid grid-flow-col gap-4 overflow-x-scroll p-4 md:grid-cols-5 lg:gap-6">
+          <div className="no-scrollbar md:gradient-mask-none auto-cols-scroll grid-cols-scroll grid-min-6 relative -mx-4 -my-4 grid grid-flow-col gap-4 overflow-x-scroll p-4 sm:grid-cols-4 md:grid-cols-5 lg:gap-6">
             {isLoading &&
               Array.from({ length: 5 }).map((_, index) => (
                 <div key={index} className="flex flex-col gap-2">
@@ -98,18 +99,15 @@ const RecommendationBlock: FC = () => {
                   <div className="skeleton bg-secondary/60 h-5 animate-pulse rounded-full" />
                 </div>
               ))}
-            {data?.recommendations.length === 0 &&
-              Array.from({ length: 5 }).map((_, index) => (
-                <div key={index} className="flex flex-col gap-2">
-                  <AspectRatio
-                    ratio={0.7}
-                    className="skeleton bg-secondary/60 flex items-center justify-center rounded-md"
-                  >
-                    <MaterialSymbolsSadTabRounded className="text-muted-foreground size-9" />
-                  </AspectRatio>
-                  <div className="skeleton bg-secondary/60 h-5 rounded-full" />
-                </div>
-              ))}
+            {data?.recommendations.length === 0 && (
+              <EmptyState
+                bordered
+                icon={<MaterialSymbolsPersonalizedRecommendations />}
+                title="Рекомендацій не знайдено"
+                description="Дай боже, щоб хтось на MAL додав рекомендації"
+                className="col-span-5"
+              />
+            )}
             {data &&
               data.recommendations.length > 0 &&
               data.recommendations.map((item) => (
