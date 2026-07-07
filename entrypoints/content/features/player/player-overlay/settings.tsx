@@ -130,34 +130,34 @@ const Settings = () => {
                 {qualities.length > 0 && (
                   <DropdownMenuItem
                     // disabled={videoQualityOptions.disabled}
-                    onClick={(e) => {
-                      e.stopPropagation();
+                    onClick={() => {
                       setView(Views.Quality);
                     }}
+                    closeOnClick={false}
                   >
                     Якість ({currentQuality})
                   </DropdownMenuItem>
                 )}
                 {subtitles.length > 0 && (
                   <DropdownMenuItem
-                    onClick={(e) => {
-                      e.preventDefault();
+                    onClick={() => {
                       setView(Views.Subtitles);
                     }}
+                    closeOnClick={false}
                   >
                     Субтитри ({currentSubtitle})
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem
                   // disabled={playbackRateOptions.disabled}
-                  onClick={(e) => {
-                    e.preventDefault();
+                  onClick={() => {
                     browser.runtime.sendMessage({
                       type: 'playerjs-command',
                       api: 'qualities',
                     });
                     setView(Views.PlaybackRate);
                   }}
+                  closeOnClick={false}
                 >
                   Швидкість ({currentSpeed})
                 </DropdownMenuItem>
@@ -174,22 +174,22 @@ const Settings = () => {
                 transition={{ duration: 0.2, ease: 'easeInOut' }}
               >
                 <DropdownMenuItem
-                  onClick={(e) => {
-                    e.preventDefault();
+                  onClick={() => {
                     setView(Views.Settings);
                   }}
+                  closeOnClick={false}
                 >
                   <MaterialSymbolsArrowBackRounded />
                   Субтитри
                 </DropdownMenuItem>
-                <DropdownMenuRadioGroup value={currentSubtitle}>
+                <DropdownMenuRadioGroup
+                  value={currentSubtitle}
+                  onValueChange={setCurrentSubtitle}
+                >
                   <DropdownMenuRadioItem
                     key="off"
-                    value="off"
-                    onSelect={(e) => {
-                      e.preventDefault();
-                      setCurrentSubtitle('');
-                    }}
+                    value=""
+                    closeOnClick={false}
                   >
                     Вимк.
                   </DropdownMenuRadioItem>
@@ -197,10 +197,7 @@ const Settings = () => {
                     <DropdownMenuRadioItem
                       key={value}
                       value={value}
-                      onSelect={(e) => {
-                        e.preventDefault();
-                        setCurrentSubtitle(value);
-                      }}
+                      closeOnClick={false}
                     >
                       {value}
                     </DropdownMenuRadioItem>
@@ -219,23 +216,23 @@ const Settings = () => {
                 transition={{ duration: 0.2, ease: 'easeInOut' }}
               >
                 <DropdownMenuItem
-                  onClick={(e) => {
-                    e.preventDefault();
+                  onClick={() => {
                     setView(Views.Settings);
                   }}
+                  closeOnClick={false}
                 >
                   <MaterialSymbolsArrowBackRounded />
                   Якість
                 </DropdownMenuItem>
-                <DropdownMenuRadioGroup value={currentQuality}>
+                <DropdownMenuRadioGroup
+                  value={currentQuality}
+                  onValueChange={setCurrentQuality}
+                >
                   {qualities.toReversed().map((value) => (
                     <DropdownMenuRadioItem
                       key={value}
                       value={value}
-                      onSelect={(e) => {
-                        e.preventDefault();
-                        setCurrentQuality(value);
-                      }}
+                      closeOnClick={false}
                     >
                       {value}
                     </DropdownMenuRadioItem>
@@ -255,23 +252,23 @@ const Settings = () => {
                 transition={{ duration: 0.2, ease: 'easeInOut' }}
               >
                 <DropdownMenuItem
-                  onClick={(e) => {
-                    e.preventDefault();
+                  onClick={() => {
                     setView(Views.Settings);
                   }}
+                  closeOnClick={false}
                 >
                   <MaterialSymbolsArrowBackRounded />
                   Швидкість
                 </DropdownMenuItem>
-                <DropdownMenuRadioGroup value={currentSpeed.toString()}>
+                <DropdownMenuRadioGroup
+                  value={currentSpeed}
+                  onValueChange={changeSpeed}
+                >
                   {speedOptions.map((value) => (
                     <DropdownMenuRadioItem
                       key={value}
-                      value={value.toString()}
-                      onSelect={(e) => {
-                        e.preventDefault();
-                        changeSpeed(value);
-                      }}
+                      value={value}
+                      closeOnClick={false}
                     >
                       {value}
                     </DropdownMenuRadioItem>

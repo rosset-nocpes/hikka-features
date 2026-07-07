@@ -12,13 +12,15 @@ const BaseSlider = forwardRef<
 >(({ className, children, bufferSegments, ...props }, ref) => (
   <SliderPrimitive.Root
     ref={ref}
-    className={cn(
-      'relative flex w-full touch-none items-center select-none',
-      className,
-    )}
+    className="relative flex w-full touch-none items-center select-none"
     {...props}
   >
-    <SliderPrimitive.Control className="relative flex w-full touch-none items-center select-none data-disabled:opacity-50 data-vertical:h-full data-vertical:min-h-40 data-vertical:w-auto data-vertical:flex-col">
+    <SliderPrimitive.Control
+      className={cn(
+        'relative flex w-full touch-none items-center select-none data-disabled:opacity-50 data-vertical:h-full data-vertical:min-h-40 data-vertical:w-auto data-vertical:flex-col',
+        className,
+      )}
+    >
       <SliderPrimitive.Track className="bg-secondary relative h-1 w-full grow overflow-hidden rounded-full duration-100 group-hover:scale-y-150">
         {bufferSegments?.map((segment, index) => (
           <div

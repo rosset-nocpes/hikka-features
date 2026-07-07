@@ -186,7 +186,6 @@ const Time = ({ className, trackClassName }: TimeProps = {}) => {
         ref={trackRef}
         className={cn(
           'group relative inline-flex w-full cursor-pointer touch-none pb-1 outline-none select-none',
-          isCompact ? 'pt-2' : 'pt-4',
           trackClassName,
         )}
         value={value}
@@ -199,7 +198,12 @@ const Time = ({ className, trackClassName }: TimeProps = {}) => {
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
-        <SliderPrimitive.Control className="relative flex w-full touch-none items-center select-none data-disabled:opacity-50 data-vertical:h-full data-vertical:min-h-40 data-vertical:w-auto data-vertical:flex-col">
+        <SliderPrimitive.Control
+          className={cn(
+            'relative flex w-full touch-none items-center select-none data-disabled:opacity-50 data-vertical:h-full data-vertical:min-h-40 data-vertical:w-auto data-vertical:flex-col',
+            isCompact ? 'pt-2' : 'pt-4',
+          )}
+        >
           <SliderPrimitive.Track
             className={cn(
               'border-shadow bg-secondary relative w-full grow overflow-hidden rounded-full duration-100 group-hover:scale-y-150',
