@@ -47,43 +47,28 @@ const PlayerSettings = () => {
           />
           <div className="flex items-center justify-between px-4 py-3">
             <label className="text-sm font-medium">Тип мінірежиму</label>
-            {navigator.userAgent.toLowerCase().includes('firefox') ? (
-              <select
-                className="border-input bg-background placeholder:text-muted-foreground flex h-10 w-36 cursor-pointer items-center justify-between rounded-md border px-3 py-2 text-sm focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1"
-                value={miniModeType}
-                onChange={(e) => {
-                  updateFeatureSettings('player', {
-                    miniModeType: e.target.value as 'custom' | 'video-native',
-                  });
-                }}
-              >
-                <option value="custom">Кастомний</option>
-                <option value="video-native">Картинка в картинці</option>
-              </select>
-            ) : (
-              <Select
-                items={miniModeTypeOptions}
-                value={miniModeType}
-                onValueChange={(value) => {
-                  updateFeatureSettings('player', {
-                    miniModeType: value as 'custom' | 'video-native',
-                  });
-                }}
-              >
-                <SelectTrigger className="w-36">
-                  <SelectValue placeholder="Оберіть тип мінірежиму" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {miniModeTypeOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            )}
+            <Select
+              items={miniModeTypeOptions}
+              value={miniModeType}
+              onValueChange={(value) => {
+                updateFeatureSettings('player', {
+                  miniModeType: value as 'custom' | 'video-native',
+                });
+              }}
+            >
+              <SelectTrigger className="w-36">
+                <SelectValue placeholder="Оберіть тип мінірежиму" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {miniModeTypeOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex items-center justify-between px-4 py-3">
             <label className="text-sm font-medium">
