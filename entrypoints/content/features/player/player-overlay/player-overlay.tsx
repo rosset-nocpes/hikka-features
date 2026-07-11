@@ -45,10 +45,7 @@ const PlayerOverlay = ({ toggleWatchedState }: Props) => {
           <BufferingIndicator />
           <div
             className={cn(
-              'relative flex flex-col bg-linear-to-t opacity-100 transition-opacity duration-300',
-              isCompactMode
-                ? 'from-black/45 to-transparent'
-                : 'from-black/10 to-transparent',
+              'relative flex flex-col opacity-100 transition-opacity duration-300',
               !isCompactMode && 'pb-20 md:pb-0',
               !uiShown && 'opacity-0',
             )}
