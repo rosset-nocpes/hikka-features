@@ -99,12 +99,12 @@ const RecommendationBlock: FC = () => {
                   <div className="skeleton bg-secondary/60 h-5 animate-pulse rounded-full" />
                 </div>
               ))}
-            {data?.recommendations.length === 0 && (
+            {!data?.recommendations.length && (
               <EmptyState
                 bordered
                 icon={<MaterialSymbolsPersonalizedRecommendations />}
                 title="Рекомендацій не знайдено"
-                description="Дай боже, щоб хтось на MAL додав рекомендації"
+                description="Рікка засмучена через відсутність рекомендацій"
                 className="col-span-5"
               />
             )}
