@@ -1,6 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import MaterialSymbolsPlannerBannerAdPtOutlineRounded from '~icons/material-symbols/planner-banner-ad-pt-outline-rounded';
 import MaterialSymbolsPlannerBannerAdPtRounded from '~icons/material-symbols/planner-banner-ad-pt-rounded';
@@ -66,32 +66,39 @@ const LocalizedPoster = () => {
 
   const togglePoster = () => setVisible((v) => !v);
 
+  useEffect(() => {
+    if (!data?.poster) return;
+    setImageLoaded(false);
+    const img = new Image();
+    img.onload = () => setImageLoaded(true);
+    img.onerror = () => setImageLoaded(false);
+    img.src = data.poster;
+    return () => {
+      img.onload = null;
+      img.onerror = null;
+    };
+  }, [data?.poster]);
+
   return (
     <AnimatePresence>
-      <motion.img
-        key="poster"
-        alt="Localized Poster"
-        decoding="async"
-        className="size-full object-cover [overflow-clip-margin:unset]"
-        style={{ color: 'transparent' }}
-        src={data?.poster}
-        initial={{ opacity: 0, clipPath: 'inset(100% 0% 0% 0%)' }}
-        animate={{
-          opacity: imageLoaded ? 1 : 0,
-          clipPath:
-            imageLoaded && visible
-              ? 'inset(0% 0% 0% 0%)'
-              : 'inset(100% 0% 0% 0%)',
-          filter: imageLoaded && visible ? 'blur(0px)' : 'blur(6px)',
-        }}
-        exit={{ opacity: 0, clipPath: 'inset(100% 0% 0% 0%)' }}
-        transition={{ duration: 0.5, ease: EASE }}
-        ref={(img) => {
-          if (img) setImageLoaded(img.complete);
-        }}
-        onLoad={() => setImageLoaded(true)}
-        onError={() => setImageLoaded(false)}
-      />
+      {imageLoaded && (
+        <motion.img
+          key="poster"
+          alt="Localized Poster"
+          decoding="async"
+          className="size-full object-cover [overflow-clip-margin:unset]"
+          style={{ color: 'transparent' }}
+          src={data?.poster}
+          initial={{ opacity: 0, clipPath: 'inset(100% 0% 0% 0%)' }}
+          animate={{
+            opacity: 1,
+            clipPath: visible ? 'inset(0% 0% 0% 0%)' : 'inset(100% 0% 0% 0%)',
+            filter: visible ? 'blur(0px)' : 'blur(6px)',
+          }}
+          exit={{ opacity: 0, clipPath: 'inset(100% 0% 0% 0%)' }}
+          transition={{ duration: 0.5, ease: EASE }}
+        />
+      )}
       {canShow && imageLoaded && (
         <motion.button
           key="poster-toggle"
