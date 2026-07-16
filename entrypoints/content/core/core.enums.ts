@@ -1,5 +1,6 @@
 export enum HikkaPages {
   All = 'all',
+  AllContent = 'all-content',
   // Anime
   AnimeSearch = 'anime-search',
   AnimeContent = 'anime-content',
