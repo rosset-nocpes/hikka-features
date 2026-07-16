@@ -5,6 +5,7 @@ export const HIKKA_PAGE_CHECKERS: Record<
   (path: string) => boolean
 > = {
   [HikkaPages.All]: () => true,
+  [HikkaPages.AllContent]: (p) => /^\/(anime|manga|novel)\//.test(p),
   [HikkaPages.AnimeSearch]: (p) => p.endsWith('/anime'),
   [HikkaPages.AnimeContent]: (p) => p.startsWith('/anime/'),
   [HikkaPages.AnimeMainPage]: (p) => /^\/anime\/[\w-]+$/.test(p),
