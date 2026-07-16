@@ -45,7 +45,7 @@ export default class AniButtonsFeature extends BaseFeature {
       },
       anchor: () =>
         isEdit()
-          ? 'div.grid > div > section:last-of-type > div:last-of-type'
+          ? 'div.grid > div'
           : '#content-right-side > #content-stats',
       css: `:host(${this.id}) { margin-bottom: -2rem !important; }`,
       inheritStyles: true,
