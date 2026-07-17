@@ -40,6 +40,9 @@ export default defineConfig({
     browser_specific_settings: {
       gecko: {
         id: 'extension@hikka-features.pp.ua',
+        data_collection_permissions: {
+          required: ['none'],
+        },
       },
     },
     declarative_net_request: {
