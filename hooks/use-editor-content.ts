@@ -35,7 +35,8 @@ const useEditorContent = () => {
   return useQuery({
     queryKey: ['editor-content', slug],
     queryFn: async () => {
-      const effectiveType = CONTENT_TYPE_MAP[content_type as string] ?? content_type;
+      const effectiveType =
+        CONTENT_TYPE_MAP[content_type as string] ?? content_type;
 
       if (!slug || !effectiveType) {
         throw new Error('Missing slug or content_type');
