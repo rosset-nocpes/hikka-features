@@ -18,7 +18,7 @@ export default class NameSuggestionFeature extends BaseFeature {
   readonly pages = [
     HikkaPages.EditCreateCharacter,
     HikkaPages.EditCreatePerson,
-    HikkaPages.AllContent
+    HikkaPages.AllContent,
   ];
   private uis: {
     target: NameSuggestionTarget;
