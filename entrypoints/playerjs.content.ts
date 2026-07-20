@@ -1,5 +1,16 @@
 import { usePlayer } from './content/features/player/context/player-context';
 
+// todo: add own ui for ad
+// todo: add own ui for subtitle system
+const HIDE_PLAYER_UI_CSS = `
+  pjsdiv
+    > pjsdiv:not(:has(video)):not(:has(video) + pjsdiv):not([id*='subtitle']):not([class*='subtitle']) {
+    display: none !important;
+  }
+`;
+
+const VIDEO_WAIT_TIMEOUT_MS = 15_000;
+
 export default defineContentScript({
   matches: [
     'https://moonanime.art/*',
@@ -7,46 +18,65 @@ export default defineContentScript({
     'https://tortuga.tw/*',
   ],
   allFrames: true,
+  runAt: 'document_start',
   async main(ctx) {
-    if (!(await isHikkaContentLoaded())) return;
+    const fromHikka = ['https://hikka.io/', 'https://dev.hikka.io/'].some(
+      (origin) => document.referrer.startsWith(origin),
+    );
 
-    const video = document.querySelector('video') as HTMLVideoElement;
+    if (!fromHikka && !(await isHikkaContentLoaded())) return;
 
-    const cleanupPlayerUi = () => {
-      Array.from(document.querySelectorAll('pjsdiv > pjsdiv'))
-        .slice(2)
-        .forEach((element) => {
-          if (!element.classList.toString().includes('subtitles')) {
-            (element as HTMLElement).style.setProperty(
-              'display',
-              'none',
-              'important',
-            );
-          }
+    const style = document.createElement('style');
+    style.textContent = HIDE_PLAYER_UI_CSS;
+    (document.head ?? document.documentElement)?.appendChild(style);
+    ctx.onInvalidated(() => style.remove());
+
+    let video: HTMLVideoElement | null = document.querySelector('video');
+
+    if (!video) {
+      video = await new Promise<HTMLVideoElement | null>((resolve) => {
+        const observer = new MutationObserver(() => {
+          const el = document.querySelector('video');
+          if (el) finish(el as HTMLVideoElement);
         });
-    };
 
-    cleanupPlayerUi();
+        const timeout = window.setTimeout(
+          () => finish(null),
+          VIDEO_WAIT_TIMEOUT_MS,
+        );
 
-    const observer = new MutationObserver(cleanupPlayerUi);
-    observer.observe(document.documentElement, {
-      childList: true,
-      subtree: true,
-    });
-    window.setTimeout(() => observer.disconnect(), 10_000);
+        const finish = (result: HTMLVideoElement | null) => {
+          window.clearTimeout(timeout);
+          observer.disconnect();
+          resolve(result);
+        };
+
+        observer.observe(document.documentElement, {
+          childList: true,
+          subtree: true,
+        });
+        ctx.onInvalidated(() => finish(null));
+      });
+    }
+
+    if (!video) {
+      style.remove();
+      return;
+    }
 
     const handlePlayerCommand = (message: unknown) => {
       if (!isPlayerCommand(message)) return;
 
       if (message.api === 'piptoggle') {
         if (usePlayer.getState().videoPiPActive) {
-          document.exitPictureInPicture();
+          document.exitPictureInPicture().catch(() => {});
         } else {
-          video.requestPictureInPicture();
+          video.requestPictureInPicture().catch(() => {});
         }
       }
 
-      window.postMessage({ ...message, type: undefined }, '*');
+      const { type: _type, ...command } = message;
+      window.postMessage(command, '*');
     };
 
     const handlePIPEnter = () => {
@@ -65,7 +95,6 @@ export default defineContentScript({
     browser.runtime.onMessage.addListener(handlePlayerCommand);
 
     ctx.onInvalidated(() => {
-      observer.disconnect();
       video.removeEventListener('enterpictureinpicture', handlePIPEnter);
       video.removeEventListener('leavepictureinpicture', handlePIPLeave);
       browser.runtime.onMessage.removeListener(handlePlayerCommand);
@@ -84,6 +113,7 @@ const isHikkaContentLoaded = async () => {
     await new Promise((resolve) => window.setTimeout(resolve, 100));
   }
 
+  // todo: return false
   return document.referrer === 'https://hikka.io/';
 };
 
