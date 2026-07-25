@@ -1,46 +1,16 @@
-import ky from 'ky';
+import { revokeConvexSession } from './convex-client';
 
 export async function Login() {
-  const granted =
-    import.meta.env.BROWSER === 'firefox'
-      ? true
-      : await browser.permissions.request({
-          permissions: ['identity'],
-          origins: ['https://api.hikka.io/*'],
-        });
-
-  if (granted) await browser.runtime.sendMessage({ type: 'login' });
+  await browser.runtime.sendMessage({ type: 'login' });
 }
 
 export async function Logout() {
-  const { setSettings } = useSettings.getState();
-
-  setSettings({
-    richPresence: false,
-    userData: undefined,
-    hikkaSecret: undefined,
-  });
+  await revokeConvexSession();
+  useSettings.getState().setSettings({ richPresence: false });
 }
 
 export async function getUserData() {
-  const { hikkaSecret } = useSettings.getState();
-  if (!hikkaSecret) return;
-
-  return ky
-    .get('https://api.hikka.io/user/me', {
-      headers: { auth: hikkaSecret.secret },
-    })
-    .json<any>();
-}
-
-export async function EditDesc(description: string) {
-  const { hikkaSecret } = useSettings.getState();
-  if (!hikkaSecret) return;
-
-  await ky.put('https://api.hikka.io/settings/description', {
-    headers: { auth: hikkaSecret.secret },
-    json: { description },
-  });
+  return useSettings.getState().userData;
 }
 
 export async function actionRichPresence(action: 'check' | 'remove') {

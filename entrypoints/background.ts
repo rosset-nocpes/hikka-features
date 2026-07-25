@@ -6,6 +6,15 @@ import type {
   RemoteFetchResponse,
 } from '@/utils/remote-fetch';
 
+import { convexApi } from '@/utils/convex-api';
+import {
+  CONVEX_SITE_URL,
+  convexMutation,
+  convexQuery,
+  exchangeLoginCode,
+} from '@/utils/convex-client';
+import { syncFavoritesFromConvex } from '@/utils/favorite-sync';
+
 interface LoginRequest {
   type: 'login';
 }
@@ -19,17 +28,6 @@ interface WatchTogetherRequest {
   type: 'watch-together';
   action: 'create' | 'join' | 'leave';
   roomId?: string;
-}
-
-interface PlayerInfo {
-  playerProvider: string;
-  teamName: string;
-  episodeNumber: number;
-}
-
-interface WatchTogetherRequestHost extends WatchTogetherRequest {
-  animeSlug: string;
-  playerInfo: PlayerInfo;
 }
 
 interface HikkaContentLoadedRequest {
@@ -56,6 +54,79 @@ type MessageRequest =
 
 export default defineBackground(() => {
   const hikkaContentTabs = new Set<number>();
+  const notificationAlarm = 'release-notifications';
+
+  const ensureNotificationAlarm = async () => {
+    if (!(await browser.alarms.get(notificationAlarm))) {
+      await browser.alarms.create(notificationAlarm, {
+        delayInMinutes: 1,
+        periodInMinutes: 5,
+      });
+    }
+  };
+
+  const pollReleaseNotifications = async () => {
+    if (!useSettings.getState().convexSession) return;
+    const notifications = await convexQuery(convexApi.notifications.unread, {
+      limit: 25,
+    });
+    if (!notifications.length) return;
+
+    const targets = (await browser.storage.local.get('notificationTargets'))
+      .notificationTargets as Record<string, string> | undefined;
+    const updatedTargets = { ...targets };
+    const delivered: string[] = [];
+
+    for (const notification of notifications) {
+      const id = `release:${notification.id}`;
+      await browser.notifications.create(id, {
+        type: 'basic',
+        iconUrl: '/hikka-features-small.svg',
+        title: `${notification.teamTitle}: серія ${notification.episodeNumber}`,
+        message:
+          notification.episodeTitle ??
+          `Вийшла нова серія для ${notification.teamTitle}`,
+      });
+      updatedTargets[id] = notification.animeSlug;
+      delivered.push(notification.id);
+    }
+
+    await browser.storage.local.set({
+      notificationTargets: updatedTargets,
+    });
+    await convexMutation(convexApi.notifications.markDelivered, {
+      ids: delivered,
+    });
+  };
+
+  ensureNotificationAlarm();
+  if (useSettings.getState().convexSession) {
+    syncFavoritesFromConvex()
+      .then(pollReleaseNotifications)
+      .catch(console.error);
+  }
+  browser.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name === notificationAlarm) {
+      pollReleaseNotifications().catch(console.error);
+    }
+  });
+  browser.notifications.onClicked.addListener(async (notificationId) => {
+    if (!notificationId.startsWith('release:')) return;
+    const stored = await browser.storage.local.get('notificationTargets');
+    const targets = (stored.notificationTargets ?? {}) as Record<
+      string,
+      string
+    >;
+    const slug = targets[notificationId];
+    if (slug) {
+      await browser.tabs.create({ url: `https://hikka.io/anime/${slug}` });
+    }
+    await convexMutation(convexApi.notifications.markRead, {
+      id: notificationId.slice('release:'.length),
+    }).catch(console.error);
+    delete targets[notificationId];
+    await browser.storage.local.set({ notificationTargets: targets });
+  });
 
   browser.tabs.onRemoved.addListener((tabId) => {
     hikkaContentTabs.delete(tabId);
@@ -99,46 +170,27 @@ export default defineBackground(() => {
           };
 
         case 'login': {
-          const { setSettings } = useSettings.getState();
+          if (!CONVEX_SITE_URL) {
+            throw new Error('WXT_CONVEX_SITE_URL is not configured');
+          }
+          const redirectUri = browser.identity.getRedirectURL();
+          const authUrl = new URL(`${CONVEX_SITE_URL}/auth/hikka/start`);
+          authUrl.searchParams.set('redirect_uri', redirectUri);
+          const responseUrl = await browser.identity.launchWebAuthFlow({
+            interactive: true,
+            url: authUrl.toString(),
+          });
+          if (!responseUrl) throw new Error('Hikka login was cancelled');
 
-          const auth_url = `https://hikka.io/oauth/?reference=${CLIENT_REFERENCE}&scope=${encodeURIComponent(
-            NEEDED_SCOPES.join(','),
-          )}`;
-
-          browser.identity
-            .launchWebAuthFlow({
-              interactive: true,
-              url: auth_url,
-            })
-            .then(async (response_url) => {
-              const params = new URLSearchParams(response_url?.split('?')[1]);
-
-              setSettings({
-                hikkaSecret: {
-                  secret: params.get('secret')!,
-                  expiration: Number(params.get('expiration')),
-                },
-              });
-
-              const r = await getUserData();
-              if (!r) return;
-
-              setSettings({
-                userData: {
-                  hikkaId: r.reference,
-                  username: r.username,
-                  avatar: r.avatar,
-                },
-              });
-            })
-            .finally(() => {
-              if (import.meta.env.BROWSER === 'firefox') return;
-
-              void browser.permissions.remove({
-                permissions: ['identity'],
-                origins: ['https://api.hikka.io/*'],
-              });
-            });
+          const response = new URL(responseUrl);
+          const authError = response.searchParams.get('error');
+          const code = response.searchParams.get('code');
+          if (authError || !code) {
+            throw new Error(authError ?? 'Hikka login did not return a code');
+          }
+          await exchangeLoginCode(code);
+          await syncFavoritesFromConvex();
+          await pollReleaseNotifications();
 
           return true;
         }

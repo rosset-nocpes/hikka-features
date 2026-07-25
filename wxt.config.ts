@@ -29,10 +29,12 @@ export default defineConfig({
   }),
   manifest: () => ({
     name: 'Hikka Features',
-    permissions: ['storage', 'identity'],
+    permissions: ['storage', 'identity', 'alarms', 'notifications'],
     host_permissions: [
-      'https://api.hikka.io/*',
-      'https://api.hikka-features.pp.ua/*',
+      'https://*.hikka.io/*',
+      'https://*.hikka-features.pp.ua/*',
+      'https://*.convex.cloud/*',
+      'https://*.convex.site/*',
       'https://graphql.anilist.co/*',
       'https://api.tenrai.org/*',
       'https://manga.in.ua/*',

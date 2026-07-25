@@ -8,6 +8,7 @@ import {
 import { create } from 'zustand';
 
 import { useSidebar } from '@/components/ui/sidebar';
+import { removeSyncedFavorite, syncFavorite } from '@/utils/favorite-sync';
 import { ProviderIFrame, ProviderTeamIFrame } from '@/utils/provider_classes';
 
 interface PlayerState {
@@ -86,7 +87,7 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
 
       const providers_avaliable = getAvailablePlayers(data).map((e) => e.title);
       const { slug } = usePageStore.getState();
-      const favoriteTeam = favoriteTeams[slug!];
+      const storedFavoriteTeam = favoriteTeams[slug!];
 
       const params = new URLSearchParams(window.location.search);
       const sharedParams: SharedPlayerParams = {
@@ -114,8 +115,9 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
       const provider =
         isShared && providers_avaliable.includes(sharedParams.provider!)
           ? sharedParams.provider!
-          : favoriteTeam
-            ? favoriteTeam.provider
+          : storedFavoriteTeam &&
+              providers_avaliable.includes(storedFavoriteTeam.provider)
+            ? storedFavoriteTeam.provider
             : providers_avaliable.includes(defaultProvider)
               ? defaultProvider
               : providers_avaliable[0];
@@ -125,20 +127,27 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
         title: '',
         logo: '',
       };
+      let favoriteTeam = storedFavoriteTeam;
       if (data[provider] instanceof ProviderTeamIFrame) {
         const first_team = data[provider].getTeams()[0];
+        const favoriteDisplayTeam = storedFavoriteTeam
+          ? data[provider]
+              .getTeams()
+              .find(
+                (candidate) =>
+                  candidate.title === storedFavoriteTeam.team ||
+                  candidate.canonicalTitle === storedFavoriteTeam.team,
+              )
+          : undefined;
 
         if (isShared && data[provider].teams[sharedParams.team!]) {
           team = data[provider].getTeam(sharedParams.team!);
-        } else if (
-          favoriteTeam &&
-          (data[favoriteTeam.provider] as ProviderTeamIFrame).teams[
-            favoriteTeam.team
-          ]
-        ) {
-          team = (data[favoriteTeam.provider] as ProviderTeamIFrame).getTeam(
-            favoriteTeam.team,
-          );
+        } else if (favoriteDisplayTeam) {
+          team = favoriteDisplayTeam;
+          favoriteTeam = {
+            provider,
+            team: favoriteDisplayTeam.title,
+          };
         } else {
           team = first_team;
         }
@@ -237,6 +246,17 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
       updateFeatureSettings('player', { favoriteTeams: updated });
 
       set({ favoriteTeam: newTeam });
+      const selectedTeam =
+        get().watchData?.[provider] instanceof ProviderTeamIFrame
+          ? (get().watchData![provider] as ProviderTeamIFrame).getTeam(team)
+          : undefined;
+      syncFavorite({
+        animeSlug: slug,
+        provider,
+        teamId: selectedTeam?.id,
+        teamTitle: selectedTeam?.canonicalTitle ?? team,
+        translationType: selectedTeam?.translationType,
+      }).catch(console.error);
     },
     removeFavoriteTeam: () => {
       const { favoriteTeams } = useSettings.getState().features.player;
@@ -249,6 +269,7 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
       updateFeatureSettings('player', { favoriteTeams: updated });
 
       set({ favoriteTeam: undefined });
+      removeSyncedFavorite(slug).catch(console.error);
     },
     setEpisode: (episode) => set({ currentEpisode: episode }),
     toggleFullscreen: () => {

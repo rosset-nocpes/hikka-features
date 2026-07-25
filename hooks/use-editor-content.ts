@@ -1,6 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import ky from 'ky';
 
+import { BACKEND_BRANCHES } from '@/utils/constants';
+import { convexApi } from '@/utils/convex-api';
+import { CONVEX_URL, convexAction } from '@/utils/convex-client';
+
 const CONTENT_TYPE_MAP: Record<string, string> = {
   person: 'people',
   character: 'characters',
@@ -41,6 +45,16 @@ const useEditorContent = () => {
 
       if (!slug || !effectiveType) {
         throw new Error('Missing slug or content_type');
+      }
+
+      if (
+        CONVEX_URL &&
+        (effectiveType === 'characters' || effectiveType === 'people')
+      ) {
+        return await convexAction(convexApi.editor.suggest, {
+          type: effectiveType,
+          slug,
+        });
       }
 
       return ky

@@ -31,6 +31,7 @@
     "cheerio": "^1.2.0",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.2.4",
+    "convex": "^1.42.3",
     "dompurify": "^3.4.14",
     "embla-carousel-react": "^8.6.0",
     "embla-carousel-wheel-gestures": "^8.1.0",

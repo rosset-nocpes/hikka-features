@@ -47,7 +47,6 @@ const UserOptions = () => {
             </AvatarFallback>
           </Avatar>
         }
-        disabled
       />
       <DropdownMenuContent align="end">
         {!userData && (
