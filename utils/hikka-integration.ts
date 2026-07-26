@@ -1,7 +1,23 @@
 import { revokeConvexSession } from './convex-client';
 
+type LoginResponse = {
+  authenticated: true;
+  refreshToken: string;
+  user: UserDataV2;
+};
+
 export async function Login() {
-  await browser.runtime.sendMessage({ type: 'login' });
+  const response = (await browser.runtime.sendMessage({
+    type: 'login',
+  })) as LoginResponse | undefined;
+  if (!response?.authenticated) {
+    throw new Error('Не вдалося завершити вхід через hikka.io');
+  }
+  useSettings.getState().setSettings({
+    convexSession: { refreshToken: response.refreshToken },
+    userData: response.user,
+  });
+  return response.user;
 }
 
 export async function Logout() {

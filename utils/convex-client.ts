@@ -7,7 +7,7 @@ import { useSettings } from '@/hooks/use-settings';
 export const CONVEX_URL = import.meta.env.WXT_CONVEX_URL ?? '';
 export const CONVEX_SITE_URL = import.meta.env.WXT_CONVEX_SITE_URL ?? '';
 
-interface AuthResponse {
+export interface AuthResponse {
   accessToken: string;
   accessTokenExpiresIn: number;
   refreshToken: string;
@@ -60,9 +60,33 @@ function acceptAuth(response: AuthResponse) {
   return response.accessToken;
 }
 
+export async function getHikkaAuthorizationUrl(redirectUri: string) {
+  if (!CONVEX_SITE_URL) {
+    throw new Error('WXT_CONVEX_SITE_URL is not configured');
+  }
+  const url = new URL(`${CONVEX_SITE_URL}/auth/hikka/start`);
+  url.searchParams.set('redirect_uri', redirectUri);
+  const response = await fetch(url);
+  if (!response.ok) {
+    const data = (await response.json().catch(() => undefined)) as
+      | { error?: string }
+      | undefined;
+    throw new Error(data?.error ?? `Authentication failed: ${response.status}`);
+  }
+  const data = (await response.json()) as { authorizationUrl?: string };
+  if (!data.authorizationUrl) {
+    throw new Error(
+      'Authentication server did not return an authorization URL',
+    );
+  }
+  return data.authorizationUrl;
+}
+
 export async function exchangeLoginCode(code: string) {
   const response = await authRequest('/auth/session/exchange', { code });
-  return acceptAuth((await response.json()) as AuthResponse);
+  const auth = (await response.json()) as AuthResponse;
+  acceptAuth(auth);
+  return auth;
 }
 
 export async function getAccessToken(force = false) {

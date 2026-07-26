@@ -8,15 +8,21 @@ import type {
 
 import { convexApi } from '@/utils/convex-api';
 import {
-  CONVEX_SITE_URL,
   convexMutation,
   convexQuery,
   exchangeLoginCode,
+  getHikkaAuthorizationUrl,
 } from '@/utils/convex-client';
 import { syncFavoritesFromConvex } from '@/utils/favorite-sync';
 
 interface LoginRequest {
   type: 'login';
+}
+
+interface LoginResponse {
+  authenticated: true;
+  refreshToken: string;
+  user: UserDataV2;
 }
 
 interface RichPresenceCheckRequest {
@@ -141,7 +147,11 @@ export default defineBackground(() => {
       request: unknown,
       sender,
     ): Promise<
-      true | { loaded: boolean } | RemoteFetchResponse | undefined
+      | true
+      | LoginResponse
+      | { loaded: boolean }
+      | RemoteFetchResponse
+      | undefined
     > => {
       // Type guard for MessageRequest
       if (!request || typeof request !== 'object' || !('type' in request)) {
@@ -170,15 +180,11 @@ export default defineBackground(() => {
           };
 
         case 'login': {
-          if (!CONVEX_SITE_URL) {
-            throw new Error('WXT_CONVEX_SITE_URL is not configured');
-          }
           const redirectUri = browser.identity.getRedirectURL();
-          const authUrl = new URL(`${CONVEX_SITE_URL}/auth/hikka/start`);
-          authUrl.searchParams.set('redirect_uri', redirectUri);
+          const authorizationUrl = await getHikkaAuthorizationUrl(redirectUri);
           const responseUrl = await browser.identity.launchWebAuthFlow({
             interactive: true,
-            url: authUrl.toString(),
+            url: authorizationUrl,
           });
           if (!responseUrl) throw new Error('Hikka login was cancelled');
 
@@ -188,11 +194,15 @@ export default defineBackground(() => {
           if (authError || !code) {
             throw new Error(authError ?? 'Hikka login did not return a code');
           }
-          await exchangeLoginCode(code);
+          const auth = await exchangeLoginCode(code);
           await syncFavoritesFromConvex();
           await pollReleaseNotifications();
 
-          return true;
+          return {
+            authenticated: true,
+            refreshToken: auth.refreshToken,
+            user: auth.user,
+          };
         }
 
         case 'rich-presence-check':

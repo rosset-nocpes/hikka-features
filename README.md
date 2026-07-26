@@ -12,6 +12,16 @@ Plugin uses:
 
 ## Development
 
+Copy `.env.example` to `.env` and set the Convex deployment URLs. The extension
+uses `WXT_CONVEX_URL` for functions and `WXT_CONVEX_SITE_URL` for the Hikka
+OAuth/session endpoints.
+
+Register `<CONVEX_SITE_URL>/auth/hikka/callback` as the redirect URL of the
+Hikka application. Configure the values returned by
+`browser.identity.getRedirectURL()` as `CHROME_EXTENSION_REDIRECT_URI` and
+`FIREFOX_EXTENSION_REDIRECT_URI` on the backend, and include both in
+`ALLOWED_EXTENSION_REDIRECTS`.
+
 ```sh
 # Run plugin on Chrome
 $ bun dev
