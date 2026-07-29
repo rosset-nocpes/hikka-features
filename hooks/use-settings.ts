@@ -24,7 +24,6 @@ interface AppState {
   // State Values
   convexSession?: { refreshToken: string };
   userData?: UserDataV2;
-  backendBranch: BackendBranches;
   richPresence: boolean;
 
   features: {
@@ -113,9 +112,6 @@ export const useSettings = create<AppState>()(
       },
       convexSession: undefined,
       userData: undefined,
-      backendBranch: import.meta.env.WXT_BACKEND_BASE_URL
-        ? 'localhost'
-        : 'stable',
       richPresence: false,
 
       // Generic setter
@@ -136,7 +132,6 @@ export const useSettings = create<AppState>()(
         features: state.features,
         convexSession: state.convexSession,
         userData: state.userData,
-        backendBranch: state.backendBranch,
         richPresence: state.richPresence,
       }),
       version: 0,
@@ -167,7 +162,6 @@ const migrateFromOldStorage = async () => {
       ...state,
       convexSession: state.convexSession,
       userData: oldStorage.userData || state.userData,
-      backendBranch: oldStorage.backendBranch || state.backendBranch,
       richPresence: oldStorage.richPresence ?? state.richPresence,
       features: {
         ...state.features,

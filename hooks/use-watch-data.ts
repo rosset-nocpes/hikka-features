@@ -1,9 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import ky from 'ky';
 
-import { BACKEND_BRANCHES } from '@/utils/constants';
-import { convexApi, type ConvexWatchResult } from '@/utils/convex-api';
-import { CONVEX_URL, convexAction } from '@/utils/convex-client';
+import { type ConvexWatchResult, convexApi } from '@/utils/convex-api';
+import { convexAction } from '@/utils/convex-client';
 import { ProviderIFrame, ProviderTeamIFrame } from '@/utils/provider_classes';
 
 const toEpisode = (
@@ -17,7 +15,7 @@ const toEpisode = (
   is_sub: isSub,
 });
 
-const toLegacyWatchData = (data: ConvexWatchResult): API.WatchData => {
+const toWatchData = (data: ConvexWatchResult): API.WatchData => {
   const out = {
     type: data.anime.mediaType === 'unknown' ? 'tv' : data.anime.mediaType,
   } as API.WatchData;
@@ -62,39 +60,15 @@ const toLegacyWatchData = (data: ConvexWatchResult): API.WatchData => {
 };
 
 const useWatchData = () => {
-  const { backendBranch } = useSettings();
   const { slug } = usePageStore();
 
   return useQuery({
     queryKey: ['watch-data', slug],
     queryFn: async () => {
-      if (CONVEX_URL) {
-        const data = await convexAction(convexApi.watch.resolve, {
-          slug: slug!,
-        });
-        return toLegacyWatchData(data);
-      }
-
-      const data = await ky
-        .get(`${BACKEND_BRANCHES[backendBranch]}/watch/v2/${slug}`)
-        .json<API.WatchData>();
-      const out = data;
-      for (const [key, elem] of Object.entries(data)) {
-        if (typeof elem === 'string') continue;
-
-        if (elem.type === 'team-iframe') {
-          const provider = new ProviderTeamIFrame(elem.lang);
-          provider.teams = (elem as ProviderTeamIFrame).teams || {};
-          provider.sortTeams();
-          out[key] = provider;
-        } else if (elem.type === 'iframe') {
-          const provider = new ProviderIFrame(elem.lang);
-          provider.episodes = (elem as ProviderIFrame).episodes || [];
-          out[key] = provider;
-        }
-      }
-
-      return out as API.WatchData;
+      const data = await convexAction(convexApi.watch.resolve, {
+        slug: slug!,
+      });
+      return toWatchData(data);
     },
     retry: false,
     staleTime: 5 * 60 * 1000,
