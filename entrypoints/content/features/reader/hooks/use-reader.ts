@@ -282,7 +282,7 @@ export const useReader = create<ReaderState & ReaderActions>((set, get) => ({
   setCarouselApi: (api) => set({ carouselApi: api }),
   getRead: () => {
     const selector =
-      '.grid > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(2) > div:nth-of-type(2) span';
+      '#content-left-side > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) span span';
     const element = document.querySelector(selector);
     return element?.firstChild?.nodeValue
       ? parseInt(element.firstChild.nodeValue, 10)

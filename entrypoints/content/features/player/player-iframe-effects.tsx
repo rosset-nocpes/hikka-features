@@ -38,7 +38,7 @@ const getNextEpisode = (
 const markCurrentEpisodeWatched = () => {
   (
     document.body.querySelector(
-      '.grid > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) button',
+      '#content-left-side > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) button:nth-of-type(2)',
     ) as HTMLButtonElement | null
   )?.click();
 };
