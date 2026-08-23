@@ -174,7 +174,7 @@ function App() {
   return (
     <div
       className={cn(
-        'flex h-150 w-100 flex-col gap-4 rounded-none p-4 font-sans font-semibold antialiased',
+        'flex h-150 w-100 overflow-hidden flex-col gap-4 rounded-none p-4 font-sans font-semibold antialiased',
         burunyaaMode
           ? 'bg-[url(https://media1.tenor.com/m/PDzKPqFw6f8AAAAC/neco-neco-arc.gif)] bg-cover bg-center bg-no-repeat'
           : 'bg-black',
