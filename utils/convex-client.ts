@@ -3,6 +3,10 @@ import type { FunctionReference } from 'convex/server';
 import { ConvexHttpClient } from 'convex/browser';
 
 import { useSettings } from '@/hooks/use-settings';
+import {
+  COMPATIBILITY_STORAGE_KEY,
+  type ExtensionCompatibilityState,
+} from '@/utils/compatibility';
 
 export const CONVEX_URL = import.meta.env.WXT_CONVEX_URL ?? '';
 export const CONVEX_SITE_URL = import.meta.env.WXT_CONVEX_SITE_URL ?? '';
@@ -126,22 +130,44 @@ async function authenticatedClient() {
   return client;
 }
 
+async function assertCompatible() {
+  const stored = await browser.storage.local.get(COMPATIBILITY_STORAGE_KEY);
+  const state = stored[COMPATIBILITY_STORAGE_KEY] as
+    | ExtensionCompatibilityState
+    | undefined;
+  if (
+    state?.extensionVersion === browser.runtime.getManifest().version &&
+    state.status === 'unsupported'
+  ) {
+    throw new Error('EXTENSION_UPDATE_REQUIRED');
+  }
+}
+
+export async function convexPublicQuery<
+  Reference extends FunctionReference<'query'>,
+>(reference: Reference, args: Reference['_args']) {
+  return await backendClient().query(reference, args);
+}
+
 export async function convexQuery<Reference extends FunctionReference<'query'>>(
   reference: Reference,
   args: Reference['_args'],
 ) {
+  await assertCompatible();
   return await (await authenticatedClient()).query(reference, args);
 }
 
 export async function convexMutation<
   Reference extends FunctionReference<'mutation'>,
 >(reference: Reference, args: Reference['_args']) {
+  await assertCompatible();
   return await (await authenticatedClient()).mutation(reference, args);
 }
 
 export async function convexAction<
   Reference extends FunctionReference<'action'>,
 >(reference: Reference, args: Reference['_args']) {
+  await assertCompatible();
   return await backendClient().action(reference, args);
 }
 

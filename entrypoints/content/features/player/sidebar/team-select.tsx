@@ -63,16 +63,39 @@ const TeamSelect: FC<Props> = ({ toggleWatchedState }) => {
     watchData: data,
   } = usePlayer();
 
-  const orderedTeams = useMemo<API.TeamData[]>(() => {
+  const teamGroups = useMemo(() => {
     if (!data || !provider) return [];
     if (!(data[provider] instanceof ProviderTeamIFrame)) return [];
 
     const teams = (data[provider] as ProviderTeamIFrame).getTeams();
-    return teams.slice().sort((a: API.TeamData, b: API.TeamData) => {
-      if (a.title === favoriteTeam?.team) return -1;
-      if (b.title === favoriteTeam?.team) return 1;
-      return 0;
-    });
+    const orderedTeams = teams
+      .slice()
+      .sort((a: API.TeamData, b: API.TeamData) => {
+        if (a.title === favoriteTeam?.team) return -1;
+        if (b.title === favoriteTeam?.team) return 1;
+        return 0;
+      });
+
+    return [
+      {
+    type: 'dub',
+        label: 'Озвучення',
+        teams: orderedTeams.filter((team) => team.translationType === 'dub'),
+      },
+      {
+        type: 'sub',
+        label: 'Субтитри',
+        teams: orderedTeams.filter((team) => team.translationType === 'sub'),
+      },
+      {
+        type: 'unknown',
+        label: 'Інші',
+        teams: orderedTeams.filter(
+          (team) =>
+            team.translationType !== 'dub' && team.translationType !== 'sub',
+        ),
+      },
+    ].filter((group) => group.teams.length > 0);
   }, [data, provider, favoriteTeam]);
 
   if (!data || !provider || !team) return;
@@ -131,86 +154,88 @@ const TeamSelect: FC<Props> = ({ toggleWatchedState }) => {
             sideOffset={4}
             container={container}
           >
-            <DropdownMenuGroup>
-              <DropdownMenuLabel className="text-muted-foreground text-xs">
-                Команди
-              </DropdownMenuLabel>
-              <ScrollArea className="max-h-96" scrollFade>
-                {orderedTeams.map((team) => (
-                  <motion.div
-                    key={team.title}
-                    layoutId={team.title}
-                    layout
-                    transition={{
-                      type: 'spring',
-                      stiffness: 600,
-                      damping: 40,
-                    }}
-                  >
-                    <DropdownMenuItem
-                      onClick={() => handleSelectTeam(team)}
-                      className="group/item p-0 font-normal"
+            <ScrollArea className="max-h-96" scrollFade>
+              {teamGroups.map((group) => (
+                <DropdownMenuGroup key={group.type}>
+                  <DropdownMenuLabel className="text-muted-foreground text-xs">
+                    {group.label}
+                  </DropdownMenuLabel>
+                  {group.teams.map((team) => (
+                    <motion.div
+                      key={team.title}
+                      layoutId={team.title}
+                      layout
+                      transition={{
+                        type: 'spring',
+                        stiffness: 600,
+                        damping: 40,
+                      }}
                     >
-                      <div className="flex w-full items-center justify-between gap-2 px-1 py-1.5 text-left text-sm">
-                        <Avatar className="h-8 w-8 rounded-md">
-                          <AvatarImage src={team.logo} alt={team.title} />
-                          <AvatarFallback>{team.title[0]}</AvatarFallback>
-                        </Avatar>
-                        <div className="grid flex-1 text-left text-sm leading-tight">
-                          <span className="truncate font-semibold">
-                            {team.title}
-                          </span>
-                          <span className="truncate text-xs">
-                            {getEpisodeRanges(
-                              (data[provider] as ProviderTeamIFrame).teams[
-                                team.title
-                              ].episodes,
-                            )}
-                          </span>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          className={cn(
-                            'group',
-                            !(
-                              favoriteTeam?.provider === provider &&
-                              favoriteTeam?.team === team.title
-                            ) && 'hidden group-hover/item:inline-flex',
-                          )}
-                          onClick={(e) => handleFavorite(e, team)}
-                        >
-                          <div className="relative">
-                            <div
-                              className={cn(
-                                'absolute inset-0 flex items-center justify-center transition-[opacity,filter,scale] duration-300 ease-in-out will-change-[opacity,filter,scale]',
-                                favoriteTeam?.provider === provider &&
-                                  favoriteTeam?.team === team.title
-                                  ? 'blur-0 scale-100 opacity-100'
-                                  : 'scale-[0.25] opacity-0 blur-xs',
+                      <DropdownMenuItem
+                        onClick={() => handleSelectTeam(team)}
+                        className="group/item p-0 font-normal"
+                      >
+                        <div className="flex w-full items-center justify-between gap-2 px-1 py-1.5 text-left text-sm">
+                          <Avatar className="h-8 w-8 rounded-md">
+                            <AvatarImage src={team.logo} alt={team.title} />
+                            <AvatarFallback>{team.title[0]}</AvatarFallback>
+                          </Avatar>
+                          <div className="grid flex-1 text-left text-sm leading-tight">
+                            <span className="truncate font-semibold">
+                              {team.title}
+                            </span>
+                            <span className="truncate text-xs">
+                              {getEpisodeRanges(
+                                (data[provider] as ProviderTeamIFrame).teams[
+                                  team.title
+                                ].episodes,
                               )}
-                            >
-                              <MaterialSymbolsStarRounded className="size-5! text-yellow-400 transition-transform duration-300 group-hover:scale-125" />
-                            </div>
-                            <div
-                              className={cn(
-                                'transition-[opacity,filter,scale] duration-300 ease-in-out will-change-[opacity,filter,scale]',
-                                favoriteTeam?.provider === provider &&
-                                  favoriteTeam?.team === team.title
-                                  ? 'scale-[0.25] opacity-0 blur-xs'
-                                  : 'blur-0 scale-100 opacity-100',
-                              )}
-                            >
-                              <MaterialSymbolsStarRateOutlineRounded className="text-muted-foreground group-hover:text-foreground size-5! transition-transform duration-300 group-hover:scale-125" />
-                            </div>
+                            </span>
                           </div>
-                        </Button>
-                      </div>
-                    </DropdownMenuItem>
-                  </motion.div>
-                ))}
-              </ScrollArea>
-            </DropdownMenuGroup>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            className={cn(
+                              'group',
+                              !(
+                                favoriteTeam?.provider === provider &&
+                                favoriteTeam?.team === team.title
+                              ) && 'hidden group-hover/item:inline-flex',
+                            )}
+                            onClick={(e) => handleFavorite(e, team)}
+                          >
+                            <div className="relative">
+                              <div
+                                className={cn(
+                                  'absolute inset-0 flex items-center justify-center transition-[opacity,filter,scale] duration-300 ease-in-out will-change-[opacity,filter,scale]',
+                                  favoriteTeam?.provider === provider &&
+                                    favoriteTeam?.team === team.title
+                                    ? 'blur-0 scale-100 opacity-100'
+                                    : 'scale-[0.25] opacity-0 blur-xs',
+                                )}
+                              >
+                                <MaterialSymbolsStarRounded className="size-5! text-yellow-400 transition-transform duration-300 group-hover:scale-125" />
+                              </div>
+                              <div
+                                className={cn(
+                                  'transition-[opacity,filter,scale] duration-300 ease-in-out will-change-[opacity,filter,scale]',
+                                  favoriteTeam?.provider === provider &&
+                                    favoriteTeam?.team === team.title
+                                    ? 'scale-[0.25] opacity-0 blur-xs'
+                                    : 'blur-0 scale-100 opacity-100',
+                                )}
+                              >
+                                <MaterialSymbolsStarRateOutlineRounded className="text-muted-foreground group-hover:text-foreground size-5! transition-transform duration-300 group-hover:scale-125" />
+                              </div>
+                            </div>
+                          </Button>
+                        </div>
+                      </DropdownMenuItem>
+                    </motion.div>
+                  ))}
+                </DropdownMenuGroup>
+              ))}
+            </ScrollArea>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>

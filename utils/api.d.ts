@@ -32,6 +32,9 @@ declare global {
         ja?: string;
       };
       airedAt?: number;
+      releasedAt?: number;
+      filler_status?: 'filler' | 'mixed';
+      episode_type?: 'canon' | 'filler' | 'mixed' | 'recap';
       is_sub?: boolean;
     };
 
@@ -86,6 +89,9 @@ declare global {
         ja?: string;
       };
       airedAt?: number;
+      releasedAt?: number;
+      filler_status?: 'filler' | 'mixed';
+      episode_type?: 'canon' | 'filler' | 'mixed' | 'recap';
       is_sub?: boolean;
     };
 

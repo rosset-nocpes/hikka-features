@@ -6,10 +6,16 @@ import type {
   RemoteFetchResponse,
 } from '@/utils/remote-fetch';
 
+import {
+  COMPATIBILITY_STORAGE_KEY,
+  EXTENSION_API_PROTOCOL,
+  type ExtensionCompatibilityState,
+  RELOAD_TABS_STORAGE_KEY,
+} from '@/utils/compatibility';
 import { convexApi } from '@/utils/convex-api';
 import {
   convexMutation,
-  convexQuery,
+  convexPublicQuery,
   exchangeLoginCode,
   getHikkaAuthorizationUrl,
 } from '@/utils/convex-client';
@@ -48,6 +54,19 @@ interface HikkaContentStatusRequest {
   type: 'hikka-content-status';
 }
 
+interface CompatibilityStatusRequest {
+  type: 'extension-compatibility-status';
+}
+
+interface ExtensionUpdateRequest {
+  type: 'extension-update';
+}
+
+interface ReleaseNotificationSeenRequest {
+  type: 'release-notification-seen';
+  id: string;
+}
+
 type MessageRequest =
   | LoginRequest
   | RichPresenceCheckRequest
@@ -56,84 +75,157 @@ type MessageRequest =
   | IFramePlayerCommand
   | HikkaContentLoadedRequest
   | HikkaContentUnloadedRequest
-  | HikkaContentStatusRequest;
+  | HikkaContentStatusRequest
+  | CompatibilityStatusRequest
+  | ExtensionUpdateRequest
+  | ReleaseNotificationSeenRequest;
 
 export default defineBackground(() => {
   const hikkaContentTabs = new Set<number>();
-  const notificationAlarm = 'release-notifications';
+  const compatibilityAlarm = 'extension-compatibility';
+  const legacyReleaseNotificationAlarm = 'release-notifications';
+  const updateCheckCooldown = 6 * 60 * 60 * 1000;
 
-  const ensureNotificationAlarm = async () => {
-    if (!(await browser.alarms.get(notificationAlarm))) {
-      await browser.alarms.create(notificationAlarm, {
-        delayInMinutes: 1,
-        periodInMinutes: 5,
-      });
-    }
+  const getStoredCompatibility = async () => {
+    const stored = await browser.storage.local.get(COMPATIBILITY_STORAGE_KEY);
+    return stored[COMPATIBILITY_STORAGE_KEY] as
+      | ExtensionCompatibilityState
+      | undefined;
   };
 
-  const pollReleaseNotifications = async () => {
-    if (!useSettings.getState().convexSession) return;
-    const notifications = await convexQuery(convexApi.notifications.unread, {
-      limit: 25,
-    });
-    if (!notifications.length) return;
-
-    const targets = (await browser.storage.local.get('notificationTargets'))
-      .notificationTargets as Record<string, string> | undefined;
-    const updatedTargets = { ...targets };
-    const delivered: string[] = [];
-
-    for (const notification of notifications) {
-      const id = `release:${notification.id}`;
-      await browser.notifications.create(id, {
-        type: 'basic',
-        iconUrl: '/hikka-features-small.svg',
-        title: `${notification.teamTitle}: серія ${notification.episodeNumber}`,
-        message:
-          notification.episodeTitle ??
-          `Вийшла нова серія для ${notification.teamTitle}`,
-      });
-      updatedTargets[id] = notification.animeSlug;
-      delivered.push(notification.id);
-    }
-
+  const publishCompatibility = async (state: ExtensionCompatibilityState) => {
     await browser.storage.local.set({
-      notificationTargets: updatedTargets,
+      [COMPATIBILITY_STORAGE_KEY]: state,
     });
-    await convexMutation(convexApi.notifications.markDelivered, {
-      ids: delivered,
+    const tabs = await browser.tabs.query({
+      url: ['https://hikka.io/*', 'https://dev.hikka.io/*'],
+    });
+    await Promise.allSettled(
+      tabs.flatMap((tab) =>
+        tab.id === undefined
+          ? []
+          : [
+              browser.tabs.sendMessage(tab.id, {
+                type: 'extension-compatibility',
+                state,
+              }),
+            ],
+      ),
+    );
+    return state;
+  };
+
+  const requestExtensionUpdate = async (
+    state: ExtensionCompatibilityState,
+    force = false,
+  ) => {
+    if (
+      !force &&
+      state.updateCheckedAt &&
+      Date.now() - state.updateCheckedAt < updateCheckCooldown
+    ) {
+      return state;
+    }
+
+    const result = await browser.runtime.requestUpdateCheck();
+    return await publishCompatibility({
+      ...state,
+      updateCheckedAt: Date.now(),
+      storeStatus: result.status,
     });
   };
 
-  ensureNotificationAlarm();
+  const pollCompatibility = async () => {
+    const extensionVersion = browser.runtime.getManifest().version;
+    const [compatibility, previous] = await Promise.all([
+      convexPublicQuery(convexApi.compatibility.get, {
+        extensionVersion,
+        protocol: EXTENSION_API_PROTOCOL,
+      }),
+      getStoredCompatibility(),
+    ]);
+    const sameRelease =
+      previous?.extensionVersion === extensionVersion &&
+      previous.latestVersion === compatibility.latestVersion;
+    const state = await publishCompatibility({
+      ...compatibility,
+      extensionVersion,
+      updateReady: sameRelease ? previous.updateReady : false,
+      checkedAt: Date.now(),
+      updateCheckedAt: sameRelease ? previous.updateCheckedAt : undefined,
+      storeStatus: sameRelease ? previous.storeStatus : undefined,
+    });
+
+    return state.status === 'current'
+      ? state
+      : await requestExtensionUpdate(state);
+  };
+
+  const applyExtensionUpdate = async () => {
+    const state = await getStoredCompatibility();
+    if (!state) return await pollCompatibility();
+    if (!state.updateReady) return await requestExtensionUpdate(state, true);
+
+    const tabs = await browser.tabs.query({
+      url: ['https://hikka.io/*', 'https://dev.hikka.io/*'],
+    });
+    await browser.storage.local.set({
+      [RELOAD_TABS_STORAGE_KEY]: tabs.flatMap((tab) =>
+        tab.id === undefined ? [] : [tab.id],
+      ),
+    });
+    browser.runtime.reload();
+    return state;
+  };
+
+  const reloadTabsAfterUpdate = async () => {
+    const stored = await browser.storage.local.get(RELOAD_TABS_STORAGE_KEY);
+    const tabIds = stored[RELOAD_TABS_STORAGE_KEY] as number[] | undefined;
+    if (!tabIds?.length) return;
+
+    await browser.storage.local.remove(RELOAD_TABS_STORAGE_KEY);
+    await Promise.allSettled(tabIds.map((tabId) => browser.tabs.reload(tabId)));
+  };
+
+  const ensureCompatibilityAlarm = async () => {
+    if (!(await browser.alarms.get(compatibilityAlarm))) {
+      await browser.alarms.create(compatibilityAlarm, {
+        delayInMinutes: 1,
+        periodInMinutes: 60,
+      });
+    }
+  };
+
+  browser.alarms.clear(legacyReleaseNotificationAlarm).catch(console.error);
+  ensureCompatibilityAlarm();
+  reloadTabsAfterUpdate().catch(console.error);
+  pollCompatibility().catch(console.error);
   if (useSettings.getState().convexSession) {
-    syncFavoritesFromConvex()
-      .then(pollReleaseNotifications)
-      .catch(console.error);
+    syncFavoritesFromConvex().catch(console.error);
   }
   browser.alarms.onAlarm.addListener((alarm) => {
-    if (alarm.name === notificationAlarm) {
-      pollReleaseNotifications().catch(console.error);
+    if (alarm.name === compatibilityAlarm) {
+      pollCompatibility().catch(console.error);
     }
   });
-  browser.notifications.onClicked.addListener(async (notificationId) => {
-    if (!notificationId.startsWith('release:')) return;
-    const stored = await browser.storage.local.get('notificationTargets');
-    const targets = (stored.notificationTargets ?? {}) as Record<
-      string,
-      string
-    >;
-    const slug = targets[notificationId];
-    if (slug) {
-      await browser.tabs.create({ url: `https://hikka.io/anime/${slug}` });
-    }
-    await convexMutation(convexApi.notifications.markRead, {
-      id: notificationId.slice('release:'.length),
-    }).catch(console.error);
-    delete targets[notificationId];
-    await browser.storage.local.set({ notificationTargets: targets });
+  browser.runtime.onUpdateAvailable.addListener(({ version }) => {
+    getStoredCompatibility()
+      .then((state) =>
+        publishCompatibility({
+          status: state?.status ?? 'update_available',
+          latestVersion: state?.latestVersion ?? version,
+          minimumVersion:
+            state?.minimumVersion ?? browser.runtime.getManifest().version,
+          protocolSupported: state?.protocolSupported ?? true,
+          extensionVersion: browser.runtime.getManifest().version,
+          updateReady: true,
+          checkedAt: state?.checkedAt ?? Date.now(),
+          updateCheckedAt: state?.updateCheckedAt ?? Date.now(),
+          storeStatus: 'update_available',
+        }),
+      )
+      .catch(console.error);
   });
-
   browser.tabs.onRemoved.addListener((tabId) => {
     hikkaContentTabs.delete(tabId);
   });
@@ -149,6 +241,7 @@ export default defineBackground(() => {
     ): Promise<
       | true
       | LoginResponse
+      | ExtensionCompatibilityState
       | { loaded: boolean }
       | RemoteFetchResponse
       | undefined
@@ -179,6 +272,25 @@ export default defineBackground(() => {
               hikkaContentTabs.has(sender.tab.id),
           };
 
+        case 'extension-compatibility-status':
+          try {
+            return await pollCompatibility();
+          } catch (error) {
+            const stored = await getStoredCompatibility();
+            if (stored) return stored;
+            throw error;
+          }
+
+        case 'extension-update':
+          return await applyExtensionUpdate();
+
+        case 'release-notification-seen':
+          if (typeof typedRequest.id !== 'string') return undefined;
+          await convexMutation(convexApi.notifications.markSeen, {
+            id: typedRequest.id,
+          });
+          return true;
+
         case 'login': {
           const redirectUri = browser.identity.getRedirectURL();
           const authorizationUrl = await getHikkaAuthorizationUrl(redirectUri);
@@ -196,7 +308,6 @@ export default defineBackground(() => {
           }
           const auth = await exchangeLoginCode(code);
           await syncFavoritesFromConvex();
-          await pollReleaseNotifications();
 
           return {
             authenticated: true,

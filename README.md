@@ -22,6 +22,29 @@ Hikka application. Configure the values returned by
 `FIREFOX_EXTENSION_REDIRECT_URI` on the backend, and include both in
 `ALLOWED_EXTENSION_REDIRECTS`.
 
+## Extension/backend compatibility
+
+The package version and backend API protocol are intentionally separate. The
+current protocol is declared in `utils/compatibility.ts`; only increment it for
+an incompatible Convex contract. Existing function names remain the protocol 1
+contract, and future breaking contracts must use new function names so both can
+run against the same database during rollout.
+
+The background worker checks `compatibility:get` on startup, when Hikka loads,
+and hourly. When Convex reports a newer or unsupported client, Hikka displays an
+update banner and the extension asks the browser store for the new build. It
+only calls `runtime.reload()` after `runtime.onUpdateAvailable` confirms that
+the update has downloaded.
+
+Release in this order:
+
+1. Deploy additive backend support while retaining the previous protocol.
+2. Publish and wait for the new extension version in every browser store.
+3. Set `latestVersion` in Convex to show the update banner.
+4. Later raise `minimumVersion` or remove the old protocol.
+
+The backend command is documented in `features-backend/convex/README.md`.
+
 ```sh
 # Run plugin on Chrome
 $ bun dev

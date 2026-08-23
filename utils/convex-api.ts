@@ -1,5 +1,7 @@
 import { makeFunctionReference } from 'convex/server';
 
+import type { CompatibilityResponse } from '@/utils/compatibility';
+
 export interface ConvexWatchEpisode {
   number: number;
   title: {
@@ -8,6 +10,9 @@ export interface ConvexWatchEpisode {
     ja?: string;
   };
   airedAt?: number;
+  releasedAt?: number;
+  fillerStatus?: 'filler' | 'mixed';
+  episodeType?: 'canon' | 'filler' | 'mixed' | 'recap';
   playback: {
     kind: 'iframe';
     url: string;
@@ -54,15 +59,29 @@ export interface SyncedFavorite {
 export interface ReleaseNotification {
   id: string;
   animeSlug: string;
+  animeTitle?: string;
   teamTitle: string;
   episodeNumber: number;
   episodeTitle?: string;
   provider: string;
   playbackUrl: string;
   createdAt: number;
+  seen: boolean;
+}
+
+export interface ReleaseNotificationMenu {
+  notifications: ReleaseNotification[];
+  unseenCount: number;
 }
 
 export const convexApi = {
+  compatibility: {
+    get: makeFunctionReference<
+      'query',
+      { extensionVersion: string; protocol: number },
+      CompatibilityResponse
+    >('compatibility:get'),
+  },
   watch: {
     resolve: makeFunctionReference<
       'action',
@@ -112,16 +131,16 @@ export const convexApi = {
     ),
   },
   notifications: {
-    unread: makeFunctionReference<
+    menu: makeFunctionReference<
       'query',
       { limit?: number },
-      ReleaseNotification[]
-    >('notifications:unread'),
-    markDelivered: makeFunctionReference<'mutation', { ids: string[] }, null>(
-      'notifications:markDelivered',
+      ReleaseNotificationMenu
+    >('notifications:menu'),
+    markSeen: makeFunctionReference<'mutation', { id: string }, null>(
+      'notifications:markSeen',
     ),
-    markRead: makeFunctionReference<'mutation', { id: string }, null>(
-      'notifications:markRead',
+    markAllSeen: makeFunctionReference<'mutation', Record<string, never>, null>(
+      'notifications:markAllSeen',
     ),
   },
 };

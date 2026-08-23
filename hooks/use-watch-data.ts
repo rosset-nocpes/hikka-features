@@ -6,13 +6,16 @@ import { ProviderIFrame, ProviderTeamIFrame } from '@/utils/provider_classes';
 
 const toEpisode = (
   episode: ConvexWatchResult['providers'][number]['sources'][number]['episodes'][number],
-  isSub: boolean,
+  translationType: ConvexWatchResult['providers'][number]['sources'][number]['translationType'],
 ): API.EpisodeData => ({
   episode: episode.number,
   video_url: episode.playback.url,
   title: episode.title,
   airedAt: episode.airedAt,
-  is_sub: isSub,
+  releasedAt: episode.releasedAt,
+  filler_status: episode.fillerStatus,
+  episode_type: episode.episodeType ?? episode.fillerStatus,
+  is_sub: translationType === 'unknown' ? undefined : translationType === 'sub',
 });
 
 const toWatchData = (data: ConvexWatchResult): API.WatchData => {
@@ -29,7 +32,7 @@ const toWatchData = (data: ConvexWatchResult): API.WatchData => {
     ) {
       const value = new ProviderIFrame(provider.language as ProviderLanguage);
       value.episodes = source.episodes.map((episode) =>
-        toEpisode(episode, false),
+        toEpisode(episode, source.translationType),
       );
       out[provider.id] = value;
       continue;
@@ -49,7 +52,7 @@ const toWatchData = (data: ConvexWatchResult): API.WatchData => {
         canonicalTitle: source.team.title,
         translationType: source.translationType,
         episodes: source.episodes.map((episode) =>
-          toEpisode(episode, source.translationType === 'sub'),
+          toEpisode(episode, source.translationType),
         ),
       };
     }
