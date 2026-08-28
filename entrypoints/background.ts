@@ -1,5 +1,7 @@
 import ky from 'ky';
 
+import type { IFramePlayerCommand } from '@/integrations/iframe-player/protocol';
+
 interface LoginRequest {
   type: 'login';
 }
@@ -34,11 +36,6 @@ interface ProxyRequest {
   data?: any;
 }
 
-interface PlayerCommandRequest {
-  type: 'playerjs-command';
-  api: string;
-}
-
 interface HikkaContentLoadedRequest {
   type: 'hikka-content-loaded';
 }
@@ -56,7 +53,7 @@ type MessageRequest =
   | RichPresenceCheckRequest
   | WatchTogetherRequest
   | ProxyRequest
-  | PlayerCommandRequest
+  | IFramePlayerCommand
   | HikkaContentLoadedRequest
   | HikkaContentUnloadedRequest
   | HikkaContentStatusRequest;
@@ -285,7 +282,7 @@ export default defineBackground(() => {
           });
           return true;
         }
-        case 'playerjs-command': {
+        case 'iframe-player-command': {
           browser.tabs.sendMessage(sender.tab!.id!, typedRequest);
           return true;
         }

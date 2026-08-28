@@ -151,10 +151,6 @@ const Settings = () => {
                 <DropdownMenuItem
                   // disabled={playbackRateOptions.disabled}
                   onClick={() => {
-                    browser.runtime.sendMessage({
-                      type: 'playerjs-command',
-                      api: 'qualities',
-                    });
                     setView(Views.PlaybackRate);
                   }}
                   closeOnClick={false}
