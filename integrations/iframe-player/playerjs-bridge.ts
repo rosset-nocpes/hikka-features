@@ -2,16 +2,12 @@ import type { IFramePlayerBridgeCommand } from './protocol';
 
 import { IFramePlayerBridge } from './bridge';
 
-const PLAYER_JS_HOSTS = ['ashdi.vip', 'tortuga.tw'];
-
 interface PlayerJsCommand {
   api: string;
   set?: number | string;
 }
 
 export class PlayerJsBridge extends IFramePlayerBridge {
-  static readonly matches = PLAYER_JS_HOSTS.map((host) => `https://${host}/*`);
-
   static readonly styles = `
     pjsdiv
       > pjsdiv:not(:has(video)):not(:has(video) + pjsdiv):not([id*='subtitle']):not([class*='subtitle']) {
@@ -19,8 +15,8 @@ export class PlayerJsBridge extends IFramePlayerBridge {
     }
   `;
 
-  static supports(url: URL) {
-    return PLAYER_JS_HOSTS.includes(url.hostname);
+  static detect(video: HTMLVideoElement) {
+    return video.closest('pjsdiv') !== null;
   }
 
   protected handleCommand(command: IFramePlayerBridgeCommand) {

@@ -8,9 +8,7 @@ const bridgeClasses = [
   PlayerJsBridge,
 ] satisfies IFramePlayerBridgeClass[];
 
-export const IFRAME_PLAYER_MATCHES = bridgeClasses.flatMap((Bridge) => [
-  ...Bridge.matches,
-]);
+export const IFRAME_PLAYER_MATCHES = ['https://*/*'];
 
-export const findIFramePlayerBridge = (url: URL) =>
-  bridgeClasses.find((Bridge) => Bridge.supports(url));
+export const findIFramePlayerBridge = (video: HTMLVideoElement) =>
+  bridgeClasses.find((Bridge) => Bridge.detect(video));

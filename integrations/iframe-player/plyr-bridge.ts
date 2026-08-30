@@ -2,8 +2,6 @@ import type { IFramePlayerBridgeCommand } from './protocol';
 
 import { IFramePlayerBridge } from './bridge';
 
-const PLYR_HOSTS = ['moonanime.art'];
-
 class PlyrQualityController {
   constructor(private readonly video: HTMLVideoElement) {}
 
@@ -89,8 +87,6 @@ class PlyrQualityController {
 }
 
 export class PlyrBridge extends IFramePlayerBridge {
-  static readonly matches = PLYR_HOSTS.map((host) => `https://${host}/*`);
-
   static readonly styles = `
     .ma-player-wrap > :not(.plyr):not(video),
     body > .ma-promo,
@@ -100,8 +96,8 @@ export class PlyrBridge extends IFramePlayerBridge {
     }
   `;
 
-  static supports(url: URL) {
-    return PLYR_HOSTS.includes(url.hostname);
+  static detect(video: HTMLVideoElement) {
+    return video.closest('.plyr') !== null;
   }
 
   private readonly qualityController = new PlyrQualityController(this.video);

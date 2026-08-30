@@ -5,9 +5,8 @@ import {
 
 export interface IFramePlayerBridgeClass {
   new (video: HTMLVideoElement): IFramePlayerBridge;
-  readonly matches: readonly string[];
   readonly styles: string;
-  supports(url: URL): boolean;
+  detect(video: HTMLVideoElement): boolean;
 }
 
 export abstract class IFramePlayerBridge {

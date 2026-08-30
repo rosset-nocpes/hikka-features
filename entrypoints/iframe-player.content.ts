@@ -1,17 +1,18 @@
+import type { IFramePlayerBridgeClass } from '@/integrations/iframe-player/bridge';
+
 import {
   findIFramePlayerBridge,
   IFRAME_PLAYER_MATCHES,
 } from '@/integrations/iframe-player/registry';
 
-const VIDEO_WAIT_TIMEOUT_MS = 15_000;
+const PLAYER_DETECTION_TIMEOUT_MS = 15_000;
 
 export default defineContentScript({
   matches: IFRAME_PLAYER_MATCHES,
   allFrames: true,
   runAt: 'document_start',
   async main(ctx) {
-    const Bridge = findIFramePlayerBridge(new URL(window.location.href));
-    if (!Bridge) return;
+    if (window.parent === window) return;
 
     const fromHikka = ['https://hikka.io/', 'https://dev.hikka.io/'].some(
       (origin) => document.referrer.startsWith(origin),
@@ -19,16 +20,15 @@ export default defineContentScript({
 
     if (!fromHikka && !(await isHikkaContentLoaded())) return;
 
+    const player = await findPlayer(ctx);
+    if (!player) return;
+
+    const { Bridge, video } = player;
+
     const style = document.createElement('style');
     style.textContent = Bridge.styles;
     (document.head ?? document.documentElement).appendChild(style);
     ctx.onInvalidated(() => style.remove());
-
-    const video = await findVideo(ctx);
-    if (!video) {
-      style.remove();
-      return;
-    }
 
     const bridge = new Bridge(video);
     bridge.start();
@@ -36,30 +36,46 @@ export default defineContentScript({
   },
 });
 
-const findVideo = async (ctx: {
+interface DetectedPlayer {
+  Bridge: IFramePlayerBridgeClass;
+  video: HTMLVideoElement;
+}
+
+const detectPlayer = (): DetectedPlayer | null => {
+  for (const video of document.querySelectorAll<HTMLVideoElement>('video')) {
+    const Bridge = findIFramePlayerBridge(video);
+    if (Bridge) return { Bridge, video };
+  }
+
+  return null;
+};
+
+const findPlayer = async (ctx: {
   onInvalidated: (callback: () => void) => void;
 }) => {
-  const existingVideo = document.querySelector<HTMLVideoElement>('video');
-  if (existingVideo) return existingVideo;
+  const existingPlayer = detectPlayer();
+  if (existingPlayer) return existingPlayer;
 
-  return new Promise<HTMLVideoElement | null>((resolve) => {
+  return new Promise<DetectedPlayer | null>((resolve) => {
     const observer = new MutationObserver(() => {
-      const video = document.querySelector<HTMLVideoElement>('video');
-      if (video) finish(video);
+      const player = detectPlayer();
+      if (player) finish(player);
     });
 
     const timeout = window.setTimeout(
       () => finish(null),
-      VIDEO_WAIT_TIMEOUT_MS,
+      PLAYER_DETECTION_TIMEOUT_MS,
     );
 
-    const finish = (video: HTMLVideoElement | null) => {
+    const finish = (player: DetectedPlayer | null) => {
       window.clearTimeout(timeout);
       observer.disconnect();
-      resolve(video);
+      resolve(player);
     };
 
     observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
       childList: true,
       subtree: true,
     });
@@ -68,18 +84,11 @@ const findVideo = async (ctx: {
 };
 
 const isHikkaContentLoaded = async () => {
-  for (let attempt = 0; attempt < 20; attempt += 1) {
-    const response = await browser.runtime
-      .sendMessage({ type: 'hikka-content-status' })
-      .catch(() => undefined);
+  const response = await browser.runtime
+    .sendMessage({ type: 'hikka-content-status' })
+    .catch(() => undefined);
 
-    if (isHikkaContentStatusResponse(response) && response.loaded) return true;
-
-    await new Promise((resolve) => window.setTimeout(resolve, 100));
-  }
-
-  // todo: return false
-  return document.referrer === 'https://hikka.io/';
+  return isHikkaContentStatusResponse(response) && response.loaded;
 };
 
 const isHikkaContentStatusResponse = (
