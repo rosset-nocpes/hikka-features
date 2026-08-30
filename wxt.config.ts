@@ -15,6 +15,9 @@ export default defineConfig({
   modules: ['@wxt-dev/auto-icons'],
   vite: () => ({
     plugins: [react(), tailwindcss(), Icons({ compiler: 'jsx', jsx: 'react' })],
+    resolve: {
+      dedupe: ['react', 'react-dom'],
+    },
     optimizeDeps: {
       entries: ['entrypoints/content/**/*.tsx'],
       include: ['react', 'react-dom'],
