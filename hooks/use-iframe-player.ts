@@ -1,6 +1,10 @@
 import { create } from 'zustand';
 
 import { usePlayer } from '@/entrypoints/content/features/player/context/player-context';
+import {
+  isIFramePlayerEvent,
+  sendIFramePlayerCommand,
+} from '@/integrations/iframe-player/protocol';
 
 interface IFramePlayerState {
   isReady: boolean;
@@ -58,101 +62,72 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
     endedCount: 0,
 
     play: () => {
-      browser.runtime.sendMessage({
-        type: 'playerjs-command',
-        api: 'play',
-      });
+      sendIFramePlayerCommand({ action: 'play' });
     },
 
     pause: () => {
-      browser.runtime.sendMessage({
-        type: 'playerjs-command',
-        api: 'pause',
-      });
+      sendIFramePlayerCommand({ action: 'pause' });
     },
 
     toggleMute: () => {
       if (get().isMuted) {
-        browser.runtime.sendMessage({
-          type: 'playerjs-command',
-          api: 'unmute',
-        });
+        sendIFramePlayerCommand({ action: 'unmute' });
       } else {
-        browser.runtime.sendMessage({
-          type: 'playerjs-command',
-          api: 'mute',
-        });
+        sendIFramePlayerCommand({ action: 'mute' });
       }
     },
 
     mute: () => {
-      browser.runtime.sendMessage({
-        type: 'playerjs-command',
-        api: 'mute',
-      });
+      sendIFramePlayerCommand({ action: 'mute' });
     },
 
     unmute: () => {
-      browser.runtime.sendMessage({
-        type: 'playerjs-command',
-        api: 'unmute',
-      });
+      sendIFramePlayerCommand({ action: 'unmute' });
     },
 
     seek: (time: number) => {
-      browser.runtime.sendMessage({
-        type: 'playerjs-command',
-        api: 'seek',
-        set: time,
-      });
+      sendIFramePlayerCommand({ action: 'seek', value: time });
     },
 
     setCurrentQuality: (quality: string) => {
       const { qualities } = get();
-      const index = qualities.findIndex((q) => q === quality).toString();
+      const index = qualities.findIndex((q) => q === quality);
 
-      browser.runtime.sendMessage({
-        type: 'playerjs-command',
-        api: 'quality',
-        set: index,
+      sendIFramePlayerCommand({
+        action: 'set-quality',
+        value: quality,
+        index,
       });
     },
 
     setCurrentSubtitle: (subtitle: string) => {
       const { subtitles } = get();
-      const index = subtitles.findIndex((s) => s === subtitle).toString();
+      const index = subtitles.findIndex((s) => s === subtitle);
 
-      browser.runtime.sendMessage({
-        type: 'playerjs-command',
-        api: 'subtitle',
-        set: index,
+      sendIFramePlayerCommand({
+        action: 'set-subtitle',
+        value: subtitle,
+        index,
       });
     },
 
     changeVolume: (volume: number) => {
-      browser.runtime.sendMessage({
-        type: 'playerjs-command',
-        api: 'volume',
-        set: volume,
-      });
+      sendIFramePlayerCommand({ action: 'set-volume', value: volume });
     },
 
     changeSpeed: (speed: number) => {
       const { speedOptions } = get();
-      const index = speedOptions.findIndex((q) => q === speed).toString();
+      const index = speedOptions.findIndex((q) => q === speed);
 
-      browser.runtime.sendMessage({
-        type: 'playerjs-command',
-        api: 'speed',
-        set: index,
+      sendIFramePlayerCommand({
+        action: 'set-speed',
+        value: speed,
+        index,
       });
     },
 
     checkBuffering: () => {
-      browser.runtime.sendMessage({
-        type: 'playerjs-command',
-        api: 'buffered',
-      });
+      sendIFramePlayerCommand({ action: 'get-buffered' });
     },
 
     reset: () => {
@@ -193,7 +168,7 @@ const shouldHandlePlayerMessage = (event: MessageEvent) => {
 };
 
 window.addEventListener('message', (event: MessageEvent) => {
-  if (event.data?.event) {
+  if (isIFramePlayerEvent(event.data)) {
     if (!shouldHandlePlayerMessage(event)) return;
     if (event.data.event !== 'inited' && !useIFramePlayer.getState().isReady) {
       return;
@@ -220,29 +195,17 @@ window.addEventListener('message', (event: MessageEvent) => {
         break;
       case 'volume':
         useIFramePlayer.setState({
-          volume: Number(event.data.data || event.data.answer),
+          volume: Number(event.data.data ?? event.data.answer),
         });
         break;
       case 'inited':
         useIFramePlayer.setState({ isReady: true });
         break;
       case 'start':
-        browser.runtime.sendMessage({
-          type: 'playerjs-command',
-          api: 'quality',
-        });
-        browser.runtime.sendMessage({
-          type: 'playerjs-command',
-          api: 'qualities',
-        });
-        browser.runtime.sendMessage({
-          type: 'playerjs-command',
-          api: 'subtitles',
-        });
-        browser.runtime.sendMessage({
-          type: 'playerjs-command',
-          api: 'volume',
-        });
+        sendIFramePlayerCommand({ action: 'get-quality' });
+        sendIFramePlayerCommand({ action: 'get-qualities' });
+        sendIFramePlayerCommand({ action: 'get-subtitles' });
+        sendIFramePlayerCommand({ action: 'get-volume' });
         break;
       case 'end':
         useIFramePlayer.setState((state) => ({
@@ -251,30 +214,30 @@ window.addEventListener('message', (event: MessageEvent) => {
         }));
         break;
       case 'quality':
-        if (!event.data.data && !event.data.answer) break;
+        const quality = event.data.data ?? event.data.answer;
+        if (typeof quality !== 'string' || !quality) break;
 
-        if (event.data.data === '1' || event.data.answer === '1') {
-          browser.runtime.sendMessage({
-            type: 'playerjs-command',
-            api: 'quality',
-          });
+        if (quality === '1') {
+          sendIFramePlayerCommand({ action: 'get-quality' });
+          break;
+        }
+
+        useIFramePlayer.setState({ currentQuality: quality });
+        break;
+      case 'qualities':
+        if (!Array.isArray(event.data.answer)) break;
+
+        if (event.data.answer[0] === 1) {
+          sendIFramePlayerCommand({ action: 'get-qualities' });
           break;
         }
 
         useIFramePlayer.setState({
-          currentQuality: event.data.data || event.data.answer,
+          qualities: event.data.answer.filter(
+            (quality): quality is string =>
+              typeof quality === 'string' && !!quality,
+          ),
         });
-        break;
-      case 'qualities':
-        if (event.data.answer[0] === 1) {
-          browser.runtime.sendMessage({
-            type: 'playerjs-command',
-            api: 'qualities',
-          });
-          break;
-        }
-
-        useIFramePlayer.setState({ qualities: event.data.answer });
         break;
       case 'speed':
         if (!event.data.data && !event.data.answer) break;
@@ -300,16 +263,20 @@ window.addEventListener('message', (event: MessageEvent) => {
         break;
       case 'subtitle':
       case 'subtitles':
-        if (!event.data.data && !event.data.answer) break;
-
-        if (event.data.data) {
-          useIFramePlayer.setState({ currentSubtitle: event.data.data });
+        if (event.data.data !== undefined) {
+          useIFramePlayer.setState({
+            currentSubtitle:
+              typeof event.data.data === 'string' ? event.data.data : '',
+          });
           break;
         }
 
-        if (event.data.answer) {
+        if (Array.isArray(event.data.answer)) {
           useIFramePlayer.setState({
-            subtitles: event.data.answer.filter(Boolean),
+            subtitles: event.data.answer.filter(
+              (subtitle): subtitle is string =>
+                typeof subtitle === 'string' && !!subtitle,
+            ),
           });
           break;
         }

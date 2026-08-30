@@ -7,6 +7,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { sendIFramePlayerCommand } from '@/integrations/iframe-player/protocol';
 
 import { usePlayer } from '../../context/player-context';
 
@@ -25,10 +26,7 @@ const MiniPlayer = () => {
 
   const handleClick = () => {
     if (isVideoNative) {
-      browser.runtime.sendMessage({
-        type: 'playerjs-command',
-        api: 'piptoggle',
-      });
+      sendIFramePlayerCommand({ action: 'toggle-picture-in-picture' });
     } else {
       toggleMiniPlayer();
     }
