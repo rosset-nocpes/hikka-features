@@ -14,7 +14,11 @@ const isWindows = process.platform === 'win32';
 export default defineConfig({
   modules: ['@wxt-dev/auto-icons'],
   vite: () => ({
-    plugins: [react(), tailwindcss(), Icons({ compiler: 'jsx', jsx: 'react' })],
+    plugins: [
+      react({ compiler: true }),
+      tailwindcss(),
+      Icons({ compiler: 'jsx', jsx: 'react' }),
+    ],
     resolve: {
       dedupe: ['react', 'react-dom'],
     },
