@@ -58,7 +58,7 @@ const ExperimentalSettingsPage = () => {
               <SelectTrigger className="w-32">
                 <SelectValue placeholder="Оберіть гілку бекенду" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent alignItemWithTrigger={false}>
                 <SelectGroup>
                   {Object.keys(BACKEND_BRANCHES).map((elem) => (
                     <SelectItem key={elem} value={elem}>

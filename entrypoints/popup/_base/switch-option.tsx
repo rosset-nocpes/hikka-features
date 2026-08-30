@@ -1,7 +1,6 @@
 import type { FC, PropsWithChildren } from 'react';
 
 import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 
 interface Props extends PropsWithChildren {
@@ -31,7 +30,7 @@ const SwitchOption: FC<Props> = ({
       onClick={grouped ? onClick : undefined}
     >
       <div className="mr-10 flex flex-col gap-1">
-        <Label className="flex cursor-pointer gap-1">
+        <span className="flex items-center gap-1 text-sm leading-none font-medium">
           {label}
           {beta && (
             <Badge
@@ -41,7 +40,7 @@ const SwitchOption: FC<Props> = ({
               Beta
             </Badge>
           )}
-        </Label>
+        </span>
         {description && (
           <p className="text-xs font-medium text-pretty text-[#A1A1A1]">
             {description}
@@ -50,11 +49,10 @@ const SwitchOption: FC<Props> = ({
       </div>
       <Switch
         checked={checked}
-        onClick={grouped ? undefined : onClick}
-        className={cn(
-          'flex items-center justify-between',
-          grouped && 'pointer-events-none',
-        )}
+        aria-label={label}
+        onClick={grouped ? (event) => event.stopPropagation() : undefined}
+        onCheckedChange={() => onClick?.()}
+        className="flex items-center justify-between transition-[background-color,box-shadow] after:-inset-y-3"
       />
     </div>
   );

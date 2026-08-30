@@ -59,7 +59,7 @@ const PlayerSettings = () => {
               <SelectTrigger className="w-36">
                 <SelectValue placeholder="Оберіть тип мінірежиму" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent alignItemWithTrigger={false}>
                 <SelectGroup>
                   {miniModeTypeOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
@@ -87,7 +87,7 @@ const PlayerSettings = () => {
                   placeholder="Оберіть програвач за замовчуванням"
                 />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent alignItemWithTrigger={false}>
                 <SelectGroup>
                   {['moon', 'ashdi'].map((elem) => (
                     <SelectItem className="uppercase" key={elem} value={elem}>

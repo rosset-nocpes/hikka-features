@@ -1,4 +1,5 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { useRef } from 'react';
 import MaterialSymbolsChevronLeftRounded from '~icons/material-symbols/chevron-left-rounded';
 import MaterialSymbolsDrawRounded from '~icons/material-symbols/draw-rounded';
 import MaterialSymbolsImageRounded from '~icons/material-symbols/image-rounded';
@@ -28,16 +29,6 @@ import LocalizedPosterSettings from './options/localized-poster-settings';
 import PlayerSettings from './options/player-settings';
 import ReaderSettings from './options/reader-settings';
 import RecommendationBlockSettings from './options/recommendation-block-settings';
-
-if (navigator.userAgent.includes('Firefox')) {
-  window.addEventListener('resize', (e) => e.stopImmediatePropagation(), {
-    capture: true,
-  });
-
-  window.addEventListener('blur', (e) => e.stopImmediatePropagation(), {
-    capture: true,
-  });
-}
 
 const EASE_SMOOTH_OUT = [0.22, 1, 0.36, 1] as const;
 
@@ -131,7 +122,7 @@ const PAGE_TITLES: Record<Page, string> = {
   player: 'Налаштування програвача',
   reader: 'Налаштування читалки',
   localizedPoster: 'Локалізовані постери',
-  experimental: 'Експерементальні функції',
+  experimental: 'Експериментальні функції',
 };
 
 function App() {
@@ -140,7 +131,7 @@ function App() {
   const { currentPage, direction, goBack } = useNavigation();
   const reduceMotion = useReducedMotion();
 
-  let devClicked = 0;
+  const devClicks = useRef(0);
 
   const pageVariants = reduceMotion
     ? {
@@ -174,13 +165,13 @@ function App() {
   return (
     <div
       className={cn(
-        'flex h-150 w-100 overflow-hidden flex-col gap-4 rounded-none p-4 font-sans font-semibold antialiased',
+        'flex h-150 w-100 flex-col gap-4 overflow-hidden rounded-none p-4 font-sans font-semibold antialiased',
         burunyaaMode
           ? 'bg-[url(https://media1.tenor.com/m/PDzKPqFw6f8AAAAC/neco-neco-arc.gif)] bg-cover bg-center bg-no-repeat'
           : 'bg-black',
       )}
     >
-      <h3 className="flex h-10 items-center text-balance">
+      <h1 className="flex h-10 items-center text-balance">
         <AnimatePresence initial={false} custom={direction} mode="popLayout">
           <motion.span
             key={currentPage}
@@ -228,7 +219,12 @@ function App() {
               </span>
             ) : (
               <>
-                <Button variant="ghost" size="icon-md" onClick={goBack}>
+                <Button
+                  aria-label="Назад"
+                  variant="ghost"
+                  size="icon-md"
+                  onClick={goBack}
+                >
                   <MaterialSymbolsChevronLeftRounded className="size-6" />
                 </Button>
                 {PAGE_TITLES[currentPage]}
@@ -237,7 +233,7 @@ function App() {
             )}
           </motion.span>
         </AnimatePresence>
-      </h3>
+      </h1>
       <div className="relative flex-1">
         <AnimatePresence initial={false} custom={direction} mode="popLayout">
           <motion.div
@@ -266,7 +262,7 @@ function App() {
           </motion.div>
         </AnimatePresence>
       </div>
-      <div className="flex items-center justify-center gap-3 text-xs text-[#5C5C5C]">
+      <div className="text-muted-foreground flex items-center justify-center gap-3 text-xs">
         <a
           href="https://github.com/rosset-nocpes/hikka-features"
           target="_blank"
@@ -277,20 +273,26 @@ function App() {
           GitHub
         </a>
         <div className="flex flex-1 items-center justify-between gap-3">
-          <div className="size-1 rounded-full bg-[#5C5C5C]" />
+          <div
+            aria-hidden="true"
+            className="bg-muted-foreground size-1 rounded-full"
+          />
           <button
             type="button"
             onClick={() => {
-              devClicked++;
-              if (devClicked === 5) {
+              devClicks.current += 1;
+              if (devClicks.current === 5) {
+                devClicks.current = 0;
                 updateFeatureSettings('devOptions', { enabled: !enabled });
-                devClicked = 0;
               }
             }}
           >
             v{version}
           </button>
-          <div className="size-1 rounded-full bg-[#5C5C5C]" />
+          <div
+            aria-hidden="true"
+            className="bg-muted-foreground size-1 rounded-full"
+          />
         </div>
         <a
           href="https://t.me/hikka_features"
