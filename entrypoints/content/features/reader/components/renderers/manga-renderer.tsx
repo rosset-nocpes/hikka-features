@@ -1,7 +1,13 @@
 /** biome-ignore-all lint/correctness/useHookAtTopLevel: . */
 import { WheelGesturesPlugin } from 'embla-carousel-wheel-gestures';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import {
+  type ComponentPropsWithoutRef,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import {
   Carousel,
@@ -19,6 +25,48 @@ import MangaScaleIndicator from '../ui/manga/manga-scale-indicator';
 
 const MotionCarousel = motion.create(Carousel);
 
+const MAX_IMAGE_RETRIES = 3;
+const IMAGE_RETRY_DELAY_MS = 1_000;
+
+type MangaPageImageProps = Omit<
+  ComponentPropsWithoutRef<'img'>,
+  'onError' | 'src'
+> & {
+  src: string;
+};
+
+const MangaPageImage = ({ src, ...props }: MangaPageImageProps) => {
+  const [retryCount, setRetryCount] = useState(0);
+  const retryTimerRef = useRef<number>(undefined);
+
+  useEffect(
+    () => () => {
+      if (retryTimerRef.current !== undefined) {
+        window.clearTimeout(retryTimerRef.current);
+      }
+    },
+    [],
+  );
+
+  const handleError = () => {
+    if (retryCount >= MAX_IMAGE_RETRIES) {
+      console.error('Failed to load image after retries:', src);
+      return;
+    }
+    if (retryTimerRef.current !== undefined) return;
+
+    retryTimerRef.current = window.setTimeout(
+      () => {
+        retryTimerRef.current = undefined;
+        setRetryCount((count) => count + 1);
+      },
+      IMAGE_RETRY_DELAY_MS * 2 ** retryCount,
+    );
+  };
+
+  return <img key={retryCount} src={src} onError={handleError} {...props} />;
+};
+
 const MangaRenderer = () => {
   const {
     settings,
@@ -33,7 +81,6 @@ const MangaRenderer = () => {
   const { data: chapterImages } = useReadChapterData();
   const [isLoading, setIsLoading] = useState(true);
 
-  const imageRefs = useRef<(HTMLImageElement | null)[]>([]);
   const prevScaleRef = useRef(settings.scale);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -62,12 +109,20 @@ const MangaRenderer = () => {
       });
     });
 
+    let isCurrentChapter = true;
+
     Promise.all(imagesToLoad).then(() => {
+      if (!isCurrentChapter) return;
+
       if (isManhwaDetected && !settings.scrollMode) {
         setSettings({ scrollMode: true });
       }
       setIsLoading(false);
     });
+
+    return () => {
+      isCurrentChapter = false;
+    };
   }, [chapterImages]);
 
   useEffect(() => {
@@ -199,11 +254,8 @@ const MangaRenderer = () => {
               {...layoutAnimation}
             >
               {chapterImages?.map((img_url, index) => (
-                <img
-                  key={index}
-                  ref={(el) => {
-                    imageRefs.current[index] = el;
-                  }}
+                <MangaPageImage
+                  key={`${currentChapter?.id}-${index}`}
                   src={img_url}
                   alt="Chapter page"
                   loading="lazy"
@@ -229,14 +281,15 @@ const MangaRenderer = () => {
               <CarouselContent className="m-0! h-full">
                 {chapterImages?.map((img_url, index) => {
                   return (
-                    <CarouselItem key={index} className="h-full">
+                    <CarouselItem
+                      key={`${currentChapter?.id}-${index}`}
+                      className="h-full"
+                    >
                       <div className="flex h-full items-center justify-center">
-                        <img
-                          ref={(el) => {
-                            imageRefs.current[index] = el;
-                          }}
+                        <MangaPageImage
                           src={img_url}
                           alt="Chapter page"
+                          loading="lazy"
                           referrerPolicy="no-referrer"
                           className="h-full object-contain"
                         />
