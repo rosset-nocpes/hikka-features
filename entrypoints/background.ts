@@ -173,6 +173,7 @@ export default defineBackground(() => {
       }
     },
   );
+});
 
 const isHikkaUrl = (url: string) => {
   const origin = new URL(url).origin;
