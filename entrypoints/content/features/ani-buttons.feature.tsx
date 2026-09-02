@@ -17,7 +17,6 @@ const SOURCES_HOSTS: Record<SourcesType, string> = {
   anidb: 'anidb.net',
   ann: 'animenewsnetwork.com',
   wiki: 'en.wikipedia.org',
-  amanogawa: 'amanogawa.space',
   mu: 'mangaupdates.com',
 };
 
@@ -27,7 +26,6 @@ const SOURCE_TITLES: Record<SourcesType, string> = {
   anidb: 'AniDB',
   ann: 'ANN',
   wiki: 'Wikipedia',
-  amanogawa: 'Amanogawa',
   mu: 'MU',
 };
 
@@ -40,7 +38,7 @@ const SOURCE_PATH_OVERRIDES: Partial<
 };
 
 const CONTENT_LINKS: Record<MediaType | InfoType, SourcesType[]> = {
-  anime: ['mal', 'anilist', 'anidb', 'ann', 'wiki', 'amanogawa'],
+  anime: ['mal', 'anilist', 'anidb', 'ann', 'wiki'],
   manga: ['mal', 'anilist', 'wiki', 'mu'],
   character: ['mal', 'anilist', 'anidb', 'ann'],
   person: ['mal', 'anilist', 'anidb', 'ann', 'wiki'],
@@ -96,16 +94,16 @@ const buildSourceUrl = (
       );
     }
     case 'ann':
-      return external('ann') ?? `https://www.animenewsnetwork.com/search?q=${title}`;
+      return (
+        external('ann') ?? `https://www.animenewsnetwork.com/search?q=${title}`
+      );
     case 'wiki':
       return content_type === 'character'
         ? undefined
         : (external('wiki') ??
-          `https://en.wikipedia.org/w/index.php?search=${title}`);
+            `https://en.wikipedia.org/w/index.php?search=${title}`);
     case 'mu':
       return `https://www.mangaupdates.com/series?search=${title}&perpage=25`;
-    case 'amanogawa':
-      return undefined; // resolved via useAmanogawaUrl
   }
 };
 
@@ -189,7 +187,10 @@ export default class AniButtonsFeature extends BaseFeature {
         const root = createRoot(wrapper);
         root.render(
           <QueryClientProvider client={queryClient}>
-            <AniButtons modalSlug={modalSlug} modalContentType={modalContentType} />
+            <AniButtons
+              modalSlug={modalSlug}
+              modalContentType={modalContentType}
+            />
           </QueryClientProvider>,
         );
 
@@ -203,7 +204,8 @@ export default class AniButtonsFeature extends BaseFeature {
 
   override get shouldMount(): boolean {
     return (
-      super.shouldMount || !!document.querySelector('[data-slug][data-content-type]')
+      super.shouldMount ||
+      !!document.querySelector('[data-slug][data-content-type]')
     );
   }
 
@@ -243,7 +245,9 @@ export default class AniButtonsFeature extends BaseFeature {
   }
 
   private syncModalUi() {
-    const modalOpen = !!document.querySelector('[data-slug][data-content-type]');
+    const modalOpen = !!document.querySelector(
+      '[data-slug][data-content-type]',
+    );
 
     if (modalOpen && this.modalUi && !this.modalUi.mounted) {
       this.modalUi.mount();
@@ -289,19 +293,10 @@ const AniButtonsContent = ({ data, isModal }: AniButtonsContentProps) => {
     data?.data_type ?? data?.content_type;
   const title = pickTitle(data);
 
-  const { data: agawaUrl, isLoading, isError } = useAmanogawaUrl(data);
   const sources = CONTENT_LINKS[content_type] ?? [];
 
-  const amanogawaClass = isLoading
-    ? 'animate-pulse'
-    : isError
-      ? 'pointer-events-none opacity-50'
-      : '';
-
   const getUrl = (source: SourcesType): string | undefined =>
-    source === 'amanogawa'
-      ? agawaUrl
-      : buildSourceUrl(source, { data, content_type, title });
+    buildSourceUrl(source, { data, content_type, title });
 
   if (isModal) {
     return (
@@ -319,10 +314,10 @@ const AniButtonsContent = ({ data, isModal }: AniButtonsContentProps) => {
               href={getUrl(source)}
               target="_blank"
               rel="noopener noreferrer"
-              className={cn(
-                buttonVariants({ variant: 'outline', size: 'icon-md' }),
-                source === 'amanogawa' && amanogawaClass,
-              )}
+              className={buttonVariants({
+                variant: 'outline',
+                size: 'icon-md',
+              })}
             >
               <Favicon host={SOURCES_HOSTS[source]} />
             </a>
@@ -359,10 +354,7 @@ const AniButtonsContent = ({ data, isModal }: AniButtonsContentProps) => {
               href={getUrl(source)}
               target="_blank"
               rel="noopener noreferrer"
-              className={cn(
-                'hover:bg-secondary/60 flex items-center gap-2 rounded-sm p-1 text-sm font-medium transition',
-                source === 'amanogawa' && amanogawaClass,
-              )}
+              className="hover:bg-secondary/60 flex items-center gap-2 rounded-sm p-1 text-sm font-medium transition"
             >
               <Favicon host={SOURCES_HOSTS[source]} />
               {SOURCE_TITLES[source]}

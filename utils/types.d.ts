@@ -5,15 +5,7 @@ declare global {
 
   type InfoType = 'character' | 'person';
 
-  type SourcesType =
-    | 'mal'
-    | 'anilist'
-    | 'anidb'
-    | 'ann'
-    | 'wiki'
-    | 'amanogawa'
-    | 'mu';
-  // | "dengeki"
+  type SourcesType = 'mal' | 'anilist' | 'anidb' | 'ann' | 'wiki' | 'mu';
 
   type BackendBranches = 'stable' | 'localhost';
 

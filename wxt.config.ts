@@ -42,7 +42,6 @@ export default defineConfig({
             'https://api.tenrai.org/*',
           ]
         : []),
-      'https://amanogawa.space/*',
       'https://manga.in.ua/*',
       'https://baka.in.ua/*',
     ],
