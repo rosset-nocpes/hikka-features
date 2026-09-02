@@ -39,7 +39,7 @@ export default defineConfig({
             'https://api.hikka.io/*',
             'https://api.hikka-features.pp.ua/*',
             'https://graphql.anilist.co/*',
-            'https://api.jikan.moe/*',
+            'https://api.tenrai.org/*',
           ]
         : []),
       'https://amanogawa.space/*',

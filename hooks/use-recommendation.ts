@@ -13,7 +13,7 @@ const useRecommendation = () => {
       const mal_id = data.mal_id;
       let maxSingleVotes = 0;
 
-      const url = `https://api.jikan.moe/v4/${contentType === 'novel' ? 'manga' : contentType}/${mal_id}/recommendations`;
+      const url = `https://api.tenrai.org/v1/${contentType === 'novel' ? 'manga' : contentType}/${mal_id}/recommendations`;
 
       const recommendation_data = await ky.get(url).json<any>();
       const result = await Promise.all(
