@@ -1,19 +1,16 @@
+import ky from 'ky';
+
 export async function getMangaupdatesURL(title: string) {
   const url =
     'https://corsproxy.io/?' +
     encodeURIComponent('https://api.mangaupdates.com/v1/series/search');
-  const response = await (
-    await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify({
+  const response = await ky
+    .post(url, {
+      json: {
         search: title,
-      }),
+      },
     })
-  ).json();
+    .json<any>();
   return response['results'][0]['record']['url'];
 }
 
@@ -23,7 +20,7 @@ export async function getDengekiURL(title: string) {
     encodeURIComponent(
       `https://api.dengeki.one/search/?search=${encodeURIComponent(title)}`,
     );
-  let x = (await (await fetch(url)).json())[0];
+  const x = (await ky.get(url).json<any[]>())[0];
 
   if (x === undefined) {
     return;

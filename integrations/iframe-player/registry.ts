@@ -8,7 +8,11 @@ const bridgeClasses = [
   PlayerJsBridge,
 ] satisfies IFramePlayerBridgeClass[];
 
-export const IFRAME_PLAYER_MATCHES = ['https://*/*'];
+export const IFRAME_PLAYER_MATCHES = [
+  'https://ashdi.vip/vod/*',
+  'https://moonanime.art/iframe/*',
+  'https://tortuga.tw/vod/*',
+];
 
 export const findIFramePlayerBridge = (video: HTMLVideoElement) =>
   bridgeClasses.find((Bridge) => Bridge.detect(video));

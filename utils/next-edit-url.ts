@@ -1,20 +1,15 @@
+import ky from 'ky';
+
 async function fetchPendingEdits(page: number, sort: string[]) {
-  const response = await fetch(
-    `https://api.hikka.io/edit/list?page=${page}&size=15`,
-    {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+  return ky
+    .post(`https://api.hikka.io/edit/list?page=${page}&size=15`, {
+      json: {
         sort,
         status: 'pending',
         slug: '',
-      }),
-    },
-  );
-  return response.json();
+      },
+    })
+    .json<any>();
 }
 
 export default async function NextEditURL(edit_id: number) {

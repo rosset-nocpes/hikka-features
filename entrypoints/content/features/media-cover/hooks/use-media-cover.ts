@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import ky from 'ky';
 
 import { usePageStore } from '@/hooks/use-page-store';
 
@@ -20,12 +21,13 @@ const fetchCharacterMedia = async (
   slug: string,
   mediaType: 'anime' | 'manga',
 ): Promise<number | null> => {
-  const response = await fetch(
+  const response = await ky.get(
     `${API_BASE_URL}/characters/${slug}/${mediaType}`,
+    { throwHttpErrors: false },
   );
   if (!response.ok) return null;
 
-  const data: CharacterMediaResponse = await response.json();
+  const data = await response.json<CharacterMediaResponse>();
   return data.list[0]?.[mediaType]?.mal_id ?? null;
 };
 
@@ -45,24 +47,20 @@ const fetchBannerImage = async (
     }
   `;
 
-  const response = await fetch(ANILIST_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-    },
-    body: JSON.stringify({
+  const response = await ky.post(ANILIST_URL, {
+    throwHttpErrors: false,
+    json: {
       query,
       variables: {
         mal_id: malId,
         type: mediaType.toUpperCase(),
       },
-    }),
+    },
   });
 
   if (!response.ok) return null;
 
-  const json = await response.json();
+  const json = await response.json<any>();
   return json.data?.Media?.bannerImage ?? null;
 };
 

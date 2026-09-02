@@ -1,3 +1,5 @@
+import ky from 'ky';
+
 // @name        Amanogawa Button
 // @version     1.1
 // @author      Lorg0n
@@ -17,7 +19,7 @@ export async function getAmanogawaURL(anime_data: any) {
       )}"`,
     );
 
-  const amanogawa_data = await (await fetch(url_cors_proxy_amanogawa)).json();
+  const amanogawa_data = await ky.get(url_cors_proxy_amanogawa).json<any[]>();
 
   const anime = findMostSimilarEnJpName(
     title_ja,

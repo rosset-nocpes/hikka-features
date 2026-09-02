@@ -1,17 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
+import ky from 'ky';
 
 import { queryClient } from '@/entrypoints/content';
 
 import { usePageStore } from './use-page-store';
 
 const hikkaPersonFetcher = async (slug: string) => {
-  const r = await fetch(`https://api.hikka.io/people/${slug}`);
-
-  if (!r.ok) {
-    throw new Error('Not found');
-  }
-
-  return r.json();
+  return ky.get(`https://api.hikka.io/people/${slug}`).json<any>();
 };
 
 const useHikkaPerson = ({ enabled = true }: { enabled?: boolean } = {}) => {

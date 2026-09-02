@@ -1,6 +1,10 @@
 import ky from 'ky';
 
 import type { IFramePlayerCommand } from '@/integrations/iframe-player/protocol';
+import type {
+  RemoteFetchRequest,
+  RemoteFetchResponse,
+} from '@/utils/remote-fetch';
 
 interface LoginRequest {
   type: 'login';
@@ -28,14 +32,6 @@ interface WatchTogetherRequestHost extends WatchTogetherRequest {
   playerInfo: PlayerInfo;
 }
 
-interface ProxyRequest {
-  type: 'proxy';
-  requestId: string;
-  method: 'GET' | 'POST';
-  url: string;
-  data?: any;
-}
-
 interface HikkaContentLoadedRequest {
   type: 'hikka-content-loaded';
 }
@@ -52,46 +48,11 @@ type MessageRequest =
   | LoginRequest
   | RichPresenceCheckRequest
   | WatchTogetherRequest
-  | ProxyRequest
+  | RemoteFetchRequest
   | IFramePlayerCommand
   | HikkaContentLoadedRequest
   | HikkaContentUnloadedRequest
   | HikkaContentStatusRequest;
-
-export const proxyUrl = <T = any>(
-  url: string,
-  method: 'GET' | 'POST' = 'GET',
-  data?: any,
-): Promise<T> => {
-  const requestId = Math.random().toString(36).substring(2, 9);
-
-  return new Promise((resolve, reject) => {
-    const handleMessage = (message: any) => {
-      if (message.type === 'proxy-response') {
-        if (message.requestId !== requestId) return;
-
-        browser.runtime.onMessage.removeListener(handleMessage);
-
-        resolve(message.data);
-      }
-    };
-
-    browser.runtime.onMessage.addListener(handleMessage);
-
-    browser.runtime
-      .sendMessage({
-        type: 'proxy',
-        requestId,
-        method,
-        url,
-        data,
-      })
-      .catch((err) => {
-        browser.runtime.onMessage.removeListener(handleMessage);
-        reject(err);
-      });
-  });
-};
 
 export default defineBackground(() => {
   const hikkaContentTabs = new Set<number>();
@@ -100,23 +61,17 @@ export default defineBackground(() => {
     hikkaContentTabs.delete(tabId);
   });
 
-  browser.webNavigation.onCommitted.addListener(({ tabId, frameId, url }) => {
-    if (frameId !== 0) return;
-    if (
-      url.startsWith('https://hikka.io/') ||
-      url.startsWith('https://dev.hikka.io/')
-    ) {
-      return;
-    }
-
-    hikkaContentTabs.delete(tabId);
+  browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
+    if (changeInfo.status === 'loading') hikkaContentTabs.delete(tabId);
   });
 
   browser.runtime.onMessage.addListener(
     async (
       request: unknown,
       sender,
-    ): Promise<true | { loaded: boolean } | undefined> => {
+    ): Promise<
+      true | { loaded: boolean } | RemoteFetchResponse | undefined
+    > => {
       // Type guard for MessageRequest
       if (!request || typeof request !== 'object' || !('type' in request)) {
         return undefined;
@@ -155,7 +110,7 @@ export default defineBackground(() => {
               interactive: true,
               url: auth_url,
             })
-            .then((response_url) => {
+            .then(async (response_url) => {
               const params = new URLSearchParams(response_url?.split('?')[1]);
 
               setSettings({
@@ -165,14 +120,23 @@ export default defineBackground(() => {
                 },
               });
 
-              getUserData().then((r) => {
-                setSettings({
-                  userData: {
-                    hikkaId: r.reference,
-                    username: r.username,
-                    avatar: r.avatar,
-                  },
-                });
+              const r = await getUserData();
+              if (!r) return;
+
+              setSettings({
+                userData: {
+                  hikkaId: r.reference,
+                  username: r.username,
+                  avatar: r.avatar,
+                },
+              });
+            })
+            .finally(() => {
+              if (import.meta.env.BROWSER === 'firefox') return;
+
+              void browser.permissions.remove({
+                permissions: ['identity'],
+                origins: ['https://api.hikka.io/*'],
               });
             });
 
@@ -191,6 +155,13 @@ export default defineBackground(() => {
             });
 
           return true;
+
+        case 'remote-fetch':
+          if (sender.frameId !== 0 || !sender.url || !isHikkaUrl(sender.url)) {
+            return undefined;
+          }
+
+          return remoteFetch(typedRequest);
 
         case 'watch-together': {
           const { userData } = useSettings.getState();
@@ -270,18 +241,6 @@ export default defineBackground(() => {
               return undefined;
           }
         }
-        case 'proxy': {
-          const { method, url, data, requestId } = typedRequest;
-
-          const r = await ky(url, { method, body: data }).json();
-
-          browser.tabs.sendMessage(sender.tab!.id!, {
-            type: 'proxy-response',
-            requestId,
-            data: r,
-          });
-          return true;
-        }
         case 'iframe-player-command': {
           browser.tabs.sendMessage(sender.tab!.id!, typedRequest);
           return true;
@@ -333,3 +292,59 @@ export default defineBackground(() => {
     };
   }
 });
+
+const isHikkaUrl = (url: string) => {
+  const origin = new URL(url).origin;
+  return origin === 'https://hikka.io' || origin === 'https://dev.hikka.io';
+};
+
+const remoteFetch = async (
+  request: RemoteFetchRequest,
+): Promise<RemoteFetchResponse> => {
+  const url = new URL(request.url);
+  const allowedMethods = REMOTE_FETCH_ORIGINS.get(url.origin);
+  const isAllowedAmanogawaPath =
+    url.origin !== 'https://amanogawa.space' || url.pathname === '/api/search';
+
+  if (
+    !allowedMethods?.has(request.method) ||
+    !isAllowedAmanogawaPath ||
+    (request.body?.length ?? 0) > 32_768
+  ) {
+    throw new Error('Remote fetch is not allowed');
+  }
+
+  const headers = new Headers();
+  if (url.origin === 'https://manga.in.ua') {
+    headers.set('X-Requested-With', 'XMLHttpRequest');
+  }
+  if (request.method === 'POST') {
+    headers.set(
+      'Content-Type',
+      'application/x-www-form-urlencoded;charset=UTF-8',
+    );
+  }
+
+  const response = await ky(url, {
+    method: request.method,
+    headers,
+    body: request.method === 'POST' ? request.body : undefined,
+    credentials: 'omit',
+    throwHttpErrors: false,
+  });
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    statusText: response.statusText,
+    body: await response.text(),
+  };
+};
+
+const REMOTE_FETCH_ORIGINS = new Map<string, Set<RemoteFetchRequest['method']>>(
+  [
+    ['https://manga.in.ua', new Set(['GET', 'POST'])],
+    ['https://baka.in.ua', new Set(['GET'])],
+    ['https://amanogawa.space', new Set(['GET'])],
+  ],
+);

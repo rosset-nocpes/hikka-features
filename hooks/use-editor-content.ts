@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import ky from 'ky';
 
 const CONTENT_TYPE_MAP: Record<string, string> = {
   person: 'people',
@@ -42,15 +43,11 @@ const useEditorContent = () => {
         throw new Error('Missing slug or content_type');
       }
 
-      const r = await fetch(
-        `${BACKEND_BRANCHES[backendBranch]}/editor/${effectiveType}/${slug}`,
-      );
-
-      if (!r.ok) {
-        throw new Error('Not found');
-      }
-
-      return (await r.json()) as API.EditorContent;
+      return ky
+        .get(
+          `${BACKEND_BRANCHES[backendBranch]}/editor/${effectiveType}/${slug}`,
+        )
+        .json<API.EditorContent>();
     },
     retry: false,
     staleTime: 0,

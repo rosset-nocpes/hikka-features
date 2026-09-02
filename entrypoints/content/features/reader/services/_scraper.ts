@@ -1,4 +1,4 @@
-import ky from 'ky';
+import { remoteFetchText } from '@/utils/remote-fetch';
 
 import type { ReaderContent } from '../reader.types';
 
@@ -11,7 +11,7 @@ abstract class BaseScraper {
   protected async request(
     url: string | URL | Request,
     method: 'GET' | 'POST' = 'GET',
-    data?: any,
+    data?: URLSearchParams,
   ) {
     const absoluteUrl =
       typeof url === 'string' && !url.startsWith('http')
@@ -19,8 +19,11 @@ abstract class BaseScraper {
         : url;
 
     try {
-      const response = await ky(absoluteUrl, { method, body: data }).text();
-      return response;
+      const requestUrl =
+        absoluteUrl instanceof Request
+          ? absoluteUrl.url
+          : absoluteUrl.toString();
+      return await remoteFetchText(requestUrl, method, data?.toString());
     } catch (error) {
       console.error(`[${this.name}] Error during ${method} ${url}:`, error);
       throw new Error(`${this.name} failed to communicate with ${url}`);

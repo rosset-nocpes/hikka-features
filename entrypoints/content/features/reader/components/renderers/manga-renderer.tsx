@@ -57,6 +57,7 @@ const MangaRenderer = () => {
           console.error('Failed to load image:', img_url);
           resolve();
         };
+        img.referrerPolicy = 'no-referrer';
         img.src = img_url;
       });
     });
@@ -206,6 +207,7 @@ const MangaRenderer = () => {
                   src={img_url}
                   alt="Chapter page"
                   loading="lazy"
+                  referrerPolicy="no-referrer"
                   className="max-w-none"
                   style={{
                     width: settings.scrollMode
@@ -235,6 +237,7 @@ const MangaRenderer = () => {
                           }}
                           src={img_url}
                           alt="Chapter page"
+                          referrerPolicy="no-referrer"
                           className="h-full object-contain"
                         />
                       </div>

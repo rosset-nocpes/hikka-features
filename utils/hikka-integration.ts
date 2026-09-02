@@ -1,5 +1,15 @@
+import ky from 'ky';
+
 export async function Login() {
-  browser.runtime.sendMessage(undefined, { type: 'login' });
+  const granted =
+    import.meta.env.BROWSER === 'firefox'
+      ? true
+      : await browser.permissions.request({
+          permissions: ['identity'],
+          origins: ['https://api.hikka.io/*'],
+        });
+
+  if (granted) await browser.runtime.sendMessage({ type: 'login' });
 }
 
 export async function Logout() {
@@ -16,26 +26,20 @@ export async function getUserData() {
   const { hikkaSecret } = useSettings.getState();
   if (!hikkaSecret) return;
 
-  return await (
-    await fetch('https://api.hikka.io/user/me', {
+  return ky
+    .get('https://api.hikka.io/user/me', {
       headers: { auth: hikkaSecret.secret },
     })
-  ).json();
+    .json<any>();
 }
 
 export async function EditDesc(description: string) {
   const { hikkaSecret } = useSettings.getState();
   if (!hikkaSecret) return;
 
-  await fetch('https://api.hikka.io/settings/description', {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      auth: hikkaSecret.secret,
-    },
-    body: JSON.stringify({
-      description: description,
-    }),
+  await ky.put('https://api.hikka.io/settings/description', {
+    headers: { auth: hikkaSecret.secret },
+    json: { description },
   });
 }
 

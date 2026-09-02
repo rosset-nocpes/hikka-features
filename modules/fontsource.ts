@@ -119,7 +119,7 @@ export function injectAllFonts() {
       } else {
         manifest.web_accessible_resources ??= [];
         manifest.web_accessible_resources.push({
-          matches: ['<all_urls>'],
+          matches: ['https://hikka.io/*', 'https://dev.hikka.io/*'],
           resources: ['fonts/**/*'],
         });
       }

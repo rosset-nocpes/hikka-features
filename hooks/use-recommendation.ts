@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import ky from 'ky';
 
 import type { ContentType } from './use-page-store';
 
@@ -14,13 +15,7 @@ const useRecommendation = () => {
 
       const url = `https://api.jikan.moe/v4/${contentType === 'novel' ? 'manga' : contentType}/${mal_id}/recommendations`;
 
-      const r = await fetch(url);
-
-      if (!r.ok) {
-        throw new Error('Not found');
-      }
-
-      const recommendation_data = await r.json();
+      const recommendation_data = await ky.get(url).json<any>();
       const result = await Promise.all(
         recommendation_data.data.slice(0, 5).map(async (element: any) => {
           try {
@@ -65,12 +60,7 @@ const fetchDetailedData = async (content_type: ContentType, content: any) => {
 
   for (const url of endpoints) {
     try {
-      const response = await fetch(url);
-      if (response.ok) return response.json();
-
-      lastError = new Error(
-        `[use-recommendation]: API request failed with status code ${response.status}`,
-      );
+      return await ky.get(url).json<any>();
     } catch (err) {
       lastError = err as Error;
     }

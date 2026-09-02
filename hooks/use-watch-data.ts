@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import ky from 'ky';
 
 import { ProviderIFrame, ProviderTeamIFrame } from '@/utils/provider_classes';
 
@@ -10,15 +11,9 @@ const useWatchData = () => {
   return useQuery({
     queryKey: ['watch-data', slug],
     queryFn: async () => {
-      const r = await fetch(
-        `${BACKEND_BRANCHES[backendBranch]}/watch/v2/${slug}`,
-      );
-
-      if (!r.ok) {
-        throw new Error('Not found');
-      }
-
-      const data: API.WatchData = await r.json();
+      const data = await ky
+        .get(`${BACKEND_BRANCHES[backendBranch]}/watch/v2/${slug}`)
+        .json<API.WatchData>();
       const out = data;
       for (const [key, elem] of Object.entries(data)) {
         if (typeof elem === 'string') continue;

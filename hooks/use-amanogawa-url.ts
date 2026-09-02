@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { remoteFetchText } from '@/utils/remote-fetch';
+
 const useAmanogawaUrl = (anime_data: any) => {
   return useQuery({
     queryKey: ['amanogawa-url', anime_data?.slug],
@@ -13,13 +15,7 @@ const useAmanogawaUrl = (anime_data: any) => {
         title_ja.replaceAll('"', "'"),
       )}"`;
 
-      const r = await fetch(url);
-
-      if (!r.ok) {
-        throw new Error('Not found');
-      }
-
-      const amanogawa_data = await r.json();
+      const amanogawa_data = JSON.parse(await remoteFetchText(url));
 
       const anime: any = findMostSimilarEnJpName(
         title_ja,

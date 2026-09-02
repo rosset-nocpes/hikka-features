@@ -27,22 +27,24 @@ export default defineConfig({
       include: ['react', 'react-dom'],
     },
   }),
-  manifest: () => ({
+  manifest: ({ browser }) => ({
     name: 'Hikka Features',
-    permissions: [
-      'webNavigation',
-      'storage',
-      'identity',
-      'declarativeNetRequestWithHostAccess',
-    ],
+    permissions: browser === 'firefox' ? ['storage', 'identity'] : ['storage'],
+    optional_permissions: browser === 'firefox' ? [] : ['identity'],
+    optional_host_permissions:
+      browser === 'firefox' ? [] : ['https://api.hikka.io/*'],
     host_permissions: [
-      'https://*.hikka.io/*',
-      'https://*.hikka-features.pp.ua/*',
-      'https://graphql.anilist.co/*',
-      'https://amanogawa.space/api/*',
+      ...(browser === 'firefox'
+        ? [
+            'https://api.hikka.io/*',
+            'https://api.hikka-features.pp.ua/*',
+            'https://graphql.anilist.co/*',
+            'https://api.jikan.moe/*',
+          ]
+        : []),
+      'https://amanogawa.space/*',
       'https://manga.in.ua/*',
       'https://baka.in.ua/*',
-      'https://api.jikan.moe/v4/*',
     ],
     browser_specific_settings: {
       gecko: {
@@ -51,15 +53,6 @@ export default defineConfig({
           required: ['none'],
         },
       },
-    },
-    declarative_net_request: {
-      rule_resources: [
-        {
-          id: 'rules',
-          enabled: true,
-          path: 'rules.json',
-        },
-      ],
     },
   }),
   webExt: {

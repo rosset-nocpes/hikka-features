@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import ky from 'ky';
 
 const useNotionData = () => {
   const { backendBranch } = useSettings();
@@ -7,15 +8,9 @@ const useNotionData = () => {
   return useQuery({
     queryKey: ['notion-data', slug],
     queryFn: async () => {
-      const r = await fetch(
-        `${BACKEND_BRANCHES[backendBranch]}/notion/${slug}`,
-      );
-
-      if (!r.ok) {
-        throw new Error('Not found');
-      }
-
-      return (await r.json()) as API.NotionData;
+      return ky
+        .get(`${BACKEND_BRANCHES[backendBranch]}/notion/${slug}`)
+        .json<API.NotionData>();
     },
     retry: false,
     staleTime: 0,

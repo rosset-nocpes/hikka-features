@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import ky from 'ky';
 
 import { queryClient } from '@/entrypoints/content';
 
@@ -9,7 +10,7 @@ export const hikkaEditContentFetcher = async () => {
 
   const edit_info = creatingEdit
     ? new URLSearchParams(document.location.search)
-    : await (await fetch(`https://api.hikka.io/edit/${split_path[2]}`)).json();
+    : await ky.get(`https://api.hikka.io/edit/${split_path[2]}`).json<any>();
 
   const content_type = creatingEdit
     ? edit_info.get('content_type')
@@ -19,8 +20,8 @@ export const hikkaEditContentFetcher = async () => {
     ? edit_info.get('slug')
     : edit_info.content.slug;
 
-  const data = await (
-    await fetch(
+  const data = await ky
+    .get(
       `https://api.hikka.io/${
         content_type === 'character'
           ? 'characters'
@@ -29,7 +30,7 @@ export const hikkaEditContentFetcher = async () => {
             : content_type
       }/${editSlug}`,
     )
-  ).json();
+    .json<any>();
 
   return data;
 };
