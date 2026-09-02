@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 
 import useReadChapterData from '../../../hooks/use-read-chapter-data';
 import { useReader } from '../../../hooks/use-reader';
@@ -7,27 +7,32 @@ import { ReaderType } from '../../../reader.enums';
 const MangaPageIndicator = () => {
   const { settings, carouselApi } = useReader();
   const { data } = useReadChapterData();
-  const [currentPage, setCurrentPage] = useState(0);
+  const pageCount = Array.isArray(data) ? data.length : 0;
 
-  useEffect(() => {
-    if (!carouselApi || !Array.isArray(data)) return;
+  const subscribe = useCallback(
+    (onStoreChange: () => void) => {
+      if (!carouselApi) return () => undefined;
 
-    const updateCurrentPage = () => {
-      if (carouselApi.selectedScrollSnap() + 1 > data.length) return;
+      carouselApi.on('select', onStoreChange);
+      carouselApi.on('reInit', onStoreChange);
 
-      setCurrentPage(carouselApi.selectedScrollSnap());
-    };
+      return () => {
+        carouselApi.off('select', onStoreChange);
+        carouselApi.off('reInit', onStoreChange);
+      };
+    },
+    [carouselApi],
+  );
 
-    carouselApi.on('select', updateCurrentPage);
-    carouselApi.on('init', updateCurrentPage);
+  const getSnapshot = useCallback(() => {
+    if (!carouselApi || pageCount === 0) return 0;
 
-    return () => {
-      carouselApi.off('select', updateCurrentPage);
-      carouselApi.off('init', updateCurrentPage);
-    };
-  }, [carouselApi, data]);
+    return Math.min(carouselApi.selectedScrollSnap(), pageCount - 1);
+  }, [carouselApi, pageCount]);
 
-  if (settings.type !== ReaderType.Manga || !Array.isArray(data)) return;
+  const currentPage = useSyncExternalStore(subscribe, getSnapshot, () => 0);
+
+  if (settings.type !== ReaderType.Manga || pageCount === 0) return;
 
   return (
     <div
@@ -38,7 +43,7 @@ const MangaPageIndicator = () => {
     >
       <div>{currentPage + 1}</div>
       <div className="bg-muted h-full w-[2px]" />
-      <div>{data.length}</div>
+      <div>{pageCount}</div>
     </div>
   );
 };
