@@ -163,84 +163,6 @@ export default defineBackground(() => {
 
           return remoteFetch(typedRequest);
 
-        case 'watch-together': {
-          const { userData } = useSettings.getState();
-
-          switch (typedRequest.action) {
-            case 'create': {
-              const { animeSlug, playerInfo } =
-                typedRequest as WatchTogetherRequestHost;
-
-              ws.send(
-                JSON.stringify({
-                  type: 'create',
-                  userData: userData,
-                  animeSlug,
-                  playerInfo,
-                }),
-              );
-
-              ws.addEventListener('message', (event) => {
-                const r = JSON.parse(event.data);
-                if (r.type === 'system' && r.action === 'created') {
-                  browser.tabs.sendMessage(sender.tab!.id!, {
-                    type: 'watch-together',
-                    action: 'created',
-                    roomId: r.roomId,
-                  });
-                }
-              });
-
-              return true;
-            }
-
-            case 'join':
-              ws.send(
-                JSON.stringify({
-                  type: 'join',
-                  userData: userData,
-                  room: typedRequest.roomId!,
-                }),
-              );
-
-              ws.addEventListener('message', (event) => {
-                const r = JSON.parse(event.data);
-                if (r.type === 'system' && r.action === 'joined') {
-                  browser.tabs.sendMessage(sender.tab!.id!, {
-                    type: 'watch-together',
-                    action: 'joined',
-                    roomId: r.roomId,
-                  });
-                }
-              });
-
-              return true;
-
-            case 'leave':
-              ws.send(
-                JSON.stringify({
-                  type: 'leave',
-                  userData: userData,
-                }),
-              );
-
-              ws.addEventListener('message', (event) => {
-                const r = JSON.parse(event.data);
-                if (r.type === 'system' && r.action === 'left') {
-                  browser.tabs.sendMessage(sender.tab!.id!, {
-                    type: 'watch-together',
-                    action: 'left',
-                    roomId: r.roomId,
-                  });
-                }
-              });
-
-              return true;
-
-            default:
-              return undefined;
-          }
-        }
         case 'iframe-player-command': {
           browser.tabs.sendMessage(sender.tab!.id!, typedRequest);
           return true;
@@ -252,47 +174,6 @@ export default defineBackground(() => {
     },
   );
 
-  // Initialize WebSocket connection
-  // let ws: WebSocket;
-  // connectWebSocket();
-
-  function connectWebSocket() {
-    // Replace with your WebSocket server URL
-    ws = new WebSocket(BACKEND_WS_URL);
-
-    // Event: Connection opened
-    ws.onopen = () => {
-      console.log('WebSocket connection opened.');
-      // ws.send(JSON.stringify({ message: "Hello from the browser extension!" }));
-      // ws.send(
-      //   JSON.stringify({
-      //     type: "join",
-      //     room: "123",
-      //     // content: "Hello from the background script!",
-      //   })
-      // );
-    };
-
-    // Event: Message received
-    ws.onmessage = (event) => {
-      console.log('Message received from server:', event.data);
-      // Process the message or forward it to a content script if needed
-    };
-
-    // Event: Connection closed
-    ws.onclose = (event) => {
-      console.log('WebSocket connection closed:', event.reason);
-      // Optionally, attempt to reconnect
-      setTimeout(connectWebSocket, 5000); // Retry connection after 5 seconds
-    };
-
-    // Event: Error occurred
-    ws.onerror = (error) => {
-      console.warn('WebSocket error:', error);
-    };
-  }
-});
-
 const isHikkaUrl = (url: string) => {
   const origin = new URL(url).origin;
   return origin === 'https://hikka.io' || origin === 'https://dev.hikka.io';
@@ -303,12 +184,9 @@ const remoteFetch = async (
 ): Promise<RemoteFetchResponse> => {
   const url = new URL(request.url);
   const allowedMethods = REMOTE_FETCH_ORIGINS.get(url.origin);
-  const isAllowedAmanogawaPath =
-    url.origin !== 'https://amanogawa.space' || url.pathname === '/api/search';
 
   if (
     !allowedMethods?.has(request.method) ||
-    !isAllowedAmanogawaPath ||
     (request.body?.length ?? 0) > 32_768
   ) {
     throw new Error('Remote fetch is not allowed');
@@ -345,6 +223,5 @@ const REMOTE_FETCH_ORIGINS = new Map<string, Set<RemoteFetchRequest['method']>>(
   [
     ['https://manga.in.ua', new Set(['GET', 'POST'])],
     ['https://baka.in.ua', new Set(['GET'])],
-    ['https://amanogawa.space', new Set(['GET'])],
   ],
 );
