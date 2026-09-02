@@ -17,14 +17,15 @@ import { ReaderProvider, useReader } from './hooks/use-reader';
 import { ReaderType } from './reader.enums';
 
 const MOUNT_TAG = 'reader-ui';
+let readerUiPromise: ReturnType<typeof createShadowRootUi> | undefined;
 
 export default function reader() {
-  return createShadowRootUi(usePageStore.getState().ctx, {
+  readerUiPromise ??= createShadowRootUi(usePageStore.getState().ctx, {
     name: MOUNT_TAG,
     position: 'modal',
     zIndex: 100,
     inheritStyles: true,
-    async onMount(container) {
+    onMount(container) {
       const wrapper = document.createElement('div');
       container.append(wrapper);
 
@@ -51,23 +52,20 @@ export default function reader() {
         </QueryClientProvider>,
       );
 
-      return { root, wrapper };
+      return root;
     },
-    onRemove: (elements) => {
-      useReader.getState().setSettings({ fullscreen: false });
+    onRemove: (root) => {
+      const { settings, toggleFullscreen } = useReader.getState();
+      if (settings.fullscreen) toggleFullscreen();
 
-      elements?.then((x) => {
-        x?.root.unmount();
-        x?.wrapper.remove();
-      });
-
-      document.body.removeChild(document.getElementsByTagName(MOUNT_TAG)[0]);
-      document.body.classList.toggle('h-full');
-      document.body.classList.toggle('overflow-hidden');
+      root?.unmount();
+      document.body.classList.remove('h-full', 'overflow-hidden');
 
       useReader.getState().reset();
     },
   });
+
+  return readerUiPromise;
 }
 
 export const Reader = () => {

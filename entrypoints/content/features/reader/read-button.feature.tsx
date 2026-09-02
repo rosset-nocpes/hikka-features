@@ -56,8 +56,7 @@ const ReadButton = () => {
   const { data, isLoading, isError } = useReadData();
 
   const openReader = () => {
-    document.body.classList.toggle('h-full');
-    document.body.classList.toggle('overflow-hidden');
+    document.body.classList.add('h-full', 'overflow-hidden');
     reader().then((ui) => ui.mount());
   };
 

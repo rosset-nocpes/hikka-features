@@ -5,6 +5,7 @@ import {
   type ComponentPropsWithoutRef,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -81,6 +82,7 @@ const MangaRenderer = () => {
   const { data: chapterImages } = useReadChapterData();
   const [isLoading, setIsLoading] = useState(true);
 
+  const carouselPlugins = useMemo(() => [WheelGesturesPlugin()], []);
   const prevScaleRef = useRef(settings.scale);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -272,7 +274,7 @@ const MangaRenderer = () => {
           ) : (
             <MotionCarousel
               key="carousel"
-              plugins={[WheelGesturesPlugin()]}
+              plugins={carouselPlugins}
               orientation={settings.orientation}
               setApi={setCarouselApi}
               className="flex h-full"

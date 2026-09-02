@@ -24,10 +24,10 @@ import PlayerOverlay from './player-overlay/player-overlay';
 
 const MOUNT_TAG = 'player-ui';
 
-let playerUiPromise: Promise<ShadowRootContentScriptUi<Root>> | undefined;
+let playerUiPromise: ReturnType<typeof createShadowRootUi> | undefined;
 
 export default function player() {
-  playerUiPromise ??= createShadowRootUi<Root>(usePageStore.getState().ctx, {
+  playerUiPromise ??= createShadowRootUi(usePageStore.getState().ctx, {
     name: MOUNT_TAG,
     position: 'modal',
     zIndex: 100,
