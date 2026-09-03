@@ -27,21 +27,14 @@ export default defineConfig({
       include: ['react', 'react-dom'],
     },
   }),
-  manifest: ({ browser }) => ({
+  manifest: () => ({
     name: 'Hikka Features',
-    permissions: browser === 'firefox' ? ['storage', 'identity'] : ['storage'],
-    optional_permissions: browser === 'firefox' ? [] : ['identity'],
-    optional_host_permissions:
-      browser === 'firefox' ? [] : ['https://api.hikka.io/*'],
+    permissions: ['storage', 'identity'],
     host_permissions: [
-      ...(browser === 'firefox'
-        ? [
-            'https://api.hikka.io/*',
-            'https://api.hikka-features.pp.ua/*',
-            'https://graphql.anilist.co/*',
-            'https://api.tenrai.org/*',
-          ]
-        : []),
+      'https://api.hikka.io/*',
+      'https://api.hikka-features.pp.ua/*',
+      'https://graphql.anilist.co/*',
+      'https://api.tenrai.org/*',
       'https://manga.in.ua/*',
       'https://baka.in.ua/*',
     ],
