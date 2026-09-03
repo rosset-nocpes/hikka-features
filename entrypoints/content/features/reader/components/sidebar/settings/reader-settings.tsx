@@ -95,7 +95,7 @@ export const SettingsItems = () => {
   } = settings;
 
   return (
-    <div className="flex flex-col gap-3 p-3 pb-0">
+    <div className="flex flex-col gap-3 p-3">
       {Object.entries(dynamicFields).map(([key, value]) => (
         <SettingItem
           key={key}
