@@ -23,6 +23,8 @@ interface IFramePlayerState {
   bufferedTime: number;
   adInProgress: boolean;
   uiShown: boolean;
+  /** Prevents auto-hiding the overlay UI (e.g. while a menu is open) */
+  uiLocked: boolean;
   endedCount: number;
 }
 
@@ -59,6 +61,7 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
     bufferedTime: 0,
     adInProgress: false,
     uiShown: true,
+    uiLocked: false,
     endedCount: 0,
 
     play: () => {
@@ -147,6 +150,7 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
         bufferedTime: 0,
         adInProgress: false,
         uiShown: true,
+        uiLocked: false,
         endedCount: 0,
       });
     },
@@ -295,6 +299,7 @@ window.addEventListener('message', (event: MessageEvent) => {
       case 'ui':
         const shouldShow = Boolean(event.data.data);
         if (!shouldShow) {
+          if (useIFramePlayer.getState().uiLocked) break;
           const overlayRef = usePlayer.getState().overlayRef;
           const isOverlayHovered = overlayRef?.current?.matches(':hover');
           if (isOverlayHovered) break;

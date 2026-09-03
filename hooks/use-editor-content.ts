@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import ky from 'ky';
+
+import { convexApi } from '@/utils/convex-api';
+import { convexAction } from '@/utils/convex-client';
 
 const CONTENT_TYPE_MAP: Record<string, string> = {
   person: 'people',
@@ -30,7 +32,6 @@ const getEditorParams = () => {
 };
 
 const useEditorContent = () => {
-  const { backendBranch } = useSettings();
   const { slug, content_type } = getEditorParams();
 
   return useQuery({
@@ -43,11 +44,14 @@ const useEditorContent = () => {
         throw new Error('Missing slug or content_type');
       }
 
-      return ky
-        .get(
-          `${BACKEND_BRANCHES[backendBranch]}/editor/${effectiveType}/${slug}`,
-        )
-        .json<API.EditorContent>();
+      if (effectiveType !== 'characters' && effectiveType !== 'people') {
+        throw new Error('Unsupported content type');
+      }
+
+      return await convexAction(convexApi.editor.suggest, {
+        type: effectiveType,
+        slug,
+      });
     },
     retry: false,
     staleTime: 0,

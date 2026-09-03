@@ -10,6 +10,17 @@ const isPersistent = env.WXT_PERSIST_BROWSER_DATA
   ? JSON.parse(env.WXT_PERSIST_BROWSER_DATA)
   : false;
 const isWindows = process.platform === 'win32';
+const convexHostPermissions = [
+  env.WXT_CONVEX_URL,
+  env.WXT_CONVEX_SITE_URL,
+].flatMap((value) => {
+  if (!value) return [];
+  try {
+    return [`${new URL(value).origin}/*`];
+  } catch {
+    return [];
+  }
+});
 
 export default defineConfig({
   modules: ['@wxt-dev/auto-icons'],
@@ -29,10 +40,20 @@ export default defineConfig({
   }),
   manifest: () => ({
     name: 'Hikka Features',
-    permissions: ['storage', 'identity'],
+    permissions: [
+      'webNavigation',
+      'storage',
+      'identity',
+      'alarms',
+      'notifications',
+      'declarativeNetRequestWithHostAccess',
+    ],
     host_permissions: [
-      'https://api.hikka.io/*',
-      'https://api.hikka-features.pp.ua/*',
+      'https://*.hikka.io/*',
+      'https://*.hikka-features.pp.ua/*',
+      'https://*.convex.cloud/*',
+      'https://*.convex.site/*',
+      ...convexHostPermissions,
       'https://graphql.anilist.co/*',
       'https://api.tenrai.org/*',
       'https://manga.in.ua/*',

@@ -1,46 +1,32 @@
-import ky from 'ky';
+import { revokeConvexSession } from './convex-client';
+
+type LoginResponse = {
+  authenticated: true;
+  refreshToken: string;
+  user: UserDataV2;
+};
 
 export async function Login() {
-  const granted =
-    import.meta.env.BROWSER === 'firefox'
-      ? true
-      : await browser.permissions.request({
-          permissions: ['identity'],
-          origins: ['https://api.hikka.io/*'],
-        });
-
-  if (granted) await browser.runtime.sendMessage({ type: 'login' });
+  const response = (await browser.runtime.sendMessage({
+    type: 'login',
+  })) as LoginResponse | undefined;
+  if (!response?.authenticated) {
+    throw new Error('Не вдалося завершити вхід через hikka.io');
+  }
+  useSettings.getState().setSettings({
+    convexSession: { refreshToken: response.refreshToken },
+    userData: response.user,
+  });
+  return response.user;
 }
 
 export async function Logout() {
-  const { setSettings } = useSettings.getState();
-
-  setSettings({
-    richPresence: false,
-    userData: undefined,
-    hikkaSecret: undefined,
-  });
+  await revokeConvexSession();
+  useSettings.getState().setSettings({ richPresence: false });
 }
 
 export async function getUserData() {
-  const { hikkaSecret } = useSettings.getState();
-  if (!hikkaSecret) return;
-
-  return ky
-    .get('https://api.hikka.io/user/me', {
-      headers: { auth: hikkaSecret.secret },
-    })
-    .json<any>();
-}
-
-export async function EditDesc(description: string) {
-  const { hikkaSecret } = useSettings.getState();
-  if (!hikkaSecret) return;
-
-  await ky.put('https://api.hikka.io/settings/description', {
-    headers: { auth: hikkaSecret.secret },
-    json: { description },
-  });
+  return useSettings.getState().userData;
 }
 
 export async function actionRichPresence(action: 'check' | 'remove') {

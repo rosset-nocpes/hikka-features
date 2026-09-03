@@ -6,8 +6,29 @@ import type {
   RemoteFetchResponse,
 } from '@/utils/remote-fetch';
 
+import {
+  COMPATIBILITY_STORAGE_KEY,
+  EXTENSION_API_PROTOCOL,
+  type ExtensionCompatibilityState,
+  RELOAD_TABS_STORAGE_KEY,
+} from '@/utils/compatibility';
+import { convexApi } from '@/utils/convex-api';
+import {
+  convexMutation,
+  convexPublicQuery,
+  exchangeLoginCode,
+  getHikkaAuthorizationUrl,
+} from '@/utils/convex-client';
+import { syncFavoritesFromConvex } from '@/utils/favorite-sync';
+
 interface LoginRequest {
   type: 'login';
+}
+
+interface LoginResponse {
+  authenticated: true;
+  refreshToken: string;
+  user: UserDataV2;
 }
 
 interface RichPresenceCheckRequest {
@@ -19,17 +40,6 @@ interface WatchTogetherRequest {
   type: 'watch-together';
   action: 'create' | 'join' | 'leave';
   roomId?: string;
-}
-
-interface PlayerInfo {
-  playerProvider: string;
-  teamName: string;
-  episodeNumber: number;
-}
-
-interface WatchTogetherRequestHost extends WatchTogetherRequest {
-  animeSlug: string;
-  playerInfo: PlayerInfo;
 }
 
 interface HikkaContentLoadedRequest {
@@ -44,6 +54,19 @@ interface HikkaContentStatusRequest {
   type: 'hikka-content-status';
 }
 
+interface CompatibilityStatusRequest {
+  type: 'extension-compatibility-status';
+}
+
+interface ExtensionUpdateRequest {
+  type: 'extension-update';
+}
+
+interface ReleaseNotificationSeenRequest {
+  type: 'release-notification-seen';
+  id: string;
+}
+
 type MessageRequest =
   | LoginRequest
   | RichPresenceCheckRequest
@@ -52,11 +75,157 @@ type MessageRequest =
   | IFramePlayerCommand
   | HikkaContentLoadedRequest
   | HikkaContentUnloadedRequest
-  | HikkaContentStatusRequest;
+  | HikkaContentStatusRequest
+  | CompatibilityStatusRequest
+  | ExtensionUpdateRequest
+  | ReleaseNotificationSeenRequest;
 
 export default defineBackground(() => {
   const hikkaContentTabs = new Set<number>();
+  const compatibilityAlarm = 'extension-compatibility';
+  const legacyReleaseNotificationAlarm = 'release-notifications';
+  const updateCheckCooldown = 6 * 60 * 60 * 1000;
 
+  const getStoredCompatibility = async () => {
+    const stored = await browser.storage.local.get(COMPATIBILITY_STORAGE_KEY);
+    return stored[COMPATIBILITY_STORAGE_KEY] as
+      | ExtensionCompatibilityState
+      | undefined;
+  };
+
+  const publishCompatibility = async (state: ExtensionCompatibilityState) => {
+    await browser.storage.local.set({
+      [COMPATIBILITY_STORAGE_KEY]: state,
+    });
+    const tabs = await browser.tabs.query({
+      url: ['https://hikka.io/*', 'https://dev.hikka.io/*'],
+    });
+    await Promise.allSettled(
+      tabs.flatMap((tab) =>
+        tab.id === undefined
+          ? []
+          : [
+              browser.tabs.sendMessage(tab.id, {
+                type: 'extension-compatibility',
+                state,
+              }),
+            ],
+      ),
+    );
+    return state;
+  };
+
+  const requestExtensionUpdate = async (
+    state: ExtensionCompatibilityState,
+    force = false,
+  ) => {
+    if (
+      !force &&
+      state.updateCheckedAt &&
+      Date.now() - state.updateCheckedAt < updateCheckCooldown
+    ) {
+      return state;
+    }
+
+    const result = await browser.runtime.requestUpdateCheck();
+    return await publishCompatibility({
+      ...state,
+      updateCheckedAt: Date.now(),
+      storeStatus: result.status,
+    });
+  };
+
+  const pollCompatibility = async () => {
+    const extensionVersion = browser.runtime.getManifest().version;
+    const [compatibility, previous] = await Promise.all([
+      convexPublicQuery(convexApi.compatibility.get, {
+        extensionVersion,
+        protocol: EXTENSION_API_PROTOCOL,
+      }),
+      getStoredCompatibility(),
+    ]);
+    const sameRelease =
+      previous?.extensionVersion === extensionVersion &&
+      previous.latestVersion === compatibility.latestVersion;
+    const state = await publishCompatibility({
+      ...compatibility,
+      extensionVersion,
+      updateReady: sameRelease ? previous.updateReady : false,
+      checkedAt: Date.now(),
+      updateCheckedAt: sameRelease ? previous.updateCheckedAt : undefined,
+      storeStatus: sameRelease ? previous.storeStatus : undefined,
+    });
+
+    return state.status === 'current'
+      ? state
+      : await requestExtensionUpdate(state);
+  };
+
+  const applyExtensionUpdate = async () => {
+    const state = await getStoredCompatibility();
+    if (!state) return await pollCompatibility();
+    if (!state.updateReady) return await requestExtensionUpdate(state, true);
+
+    const tabs = await browser.tabs.query({
+      url: ['https://hikka.io/*', 'https://dev.hikka.io/*'],
+    });
+    await browser.storage.local.set({
+      [RELOAD_TABS_STORAGE_KEY]: tabs.flatMap((tab) =>
+        tab.id === undefined ? [] : [tab.id],
+      ),
+    });
+    browser.runtime.reload();
+    return state;
+  };
+
+  const reloadTabsAfterUpdate = async () => {
+    const stored = await browser.storage.local.get(RELOAD_TABS_STORAGE_KEY);
+    const tabIds = stored[RELOAD_TABS_STORAGE_KEY] as number[] | undefined;
+    if (!tabIds?.length) return;
+
+    await browser.storage.local.remove(RELOAD_TABS_STORAGE_KEY);
+    await Promise.allSettled(tabIds.map((tabId) => browser.tabs.reload(tabId)));
+  };
+
+  const ensureCompatibilityAlarm = async () => {
+    if (!(await browser.alarms.get(compatibilityAlarm))) {
+      await browser.alarms.create(compatibilityAlarm, {
+        delayInMinutes: 1,
+        periodInMinutes: 60,
+      });
+    }
+  };
+
+  browser.alarms.clear(legacyReleaseNotificationAlarm).catch(console.error);
+  ensureCompatibilityAlarm();
+  reloadTabsAfterUpdate().catch(console.error);
+  pollCompatibility().catch(console.error);
+  if (useSettings.getState().convexSession) {
+    syncFavoritesFromConvex().catch(console.error);
+  }
+  browser.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name === compatibilityAlarm) {
+      pollCompatibility().catch(console.error);
+    }
+  });
+  browser.runtime.onUpdateAvailable.addListener(({ version }) => {
+    getStoredCompatibility()
+      .then((state) =>
+        publishCompatibility({
+          status: state?.status ?? 'update_available',
+          latestVersion: state?.latestVersion ?? version,
+          minimumVersion:
+            state?.minimumVersion ?? browser.runtime.getManifest().version,
+          protocolSupported: state?.protocolSupported ?? true,
+          extensionVersion: browser.runtime.getManifest().version,
+          updateReady: true,
+          checkedAt: state?.checkedAt ?? Date.now(),
+          updateCheckedAt: state?.updateCheckedAt ?? Date.now(),
+          storeStatus: 'update_available',
+        }),
+      )
+      .catch(console.error);
+  });
   browser.tabs.onRemoved.addListener((tabId) => {
     hikkaContentTabs.delete(tabId);
   });
@@ -70,7 +239,12 @@ export default defineBackground(() => {
       request: unknown,
       sender,
     ): Promise<
-      true | { loaded: boolean } | RemoteFetchResponse | undefined
+      | true
+      | LoginResponse
+      | ExtensionCompatibilityState
+      | { loaded: boolean }
+      | RemoteFetchResponse
+      | undefined
     > => {
       // Type guard for MessageRequest
       if (!request || typeof request !== 'object' || !('type' in request)) {
@@ -98,49 +272,48 @@ export default defineBackground(() => {
               hikkaContentTabs.has(sender.tab.id),
           };
 
-        case 'login': {
-          const { setSettings } = useSettings.getState();
+        case 'extension-compatibility-status':
+          try {
+            return await pollCompatibility();
+          } catch (error) {
+            const stored = await getStoredCompatibility();
+            if (stored) return stored;
+            throw error;
+          }
 
-          const auth_url = `https://hikka.io/oauth/?reference=${CLIENT_REFERENCE}&scope=${encodeURIComponent(
-            NEEDED_SCOPES.join(','),
-          )}`;
+        case 'extension-update':
+          return await applyExtensionUpdate();
 
-          browser.identity
-            .launchWebAuthFlow({
-              interactive: true,
-              url: auth_url,
-            })
-            .then(async (response_url) => {
-              const params = new URLSearchParams(response_url?.split('?')[1]);
-
-              setSettings({
-                hikkaSecret: {
-                  secret: params.get('secret')!,
-                  expiration: Number(params.get('expiration')),
-                },
-              });
-
-              const r = await getUserData();
-              if (!r) return;
-
-              setSettings({
-                userData: {
-                  hikkaId: r.reference,
-                  username: r.username,
-                  avatar: r.avatar,
-                },
-              });
-            })
-            .finally(() => {
-              if (import.meta.env.BROWSER === 'firefox') return;
-
-              void browser.permissions.remove({
-                permissions: ['identity'],
-                origins: ['https://api.hikka.io/*'],
-              });
-            });
-
+        case 'release-notification-seen':
+          if (typeof typedRequest.id !== 'string') return undefined;
+          await convexMutation(convexApi.notifications.markSeen, {
+            id: typedRequest.id,
+          });
           return true;
+
+        case 'login': {
+          const redirectUri = browser.identity.getRedirectURL();
+          const authorizationUrl = await getHikkaAuthorizationUrl(redirectUri);
+          const responseUrl = await browser.identity.launchWebAuthFlow({
+            interactive: true,
+            url: authorizationUrl,
+          });
+          if (!responseUrl) throw new Error('Hikka login was cancelled');
+
+          const response = new URL(responseUrl);
+          const authError = response.searchParams.get('error');
+          const code = response.searchParams.get('code');
+          if (authError || !code) {
+            throw new Error(authError ?? 'Hikka login did not return a code');
+          }
+          const auth = await exchangeLoginCode(code);
+          await syncFavoritesFromConvex();
+
+          return {
+            authenticated: true,
+            refreshToken: auth.refreshToken,
+            user: auth.user,
+          };
         }
 
         case 'rich-presence-check':

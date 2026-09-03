@@ -22,9 +22,8 @@ let hasMigratedFromOldStorage = false;
 
 interface AppState {
   // State Values
-  hikkaSecret?: { secret: string; expiration: number };
+  convexSession?: { refreshToken: string };
   userData?: UserDataV2;
-  backendBranch: BackendBranches;
   richPresence: boolean;
 
   features: {
@@ -111,11 +110,8 @@ export const useSettings = create<AppState>()(
           burunyaaMode: false,
         },
       },
-      hikkaSecret: undefined,
+      convexSession: undefined,
       userData: undefined,
-      backendBranch: import.meta.env.WXT_BACKEND_BASE_URL
-        ? 'localhost'
-        : 'stable',
       richPresence: false,
 
       // Generic setter
@@ -134,9 +130,8 @@ export const useSettings = create<AppState>()(
       storage: createJSONStorage(() => extensionStorage),
       partialize: (state) => ({
         features: state.features,
-        hikkaSecret: state.hikkaSecret,
+        convexSession: state.convexSession,
         userData: state.userData,
-        backendBranch: state.backendBranch,
         richPresence: state.richPresence,
       }),
       version: 0,
@@ -165,12 +160,8 @@ const migrateFromOldStorage = async () => {
 
     state = {
       ...state,
-      hikkaSecret:
-        oldStorage.hikkaSecret !== undefined
-          ? { secret: oldStorage.hikkaSecret, expiration: 0 }
-          : state.hikkaSecret,
+      convexSession: state.convexSession,
       userData: oldStorage.userData || state.userData,
-      backendBranch: oldStorage.backendBranch || state.backendBranch,
       richPresence: oldStorage.richPresence ?? state.richPresence,
       features: {
         ...state.features,
