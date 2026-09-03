@@ -243,20 +243,18 @@ const FontFamilySelect = ({
       }
     />
     <DropdownMenuContent
+      className={cn('w-72', isMobile && 'w-(--anchor-width)')}
       side={isMobile ? 'bottom' : 'left'}
       align="end"
       sideOffset={isMobile ? 4 : 24}
       alignOffset={isMobile ? 0 : -12}
       container={container}
     >
-      <ScrollArea
-        className={cn('max-h-80 w-72', isMobile && 'w-(--anchor-width)')}
-      >
+      <ScrollArea className="max-h-80 w-full">
         {config.options?.map((option: any, index: number) => (
-          <>
+          <div key={option.value}>
             <DropdownMenuItem
-              key={option.value}
-              className="flex-col items-start gap-1 md:w-72"
+              className="flex-col items-start gap-1"
               onClick={(e) => {
                 e.preventDefault();
                 onChange(option.value);
@@ -270,7 +268,7 @@ const FontFamilySelect = ({
               </div>
             </DropdownMenuItem>
             {index < config.options.length - 1 && <DropdownMenuSeparator />}
-          </>
+          </div>
         ))}
       </ScrollArea>
     </DropdownMenuContent>
