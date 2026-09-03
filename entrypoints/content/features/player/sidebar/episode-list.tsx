@@ -6,7 +6,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from '@/components/ui/sidebar';
 
 import { getWatched, usePlayer } from '../context/player-context';
@@ -43,7 +42,6 @@ const getEpisodeReleaseDate = (releasedAt?: number) =>
   releasedAt ? dateFormatter.format(new Date(releasedAt * 1000)) : undefined;
 
 const EpisodeList: FC<Props> = ({ toggleWatchedState }) => {
-  const { open } = useSidebar();
   const { episodeData, currentEpisode, setEpisode } = usePlayer();
 
   const handleSelectEpisode = (value: API.EpisodeData) => {
@@ -71,7 +69,6 @@ const EpisodeList: FC<Props> = ({ toggleWatchedState }) => {
             index > 0 && episodeData[index - 1].episode === ep.episode;
           const episodeType = getEpisodeType(ep);
           const metadata = [
-            title ? `Епізод #${ep.episode}` : undefined,
             duplicate ? 'Дублікат' : undefined,
             getEpisodeReleaseDate(ep.releasedAt),
           ]
@@ -92,22 +89,6 @@ const EpisodeList: FC<Props> = ({ toggleWatchedState }) => {
                 onClick={() => handleSelectEpisode(ep)}
                 isActive={ep.video_url === currentEpisode?.video_url}
               >
-                <div
-                  className={cn(
-                    'size-4 shrink-0 text-center duration-300',
-                    open ? '-ml-6' : 'ml-0',
-                  )}
-                >
-                  <span
-                    className={cn(
-                      'block leading-4 duration-300',
-                      open && 'text-transparent!',
-                      ep.episode <= getWatched() && 'text-muted-foreground',
-                    )}
-                  >
-                    {ep.episode}
-                  </span>
-                </div>
                 <div className="grid min-w-0 flex-1 text-left leading-tight">
                   <span
                     className={cn(
@@ -115,7 +96,7 @@ const EpisodeList: FC<Props> = ({ toggleWatchedState }) => {
                       ep.episode <= getWatched() && 'text-muted-foreground',
                     )}
                   >
-                    {title ?? `Епізод #${ep.episode}`}
+                    {title ? `${ep.episode}. ${title}` : `Епізод ${ep.episode}`}
                   </span>
                   {(metadata || episodeType) && (
                     <span className="flex min-w-0 items-center gap-1.5">

@@ -36,7 +36,8 @@ const Gestrues = () => {
       clearTimeout(hideUiTimerRef.current);
     }
     hideUiTimerRef.current = setTimeout(() => {
-      if (!useIFramePlayer.getState().isPlaying) return;
+      const { isPlaying, uiLocked } = useIFramePlayer.getState();
+      if (!isPlaying || uiLocked) return;
       useIFramePlayer.setState({ uiShown: false });
     }, 4000);
   }, []);

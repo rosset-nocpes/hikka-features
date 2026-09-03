@@ -336,7 +336,8 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
           useIFramePlayer.setState({ uiShown: true });
           clearTimeout(hideTimer);
           hideTimer = setTimeout(() => {
-            if (!useIFramePlayer.getState().isPlaying) return;
+            const { isPlaying, uiLocked } = useIFramePlayer.getState();
+            if (!isPlaying || uiLocked) return;
             useIFramePlayer.setState({ uiShown: false });
           }, 4000);
         };
@@ -356,7 +357,8 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
           if (event.pointerType !== 'mouse') return;
           clearTimeout(hideTimer);
           hideTimer = setTimeout(() => {
-            if (!useIFramePlayer.getState().isPlaying) return;
+            const { isPlaying, uiLocked } = useIFramePlayer.getState();
+            if (!isPlaying || uiLocked) return;
             useIFramePlayer.setState({ uiShown: false });
           }, 4000);
         };
