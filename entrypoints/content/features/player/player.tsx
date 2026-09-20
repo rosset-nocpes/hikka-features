@@ -2,7 +2,7 @@ import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
 
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import { createRoot } from 'react-dom/client';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
@@ -139,10 +139,7 @@ const PlayerFrame = () => {
 
   useEffect(() => {
     setOpen(!isCompactMode);
-    container?.parentElement?.classList.toggle(
-      'pointer-events-none',
-      isCompactMode,
-    );
+    container?.classList.toggle('pointer-events-none', isCompactMode);
     document.body.classList.toggle('h-full', !isCompactMode);
     document.body.classList.toggle('overflow-hidden', !isCompactMode);
     // oxlint-disable-next-line eslint-plugin-react-hooks/exhaustive-deps
