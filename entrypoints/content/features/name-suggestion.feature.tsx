@@ -42,10 +42,8 @@ export default class NameSuggestionFeature extends BaseFeature {
 
             syncFeatureTheme(container, { themeVariables: true });
 
-            if (container.parentElement) {
-              container.parentElement.style.right = '0.25rem';
-              container.parentElement.style.bottom = '0.25rem';
-            }
+            container.style.right = '0.25rem';
+            container.style.bottom = '0.25rem';
 
             const root = createRoot(wrapper);
             root.render(
