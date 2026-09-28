@@ -31,12 +31,8 @@ const getEpisodeTitle = (episode: API.EpisodeData) =>
   episode.title?.en?.trim() ||
   episode.title?.ja?.trim();
 
-const getEpisodeType = (episode: API.EpisodeData) => {
-  const type = episode.episode_type ?? episode.filler_status;
-  if (!type || type === 'canon') return;
-
-  return type;
-};
+const getEpisodeType = (episode: API.EpisodeData) =>
+  episode.episode_type === 'canon' ? undefined : episode.episode_type;
 
 const getEpisodeReleaseDate = (releasedAt?: number) =>
   releasedAt ? dateFormatter.format(new Date(releasedAt * 1000)) : undefined;

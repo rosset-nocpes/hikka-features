@@ -1,4 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  QueryClientProvider,
+  useMutation,
+  useQuery,
+} from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import MaterialSymbolsLiveTvRounded from '~icons/material-symbols/live-tv-rounded';
@@ -9,8 +14,9 @@ import {
   type ReleaseNotificationMenu,
   convexApi,
 } from '@/utils/convex-api';
-import { CONVEX_URL, convexMutation, convexQuery } from '@/utils/convex-client';
+import { accountMutation, accountQuery } from '@/utils/convex-client';
 
+import { queryClient } from '..';
 import { BaseFeature } from '../core/base-feature';
 import { HikkaPages } from '../core/core.enums';
 
@@ -21,11 +27,6 @@ const EMPTY_MENU: ReleaseNotificationMenu = {
   notifications: [],
   unseenCount: 0,
 };
-
-interface LoadedMenu {
-  ownerId: string;
-  data: ReleaseNotificationMenu;
-}
 
 interface NativeCount {
   count: number;
@@ -68,7 +69,11 @@ export default class ReleaseNotificationsFeature extends BaseFeature {
         container.append(wrapper);
 
         const root = createRoot(wrapper);
-        root.render(<ReleaseNotificationsController />);
+        root.render(
+          <QueryClientProvider client={queryClient}>
+            <ReleaseNotificationsController />
+          </QueryClientProvider>,
+        );
         return root;
       },
       onRemove: (root) => root?.unmount(),
@@ -77,116 +82,58 @@ export default class ReleaseNotificationsFeature extends BaseFeature {
   }
 }
 
+/**
+ * Merges favorite-team release notifications into hikka.io's native
+ * notification bell and menu.
+ */
 const ReleaseNotificationsController = () => {
-  const convexSession = useSettings((state) => state.convexSession);
-  const extensionHikkaId = useSettings((state) => state.userData?.hikkaId);
-  const [loadedMenu, setLoadedMenu] = useState<LoadedMenu>();
+  const signedIn = useSettings((state) => Boolean(state.convexSession));
+  const hikkaId = useSettings((state) => state.userData?.hikkaId);
   const [dom, setDom] = useState<NotificationDom>({ badges: [] });
-  const [isMarkingAll, setIsMarkingAll] = useState(false);
-  const refreshGeneration = useRef(0);
-  const data =
-    loadedMenu && loadedMenu.ownerId === extensionHikkaId
-      ? loadedMenu.data
-      : EMPTY_MENU;
+  const queryKey = ['release-notifications', hikkaId];
+  const enabled = signedIn && hikkaId !== undefined;
 
-  const refresh = useCallback(async () => {
-    const generation = ++refreshGeneration.current;
-    if (!convexSession || !extensionHikkaId || !CONVEX_URL) {
-      setLoadedMenu(undefined);
-      return;
-    }
+  const { data = EMPTY_MENU, refetch } = useQuery({
+    queryKey,
+    enabled,
+    // Only show the extension account's notifications to that Hikka user.
+    queryFn: async () =>
+      (await getHikkaViewerId()) === hikkaId
+        ? await accountQuery(convexApi.notifications.menu, { limit: 50 })
+        : EMPTY_MENU,
+    refetchInterval: POLL_INTERVAL_MS,
+    retry: false,
+  });
 
-    try {
-      const viewerId = await getHikkaViewerId();
-      if (generation !== refreshGeneration.current) return;
-      if (viewerId !== extensionHikkaId) {
-        setLoadedMenu(undefined);
-        return;
-      }
-
-      const menu = await convexQuery(convexApi.notifications.menu, {
-        limit: 50,
-      });
-      if (
-        generation === refreshGeneration.current &&
-        useSettings.getState().userData?.hikkaId === extensionHikkaId
-      ) {
-        setLoadedMenu({ ownerId: extensionHikkaId, data: menu });
-      }
-    } catch (error) {
-      if (generation === refreshGeneration.current) {
-        setLoadedMenu(undefined);
-      }
-      if (
-        useSettings.getState().convexSession &&
-        useSettings.getState().userData?.hikkaId === extensionHikkaId
-      ) {
-        console.error('Failed to load release notifications', error);
-      }
-    }
-  }, [convexSession, extensionHikkaId]);
-
-  const markAllSeen = useCallback(async () => {
-    if (
-      !convexSession ||
-      !extensionHikkaId ||
-      data.unseenCount === 0 ||
-      isMarkingAll
-    ) {
-      return;
-    }
-
-    ++refreshGeneration.current;
-    setIsMarkingAll(true);
-    try {
-      await convexMutation(convexApi.notifications.markAllSeen, {});
-      ++refreshGeneration.current;
-      setLoadedMenu((current) =>
-        current?.ownerId === extensionHikkaId
+  const { mutate: markAllSeen, isPending: markingAllSeen } = useMutation({
+    mutationFn: () => accountMutation(convexApi.notifications.markAllSeen, {}),
+    // Keep an in-flight poll from overwriting the cleared state.
+    onMutate: () => queryClient.cancelQueries({ queryKey }),
+    onSuccess: () =>
+      queryClient.setQueryData<ReleaseNotificationMenu>(queryKey, (menu) =>
+        menu
           ? {
-              ownerId: extensionHikkaId,
-              data: {
-                notifications: current.data.notifications.map(
-                  (notification) => ({
-                    ...notification,
-                    seen: true,
-                  }),
-                ),
-                unseenCount: 0,
-              },
+              notifications: menu.notifications.map((notification) => ({
+                ...notification,
+                seen: true,
+              })),
+              unseenCount: 0,
             }
-          : current,
+          : menu,
+      ),
+    onError: (error) =>
+      console.error('Failed to mark release notifications as seen', error),
+  });
+  const hasUnseen = data.unseenCount > 0;
+
+  const markSeen = (notification: ReleaseNotification) => {
+    if (notification.seen) return;
+    accountMutation(convexApi.notifications.markSeen, { id: notification.id })
+      .then(() => refetch())
+      .catch((error) =>
+        console.error('Failed to mark release notification as seen', error),
       );
-    } catch (error) {
-      console.error('Failed to mark release notifications as seen', error);
-    } finally {
-      setIsMarkingAll(false);
-    }
-  }, [convexSession, data.unseenCount, extensionHikkaId, isMarkingAll]);
-
-  useEffect(() => {
-    void refresh();
-
-    const interval = window.setInterval(refresh, POLL_INTERVAL_MS);
-    const refreshVisible = () => {
-      if (document.visibilityState === 'visible') void refresh();
-    };
-
-    window.addEventListener('focus', refreshVisible);
-    document.addEventListener('visibilitychange', refreshVisible);
-    return () => {
-      window.clearInterval(interval);
-      window.removeEventListener('focus', refreshVisible);
-      document.removeEventListener('visibilitychange', refreshVisible);
-    };
-  }, [refresh]);
-
-  useEffect(
-    () => () => {
-      ++refreshGeneration.current;
-    },
-    [],
-  );
+  };
 
   useEffect(() => {
     const scan = () => {
@@ -206,8 +153,8 @@ const ReleaseNotificationsController = () => {
   }, []);
 
   useEffect(() => {
-    if (dom.menu) void refresh();
-  }, [dom.menu, refresh]);
+    if (dom.menu && enabled) void refetch();
+  }, [dom.menu, enabled, refetch]);
 
   useEffect(() => {
     const restore: Array<() => void> = [];
@@ -230,44 +177,43 @@ const ReleaseNotificationsController = () => {
     return () => restore.forEach((show) => show());
   }, [data.notifications.length, data.unseenCount, dom]);
 
+  // Hikka's own "mark all read" button also clears extension notifications.
   useEffect(() => {
+    if (!hasUnseen || markingAllSeen) return;
     const handleNativeMarkAll = (event: MouseEvent) => {
-      if (data.unseenCount === 0) return;
       const button =
         event.target instanceof Element ? event.target.closest('button') : null;
       if (
-        !button ||
-        button.hasAttribute('data-hf-release-mark-all') ||
-        button.textContent?.trim() !== 'Прочитати всі' ||
-        !button.closest(
+        button &&
+        !button.hasAttribute('data-hf-release-mark-all') &&
+        button.textContent?.trim() === 'Прочитати всі' &&
+        button.closest(
           '[data-slot="dropdown-menu-content"], [data-slot="drawer-content"]',
         )
       ) {
-        return;
+        markAllSeen();
       }
-      void markAllSeen();
     };
 
     document.addEventListener('click', handleNativeMarkAll, true);
     return () =>
       document.removeEventListener('click', handleNativeMarkAll, true);
-  }, [data.unseenCount, markAllSeen]);
+  }, [hasUnseen, markingAllSeen, markAllSeen]);
 
   return (
     <>
-      {dom.badges.map((target) =>
-        data.unseenCount > 0
-          ? createPortal(
-              <NotificationCount
-                count={target.count + data.unseenCount}
-                saturated={target.saturated}
-                placement={target.placement}
-              />,
-              target.container,
-              target.placement,
-            )
-          : null,
-      )}
+      {data.unseenCount > 0 &&
+        dom.badges.map((target) =>
+          createPortal(
+            <NotificationCount
+              count={target.count + data.unseenCount}
+              saturated={target.saturated}
+              placement={target.placement}
+            />,
+            target.container,
+            target.placement,
+          ),
+        )}
 
       {dom.menu && data.unseenCount > 0
         ? createPortal(
@@ -285,8 +231,8 @@ const ReleaseNotificationsController = () => {
               type="button"
               data-hf-release-mark-all
               className="border-border bg-background hover:bg-accent inline-flex shrink-0 items-center justify-center rounded-full border px-3.5 py-1 text-xs font-medium disabled:pointer-events-none disabled:opacity-50"
-              disabled={isMarkingAll}
-              onClick={() => void markAllSeen()}
+              disabled={markingAllSeen}
+              onClick={() => markAllSeen()}
             >
               Прочитати всі
             </button>,
@@ -298,21 +244,7 @@ const ReleaseNotificationsController = () => {
         ? createPortal(
             <ReleaseNotificationSection
               notifications={data.notifications}
-              onNotificationClick={(notification) => {
-                if (notification.seen) return;
-                void browser.runtime
-                  .sendMessage({
-                    type: 'release-notification-seen',
-                    id: notification.id,
-                  })
-                  .then(() => refresh())
-                  .catch((error) =>
-                    console.error(
-                      'Failed to mark release notification as seen',
-                      error,
-                    ),
-                  );
-              }}
+              onNotificationClick={markSeen}
             />,
             dom.menu.list,
           )
@@ -506,6 +438,7 @@ function sameNotificationDom(current: NotificationDom, next: NotificationDom) {
   return current.badges.every((badge, index) => {
     const candidate = next.badges[index];
     return (
+      candidate !== undefined &&
       badge.container === candidate.container &&
       badge.nativeBadge === candidate.nativeBadge &&
       badge.placement === candidate.placement &&

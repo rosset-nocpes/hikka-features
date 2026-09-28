@@ -19,8 +19,13 @@ OAuth/session endpoints.
 Register `<CONVEX_SITE_URL>/auth/hikka/callback` as the redirect URL of the
 Hikka application. Configure the values returned by
 `browser.identity.getRedirectURL()` as `CHROME_EXTENSION_REDIRECT_URI` and
-`FIREFOX_EXTENSION_REDIRECT_URI` on the backend, and include both in
-`ALLOWED_EXTENSION_REDIRECTS`.
+`FIREFOX_EXTENSION_REDIRECT_URI` on the backend.
+
+The background worker owns the account session (`utils/convex-session.ts`).
+Refresh tokens rotate on every use, so content scripts and the popup never
+refresh on their own: they call `accountQuery`/`accountMutation`, which forward
+the request to the background. Public functions (`watch:resolve`,
+`catalog:get`, `editor:suggest`) are called directly.
 
 ## Extension/backend compatibility
 

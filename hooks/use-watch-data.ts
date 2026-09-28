@@ -1,59 +1,51 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { type ConvexWatchResult, convexApi } from '@/utils/convex-api';
-import { convexAction } from '@/utils/convex-client';
+import { publicAction } from '@/utils/convex-client';
 import { ProviderIFrame, ProviderTeamIFrame } from '@/utils/provider_classes';
 
-const toEpisode = (
-  episode: ConvexWatchResult['providers'][number]['sources'][number]['episodes'][number],
-  translationType: ConvexWatchResult['providers'][number]['sources'][number]['translationType'],
-): API.EpisodeData => ({
-  episode: episode.number,
-  video_url: episode.playback.url,
-  title: episode.title,
-  airedAt: episode.airedAt,
-  releasedAt: episode.releasedAt,
-  filler_status: episode.fillerStatus,
-  episode_type: episode.episodeType ?? episode.fillerStatus,
-  is_sub: translationType === 'unknown' ? undefined : translationType === 'sub',
-});
-
 const toWatchData = (data: ConvexWatchResult): API.WatchData => {
+  const info = new Map(
+    data.episodes.map((episode) => [episode.number, episode]),
+  );
+  const toEpisodes = (
+    episodes: ConvexWatchResult['providers'][number]['sources'][number]['episodes'],
+  ): API.EpisodeData[] =>
+    episodes.map(({ number, url, releasedAt }) => ({
+      episode: number,
+      video_url: url,
+      title: info.get(number)?.title,
+      episode_type: info.get(number)?.type,
+      releasedAt,
+    }));
+
   const out = {
     type: data.anime.mediaType === 'unknown' ? 'tv' : data.anime.mediaType,
   } as API.WatchData;
 
   for (const provider of data.providers) {
-    const source = provider.sources[0];
-    if (
-      provider.sources.length === 1 &&
-      source?.team.title === 'Main' &&
-      source.translationType === 'unknown'
-    ) {
-      const value = new ProviderIFrame(provider.language as ProviderLanguage);
-      value.episodes = source.episodes.map((episode) =>
-        toEpisode(episode, source.translationType),
-      );
+    const language = provider.language as ProviderLanguage;
+    const [first] = provider.sources;
+    if (first && !first.team) {
+      const value = new ProviderIFrame(language);
+      value.episodes = toEpisodes(first.episodes);
       out[provider.id] = value;
       continue;
     }
 
-    const value = new ProviderTeamIFrame(provider.language as ProviderLanguage);
-    for (const source of provider.sources) {
-      let displayTitle = source.team.title;
-      if (value.teams[displayTitle]) {
-        displayTitle = `${displayTitle} — ${
-          source.translationType === 'sub' ? 'субтитри' : provider.id
-        }`;
-      }
-      value.teams[displayTitle] = {
-        id: source.team.id,
-        logo: source.team.logo ?? '',
-        canonicalTitle: source.team.title,
-        translationType: source.translationType,
-        episodes: source.episodes.map((episode) =>
-          toEpisode(episode, source.translationType),
-        ),
+    const value = new ProviderTeamIFrame(language);
+    for (const { team, translationType, episodes } of provider.sources) {
+      if (!team) continue;
+      // The same team can publish both a dub and subtitles.
+      const title = value.teams[team.title]
+        ? `${team.title} — ${translationType === 'sub' ? 'субтитри' : provider.id}`
+        : team.title;
+      value.teams[title] = {
+        id: team.id,
+        logo: team.logo ?? '',
+        canonicalTitle: team.title,
+        translationType,
+        episodes: toEpisodes(episodes),
       };
     }
     value.sortTeams();
@@ -67,12 +59,8 @@ const useWatchData = () => {
 
   return useQuery({
     queryKey: ['watch-data', slug],
-    queryFn: async () => {
-      const data = await convexAction(convexApi.watch.resolve, {
-        slug: slug!,
-      });
-      return toWatchData(data);
-    },
+    queryFn: async () =>
+      toWatchData(await publicAction(convexApi.watch.resolve, { slug: slug! })),
     retry: false,
     staleTime: 5 * 60 * 1000,
     enabled: !!slug,

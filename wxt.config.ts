@@ -40,19 +40,9 @@ export default defineConfig({
   }),
   manifest: () => ({
     name: 'Hikka Features',
-    permissions: [
-      'webNavigation',
-      'storage',
-      'identity',
-      'alarms',
-      'notifications',
-      'declarativeNetRequestWithHostAccess',
-    ],
+    permissions: ['storage', 'identity', 'alarms'],
     host_permissions: [
-      'https://*.hikka.io/*',
-      'https://*.hikka-features.pp.ua/*',
-      'https://*.convex.cloud/*',
-      'https://*.convex.site/*',
+      'https://api.hikka.io/*',
       ...convexHostPermissions,
       'https://graphql.anilist.co/*',
       'https://api.tenrai.org/*',

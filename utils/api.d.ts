@@ -31,11 +31,8 @@ declare global {
         en?: string;
         ja?: string;
       };
-      airedAt?: number;
       releasedAt?: number;
-      filler_status?: 'filler' | 'mixed';
       episode_type?: 'canon' | 'filler' | 'mixed' | 'recap';
-      is_sub?: boolean;
     };
 
     /* Manga */
@@ -88,11 +85,8 @@ declare global {
         en?: string;
         ja?: string;
       };
-      airedAt?: number;
       releasedAt?: number;
-      filler_status?: 'filler' | 'mixed';
       episode_type?: 'canon' | 'filler' | 'mixed' | 'recap';
-      is_sub?: boolean;
     };
 
     interface EditorContent {

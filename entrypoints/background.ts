@@ -13,22 +13,20 @@ import {
   RELOAD_TABS_STORAGE_KEY,
 } from '@/utils/compatibility';
 import { convexApi } from '@/utils/convex-api';
+import { type ConvexAuthRequest, convexClient } from '@/utils/convex-client';
 import {
-  convexMutation,
-  convexPublicQuery,
-  exchangeLoginCode,
-  getHikkaAuthorizationUrl,
-} from '@/utils/convex-client';
-import { syncFavoritesFromConvex } from '@/utils/favorite-sync';
+  login,
+  logout,
+  runAccountRequest,
+  syncFavorites,
+} from '@/utils/convex-session';
 
 interface LoginRequest {
   type: 'login';
 }
 
-interface LoginResponse {
-  authenticated: true;
-  refreshToken: string;
-  user: UserDataV2;
+interface LogoutRequest {
+  type: 'logout';
 }
 
 interface RichPresenceCheckRequest {
@@ -62,13 +60,10 @@ interface ExtensionUpdateRequest {
   type: 'extension-update';
 }
 
-interface ReleaseNotificationSeenRequest {
-  type: 'release-notification-seen';
-  id: string;
-}
-
 type MessageRequest =
   | LoginRequest
+  | LogoutRequest
+  | ConvexAuthRequest
   | RichPresenceCheckRequest
   | WatchTogetherRequest
   | RemoteFetchRequest
@@ -77,13 +72,11 @@ type MessageRequest =
   | HikkaContentUnloadedRequest
   | HikkaContentStatusRequest
   | CompatibilityStatusRequest
-  | ExtensionUpdateRequest
-  | ReleaseNotificationSeenRequest;
+  | ExtensionUpdateRequest;
 
 export default defineBackground(() => {
   const hikkaContentTabs = new Set<number>();
   const compatibilityAlarm = 'extension-compatibility';
-  const legacyReleaseNotificationAlarm = 'release-notifications';
   const updateCheckCooldown = 6 * 60 * 60 * 1000;
 
   const getStoredCompatibility = async () => {
@@ -138,7 +131,7 @@ export default defineBackground(() => {
   const pollCompatibility = async () => {
     const extensionVersion = browser.runtime.getManifest().version;
     const [compatibility, previous] = await Promise.all([
-      convexPublicQuery(convexApi.compatibility.get, {
+      convexClient().query(convexApi.compatibility.get, {
         extensionVersion,
         protocol: EXTENSION_API_PROTOCOL,
       }),
@@ -196,31 +189,31 @@ export default defineBackground(() => {
     }
   };
 
-  browser.alarms.clear(legacyReleaseNotificationAlarm).catch(console.error);
   ensureCompatibilityAlarm();
   reloadTabsAfterUpdate().catch(console.error);
   pollCompatibility().catch(console.error);
-  if (useSettings.getState().convexSession) {
-    syncFavoritesFromConvex().catch(console.error);
-  }
+  browser.runtime.onStartup.addListener(() => {
+    syncFavorites().catch(console.error);
+  });
   browser.alarms.onAlarm.addListener((alarm) => {
     if (alarm.name === compatibilityAlarm) {
       pollCompatibility().catch(console.error);
     }
   });
   browser.runtime.onUpdateAvailable.addListener(({ version }) => {
+    const extensionVersion = browser.runtime.getManifest().version;
     getStoredCompatibility()
       .then((state) =>
         publishCompatibility({
-          status: state?.status ?? 'update_available',
-          latestVersion: state?.latestVersion ?? version,
-          minimumVersion:
-            state?.minimumVersion ?? browser.runtime.getManifest().version,
-          protocolSupported: state?.protocolSupported ?? true,
-          extensionVersion: browser.runtime.getManifest().version,
+          // Defaults surface the banner even if the backend was never reached.
+          status: 'update_available',
+          latestVersion: version,
+          minimumVersion: extensionVersion,
+          protocolSupported: true,
+          checkedAt: Date.now(),
+          ...state,
+          extensionVersion,
           updateReady: true,
-          checkedAt: state?.checkedAt ?? Date.now(),
-          updateCheckedAt: state?.updateCheckedAt ?? Date.now(),
           storeStatus: 'update_available',
         }),
       )
@@ -235,17 +228,7 @@ export default defineBackground(() => {
   });
 
   browser.runtime.onMessage.addListener(
-    async (
-      request: unknown,
-      sender,
-    ): Promise<
-      | true
-      | LoginResponse
-      | ExtensionCompatibilityState
-      | { loaded: boolean }
-      | RemoteFetchResponse
-      | undefined
-    > => {
+    async (request: unknown, sender): Promise<unknown> => {
       // Type guard for MessageRequest
       if (!request || typeof request !== 'object' || !('type' in request)) {
         return undefined;
@@ -284,37 +267,18 @@ export default defineBackground(() => {
         case 'extension-update':
           return await applyExtensionUpdate();
 
-        case 'release-notification-seen':
-          if (typeof typedRequest.id !== 'string') return undefined;
-          await convexMutation(convexApi.notifications.markSeen, {
-            id: typedRequest.id,
-          });
-          return true;
+        case 'convex-auth':
+          return await runAccountRequest(typedRequest);
 
         case 'login': {
-          const redirectUri = browser.identity.getRedirectURL();
-          const authorizationUrl = await getHikkaAuthorizationUrl(redirectUri);
-          const responseUrl = await browser.identity.launchWebAuthFlow({
-            interactive: true,
-            url: authorizationUrl,
-          });
-          if (!responseUrl) throw new Error('Hikka login was cancelled');
-
-          const response = new URL(responseUrl);
-          const authError = response.searchParams.get('error');
-          const code = response.searchParams.get('code');
-          if (authError || !code) {
-            throw new Error(authError ?? 'Hikka login did not return a code');
-          }
-          const auth = await exchangeLoginCode(code);
-          await syncFavoritesFromConvex();
-
-          return {
-            authenticated: true,
-            refreshToken: auth.refreshToken,
-            user: auth.user,
-          };
+          const user = await login();
+          syncFavorites().catch(console.error);
+          return user;
         }
+
+        case 'logout':
+          await logout();
+          return true;
 
         case 'rich-presence-check':
           browser.tabs

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { convexApi } from '@/utils/convex-api';
-import { convexAction } from '@/utils/convex-client';
+import { publicAction } from '@/utils/convex-client';
 
 const CONTENT_TYPE_MAP: Record<string, string> = {
   person: 'people',
@@ -48,7 +48,7 @@ const useEditorContent = () => {
         throw new Error('Unsupported content type');
       }
 
-      return await convexAction(convexApi.editor.suggest, {
+      return await publicAction(convexApi.editor.suggest, {
         type: effectiveType,
         slug,
       });

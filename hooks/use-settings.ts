@@ -160,7 +160,6 @@ const migrateFromOldStorage = async () => {
 
     state = {
       ...state,
-      convexSession: state.convexSession,
       userData: oldStorage.userData || state.userData,
       richPresence: oldStorage.richPresence ?? state.richPresence,
       features: {

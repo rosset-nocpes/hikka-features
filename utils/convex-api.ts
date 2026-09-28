@@ -2,45 +2,31 @@ import { makeFunctionReference } from 'convex/server';
 
 import type { CompatibilityResponse } from '@/utils/compatibility';
 
-export interface ConvexWatchEpisode {
+// Hand-written mirror of the backend contract (features-backend/convex).
+
+type TranslationType = 'dub' | 'sub' | 'unknown';
+
+export interface ConvexEpisodeInfo {
   number: number;
-  title: {
-    ua?: string;
-    en?: string;
-    ja?: string;
-  };
-  airedAt?: number;
-  releasedAt?: number;
-  fillerStatus?: 'filler' | 'mixed';
-  episodeType?: 'canon' | 'filler' | 'mixed' | 'recap';
-  playback: {
-    kind: 'iframe';
-    url: string;
-  };
+  title?: { ua?: string; en?: string; ja?: string };
+  type?: 'canon' | 'filler' | 'mixed' | 'recap';
 }
 
 export interface ConvexWatchSource {
-  key: string;
-  team: {
-    id?: string;
-    title: string;
-    logo?: string;
-  };
-  translationType: 'dub' | 'sub' | 'unknown';
-  episodes: ConvexWatchEpisode[];
+  /** Absent for providers that do not split playback by team. */
+  team?: { id?: string; title: string; logo?: string };
+  translationType: TranslationType;
+  episodes: Array<{ number: number; url: string; releasedAt?: number }>;
 }
 
 export interface ConvexWatchResult {
-  anime: {
-    id: string;
-    slug: string;
-    mediaType: 'tv' | 'movie' | 'ona' | 'unknown';
-  };
+  anime: { slug: string; mediaType: 'tv' | 'movie' | 'ona' | 'unknown' };
   providers: Array<{
     id: string;
     language: 'uk' | 'en' | 'multi';
     sources: ConvexWatchSource[];
   }>;
+  episodes: ConvexEpisodeInfo[];
   warnings: Array<{ provider: string; code: string }>;
   refreshedAt: number;
 }
@@ -50,7 +36,7 @@ export interface SyncedFavorite {
   provider: string;
   teamId?: string;
   teamTitle: string;
-  translationType: 'dub' | 'sub' | 'unknown';
+  translationType: TranslationType;
   notificationsEnabled: boolean;
   baselineEpisode: number;
   updatedAt: number;
@@ -63,8 +49,6 @@ export interface ReleaseNotification {
   teamTitle: string;
   episodeNumber: number;
   episodeTitle?: string;
-  provider: string;
-  playbackUrl: string;
   createdAt: number;
   seen: boolean;
 }
@@ -73,6 +57,8 @@ export interface ReleaseNotificationMenu {
   notifications: ReleaseNotification[];
   unseenCount: number;
 }
+
+type NoArgs = Record<string, never>;
 
 export const convexApi = {
   compatibility: {
@@ -85,13 +71,13 @@ export const convexApi = {
   watch: {
     resolve: makeFunctionReference<
       'action',
-      { slug: string; force?: boolean },
+      { slug: string },
       ConvexWatchResult
     >('watch:resolve'),
   },
   catalog: {
     get: makeFunctionReference<
-      'action',
+      'query',
       { slug: string },
       {
         poster?: string;
@@ -107,11 +93,9 @@ export const convexApi = {
     >('editor:suggest'),
   },
   favorites: {
-    list: makeFunctionReference<
-      'query',
-      Record<string, never>,
-      SyncedFavorite[]
-    >('favorites:list'),
+    list: makeFunctionReference<'query', NoArgs, SyncedFavorite[]>(
+      'favorites:list',
+    ),
     set: makeFunctionReference<
       'mutation',
       {
@@ -120,7 +104,7 @@ export const convexApi = {
           provider: string;
           teamTitle: string;
           teamId?: string;
-          translationType: 'dub' | 'sub' | 'unknown';
+          translationType: TranslationType;
           notificationsEnabled: boolean;
         };
       },
@@ -139,7 +123,7 @@ export const convexApi = {
     markSeen: makeFunctionReference<'mutation', { id: string }, null>(
       'notifications:markSeen',
     ),
-    markAllSeen: makeFunctionReference<'mutation', Record<string, never>, null>(
+    markAllSeen: makeFunctionReference<'mutation', NoArgs, null>(
       'notifications:markAllSeen',
     ),
   },
