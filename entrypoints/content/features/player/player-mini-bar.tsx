@@ -12,6 +12,7 @@ import MiniPlayer from './player-overlay/buttons/mini-player';
 import Mute from './player-overlay/buttons/mute';
 import Play from './player-overlay/buttons/play';
 import Time from './player-overlay/sliders/time';
+import { getTeamName } from './teams';
 
 interface Props {
   onDragStart: (event: ReactPointerEvent<HTMLButtonElement>) => void;
@@ -27,9 +28,10 @@ const PlayerMiniBar = ({ onDragStart }: Props) => {
     animeData?.title_ja ||
     animeData?.title_original;
 
+  const teamName = team && getTeamName(team);
   const subtitle = currentEpisode?.episode
-    ? `Епізод ${currentEpisode.episode}${team?.title ? ` · ${team.title}` : ''}`
-    : team?.title;
+    ? `Епізод ${currentEpisode.episode}${teamName ? ` · ${teamName}` : ''}`
+    : teamName;
 
   return (
     <div className="relative flex w-full flex-col">
@@ -45,9 +47,9 @@ const PlayerMiniBar = ({ onDragStart }: Props) => {
         <Play />
         <div className="flex items-center gap-2">
           <Avatar className="size-7 shrink-0 rounded-md">
-            {team?.logo && <AvatarImage src={team.logo} alt={team.title} />}
+            {team?.logo && <AvatarImage src={team.logo} alt={teamName} />}
             <AvatarFallback className="text-[10px] font-medium">
-              {team?.title?.[0] ?? '?'}
+              {teamName?.[0] ?? '?'}
             </AvatarFallback>
           </Avatar>
           <div className="flex min-w-0 flex-1 flex-col justify-center">

@@ -19,6 +19,7 @@ import { SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { ProviderTeamIFrame } from '@/utils/provider_classes';
 
 import { usePlayer } from '../context/player-context';
+import { getTeamName, groupTeams } from '../teams';
 
 interface Props {
   toggleWatchedState: (state: boolean) => void;
@@ -67,35 +68,7 @@ const TeamSelect: FC<Props> = ({ toggleWatchedState }) => {
     if (!data || !provider) return [];
     if (!(data[provider] instanceof ProviderTeamIFrame)) return [];
 
-    const teams = (data[provider] as ProviderTeamIFrame).getTeams();
-    const orderedTeams = teams
-      .slice()
-      .sort((a: API.TeamData, b: API.TeamData) => {
-        if (a.title === favoriteTeam?.team) return -1;
-        if (b.title === favoriteTeam?.team) return 1;
-        return 0;
-      });
-
-    return [
-      {
-    type: 'dub',
-        label: 'Озвучення',
-        teams: orderedTeams.filter((team) => team.translationType === 'dub'),
-      },
-      {
-        type: 'sub',
-        label: 'Субтитри',
-        teams: orderedTeams.filter((team) => team.translationType === 'sub'),
-      },
-      {
-        type: 'unknown',
-        label: 'Інші',
-        teams: orderedTeams.filter(
-          (team) =>
-            team.translationType !== 'dub' && team.translationType !== 'sub',
-        ),
-      },
-    ].filter((group) => group.teams.length > 0);
+    return groupTeams(data[provider].getTeams(), favoriteTeam?.team);
   }, [data, provider, favoriteTeam]);
 
   if (!data || !provider || !team) return;
@@ -130,15 +103,17 @@ const TeamSelect: FC<Props> = ({ toggleWatchedState }) => {
             render={
               <SidebarMenuButton
                 size="lg"
-                tooltip={team.title}
+                tooltip={getTeamName(team)}
                 tooltipContainer={container}
               >
                 <Avatar className="size-8 rounded-md">
                   <AvatarImage src={team.logo} />
-                  <AvatarFallback>{team.title[0]}</AvatarFallback>
+                  <AvatarFallback>{getTeamName(team)[0]}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">{team.title}</span>
+                  <span className="truncate font-semibold">
+                    {getTeamName(team)}
+                  </span>
                   <span className="truncate text-xs">
                     {episodeData && getEpisodeRanges(episodeData)}
                   </span>
@@ -177,12 +152,17 @@ const TeamSelect: FC<Props> = ({ toggleWatchedState }) => {
                       >
                         <div className="flex w-full items-center justify-between gap-2 px-1 py-1.5 text-left text-sm">
                           <Avatar className="h-8 w-8 rounded-md">
-                            <AvatarImage src={team.logo} alt={team.title} />
-                            <AvatarFallback>{team.title[0]}</AvatarFallback>
+                            <AvatarImage
+                              src={team.logo}
+                              alt={getTeamName(team)}
+                            />
+                            <AvatarFallback>
+                              {getTeamName(team)[0]}
+                            </AvatarFallback>
                           </Avatar>
                           <div className="grid flex-1 text-left text-sm leading-tight">
                             <span className="truncate font-semibold">
-                              {team.title}
+                              {getTeamName(team)}
                             </span>
                             <span className="truncate text-xs">
                               {getEpisodeRanges(

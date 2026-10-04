@@ -180,12 +180,7 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
 
       const newTeamName =
         watchData[provider] instanceof ProviderTeamIFrame
-          ? {
-              title: Object.keys(watchData[provider].teams)[0],
-              logo: watchData[provider].teams[
-                Object.keys(watchData[provider].teams)[0]
-              ].logo,
-            }
+          ? watchData[provider].getTeams()[0]!
           : { title: '', logo: '' };
       const newEpisode =
         watchData[provider] instanceof ProviderTeamIFrame

@@ -36,6 +36,9 @@ const toWatchData = (data: ConvexWatchResult): API.WatchData => {
     const value = new ProviderTeamIFrame(language);
     for (const { team, translationType, episodes } of provider.sources) {
       if (!team) continue;
+      // The title doubles as the key (favourites and share links store it),
+      // so a team listed for both dub and sub needs a suffix on its second
+      // entry. UIs show `canonicalTitle` instead (see getTeamName).
       const title = value.teams[team.title]
         ? `${team.title} — ${translationType === 'sub' ? 'субтитри' : 'озвучення'}`
         : team.title;

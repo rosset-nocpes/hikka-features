@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/tooltip';
 
 import { usePlayer } from '../../context/player-context';
+import { getTeamName } from '../../teams';
 import { formatTime } from '../time-group';
 import { useUiLock } from '../use-ui-lock';
 
@@ -118,7 +119,7 @@ const Share: FC<Props> = ({ anchor }) => {
       >
         <div className="text-muted-foreground truncate px-2 py-1.5 text-xs font-medium">
           Епізод {currentEpisode?.episode}
-          {team?.title && ` · ${team.title}`}
+          {team?.title && ` · ${getTeamName(team)}`}
         </div>
         <div className="flex items-center gap-2 px-2 py-1.5 text-sm">
           <label className="flex flex-1 cursor-pointer items-center gap-2 select-none">
