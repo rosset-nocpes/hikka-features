@@ -20,10 +20,10 @@ const dateFormatter = new Intl.DateTimeFormat('uk-UA', {
   year: 'numeric',
 });
 
-const episodeTypeLabels = {
-  filler: 'Філер',
-  mixed: 'Канон / філер',
-  recap: 'Рекап',
+const episodeTypeBadges = {
+  filler: { label: 'Філер', className: 'bg-warning/15 text-warning' },
+  mixed: { label: 'Канон / філер', className: 'bg-warning/15 text-warning' },
+  recap: { label: 'Рекап', className: 'bg-info/15 text-info' },
 } as const;
 
 const getEpisodeTitle = (episode: API.EpisodeData) =>
@@ -31,92 +31,118 @@ const getEpisodeTitle = (episode: API.EpisodeData) =>
   episode.title?.en?.trim() ||
   episode.title?.ja?.trim();
 
-const getEpisodeType = (episode: API.EpisodeData) =>
-  episode.episode_type === 'canon' ? undefined : episode.episode_type;
-
-const getEpisodeReleaseDate = (releasedAt?: number) =>
+const formatReleaseDate = (releasedAt?: number) =>
   releasedAt ? dateFormatter.format(new Date(releasedAt * 1000)) : undefined;
+
+/** Scrolls the list itself, never the page, so the row is visible. */
+const revealRow = (row: HTMLElement, block: 'center' | 'nearest') => {
+  const viewport = row.closest('[data-slot=scroll-area-viewport]');
+  if (!viewport) return;
+
+  const rowRect = row.getBoundingClientRect();
+  const viewportRect = viewport.getBoundingClientRect();
+  const top = rowRect.top - viewportRect.top;
+  const bottom = rowRect.bottom - viewportRect.bottom;
+
+  if (block === 'center') {
+    viewport.scrollTop += top - (viewportRect.height - rowRect.height) / 2;
+  } else if (top < 0) {
+    viewport.scrollTop += top;
+  } else if (bottom > 0) {
+    viewport.scrollTop += bottom;
+  }
+};
 
 const EpisodeList: FC<Props> = ({ toggleWatchedState }) => {
   const { episodeData, currentEpisode, setEpisode } = usePlayer();
+  const currentRowRef = useRef<HTMLLIElement>(null);
+  const revealedRef = useRef(false);
+
+  // Centre the current episode when the list first appears, then keep it in
+  // view as playback moves on.
+  useEffect(() => {
+    if (!currentRowRef.current) return;
+    revealRow(
+      currentRowRef.current,
+      revealedRef.current ? 'nearest' : 'center',
+    );
+    revealedRef.current = true;
+  }, [currentEpisode?.video_url, episodeData]);
+
+  if (!episodeData?.length) return null;
+
+  const watched = getWatched();
+  // Decided per list so every row shares the same layout and height.
+  const numbered = episodeData.some((episode) => getEpisodeTitle(episode));
+  const numberWidth = `${String(Math.max(...episodeData.map((episode) => episode.episode))).length}ch`;
+  const dated = episodeData.some((episode) => episode.releasedAt);
 
   const handleSelectEpisode = (value: API.EpisodeData) => {
     setEpisode(value);
     toggleWatchedState(false);
   };
 
-  const currentEpisodeRef = useRef<HTMLLIElement>(null);
-
-  useEffect(() => {
-    if (!currentEpisodeRef.current) return;
-
-    currentEpisodeRef.current.scrollIntoView({
-      behavior: 'instant',
-      block: 'center',
-    });
-  }, [!!currentEpisodeRef.current]);
-
   return (
     <SidebarGroup>
       <SidebarMenu>
-        {episodeData?.map((ep, index) => {
+        {episodeData.map((ep, index) => {
           const title = getEpisodeTitle(ep);
-          const duplicate =
-            index > 0 && episodeData[index - 1].episode === ep.episode;
-          const episodeType = getEpisodeType(ep);
-          const metadata = [
-            duplicate ? 'Дублікат' : undefined,
-            getEpisodeReleaseDate(ep.releasedAt),
-          ]
-            .filter(Boolean)
-            .join(' · ');
+          const releaseDate = formatReleaseDate(ep.releasedAt);
+          const duplicate = episodeData[index - 1]?.episode === ep.episode;
+          const typeBadge =
+            ep.episode_type && ep.episode_type !== 'canon'
+              ? episodeTypeBadges[ep.episode_type]
+              : undefined;
+          const isCurrent = ep.video_url === currentEpisode?.video_url;
 
           return (
             <SidebarMenuItem
               key={ep.video_url}
-              ref={
-                ep.video_url === currentEpisode?.video_url
-                  ? currentEpisodeRef
-                  : null
-              }
+              ref={isCurrent ? currentRowRef : null}
             >
               <SidebarMenuButton
-                className="h-12 py-1.5"
+                className={cn(
+                  dated && 'h-12',
+                  ep.episode <= watched &&
+                    !isCurrent &&
+                    'text-muted-foreground',
+                )}
                 onClick={() => handleSelectEpisode(ep)}
-                isActive={ep.video_url === currentEpisode?.video_url}
+                isActive={isCurrent}
               >
-                <div className="grid min-w-0 flex-1 text-left leading-tight">
+                {numbered && (
                   <span
-                    className={cn(
-                      'truncate duration-300',
-                      ep.episode <= getWatched() && 'text-muted-foreground',
-                    )}
+                    className="text-muted-foreground shrink-0 text-right text-xs tabular-nums"
+                    style={{ width: numberWidth }}
                   >
-                    {title ? `${ep.episode}. ${title}` : `Епізод ${ep.episode}`}
+                    {ep.episode}
                   </span>
-                  {(metadata || episodeType) && (
-                    <span className="flex min-w-0 items-center gap-1.5">
-                      {metadata && (
-                        <span className="text-muted-foreground truncate text-xs font-normal">
-                          {metadata}
-                        </span>
-                      )}
-                      {episodeType && (
-                        <Badge
-                          variant="secondary"
-                          className={cn(
-                            'h-4 rounded-sm px-1.5 py-0 text-[10px] leading-none font-semibold transition-none',
-                            episodeType === 'recap'
-                              ? 'bg-info/15 text-info'
-                              : 'bg-warning/15 text-warning',
-                          )}
-                        >
-                          {episodeTypeLabels[episodeType]}
-                        </Badge>
-                      )}
+                )}
+                <div className="grid min-w-0 flex-1 leading-tight">
+                  <span className="truncate">
+                    {title ?? `Епізод ${ep.episode}`}
+                  </span>
+                  {releaseDate && (
+                    <span className="text-muted-foreground truncate text-xs font-normal">
+                      {releaseDate}
                     </span>
                   )}
                 </div>
+                {duplicate && (
+                  <Badge className="bg-muted text-muted-foreground h-4 rounded-sm px-1.5 text-[10px] font-semibold">
+                    Дублікат
+                  </Badge>
+                )}
+                {typeBadge && (
+                  <Badge
+                    className={cn(
+                      'h-4 rounded-sm px-1.5 text-[10px] font-semibold',
+                      typeBadge.className,
+                    )}
+                  >
+                    {typeBadge.label}
+                  </Badge>
+                )}
               </SidebarMenuButton>
             </SidebarMenuItem>
           );

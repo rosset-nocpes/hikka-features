@@ -36,9 +36,8 @@ const toWatchData = (data: ConvexWatchResult): API.WatchData => {
     const value = new ProviderTeamIFrame(language);
     for (const { team, translationType, episodes } of provider.sources) {
       if (!team) continue;
-      // The same team can publish both a dub and subtitles.
       const title = value.teams[team.title]
-        ? `${team.title} — ${translationType === 'sub' ? 'субтитри' : provider.id}`
+        ? `${team.title} — ${translationType === 'sub' ? 'субтитри' : 'озвучення'}`
         : team.title;
       value.teams[title] = {
         id: team.id,

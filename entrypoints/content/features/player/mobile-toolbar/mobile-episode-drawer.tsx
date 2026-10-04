@@ -14,6 +14,7 @@ import { getWatched, usePlayer } from '../context/player-context';
 const MobileEpisodeDrawer = () => {
   const [open, setOpen] = useState(false);
   const { container, currentEpisode, setEpisode, episodeData } = usePlayer();
+  const watched = getWatched();
 
   const handleSelectEpisode = (episode: API.EpisodeData) => {
     setEpisode(episode);
@@ -49,10 +50,10 @@ const MobileEpisodeDrawer = () => {
               onClick={() => handleSelectEpisode(ep)}
               className={cn(
                 'w-full shrink-0 text-lg',
-                index + 1 <= getWatched() && 'text-muted-foreground',
+                ep.episode <= watched && 'text-muted-foreground',
               )}
             >
-              {`Епізод #${ep.episode}${index > 0 && episodeData[index - 1].episode === ep.episode ? ' (Дублікат)' : ''}`}
+              {`Епізод #${ep.episode}${episodeData[index - 1]?.episode === ep.episode ? ' (Дублікат)' : ''}`}
             </Button>
           ))}
         </div>

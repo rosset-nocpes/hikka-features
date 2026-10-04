@@ -1,3 +1,5 @@
+import { useRef } from 'react';
+
 import { usePlayer } from '../context/player-context';
 import Fullscreen from './buttons/fullscreen';
 import MiniPlayer from './buttons/mini-player';
@@ -11,6 +13,8 @@ import TimeGroup from './time-group';
 
 const VideoToolbar = () => {
   const { miniPlayer, videoPiPActive } = usePlayer();
+  const mobileActionsRef = useRef<HTMLDivElement>(null);
+  const actionsRef = useRef<HTMLDivElement>(null);
 
   const isCompactMode = miniPlayer || videoPiPActive;
 
@@ -40,8 +44,11 @@ const VideoToolbar = () => {
             <TimeGroup />
           </div>
         </div>
-        <div className="border-shadow bg-background/60 flex shrink-0 gap-1 rounded-lg p-1 backdrop-blur-xl">
-          <Settings />
+        <div
+          ref={mobileActionsRef}
+          className="border-shadow bg-background/60 flex shrink-0 gap-1 rounded-lg p-1 backdrop-blur-xl"
+        >
+          <Settings anchor={mobileActionsRef} />
           <Fullscreen />
         </div>
       </div>
@@ -55,9 +62,12 @@ const VideoToolbar = () => {
           <TimeGroup />
         </div>
       </div>
-      <div className="border-shadow bg-background/60 hidden gap-1 rounded-lg p-1 backdrop-blur-xl md:flex">
+      <div
+        ref={actionsRef}
+        className="border-shadow bg-background/60 hidden gap-1 rounded-lg p-1 backdrop-blur-xl md:flex"
+      >
         <Share />
-        <Settings />
+        <Settings anchor={actionsRef} />
         <MiniPlayer />
         <TheatreMode />
         <Fullscreen />

@@ -1,5 +1,22 @@
-import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  AnimatePresence,
+  animate,
+  motion,
+  useIsPresent,
+  useMotionValue,
+} from 'motion/react';
+import {
+  type FC,
+  type PropsWithChildren,
+  type ReactNode,
+  type RefObject,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import MaterialSymbolsArrowBackRounded from '~icons/material-symbols/arrow-back-rounded';
 import MaterialSymbolsChevronRightRounded from '~icons/material-symbols/chevron-right-rounded';
 import MaterialSymbolsHighQualityOutlineRounded from '~icons/material-symbols/high-quality-outline-rounded';
@@ -9,155 +26,234 @@ import MaterialSymbolsSubtitlesOutlineRounded from '~icons/material-symbols/subt
 
 import { Button } from '@/components/ui/button';
 import {
-  DropdownMenuGroup,
-  DropdownMenuTrigger,
+  DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
-  DropdownMenu,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  TooltipTrigger,
-  TooltipContent,
   Tooltip,
+  TooltipContent,
+  TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { usePlayer } from '@/entrypoints/content/features/player/context/player-context';
 
-enum Views {
-  Root = 'root',
-  Quality = 'quality',
-  Subtitles = 'subtitles',
-  PlaybackRate = 'playback-rate',
+interface Submenu {
+  id: 'quality' | 'subtitles' | 'speed';
+  label: string;
+  icon: ReactNode;
+  value: string;
+  options: Array<{ value: string; label: string }>;
+  select: (value: string) => void;
 }
 
-const MotionDropdownMenuGroup = motion.create(DropdownMenuGroup);
+const transition = { duration: 0.24, ease: [0.22, 1, 0.36, 1] } as const;
 
-const EASE_SMOOTH_OUT = [0.22, 1, 0.36, 1] as const;
-
-const sizeTransition = { duration: 0.25, ease: EASE_SMOOTH_OUT } as const;
-
-const menuVariants = {
-  enter: (direction: number) => ({
-    x: direction > 0 ? 56 : -56,
-    opacity: 0,
-    filter: 'blur(3px)',
-  }),
-  center: { x: 0, opacity: 1, filter: 'blur(0px)' },
-  exit: (direction: number) => ({
-    x: direction > 0 ? -56 : 56,
-    opacity: 0,
-    filter: 'blur(3px)',
-    transition: {
-      x: { duration: 0.15, ease: EASE_SMOOTH_OUT },
-      filter: { duration: 0.1 },
-      opacity: { duration: 0.1 },
-    },
-  }),
+const slide = {
+  enter: (direction: number) => ({ x: direction * 24, opacity: 0 }),
+  center: { x: 0, opacity: 1 },
+  exit: (direction: number) => ({ x: direction * -24, opacity: 0 }),
 };
-
-const viewMotionProps = (direction: number) => ({
-  custom: direction,
-  variants: menuVariants,
-  initial: 'enter' as const,
-  animate: 'center' as const,
-  exit: 'exit' as const,
-  transition: {
-    x: { duration: 0.25, ease: EASE_SMOOTH_OUT },
-    filter: { duration: 0.2 },
-    opacity: { duration: 0.2 },
-  },
-});
 
 const formatSpeed = (speed: number) => (speed === 1 ? 'Звичайна' : `${speed}x`);
 
-const SubmenuHeader = ({
-  title,
-  onBack,
-}: {
-  title: string;
-  onBack: () => void;
-}) => (
-  <>
-    <DropdownMenuItem
-      className="text-muted-foreground font-medium"
-      onClick={onBack}
-      closeOnClick={false}
-    >
-      <MaterialSymbolsArrowBackRounded />
-      {title}
-    </DropdownMenuItem>
-    <DropdownMenuSeparator />
-  </>
-);
+const useSubmenus = (): Submenu[] => {
+  const player = useIFramePlayer(
+    useShallow((state) => ({
+      qualities: state.qualities,
+      currentQuality: state.currentQuality,
+      setCurrentQuality: state.setCurrentQuality,
+      subtitles: state.subtitles,
+      currentSubtitle: state.currentSubtitle,
+      setCurrentSubtitle: state.setCurrentSubtitle,
+      speedOptions: state.speedOptions,
+      currentSpeed: state.currentSpeed,
+      changeSpeed: state.changeSpeed,
+    })),
+  );
 
-const RowValue = ({ value }: { value: string }) => (
-  <span className="text-muted-foreground ml-auto line-clamp-1 flex items-center gap-0.5 truncate text-xs tabular-nums">
-    {value}
-    <MaterialSymbolsChevronRightRounded className="size-4" />
-  </span>
-);
-
-const Settings = () => {
-  const { container, overlayRef } = usePlayer();
-  const {
-    currentQuality,
-    qualities,
-    setCurrentQuality,
-    currentSpeed,
-    speedOptions,
-    changeSpeed,
-    currentSubtitle,
-    setCurrentSubtitle,
-    subtitles,
-  } = useIFramePlayer();
-
-  const [activeView, setView] = useState<Views>(Views.Root);
-  const [open, setOpen] = useState(false);
-  const direction = activeView === Views.Root ? -1 : 1;
-
-  // Track the natural size of the active view so the popup can smoothly
-  // animate its width/height between views (the `layout` prop can't do
-  // this reliably across AnimatePresence mounts/unmounts)
-  const [viewSize, setViewSize] = useState<{
-    width: number;
-    height: number;
-  } | null>(null);
-  const viewObserver = useRef<ResizeObserver | null>(null);
-
-  const measureView = useCallback((node: HTMLElement | null) => {
-    // Ignore unmount calls (exiting views): by that point the observer
-    // is already watching the entering view and must not be disconnected
-    if (!node) return;
-    viewObserver.current ??= new ResizeObserver((entries) => {
-      const target = entries.at(-1)?.target as HTMLElement | undefined;
-      if (!target || !target.isConnected) return;
-      setViewSize({ width: target.offsetWidth, height: target.offsetHeight });
+  const submenus: Submenu[] = [];
+  if (player.qualities.length > 0) {
+    submenus.push({
+      id: 'quality',
+      label: 'Якість',
+      icon: <MaterialSymbolsHighQualityOutlineRounded />,
+      value: player.currentQuality,
+      options: player.qualities
+        .toReversed()
+        .map((value) => ({ value, label: value })),
+      select: player.setCurrentQuality,
     });
-    viewObserver.current.disconnect();
-    viewObserver.current.observe(node);
-  }, []);
+  }
+  if (player.subtitles.length > 0) {
+    submenus.push({
+      id: 'subtitles',
+      label: 'Субтитри',
+      icon: <MaterialSymbolsSubtitlesOutlineRounded />,
+      value: player.currentSubtitle,
+      options: [
+        { value: '', label: 'Вимк.' },
+        ...player.subtitles.map((value) => ({ value, label: value })),
+      ],
+      select: player.setCurrentSubtitle,
+    });
+  }
+  submenus.push({
+    id: 'speed',
+    label: 'Швидкість',
+    icon: <MaterialSymbolsSpeedOutlineRounded />,
+    value: String(player.currentSpeed),
+    options: player.speedOptions.map((value) => ({
+      value: String(value),
+      label: formatSpeed(value),
+    })),
+    select: (value) => player.changeSpeed(Number(value)),
+  });
+  return submenus;
+};
 
-  useEffect(() => () => viewObserver.current?.disconnect(), []);
+const selectedLabel = ({ options, value }: Submenu) =>
+  options.find((option) => option.value === value)?.label ?? (value || 'Авто');
 
-  const handleOpenChange = (nextOpen: boolean) => {
-    setOpen(nextOpen);
-    // Keep the player UI visible while the menu is open
-    useIFramePlayer.setState({ uiLocked: nextOpen, uiShown: true });
-    // Always start from the root view on open, so a previously
-    // visited submenu doesn't greet the user on reopen. Drop the stale
-    // measured size so the popup opens at its natural size
-    if (nextOpen) {
-      setView(Views.Root);
-      setViewSize(null);
-    }
-  };
+/**
+ * A single menu page. Only the page on screen reports its height; the one
+ * leaving is taken out of the flow and pinned to the bottom so it slides away
+ * in place instead of riding the resizing edge.
+ */
+const Page: FC<
+  PropsWithChildren<{ direction: number; onHeight: (height: number) => void }>
+> = ({ direction, onHeight, children }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const isPresent = useIsPresent();
 
-  const goBack = () => setView(Views.Root);
+  useLayoutEffect(() => {
+    const node = ref.current;
+    if (!node || !isPresent) return;
+    const observer = new ResizeObserver(() => onHeight(node.offsetHeight));
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [isPresent, onHeight]);
 
   return (
-    <DropdownMenu open={open} onOpenChange={handleOpenChange} modal={false}>
+    <motion.div
+      ref={ref}
+      custom={direction}
+      variants={slide}
+      initial="enter"
+      animate="center"
+      exit="exit"
+      transition={transition}
+      className={cn(
+        !isPresent && 'pointer-events-none absolute inset-x-0 bottom-0',
+      )}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
+/** Mounted with the popup, so every open starts on the root page. */
+const SettingsPages = () => {
+  const submenus = useSubmenus();
+  const [activeId, setActiveId] = useState<Submenu['id']>();
+  const height = useMotionValue<number | 'auto'>('auto');
+
+  // The first measurement only pins the natural height, so later ones have a
+  // fixed value to animate from.
+  const resize = useCallback(
+    (next: number) => {
+      if (height.get() === 'auto') height.set(next);
+      else animate(height, next, transition);
+    },
+    [height],
+  );
+
+  const active = submenus.find((submenu) => submenu.id === activeId);
+  const direction = active ? 1 : -1;
+  const goBack = () => setActiveId(undefined);
+
+  // The popup opens upwards, so pages sit on its bottom edge and only the
+  // top edge moves while the height animates between pages.
+  return (
+    <motion.div
+      style={{ height }}
+      className="relative flex flex-col justify-end overflow-hidden"
+    >
+      <AnimatePresence initial={false} custom={direction}>
+        {active ? (
+          <Page key={active.id} direction={direction} onHeight={resize}>
+            <DropdownMenuItem
+              className="text-muted-foreground font-medium"
+              closeOnClick={false}
+              onClick={goBack}
+            >
+              <MaterialSymbolsArrowBackRounded />
+              {active.label}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuRadioGroup
+              value={active.value}
+              onValueChange={(value: string) => {
+                active.select(value);
+                goBack();
+              }}
+            >
+              {active.options.map(({ value, label }) => (
+                <DropdownMenuRadioItem
+                  key={value}
+                  value={value}
+                  closeOnClick={false}
+                  className="tabular-nums"
+                >
+                  <span className="truncate">{label}</span>
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </Page>
+        ) : (
+          <Page key="root" direction={direction} onHeight={resize}>
+            {submenus.map((submenu) => (
+              <DropdownMenuItem
+                key={submenu.id}
+                closeOnClick={false}
+                onClick={() => setActiveId(submenu.id)}
+              >
+                {submenu.icon}
+                {submenu.label}
+                <span className="text-muted-foreground ml-auto flex min-w-0 items-center gap-0.5 text-xs tabular-nums">
+                  <span className="truncate">{selectedLabel(submenu)}</span>
+                  <MaterialSymbolsChevronRightRounded className="size-4" />
+                </span>
+              </DropdownMenuItem>
+            ))}
+          </Page>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
+
+interface Props {
+  /** Toolbar group the menu lines up with, rather than the button itself. */
+  anchor: RefObject<HTMLElement | null>;
+}
+
+const Settings: FC<Props> = ({ anchor }) => {
+  const { container, overlayRef } = usePlayer();
+  const [open, setOpen] = useState(false);
+
+  // Keep the player UI visible while the menu is open.
+  useEffect(() => {
+    if (!open) return;
+    useIFramePlayer.setState({ uiLocked: true, uiShown: true });
+    return () => useIFramePlayer.setState({ uiLocked: false });
+  }, [open]);
+
+  return (
+    <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
       <Tooltip>
         <TooltipTrigger
           render={
@@ -188,150 +284,16 @@ const Settings = () => {
         )}
       </Tooltip>
       <DropdownMenuContent
-        className="bg-popover/60 w-auto backdrop-blur-xl"
+        className="bg-popover/60 w-56 backdrop-blur-xl"
         container={container}
+        anchor={anchor}
         side="top"
-        sideOffset={24}
+        sideOffset={20}
         align="end"
-        alignOffset={-111}
         collisionBoundary={overlayRef.current as Element}
         collisionPadding={8}
       >
-        <motion.div
-          initial={false}
-          animate={viewSize ?? undefined}
-          transition={sizeTransition}
-          className="relative overflow-hidden"
-        >
-          <AnimatePresence initial={false} mode="popLayout" custom={direction}>
-            {activeView === Views.Root && (
-              <MotionDropdownMenuGroup
-                key="root"
-                ref={measureView}
-                className="w-56"
-                {...viewMotionProps(direction)}
-              >
-                {qualities.length > 0 && (
-                  <DropdownMenuItem
-                    onClick={() => setView(Views.Quality)}
-                    closeOnClick={false}
-                  >
-                    <MaterialSymbolsHighQualityOutlineRounded />
-                    Якість
-                    <RowValue value={currentQuality || 'Авто'} />
-                  </DropdownMenuItem>
-                )}
-                {subtitles.length > 0 && (
-                  <DropdownMenuItem
-                    onClick={() => setView(Views.Subtitles)}
-                    closeOnClick={false}
-                  >
-                    <MaterialSymbolsSubtitlesOutlineRounded />
-                    Субтитри
-                    <RowValue value={currentSubtitle || 'Вимк.'} />
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem
-                  onClick={() => setView(Views.PlaybackRate)}
-                  closeOnClick={false}
-                >
-                  <MaterialSymbolsSpeedOutlineRounded />
-                  Швидкість
-                  <RowValue value={formatSpeed(currentSpeed)} />
-                </DropdownMenuItem>
-              </MotionDropdownMenuGroup>
-            )}
-
-            {activeView === Views.Quality && (
-              <MotionDropdownMenuGroup
-                key="quality"
-                ref={measureView}
-                className="w-44"
-                {...viewMotionProps(direction)}
-              >
-                <SubmenuHeader title="Якість" onBack={goBack} />
-                <DropdownMenuRadioGroup
-                  value={currentQuality}
-                  onValueChange={(value) => {
-                    setCurrentQuality(value as string);
-                    goBack();
-                  }}
-                >
-                  {qualities.toReversed().map((value) => (
-                    <DropdownMenuRadioItem
-                      key={value}
-                      value={value}
-                      closeOnClick={false}
-                      className="tabular-nums"
-                    >
-                      {value}
-                    </DropdownMenuRadioItem>
-                  ))}
-                </DropdownMenuRadioGroup>
-              </MotionDropdownMenuGroup>
-            )}
-
-            {activeView === Views.Subtitles && (
-              <MotionDropdownMenuGroup
-                key="subtitles"
-                ref={measureView}
-                className="w-44"
-                {...viewMotionProps(direction)}
-              >
-                <SubmenuHeader title="Субтитри" onBack={goBack} />
-                <DropdownMenuRadioGroup
-                  value={currentSubtitle}
-                  onValueChange={(value) => {
-                    setCurrentSubtitle(value as string);
-                    goBack();
-                  }}
-                >
-                  <DropdownMenuRadioItem value="" closeOnClick={false}>
-                    Вимк.
-                  </DropdownMenuRadioItem>
-                  {subtitles.map((value) => (
-                    <DropdownMenuRadioItem
-                      key={value}
-                      value={value}
-                      closeOnClick={false}
-                    >
-                      {value}
-                    </DropdownMenuRadioItem>
-                  ))}
-                </DropdownMenuRadioGroup>
-              </MotionDropdownMenuGroup>
-            )}
-
-            {activeView === Views.PlaybackRate && (
-              <MotionDropdownMenuGroup
-                key="playback-rate"
-                ref={measureView}
-                className="w-44"
-                {...viewMotionProps(direction)}
-              >
-                <SubmenuHeader title="Швидкість" onBack={goBack} />
-                <DropdownMenuRadioGroup
-                  value={currentSpeed}
-                  onValueChange={(value) => {
-                    changeSpeed(value as number);
-                    goBack();
-                  }}
-                >
-                  {speedOptions.map((value) => (
-                    <DropdownMenuRadioItem
-                      key={value}
-                      value={value}
-                      closeOnClick={false}
-                      className="tabular-nums"
-                    >
-                      {formatSpeed(value)}
-                    </DropdownMenuRadioItem>
-                  ))}
-                </DropdownMenuRadioGroup>
-              </MotionDropdownMenuGroup>
-            )}
-          </AnimatePresence>
-        </motion.div>
+        <SettingsPages />
       </DropdownMenuContent>
     </DropdownMenu>
   );
