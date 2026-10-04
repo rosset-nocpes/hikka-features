@@ -1,6 +1,7 @@
 import { ChevronRight } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 
+import MissingDivider, { countMissing } from '@/components/missing-divider';
 import {
   Collapsible,
   CollapsibleContent,
@@ -109,6 +110,23 @@ const VolumesView = () => {
       });
   }, [data, settings.sortBy, settings.translator]);
 
+  const descending = settings.sortBy.order !== ReaderOrderBy.Ascending;
+
+  // Counted across volume boundaries, since some sources restart chapter
+  // numbers per volume and others don't.
+  const missingById = useMemo(() => {
+    if (settings.sortBy.field !== ReaderSortBy.Chapter)
+      return new Map<string, number>();
+
+    const chapters = sortedVolumes.flatMap((volume) => volume.chapters);
+    return new Map(
+      chapters.map((chapter, index) => {
+        const below = chapters[descending ? index + 1 : index - 1];
+        return [chapter.id, countMissing(chapter.chapter, below?.chapter)];
+      }),
+    );
+  }, [sortedVolumes, settings.sortBy.field, descending]);
+
   if (data?.displayMode !== ReaderContentMode.Volumes) return;
 
   return (
@@ -135,55 +153,68 @@ const VolumesView = () => {
             />
             <CollapsibleContent className="h-(--collapsible-panel-height) overflow-hidden transition-[height] duration-150 ease-out data-ending-style:h-0 data-starting-style:h-0">
               <SidebarMenuSub>
-                {volume.chapters.map((chapter) => (
-                  <SidebarMenuSubItem key={chapter.id}>
-                    <SidebarMenuButton
-                      onClick={() => handleSelectChapter(chapter)}
-                      isActive={chapter.id === currentChapter?.id}
-                      size="lg"
-                      ref={
-                        chapter.id === currentChapter?.id
-                          ? currentChapterRef
-                          : null
-                      }
-                    >
-                      <div className="flex flex-1 flex-col gap-1 truncate text-left leading-tight">
-                        <span
-                          className={cn(
-                            (() => {
-                              const allChapters = sortedVolumes.flatMap(
-                                (vol) => vol.chapters,
-                              );
-                              const chapterIndex = allChapters.findIndex(
-                                (chap) => chap.id === chapter.id,
-                              );
-                              return (
-                                chapterIndex !== -1 &&
-                                chapterIndex < getRead() &&
-                                'text-muted-foreground'
-                              );
-                            })(),
-                          )}
+                {volume.chapters.map((chapter) => {
+                  const missing = missingById.get(chapter.id) ?? 0;
+                  const divider = missing > 0 && (
+                    <SidebarMenuSubItem>
+                      <MissingDivider count={missing} noun="chapter" />
+                    </SidebarMenuSubItem>
+                  );
+
+                  return (
+                    <Fragment key={chapter.id}>
+                      {!descending && divider}
+                      <SidebarMenuSubItem>
+                        <SidebarMenuButton
+                          onClick={() => handleSelectChapter(chapter)}
+                          isActive={chapter.id === currentChapter?.id}
+                          size="lg"
+                          ref={
+                            chapter.id === currentChapter?.id
+                              ? currentChapterRef
+                              : null
+                          }
                         >
-                          Розділ {chapter.chapter}
-                        </span>
-                        <div className="flex items-center gap-1">
-                          <span className="text-muted-foreground text-xs">
-                            {chapter.date_upload}
-                          </span>
-                          {chapter.translator && (
-                            <>
-                              <div className="bg-muted-foreground size-1 shrink-0 rounded-full" />
-                              <span className="text-muted-foreground truncate text-xs">
-                                {chapter.translator}
+                          <div className="flex flex-1 flex-col gap-1 truncate text-left leading-tight">
+                            <span
+                              className={cn(
+                                (() => {
+                                  const allChapters = sortedVolumes.flatMap(
+                                    (vol) => vol.chapters,
+                                  );
+                                  const chapterIndex = allChapters.findIndex(
+                                    (chap) => chap.id === chapter.id,
+                                  );
+                                  return (
+                                    chapterIndex !== -1 &&
+                                    chapterIndex < getRead() &&
+                                    'text-muted-foreground'
+                                  );
+                                })(),
+                              )}
+                            >
+                              Розділ {chapter.chapter}
+                            </span>
+                            <div className="flex items-center gap-1">
+                              <span className="text-muted-foreground text-xs">
+                                {chapter.date_upload}
                               </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </SidebarMenuButton>
-                  </SidebarMenuSubItem>
-                ))}
+                              {chapter.translator && (
+                                <>
+                                  <div className="bg-muted-foreground size-1 shrink-0 rounded-full" />
+                                  <span className="text-muted-foreground truncate text-xs">
+                                    {chapter.translator}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </SidebarMenuButton>
+                      </SidebarMenuSubItem>
+                      {descending && divider}
+                    </Fragment>
+                  );
+                })}
               </SidebarMenuSub>
             </CollapsibleContent>
           </Collapsible>

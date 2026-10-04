@@ -1,5 +1,6 @@
-import { type FC, useEffect, useRef } from 'react';
+import { type FC, Fragment, useEffect, useRef } from 'react';
 
+import MissingDivider, { countMissing } from '@/components/missing-divider';
 import { Badge } from '@/components/ui/badge';
 import {
   SidebarGroup,
@@ -88,7 +89,9 @@ const EpisodeList: FC<Props> = ({ toggleWatchedState }) => {
         {episodeData.map((ep, index) => {
           const title = getEpisodeTitle(ep);
           const releaseDate = formatReleaseDate(ep.releasedAt);
-          const duplicate = episodeData[index - 1]?.episode === ep.episode;
+          const previous = episodeData[index - 1]?.episode;
+          const missing = countMissing(ep.episode, previous);
+          const duplicate = previous === ep.episode;
           const typeBadge =
             ep.episode_type && ep.episode_type !== 'canon'
               ? episodeTypeBadges[ep.episode_type]
@@ -96,55 +99,59 @@ const EpisodeList: FC<Props> = ({ toggleWatchedState }) => {
           const isCurrent = ep.video_url === currentEpisode?.video_url;
 
           return (
-            <SidebarMenuItem
-              key={ep.video_url}
-              ref={isCurrent ? currentRowRef : null}
-            >
-              <SidebarMenuButton
-                className={cn(
-                  dated && 'h-12',
-                  ep.episode <= watched &&
-                    !isCurrent &&
-                    'text-muted-foreground',
-                )}
-                onClick={() => handleSelectEpisode(ep)}
-                isActive={isCurrent}
-              >
-                {numbered && (
-                  <span
-                    className="text-muted-foreground shrink-0 text-right text-xs tabular-nums"
-                    style={{ width: numberWidth }}
-                  >
-                    {ep.episode}
-                  </span>
-                )}
-                <div className="grid min-w-0 flex-1 leading-tight">
-                  <span className="truncate">
-                    {title ?? `Епізод ${ep.episode}`}
-                  </span>
-                  {releaseDate && (
-                    <span className="text-muted-foreground truncate text-xs font-normal">
-                      {releaseDate}
+            <Fragment key={ep.video_url}>
+              {missing > 0 && (
+                <SidebarMenuItem>
+                  <MissingDivider count={missing} noun="episode" />
+                </SidebarMenuItem>
+              )}
+              <SidebarMenuItem ref={isCurrent ? currentRowRef : null}>
+                <SidebarMenuButton
+                  className={cn(
+                    dated && 'h-12',
+                    ep.episode <= watched &&
+                      !isCurrent &&
+                      'text-muted-foreground',
+                  )}
+                  onClick={() => handleSelectEpisode(ep)}
+                  isActive={isCurrent}
+                >
+                  {numbered && (
+                    <span
+                      className="text-muted-foreground shrink-0 text-right text-xs tabular-nums"
+                      style={{ width: numberWidth }}
+                    >
+                      {ep.episode}
                     </span>
                   )}
-                </div>
-                {duplicate && (
-                  <Badge className="bg-muted text-muted-foreground h-4 rounded-sm px-1.5 text-[10px] font-semibold">
-                    Дублікат
-                  </Badge>
-                )}
-                {typeBadge && (
-                  <Badge
-                    className={cn(
-                      'h-4 rounded-sm px-1.5 text-[10px] font-semibold',
-                      typeBadge.className,
+                  <div className="grid min-w-0 flex-1 leading-tight">
+                    <span className="truncate">
+                      {title ?? `Епізод ${ep.episode}`}
+                    </span>
+                    {releaseDate && (
+                      <span className="text-muted-foreground truncate text-xs font-normal">
+                        {releaseDate}
+                      </span>
                     )}
-                  >
-                    {typeBadge.label}
-                  </Badge>
-                )}
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+                  </div>
+                  {duplicate && (
+                    <Badge className="bg-muted text-muted-foreground h-4 rounded-sm px-1.5 text-[10px] font-semibold">
+                      Дублікат
+                    </Badge>
+                  )}
+                  {typeBadge && (
+                    <Badge
+                      className={cn(
+                        'h-4 rounded-sm px-1.5 text-[10px] font-semibold',
+                        typeBadge.className,
+                      )}
+                    >
+                      {typeBadge.label}
+                    </Badge>
+                  )}
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </Fragment>
           );
         })}
       </SidebarMenu>
