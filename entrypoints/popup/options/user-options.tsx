@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import MaterialSymbolsExitToAppRounded from '~icons/material-symbols/exit-to-app-rounded';
+import MaterialSymbolsLoginRounded from '~icons/material-symbols/login-rounded';
 import MaterialSymbolsPersonRounded from '~icons/material-symbols/person-rounded';
 
 import HikkaLogo from '@/assets/hikka_logo.svg';
@@ -27,11 +27,11 @@ const UserOptions = () => {
   const [pending, setPending] = useState<'login' | 'logout'>();
   const [error, setError] = useState<string>();
 
-  const login = async () => {
-    setPending('login');
+  const run = async (action: 'login' | 'logout') => {
+    setPending(action);
     setError(undefined);
     try {
-      await Login();
+      await (action === 'login' ? Login() : Logout());
     } catch (cause) {
       setError(authErrorMessage(cause));
     } finally {
@@ -39,92 +39,70 @@ const UserOptions = () => {
     }
   };
 
-  const logout = async () => {
-    setPending('logout');
-    setError(undefined);
-    try {
-      await Logout();
-    } catch (cause) {
-      setError(authErrorMessage(cause));
-    } finally {
-      setPending(undefined);
-    }
-  };
+  // Errors replace the description, so the row never changes height.
+  const description = (text: string) =>
+    error ? (
+      <span role="alert" className="text-destructive text-xs font-medium">
+        {error}
+      </span>
+    ) : (
+      <span className="text-xs font-medium text-pretty text-[#A1A1A1]">
+        {text}
+      </span>
+    );
 
   if (convexSession && userData) {
     return (
-      <div className="flex flex-col gap-3 px-4 py-3">
-        <div className="flex items-center gap-3">
-          <Avatar>
-            <AvatarImage src={userData.avatar} alt={userData.username} />
-            <AvatarFallback>
-              <MaterialSymbolsPersonRounded className="size-5" />
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-semibold">
-              {userData.username}
-            </div>
-            <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
-              <span className="size-1.5 rounded-full bg-emerald-400" />
-              Синхронізацію увімкнено
-            </div>
-          </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Вийти з акаунта"
-            disabled={Boolean(pending)}
-            onClick={logout}
-          >
-            {pending === 'logout' ? (
-              <Spinner />
-            ) : (
-              <MaterialSymbolsExitToAppRounded className="text-destructive" />
-            )}
-          </Button>
+      <div className="flex items-center gap-3 px-4 py-3">
+        <Avatar className="rounded-md">
+          <AvatarImage src={userData.avatar} alt="" />
+          <AvatarFallback>
+            <MaterialSymbolsPersonRounded className="size-5" />
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <span className="truncate text-sm font-medium">
+            {userData.username}
+          </span>
+          {description('Обрані команди синхронізуються')}
         </div>
-        <p className="text-muted-foreground text-xs leading-relaxed">
-          Обрані команди й сповіщення доступні на всіх ваших пристроях.
-        </p>
-        {error && (
-          <p role="alert" className="text-destructive text-xs">
-            {error}
-          </p>
-        )}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground hover:text-destructive min-w-15"
+          disabled={Boolean(pending)}
+          onClick={() => run('logout')}
+        >
+          {pending === 'logout' ? <Spinner /> : 'Вийти'}
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-3 px-4 py-3">
-      <div className="flex items-center gap-3">
-        <div className="bg-primary/10 grid size-10 shrink-0 place-items-center rounded-lg">
-          <img src={HikkaLogo} className="size-6 rounded-sm" alt="" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold">Акаунт hikka.io</div>
-          <div className="text-muted-foreground text-xs">
-            Синхронізація обраних команд
-          </div>
-        </div>
-        <Button
-          type="button"
-          size="sm"
-          disabled={Boolean(pending)}
-          onClick={login}
-        >
-          {pending === 'login' && <Spinner />}
-          Увійти
-        </Button>
-      </div>
-      {error && (
-        <p role="alert" className="text-destructive text-xs">
-          {error}
-        </p>
+    <button
+      type="button"
+      disabled={Boolean(pending)}
+      onClick={() => run('login')}
+      className="group/row hover:bg-accent/30 flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left transition-[background-color] disabled:cursor-progress disabled:hover:bg-transparent"
+    >
+      <span className="grid size-10 shrink-0 place-items-center rounded-md bg-black">
+        <img src={HikkaLogo} className="size-8" alt="" />
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col gap-1">
+        <span className="text-sm font-medium">Увійти через hikka.io</span>
+        {description(
+          pending === 'login'
+            ? 'Завершіть вхід у вікні hikka.io'
+            : 'Синхронізація обраних команд',
+        )}
+      </span>
+      {pending === 'login' ? (
+        <Spinner className="text-muted-foreground size-5" />
+      ) : (
+        <MaterialSymbolsLoginRounded className="text-muted-foreground size-5 shrink-0 transition-transform group-hover/row:translate-x-0.5" />
       )}
-    </div>
+    </button>
   );
 };
 
