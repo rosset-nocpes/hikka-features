@@ -66,7 +66,7 @@ const VideoToolbar = () => {
         ref={actionsRef}
         className="border-shadow bg-background/60 hidden gap-1 rounded-lg p-1 backdrop-blur-xl md:flex"
       >
-        <Share />
+        <Share anchor={actionsRef} />
         <Settings anchor={actionsRef} />
         <MiniPlayer />
         <TheatreMode />

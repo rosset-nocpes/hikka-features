@@ -121,12 +121,13 @@ const Gestrues = () => {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
+      // The player lives in a shadow root, so `e.target` is its host; the
+      // composed path has the element that actually has focus.
+      const target = e.composedPath()[0] as HTMLElement;
       if (
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.tagName === 'BUTTON' ||
-        target.isContentEditable
+        (e.target as HTMLElement).tagName === 'BUTTON' ||
+        target.isContentEditable ||
+        target.closest?.('input, textarea, [role=dialog], [role=menu]')
       ) {
         return;
       }

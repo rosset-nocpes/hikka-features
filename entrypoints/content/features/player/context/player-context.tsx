@@ -97,11 +97,11 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
         time: params.get('time'),
       };
 
-      const isShared = !!(
-        sharedParams.provider &&
-        sharedParams.team &&
-        sharedParams.episode
-      );
+      // Teamless providers share an empty playerTeam.
+      const isShared =
+        !!sharedParams.provider &&
+        sharedParams.team !== null &&
+        !!sharedParams.episode;
 
       // cleanup url
       const url = new URL(window.location.href);

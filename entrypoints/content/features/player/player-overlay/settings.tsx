@@ -11,7 +11,6 @@ import {
   type ReactNode,
   type RefObject,
   useCallback,
-  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -40,6 +39,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { usePlayer } from '@/entrypoints/content/features/player/context/player-context';
+
+import { useUiLock } from './use-ui-lock';
 
 interface Submenu {
   id: 'quality' | 'subtitles' | 'speed';
@@ -234,13 +235,7 @@ interface Props {
 const Settings: FC<Props> = ({ anchor }) => {
   const { container, overlayRef } = usePlayer();
   const [open, setOpen] = useState(false);
-
-  // Keep the player UI visible while the menu is open.
-  useEffect(() => {
-    if (!open) return;
-    useIFramePlayer.setState({ uiLocked: true, uiShown: true });
-    return () => useIFramePlayer.setState({ uiLocked: false });
-  }, [open]);
+  useUiLock(open);
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
