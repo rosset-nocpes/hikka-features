@@ -118,11 +118,6 @@ const useSubmenus = (): Submenu[] => {
 const selectedLabel = ({ options, value }: Submenu) =>
   options.find((option) => option.value === value)?.label ?? (value || 'Авто');
 
-/**
- * A single menu page. Only the page on screen reports its height; the one
- * leaving is taken out of the flow and pinned to the bottom so it slides away
- * in place instead of riding the resizing edge.
- */
 const Page: FC<
   PropsWithChildren<{ direction: number; onHeight: (height: number) => void }>
 > = ({ direction, onHeight, children }) => {
@@ -155,14 +150,11 @@ const Page: FC<
   );
 };
 
-/** Mounted with the popup, so every open starts on the root page. */
 const SettingsPages = () => {
   const submenus = useSubmenus();
   const [activeId, setActiveId] = useState<Submenu['id']>();
   const height = useMotionValue<number | 'auto'>('auto');
 
-  // The first measurement only pins the natural height, so later ones have a
-  // fixed value to animate from.
   const resize = useCallback(
     (next: number) => {
       if (height.get() === 'auto') height.set(next);
@@ -175,8 +167,6 @@ const SettingsPages = () => {
   const direction = active ? 1 : -1;
   const goBack = () => setActiveId(undefined);
 
-  // The popup opens upwards, so pages sit on its bottom edge and only the
-  // top edge moves while the height animates between pages.
   return (
     <motion.div
       style={{ height }}
@@ -185,15 +175,6 @@ const SettingsPages = () => {
       <AnimatePresence initial={false} custom={direction}>
         {active ? (
           <Page key={active.id} direction={direction} onHeight={resize}>
-            <DropdownMenuItem
-              className="text-muted-foreground font-medium"
-              closeOnClick={false}
-              onClick={goBack}
-            >
-              <MaterialSymbolsArrowBackRounded />
-              {active.label}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
             <DropdownMenuRadioGroup
               value={active.value}
               onValueChange={(value: string) => {
@@ -212,6 +193,15 @@ const SettingsPages = () => {
                 </DropdownMenuRadioItem>
               ))}
             </DropdownMenuRadioGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="text-muted-foreground font-medium"
+              closeOnClick={false}
+              onClick={goBack}
+            >
+              <MaterialSymbolsArrowBackRounded />
+              {active.label}
+            </DropdownMenuItem>
           </Page>
         ) : (
           <Page key="root" direction={direction} onHeight={resize}>
