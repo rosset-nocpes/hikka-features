@@ -1,145 +1,147 @@
-import { Link, Copy, CopyCheck } from 'lucide-react';
-import { useState } from 'react';
-import MaterialSymbolsShareOutline from '~icons/material-symbols/share-outline';
+import { type FC, type RefObject, useEffect, useState } from 'react';
+import MaterialSymbolsCheckRounded from '~icons/material-symbols/check-rounded';
+import MaterialSymbolsContentCopyOutlineRounded from '~icons/material-symbols/content-copy-outline-rounded';
+import MaterialSymbolsShareOutlineRounded from '~icons/material-symbols/share-outline-rounded';
 
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
 import {
-  PopoverTrigger,
-  PopoverContent,
   Popover,
+  PopoverContent,
+  PopoverTrigger,
 } from '@/components/ui/popover';
-import {
-  TooltipTrigger,
-  TooltipContent,
-  TooltipProvider,
-  Tooltip,
-} from '@/components/ui/tooltip';
+import { Switch } from '@/components/ui/switch';
 
 import { usePlayer } from '../../context/player-context';
+import { getTeamName } from '../../teams';
+import { formatTime } from '../time-group';
+import ToolbarTooltip from '../toolbar-tooltip';
+import { useUiLock } from '../use-ui-lock';
 
-const Share = () => {
+/** Reads "1:02:03", "2:03" or "123" as seconds. */
+const parseTime = (value: string) => {
+  const parts = value.trim().split(':');
+  if (parts.length > 3 || !parts.every((part) => /^\d+$/.test(part))) return;
+  return parts.reduce((total, part) => total * 60 + Number(part), 0);
+};
+
+interface Props {
+  /** Toolbar group the menu lines up with, rather than the button itself. */
+  anchor: RefObject<HTMLElement | null>;
+}
+
+const Share: FC<Props> = ({ anchor }) => {
   const { container, overlayRef, provider, team, currentEpisode } = usePlayer();
-  const { currentTime } = useIFramePlayer();
+  const [open, setOpen] = useState(false);
+  const [withTime, setWithTime] = useState(false);
+  const [time, setTime] = useState(0);
+  const [timeText, setTimeText] = useState('');
+  const [copied, setCopied] = useState(false);
+  useUiLock(open);
 
-  const [showTooltip, setShowTooltip] = useState(false);
-  const [isTimecodeLink, toggleTimestampLink] = useState(false);
-  const [timecodeLink, setTimecodeLink] = useState(0);
+  useEffect(() => {
+    if (!copied) return;
+    const timeout = setTimeout(() => setCopied(false), 2000);
+    return () => clearTimeout(timeout);
+  }, [copied]);
 
-  const handleCopyShareLink = () => {
-    if (!provider || !team || !currentEpisode) return;
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next);
+    if (!next) return;
 
-    const url = new URL(`${window.location.origin}${window.location.pathname}`);
-    const searchParams = url.searchParams;
+    const now = Math.floor(useIFramePlayer.getState().currentTime);
+    setTime(now);
+    setTimeText(formatTime(now));
+    setWithTime(false);
+    setCopied(false);
+  };
 
-    searchParams.append('playerProvider', provider);
-    searchParams.append('playerTeam', team.title);
-    searchParams.append('playerEpisode', currentEpisode.episode.toString());
+  /** Applies the typed time, or restores the last valid one. */
+  const commitTime = () => {
+    const { duration } = useIFramePlayer.getState();
+    const parsed = parseTime(timeText) ?? time;
+    const next = duration > 0 ? Math.min(parsed, Math.floor(duration)) : parsed;
+    setTime(next);
+    setTimeText(formatTime(next));
+    return next;
+  };
 
-    if (isTimecodeLink) {
-      searchParams.append('time', timecodeLink.toString());
-    }
+  const copyLink = () => {
+    if (!provider || !currentEpisode) return;
 
-    navigator.clipboard.writeText(url.href);
+    const url = new URL(window.location.pathname, window.location.origin);
+    url.searchParams.set('playerProvider', provider);
+    url.searchParams.set('playerTeam', team?.title ?? '');
+    url.searchParams.set('playerEpisode', String(currentEpisode.episode));
+    if (withTime) url.searchParams.set('time', String(commitTime()));
+
+    void navigator.clipboard.writeText(url.href).then(() => setCopied(true));
   };
 
   return (
-    <Popover
-      onOpenChange={(open) => {
-        if (open) {
-          toggleTimestampLink(false);
-          setTimecodeLink(Math.floor(currentTime));
-        }
-      }}
-    >
-      <PopoverTrigger>
-        <Tooltip>
-          <TooltipTrigger>
-            <Button variant="ghost" size="sm">
-              <MaterialSymbolsShareOutline className="flex-1" />
+    <Popover open={open} onOpenChange={handleOpenChange}>
+      <ToolbarTooltip label="Поділитися" disabled={open}>
+        <PopoverTrigger
+          render={
+            <Button variant="ghost" size="icon-sm">
+              <MaterialSymbolsShareOutlineRounded />
             </Button>
-          </TooltipTrigger>
-          <TooltipContent
-            side="top"
-            sideOffset={32}
-            collisionBoundary={overlayRef.current as Element}
-            collisionPadding={8}
-            container={container}
-          >
-            Поділитися
-          </TooltipContent>
-        </Tooltip>
-      </PopoverTrigger>
+          }
+        />
+      </ToolbarTooltip>
       <PopoverContent
-        className="flex flex-col gap-2"
+        className="bg-popover/60 w-56 gap-0 p-1 backdrop-blur-xl"
         container={container}
+        anchor={anchor}
         side="top"
-        sideOffset={32}
-        // collisionBoundary={overlayRef.current as Element}
+        sideOffset={20}
+        align="end"
+        collisionBoundary={overlayRef.current as Element}
         collisionPadding={8}
       >
-        <div className="bg-muted flex items-center gap-2 rounded-md py-1 pr-1 pl-2">
-          <Link className="text-muted-foreground size-3.5 shrink-0" />
-          <span className="gradient-mask-r-90 cursor-default overflow-hidden text-xs font-medium text-nowrap">
-            {window.location.href}
-          </span>
-          <TooltipProvider>
-            <Tooltip open={showTooltip}>
-              <TooltipTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="hover:bg-background size-6 shrink-0 rounded-sm"
-                    onClick={() => {
-                      handleCopyShareLink();
-                      setShowTooltip(true);
-                      setTimeout(() => setShowTooltip(false), 1000);
-                    }}
-                  >
-                    <Copy className="h-3.5 w-3.5" />
-                  </Button>
-                }
-              />
-              <TooltipContent
-                side="left"
-                className="flex items-center gap-1 text-xs font-medium"
-              >
-                <CopyCheck className="size-3.5 shrink-0" />
-                Скопійовано
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+        <div className="text-muted-foreground truncate px-2 py-1.5 text-xs font-medium">
+          Епізод {currentEpisode?.episode}
+          {team?.title && ` · ${getTeamName(team)}`}
         </div>
-        <div className="flex items-center gap-2">
-          <Checkbox
-            checked={isTimecodeLink}
-            onCheckedChange={() => toggleTimestampLink(!isTimecodeLink)}
-          />
-          <div
-            className={cn(
-              'flex items-center gap-2',
-              !isTimecodeLink && 'cursor-not-allowed opacity-70',
-            )}
-          >
-            <div className="text-muted-foreground text-xs">Починати з:</div>
-            <Input
-              disabled={!isTimecodeLink}
-              defaultValue={new Date(timecodeLink * 1000)
-                .toISOString()
-                .slice(11, 19)}
-              onBlur={(e) => {
-                const [hours, minutes, seconds] = e.target.value
-                  .split(':')
-                  .map(Number);
-                setTimecodeLink(hours * 3600 + minutes * 60 + seconds);
-              }}
-              placeholder="00:00:00"
-              className="h-6 w-24 text-xs focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0"
+        <div className="flex items-center gap-2 px-2 py-1.5 text-sm">
+          <label className="flex flex-1 cursor-pointer items-center gap-2 select-none">
+            <Switch
+              size="sm"
+              checked={withTime}
+              onCheckedChange={setWithTime}
             />
-          </div>
+            Почати з
+          </label>
+          <input
+            aria-label="Час початку"
+            inputMode="numeric"
+            value={timeText}
+            onChange={(event) => {
+              setTimeText(event.target.value);
+              setWithTime(true);
+            }}
+            onBlur={commitTime}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') event.currentTarget.blur();
+            }}
+            className={cn(
+              'bg-foreground/5 focus-visible:ring-ring h-6 w-18 rounded-sm px-1.5 text-right text-sm tabular-nums outline-none focus-visible:ring-1',
+              !withTime && 'text-muted-foreground',
+            )}
+          />
         </div>
+        <div className="bg-border -mx-1 my-1 h-px" />
+        <button
+          type="button"
+          onClick={copyLink}
+          className="hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none [&_svg]:size-4 [&_svg]:shrink-0"
+        >
+          {copied ? (
+            <MaterialSymbolsCheckRounded className="text-success" />
+          ) : (
+            <MaterialSymbolsContentCopyOutlineRounded />
+          )}
+          {copied ? 'Скопійовано' : 'Копіювати посилання'}
+        </button>
       </PopoverContent>
     </Popover>
   );

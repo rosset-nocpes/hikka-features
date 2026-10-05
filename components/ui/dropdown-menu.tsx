@@ -23,6 +23,10 @@ function DropdownMenuContent({
   alignOffset = 0,
   side = 'bottom',
   sideOffset = 4,
+  anchor,
+  collisionAvoidance,
+  collisionBoundary,
+  collisionPadding,
   container,
   className,
   positionMethod,
@@ -34,6 +38,7 @@ function DropdownMenuContent({
     | 'alignOffset'
     | 'side'
     | 'sideOffset'
+    | 'anchor'
     | 'collisionAvoidance'
     | 'collisionBoundary'
     | 'collisionPadding'
@@ -48,9 +53,10 @@ function DropdownMenuContent({
         alignOffset={alignOffset}
         side={side}
         sideOffset={sideOffset}
-        collisionAvoidance={props.collisionAvoidance}
-        collisionBoundary={props.collisionBoundary}
-        collisionPadding={props.collisionPadding}
+        anchor={anchor}
+        collisionAvoidance={collisionAvoidance}
+        collisionBoundary={collisionBoundary}
+        collisionPadding={collisionPadding}
         positionMethod={resolvePositionMethod(container, positionMethod)}
       >
         <MenuPrimitive.Popup

@@ -1,97 +1,108 @@
-import MaterialSymbolsExitToAppRounded from '~icons/material-symbols/exit-to-app-rounded';
+import { useState } from 'react';
+import MaterialSymbolsLoginRounded from '~icons/material-symbols/login-rounded';
 import MaterialSymbolsPersonRounded from '~icons/material-symbols/person-rounded';
-import MdiBeta from '~icons/mdi/beta';
 
 import HikkaLogo from '@/assets/hikka_logo.svg';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Logout } from '@/utils/hikka-integration';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import { Login, Logout } from '@/utils/hikka-integration';
+
+const authErrorMessage = (error: unknown) => {
+  const message = error instanceof Error ? error.message : '';
+  if (message.includes('WXT_CONVEX_SITE_URL')) {
+    return 'Сервер входу не налаштований у цій збірці.';
+  }
+  if (message.includes('cancel') || message.includes('closed')) {
+    return 'Вхід скасовано.';
+  }
+  if (message.includes('invalid_redirect_uri')) {
+    return 'Цю версію розширення ще не дозволено на сервері.';
+  }
+  return message || 'Не вдалося увійти. Спробуйте ще раз.';
+};
 
 const UserOptions = () => {
-  const { richPresence, userData, setSettings } = useSettings();
-  // const [getRichPresence, toggleRichPresence] = useState<boolean | null>(null);
+  const { convexSession, userData } = useSettings();
+  const [pending, setPending] = useState<'login' | 'logout'>();
+  const [error, setError] = useState<string>();
 
-  // const [getUserData, setUserData] = useState<any>(null);
+  const run = async (action: 'login' | 'logout') => {
+    setPending(action);
+    setError(undefined);
+    try {
+      await (action === 'login' ? Login() : Logout());
+    } catch (cause) {
+      setError(authErrorMessage(cause));
+    } finally {
+      setPending(undefined);
+    }
+  };
 
-  // useEffect(() => {
-  //   Promise.all([richPresence.getValue(), userData.getValue()]).then(
-  //     ([richPresence, userData]) => {
-  //       toggleRichPresence(richPresence);
-  //       setUserData(userData);
-  //     },
-  //   );
+  // Errors replace the description, so the row never changes height.
+  const description = (text: string) =>
+    error ? (
+      <span role="alert" className="text-destructive text-xs font-medium">
+        {error}
+      </span>
+    ) : (
+      <span className="text-xs font-medium text-pretty text-[#A1A1A1]">
+        {text}
+      </span>
+    );
 
-  //   hikkaSecret.watch(async () => {
-  //     setUserData(await userData.getValue());
-  //   });
-  // }, []);
+  if (convexSession && userData) {
+    return (
+      <div className="flex items-center gap-3 px-4 py-3">
+        <Avatar className="rounded-md">
+          <AvatarImage src={userData.avatar} alt="" />
+          <AvatarFallback>
+            <MaterialSymbolsPersonRounded className="size-5" />
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <span className="truncate text-sm font-medium">
+            {userData.username}
+          </span>
+          {description('Обрані команди синхронізуються')}
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground hover:text-destructive min-w-15"
+          disabled={Boolean(pending)}
+          onClick={() => run('logout')}
+        >
+          {pending === 'logout' ? <Spinner /> : 'Вийти'}
+        </Button>
+      </div>
+    );
+  }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Avatar className="pointer-events-none">
-            <AvatarImage src={userData?.avatar} />
-            <AvatarFallback>
-              <MaterialSymbolsPersonRounded className="size-5" />
-            </AvatarFallback>
-          </Avatar>
-        }
-        disabled
-      />
-      <DropdownMenuContent align="end">
-        {!userData && (
-          <DropdownMenuItem onClick={Login} className="items-center gap-2">
-            <img src={HikkaLogo} className="size-5 rounded-sm" />
-            Увійти в акаунт hikka.io
-          </DropdownMenuItem>
+    <button
+      type="button"
+      disabled={Boolean(pending)}
+      onClick={() => run('login')}
+      className="group/row hover:bg-accent/30 flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left transition-[background-color] disabled:cursor-progress disabled:hover:bg-transparent"
+    >
+      <span className="grid size-10 shrink-0 place-items-center rounded-md bg-black">
+        <img src={HikkaLogo} className="size-8" alt="" />
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col gap-1">
+        <span className="text-sm font-medium">Увійти через hikka.io</span>
+        {description(
+          pending === 'login'
+            ? 'Завершіть вхід у вікні hikka.io'
+            : 'Синхронізація обраних команд',
         )}
-        {userData && (
-          <>
-            <DropdownMenuLabel className="bg-secondary/30 -m-1 line-clamp-1 p-2">
-              {userData?.username}
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={Logout} className="items-center gap-2">
-              <MaterialSymbolsExitToAppRounded className="text-destructive" />
-              Вийти з акаунта
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuLabel className="flex gap-2">
-                Фічі
-                <Badge
-                  variant="outline"
-                  className="text-primary-foreground cursor-default bg-yellow-500"
-                >
-                  <MdiBeta />
-                  Beta
-                </Badge>
-              </DropdownMenuLabel>
-              <DropdownMenuCheckboxItem
-                checked={richPresence}
-                onSelect={(e) => e.preventDefault()}
-                onCheckedChange={(e) => {
-                  setSettings({ richPresence: e });
-                }}
-              >
-                Rich Presence
-              </DropdownMenuCheckboxItem>
-            </DropdownMenuGroup>
-          </>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </span>
+      {pending === 'login' ? (
+        <Spinner className="text-muted-foreground size-5" />
+      ) : (
+        <MaterialSymbolsLoginRounded className="text-muted-foreground size-5 shrink-0 transition-transform group-hover/row:translate-x-0.5" />
+      )}
+    </button>
   );
 };
 

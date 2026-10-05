@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { useMemo } from 'react';
+import { Fragment, useMemo } from 'react';
 import MaterialSymbolsStarRateOutlineRounded from '~icons/material-symbols/star-rate-outline-rounded';
 import MaterialSymbolsStarRounded from '~icons/material-symbols/star-rounded';
 
@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 
 import { usePlayer } from '../context/player-context';
+import { getTeamName, groupTeams } from '../teams';
 
 const MobileTeamSelect = () => {
   const {
@@ -19,16 +20,11 @@ const MobileTeamSelect = () => {
     watchData: data,
   } = usePlayer();
 
-  const orderedTeams = useMemo<API.TeamData[]>(() => {
+  const teamGroups = useMemo(() => {
     if (!data || !provider) return [];
     if (!(data[provider] instanceof ProviderTeamIFrame)) return [];
 
-    const teams = (data[provider] as ProviderTeamIFrame).getTeams();
-    return teams.slice().sort((a: API.TeamData, b: API.TeamData) => {
-      if (a.title === favoriteTeam?.team) return -1;
-      if (b.title === favoriteTeam?.team) return 1;
-      return 0;
-    });
+    return groupTeams(data[provider].getTeams(), favoriteTeam?.team);
   }, [data, provider, favoriteTeam]);
 
   if (!data || !provider || !team) return;
@@ -54,73 +50,82 @@ const MobileTeamSelect = () => {
 
   return (
     <motion.div layout className="flex flex-col gap-2 overflow-y-auto">
-      {orderedTeams.map((t) => (
-        <motion.div
-          key={t.title}
-          layoutId={t.title}
-          layout
-          transition={{
-            type: 'spring',
-            stiffness: 600,
-            damping: 40,
-          }}
-        >
-          <Button
-            variant="outline"
-            onClick={() => handleSelectTeam(t)}
-            className={cn(
-              'group/item hover:bg-secondary/20 w-full p-1 font-normal',
-              t.title === team.title &&
-                'bg-secondary! text-secondary-foreground!',
-            )}
-          >
-            <Avatar className="rounded-sm">
-              <AvatarImage src={t.logo} alt={t.title} />
-              <AvatarFallback>{t.title[0]}</AvatarFallback>
-            </Avatar>
-            <div className="grid flex-1 text-left leading-tight">
-              <span className="truncate text-lg font-semibold">{t.title}</span>
-              {/*<span className="truncate text-xs">
-                {getEpisodeRanges(
-                  (data[provider] as ProviderTeamIFrame).teams[t.title]
-                    .episodes,
-                )}
-              </span>*/}
-            </div>
-            <Button
-              variant="ghost"
-              size="icon-md"
-              className="group relative"
-              onClick={(e) => handleFavorite(e, t)}
+      {teamGroups.map((group) => (
+        <Fragment key={group.type}>
+          <motion.span layout className="px-2 py-1.5 text-sm font-semibold">
+            {group.label}
+          </motion.span>
+          {group.teams.map((t) => (
+            <motion.div
+              key={t.title}
+              layoutId={t.title}
+              layout
+              transition={{
+                type: 'spring',
+                stiffness: 600,
+                damping: 40,
+              }}
             >
-              <div
+              <Button
+                variant="outline"
+                onClick={() => handleSelectTeam(t)}
                 className={cn(
-                  'absolute inset-0 flex items-center justify-center transition-all duration-300 ease-in-out will-change-[transform,opacity,filter]',
-                  favoriteTeam?.provider === provider &&
-                    favoriteTeam?.team === t.title
-                    ? 'blur-0 scale-100 opacity-100'
-                    : 'scale-[0.25] opacity-0 blur-xs',
+                  'group/item hover:bg-secondary/20 w-full p-1 font-normal',
+                  t.title === team.title &&
+                    'bg-secondary! text-secondary-foreground!',
                 )}
               >
-                <MaterialSymbolsStarRounded className="size-7! text-yellow-300 transition-transform duration-300" />
-              </div>
-              <div
-                className={cn(
-                  'opacity transition-[transform,filter] duration-300 ease-in-out will-change-[transform,opacity,filter]',
-                  favoriteTeam?.provider === provider &&
-                    favoriteTeam?.team === t.title
-                    ? 'scale-[0.25] opacity-0 blur-xs'
-                    : 'blur-0 scale-100 opacity-100',
-                )}
-              >
-                <MaterialSymbolsStarRateOutlineRounded className="text-muted-foreground size-7! transition-transform duration-300" />
-              </div>
-            </Button>
-            {/*<div className="flex w-full items-center justify-between gap-2  text-left text-sm">
+                <Avatar className="rounded-sm">
+                  <AvatarImage src={t.logo} alt={getTeamName(t)} />
+                  <AvatarFallback>{getTeamName(t)[0]}</AvatarFallback>
+                </Avatar>
+                <div className="grid flex-1 text-left leading-tight">
+                  <span className="truncate text-lg font-semibold">
+                    {getTeamName(t)}
+                  </span>
+                  {/*<span className="truncate text-xs">
+                    {getEpisodeRanges(
+                      (data[provider] as ProviderTeamIFrame).teams[t.title]
+                        .episodes,
+                    )}
+                  </span>*/}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon-md"
+                  className="group relative"
+                  onClick={(e) => handleFavorite(e, t)}
+                >
+                  <div
+                    className={cn(
+                      'absolute inset-0 flex items-center justify-center transition-all duration-300 ease-in-out will-change-[transform,opacity,filter]',
+                      favoriteTeam?.provider === provider &&
+                        favoriteTeam?.team === t.title
+                        ? 'blur-0 scale-100 opacity-100'
+                        : 'scale-[0.25] opacity-0 blur-xs',
+                    )}
+                  >
+                    <MaterialSymbolsStarRounded className="size-7! text-yellow-300 transition-transform duration-300" />
+                  </div>
+                  <div
+                    className={cn(
+                      'opacity transition-[transform,filter] duration-300 ease-in-out will-change-[transform,opacity,filter]',
+                      favoriteTeam?.provider === provider &&
+                        favoriteTeam?.team === t.title
+                        ? 'scale-[0.25] opacity-0 blur-xs'
+                        : 'blur-0 scale-100 opacity-100',
+                    )}
+                  >
+                    <MaterialSymbolsStarRateOutlineRounded className="text-muted-foreground size-7! transition-transform duration-300" />
+                  </div>
+                </Button>
+                {/*<div className="flex w-full items-center justify-between gap-2  text-left text-sm">
 
-            </div>*/}
-          </Button>
-        </motion.div>
+                </div>*/}
+              </Button>
+            </motion.div>
+          ))}
+        </Fragment>
       ))}
     </motion.div>
   );

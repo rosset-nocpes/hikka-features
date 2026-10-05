@@ -14,6 +14,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 
 import { getAvailablePlayers, usePlayer } from '../context/player-context';
+import { getTeamName } from '../teams';
 import MobileTeamSelect from './mobile-team-select';
 
 interface Props {
@@ -59,7 +60,9 @@ const MobileTeamProviderDrawer: FC<Props> = ({ toggleWatchedState }) => {
         render={
           <Avatar className="size-10 rounded-md">
             <AvatarImage src={team?.logo} />
-            <AvatarFallback>{team?.title?.slice(0, 2)}</AvatarFallback>
+            <AvatarFallback>
+              {team && getTeamName(team).slice(0, 2)}
+            </AvatarFallback>
           </Avatar>
         }
       />

@@ -1,6 +1,7 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { type FC, type RefObject, useLayoutEffect, useMemo } from 'react';
 
+import MissingDivider, { countMissing } from '@/components/missing-divider';
 import {
   SidebarGroup,
   SidebarMenu,
@@ -28,6 +29,8 @@ const isTranslatorMatch = (chapter: Chapter, translator: string) =>
 
 const getDateTime = (value: string) =>
   new Date(value.split('.').reverse().join('-')).getTime();
+
+type Row = { id: string; chapter: Chapter } | { id: string; missing: number };
 
 interface Props {
   scrollRef: RefObject<HTMLDivElement | null>;
@@ -81,10 +84,31 @@ const ChaptersView: FC<Props> = ({ scrollRef }) => {
       });
   }, [data, settings.sortBy, settings.translator]);
 
+  // Gaps only mean something when sorted by number. Each one sits between a
+  // chapter and its lower neighbour: above it ascending, below it descending.
+  const rows = useMemo(() => {
+    const { field, order } = settings.sortBy;
+    const descending = order !== ReaderOrderBy.Ascending;
+
+    return sorted.flatMap((chapter, index): Row[] => {
+      const row = { id: chapter.id, chapter };
+      const below = sorted[descending ? index + 1 : index - 1];
+      const missing =
+        field === ReaderSortBy.Chapter
+          ? countMissing(chapter.chapter, below?.chapter)
+          : 0;
+      if (!missing) return [row];
+
+      const divider = { id: `missing-${chapter.id}`, missing };
+      return descending ? [row, divider] : [divider, row];
+    });
+  }, [sorted, settings.sortBy]);
+
   const rowVirtualizer = useVirtualizer({
-    count: sorted.length,
+    count: rows.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: () => 52,
+    estimateSize: (index) => ('missing' in rows[index]! ? 28 : 52),
+    getItemKey: (index) => rows[index]!.id,
     overscan: 5,
   });
 
@@ -93,9 +117,7 @@ const ChaptersView: FC<Props> = ({ scrollRef }) => {
     if (!currentChapter) return;
     if (data?.displayMode !== ReaderContentMode.Chapters) return;
 
-    const currentIndex = sorted.findIndex(
-      (chapter) => chapter.id === currentChapter.id,
-    );
+    const currentIndex = rows.findIndex((row) => row.id === currentChapter.id);
 
     if (currentIndex !== -1) {
       rowVirtualizer.scrollToIndex(currentIndex, {
@@ -103,64 +125,63 @@ const ChaptersView: FC<Props> = ({ scrollRef }) => {
         behavior: 'auto',
       });
     }
-  }, [container, currentChapter, data?.displayMode, rowVirtualizer, sorted]);
+  }, [container, currentChapter, data?.displayMode, rowVirtualizer, rows]);
 
   if (data?.displayMode !== ReaderContentMode.Chapters) return;
 
   return (
     <SidebarGroup>
-      <SidebarMenu>
-        <div
-          style={{
-            height: `${rowVirtualizer.getTotalSize()}px`,
-            width: '100%',
-            position: 'relative',
-          }}
-        >
-          {rowVirtualizer.getVirtualItems().map((virtualItem) => (
-            <SidebarMenuItem key={virtualItem.index}>
-              <SidebarMenuButton
-                onClick={() => handleSelectChapter(sorted[virtualItem.index])}
-                isActive={sorted[virtualItem.index].id === currentChapter?.id}
-                size="lg"
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  transform: `translateY(${virtualItem.start}px)`,
-                }}
-              >
-                <div className="flex flex-1 flex-col gap-1 truncate text-left leading-tight">
-                  <span
-                    // todo: change it
-                    className={cn(
-                      sorted[virtualItem.index].chapter <= getRead() &&
-                        'text-muted-foreground',
-                    )}
-                  >
-                    {sorted[virtualItem.index].volume &&
-                      `Том ${sorted[virtualItem.index].volume} `}
-                    Розділ {sorted[virtualItem.index].chapter}
-                  </span>
-                  <div className="flex items-center gap-1">
-                    <span className="text-muted-foreground text-xs">
-                      {sorted[virtualItem.index].date_upload}
+      <SidebarMenu
+        className="relative"
+        style={{ height: rowVirtualizer.getTotalSize() }}
+      >
+        {rowVirtualizer.getVirtualItems().map((virtualItem) => {
+          const row = rows[virtualItem.index]!;
+
+          return (
+            <SidebarMenuItem
+              key={virtualItem.key}
+              className="absolute inset-x-0 top-0"
+              style={{ transform: `translateY(${virtualItem.start}px)` }}
+            >
+              {'missing' in row ? (
+                <MissingDivider count={row.missing} noun="chapter" />
+              ) : (
+                <SidebarMenuButton
+                  onClick={() => handleSelectChapter(row.chapter)}
+                  isActive={row.chapter.id === currentChapter?.id}
+                  size="lg"
+                >
+                  <div className="flex flex-1 flex-col gap-1 truncate text-left leading-tight">
+                    <span
+                      // todo: change it
+                      className={cn(
+                        row.chapter.chapter <= getRead() &&
+                          'text-muted-foreground',
+                      )}
+                    >
+                      {row.chapter.volume ? `Том ${row.chapter.volume} ` : null}
+                      Розділ {row.chapter.chapter}
                     </span>
-                    {sorted[virtualItem.index].translator && (
-                      <>
-                        <div className="bg-muted-foreground size-1 shrink-0 rounded-full" />
-                        <span className="text-muted-foreground truncate text-xs">
-                          {sorted[virtualItem.index].translator}
-                        </span>
-                      </>
-                    )}
+                    <div className="flex items-center gap-1">
+                      <span className="text-muted-foreground text-xs">
+                        {row.chapter.date_upload}
+                      </span>
+                      {row.chapter.translator && (
+                        <>
+                          <div className="bg-muted-foreground size-1 shrink-0 rounded-full" />
+                          <span className="text-muted-foreground truncate text-xs">
+                            {row.chapter.translator}
+                          </span>
+                        </>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </SidebarMenuButton>
+                </SidebarMenuButton>
+              )}
             </SidebarMenuItem>
-          ))}
-        </div>
+          );
+        })}
       </SidebarMenu>
     </SidebarGroup>
   );

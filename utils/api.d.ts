@@ -26,6 +26,13 @@ declare global {
     type EpisodeData = {
       episode: number;
       video_url: string;
+      title?: {
+        ua?: string;
+        en?: string;
+        ja?: string;
+      };
+      releasedAt?: number;
+      episode_type?: 'canon' | 'filler' | 'mixed' | 'recap';
     };
 
     /* Manga */
@@ -63,13 +70,23 @@ declare global {
     type ProviderType = 'team-iframe' | 'team-hls' | 'iframe' | 'hls' | 'id';
 
     type TeamData = {
+      id?: string;
       title: string;
       logo: string;
+      canonicalTitle?: string;
+      translationType?: 'dub' | 'sub' | 'unknown';
     };
 
     type EpisodeDataIFrame = {
       episode: number;
       video_url: string;
+      title?: {
+        ua?: string;
+        en?: string;
+        ja?: string;
+      };
+      releasedAt?: number;
+      episode_type?: 'canon' | 'filler' | 'mixed' | 'recap';
     };
 
     interface EditorContent {

@@ -1,279 +1,265 @@
-import { AnimatePresence, motion } from 'motion/react';
-import { useState } from 'react';
+import {
+  AnimatePresence,
+  animate,
+  motion,
+  useIsPresent,
+  useMotionValue,
+} from 'motion/react';
+import {
+  type FC,
+  type PropsWithChildren,
+  type ReactNode,
+  type RefObject,
+  useCallback,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import MaterialSymbolsArrowBackRounded from '~icons/material-symbols/arrow-back-rounded';
-import MaterialSymbolsPageInfoOutlineRounded from '~icons/material-symbols/page-info-outline-rounded';
+import MaterialSymbolsChevronRightRounded from '~icons/material-symbols/chevron-right-rounded';
+import MaterialSymbolsHighQualityOutlineRounded from '~icons/material-symbols/high-quality-outline-rounded';
+import MaterialSymbolsSettingsOutlineRounded from '~icons/material-symbols/settings-outline-rounded';
+import MaterialSymbolsSpeedOutlineRounded from '~icons/material-symbols/speed-outline-rounded';
+import MaterialSymbolsSubtitlesOutlineRounded from '~icons/material-symbols/subtitles-outline-rounded';
 
 import { Button } from '@/components/ui/button';
 import {
-  DropdownMenuGroup,
-  DropdownMenuTrigger,
+  DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
-  DropdownMenu,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  TooltipTrigger,
-  TooltipContent,
-  Tooltip,
-} from '@/components/ui/tooltip';
 import { usePlayer } from '@/entrypoints/content/features/player/context/player-context';
 
-enum Views {
-  Settings = 'settings',
-  Quality = 'quality',
-  Subtitles = 'subtitles',
-  PlaybackRate = 'playback-rate',
-  AudioGain = 'audio-gain',
+import ToolbarTooltip from './toolbar-tooltip';
+import { useUiLock } from './use-ui-lock';
+
+interface Submenu {
+  id: 'quality' | 'subtitles' | 'speed';
+  label: string;
+  icon: ReactNode;
+  value: string;
+  options: Array<{ value: string; label: string }>;
+  select: (value: string) => void;
 }
 
-const MotionDropdownMenuGroup = motion.create(DropdownMenuGroup);
+const transition = { duration: 0.24, ease: [0.22, 1, 0.36, 1] } as const;
 
-const Settings = () => {
-  const { container, overlayRef } = usePlayer();
-  const {
-    currentQuality,
-    qualities,
-    setCurrentQuality,
-    currentSpeed,
-    speedOptions,
-    changeSpeed,
-    currentSubtitle,
-    setCurrentSubtitle,
-    subtitles,
-  } = useIFramePlayer();
-  // const player = useMediaPlayer();
-  // const videoQualityOptions = useVideoQualityOptions();
-  // const currentQualityHeight = videoQualityOptions.selectedQuality?.height;
-  // const videoQualityHint =
-  //   videoQualityOptions.selectedValue !== 'auto' && currentQualityHeight
-  //     ? `${currentQualityHeight}p`
-  //     : `Auto${currentQualityHeight ? ` (${currentQualityHeight}p)` : ''}`;
+const slide = {
+  enter: (direction: number) => ({ x: direction * 24, opacity: 0 }),
+  center: { x: 0, opacity: 1 },
+  exit: (direction: number) => ({ x: direction * -24, opacity: 0 }),
+};
 
-  // const playbackRateOptions = usePlaybackRateOptions();
-  // const playbackRateHint =
-  //   playbackRateOptions.selectedValue === '1'
-  //     ? 'Normal'
-  //     : `${playbackRateOptions.selectedValue}x`;
+const formatSpeed = (speed: number) => (speed === 1 ? 'Звичайна' : `${speed}x`);
 
-  // const audioGainOptions = useAudioGainOptions();
+const useSubmenus = (): Submenu[] => {
+  const player = useIFramePlayer(
+    useShallow((state) => ({
+      qualities: state.qualities,
+      currentQuality: state.currentQuality,
+      setCurrentQuality: state.setCurrentQuality,
+      subtitles: state.subtitles,
+      currentSubtitle: state.currentSubtitle,
+      setCurrentSubtitle: state.setCurrentSubtitle,
+      speedOptions: state.speedOptions,
+      currentSpeed: state.currentSpeed,
+      changeSpeed: state.changeSpeed,
+    })),
+  );
 
-  const [activeView, setView] = useState<Views>(Views.Settings);
-  const [open, setOpen] = useState(false);
-  const direction = activeView === Views.Settings ? -1 : 1;
+  const submenus: Submenu[] = [];
+  if (player.qualities.length > 0) {
+    submenus.push({
+      id: 'quality',
+      label: 'Якість',
+      icon: <MaterialSymbolsHighQualityOutlineRounded />,
+      value: player.currentQuality,
+      options: player.qualities
+        .toReversed()
+        .map((value) => ({ value, label: value })),
+      select: player.setCurrentQuality,
+    });
+  }
+  if (player.subtitles.length > 0) {
+    submenus.push({
+      id: 'subtitles',
+      label: 'Субтитри',
+      icon: <MaterialSymbolsSubtitlesOutlineRounded />,
+      value: player.currentSubtitle,
+      options: [
+        { value: '', label: 'Вимк.' },
+        ...player.subtitles.map((value) => ({ value, label: value })),
+      ],
+      select: player.setCurrentSubtitle,
+    });
+  }
+  submenus.push({
+    id: 'speed',
+    label: 'Швидкість',
+    icon: <MaterialSymbolsSpeedOutlineRounded />,
+    value: String(player.currentSpeed),
+    options: player.speedOptions.map((value) => ({
+      value: String(value),
+      label: formatSpeed(value),
+    })),
+    select: (value) => player.changeSpeed(Number(value)),
+  });
+  return submenus;
+};
 
-  const menuVariants = {
-    enter: (direction) => ({
-      x: direction > 0 ? 300 : -300,
-      opacity: 0,
-    }),
-    center: {
-      x: 0,
-      opacity: 1,
+const selectedLabel = ({ options, value }: Submenu) =>
+  options.find((option) => option.value === value)?.label ?? (value || 'Авто');
+
+const Page: FC<
+  PropsWithChildren<{ direction: number; onHeight: (height: number) => void }>
+> = ({ direction, onHeight, children }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const isPresent = useIsPresent();
+
+  useLayoutEffect(() => {
+    const node = ref.current;
+    if (!node || !isPresent) return;
+    const observer = new ResizeObserver(() => onHeight(node.offsetHeight));
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [isPresent, onHeight]);
+
+  return (
+    <motion.div
+      ref={ref}
+      custom={direction}
+      variants={slide}
+      initial="enter"
+      animate="center"
+      exit="exit"
+      transition={transition}
+      className={cn(
+        !isPresent && 'pointer-events-none absolute inset-x-0 bottom-0',
+      )}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
+const SettingsPages = () => {
+  const submenus = useSubmenus();
+  const [activeId, setActiveId] = useState<Submenu['id']>();
+  const height = useMotionValue<number | 'auto'>('auto');
+
+  const resize = useCallback(
+    (next: number) => {
+      if (height.get() === 'auto') height.set(next);
+      else animate(height, next, transition);
     },
-    exit: (direction) => ({
-      x: direction > 0 ? -300 : 300,
-      opacity: 0,
-    }),
-  };
+    [height],
+  );
+
+  const active = submenus.find((submenu) => submenu.id === activeId);
+  const direction = active ? 1 : -1;
+  const goBack = () => setActiveId(undefined);
+
+  return (
+    <motion.div
+      style={{ height }}
+      className="relative flex flex-col justify-end overflow-hidden"
+    >
+      <AnimatePresence initial={false} custom={direction}>
+        {active ? (
+          <Page key={active.id} direction={direction} onHeight={resize}>
+            <DropdownMenuRadioGroup
+              value={active.value}
+              onValueChange={(value: string) => {
+                active.select(value);
+                goBack();
+              }}
+            >
+              {active.options.map(({ value, label }) => (
+                <DropdownMenuRadioItem
+                  key={value}
+                  value={value}
+                  closeOnClick={false}
+                  className="tabular-nums"
+                >
+                  <span className="truncate">{label}</span>
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="text-muted-foreground font-medium"
+              closeOnClick={false}
+              onClick={goBack}
+            >
+              <MaterialSymbolsArrowBackRounded />
+              {active.label}
+            </DropdownMenuItem>
+          </Page>
+        ) : (
+          <Page key="root" direction={direction} onHeight={resize}>
+            {submenus.map((submenu) => (
+              <DropdownMenuItem
+                key={submenu.id}
+                closeOnClick={false}
+                onClick={() => setActiveId(submenu.id)}
+              >
+                {submenu.icon}
+                {submenu.label}
+                <span className="text-muted-foreground ml-auto flex min-w-0 items-center gap-0.5 text-xs tabular-nums">
+                  <span className="truncate">{selectedLabel(submenu)}</span>
+                  <MaterialSymbolsChevronRightRounded className="size-4" />
+                </span>
+              </DropdownMenuItem>
+            ))}
+          </Page>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
+
+interface Props {
+  /** Toolbar group the menu lines up with, rather than the button itself. */
+  anchor: RefObject<HTMLElement | null>;
+}
+
+const Settings: FC<Props> = ({ anchor }) => {
+  const { container, overlayRef } = usePlayer();
+  const [open, setOpen] = useState(false);
+  useUiLock(open);
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
-      <DropdownMenuTrigger>
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button variant="ghost" size="icon-sm">
-                <MaterialSymbolsPageInfoOutlineRounded />
-              </Button>
-            }
-          />
-          <TooltipContent
-            className="parent-data-[open]:hidden"
-            side="top"
-            sideOffset={32}
-            collisionBoundary={overlayRef.current as Element}
-            collisionPadding={8}
-            container={container}
-          >
-            Налаштування
-          </TooltipContent>
-        </Tooltip>
-      </DropdownMenuTrigger>
+      <ToolbarTooltip label="Налаштування" disabled={open}>
+        <DropdownMenuTrigger
+          render={
+            <Button variant="ghost" size="icon-sm">
+              <MaterialSymbolsSettingsOutlineRounded
+                className={cn(
+                  'size-5 transition-transform duration-200',
+                  open && 'rotate-45',
+                )}
+              />
+            </Button>
+          }
+        />
+      </ToolbarTooltip>
       <DropdownMenuContent
-        className="bg-popover/60 backdrop-blur-xl"
+        className="bg-popover/60 w-56 backdrop-blur-xl"
         container={container}
+        anchor={anchor}
         side="top"
-        sideOffset={24}
-        align="start"
-        alignOffset={16}
+        sideOffset={20}
+        align="end"
         collisionBoundary={overlayRef.current as Element}
-        // collisionPadding={8}
+        collisionPadding={8}
       >
-        <motion.div
-          layout
-          transition={{ duration: 0.2, ease: 'easeInOut' }}
-          style={{ overflow: 'hidden' }}
-        >
-          <AnimatePresence initial={false} mode="wait" custom={direction}>
-            {activeView === Views.Settings && (
-              <MotionDropdownMenuGroup
-                key="main"
-                custom={direction}
-                variants={menuVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.2, ease: 'easeInOut' }}
-              >
-                {qualities.length > 0 && (
-                  <DropdownMenuItem
-                    // disabled={videoQualityOptions.disabled}
-                    onClick={() => {
-                      setView(Views.Quality);
-                    }}
-                    closeOnClick={false}
-                  >
-                    Якість ({currentQuality})
-                  </DropdownMenuItem>
-                )}
-                {subtitles.length > 0 && (
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setView(Views.Subtitles);
-                    }}
-                    closeOnClick={false}
-                  >
-                    Субтитри ({currentSubtitle})
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem
-                  // disabled={playbackRateOptions.disabled}
-                  onClick={() => {
-                    setView(Views.PlaybackRate);
-                  }}
-                  closeOnClick={false}
-                >
-                  Швидкість ({currentSpeed})
-                </DropdownMenuItem>
-              </MotionDropdownMenuGroup>
-            )}
-            {activeView === Views.Subtitles && (
-              <MotionDropdownMenuGroup
-                key="subtitles"
-                custom={direction}
-                variants={menuVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.2, ease: 'easeInOut' }}
-              >
-                <DropdownMenuItem
-                  onClick={() => {
-                    setView(Views.Settings);
-                  }}
-                  closeOnClick={false}
-                >
-                  <MaterialSymbolsArrowBackRounded />
-                  Субтитри
-                </DropdownMenuItem>
-                <DropdownMenuRadioGroup
-                  value={currentSubtitle}
-                  onValueChange={setCurrentSubtitle}
-                >
-                  <DropdownMenuRadioItem
-                    key="off"
-                    value=""
-                    closeOnClick={false}
-                  >
-                    Вимк.
-                  </DropdownMenuRadioItem>
-                  {subtitles.map((value) => (
-                    <DropdownMenuRadioItem
-                      key={value}
-                      value={value}
-                      closeOnClick={false}
-                    >
-                      {value}
-                    </DropdownMenuRadioItem>
-                  ))}
-                </DropdownMenuRadioGroup>
-              </MotionDropdownMenuGroup>
-            )}
-            {activeView === Views.Quality && (
-              <MotionDropdownMenuGroup
-                key="quality"
-                custom={direction}
-                variants={menuVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.2, ease: 'easeInOut' }}
-              >
-                <DropdownMenuItem
-                  onClick={() => {
-                    setView(Views.Settings);
-                  }}
-                  closeOnClick={false}
-                >
-                  <MaterialSymbolsArrowBackRounded />
-                  Якість
-                </DropdownMenuItem>
-                <DropdownMenuRadioGroup
-                  value={currentQuality}
-                  onValueChange={setCurrentQuality}
-                >
-                  {qualities.toReversed().map((value) => (
-                    <DropdownMenuRadioItem
-                      key={value}
-                      value={value}
-                      closeOnClick={false}
-                    >
-                      {value}
-                    </DropdownMenuRadioItem>
-                  ))}
-                </DropdownMenuRadioGroup>
-              </MotionDropdownMenuGroup>
-            )}
-
-            {activeView === Views.PlaybackRate && (
-              <MotionDropdownMenuGroup
-                key="playback-rate"
-                custom={direction}
-                variants={menuVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.2, ease: 'easeInOut' }}
-              >
-                <DropdownMenuItem
-                  onClick={() => {
-                    setView(Views.Settings);
-                  }}
-                  closeOnClick={false}
-                >
-                  <MaterialSymbolsArrowBackRounded />
-                  Швидкість
-                </DropdownMenuItem>
-                <DropdownMenuRadioGroup
-                  value={currentSpeed}
-                  onValueChange={changeSpeed}
-                >
-                  {speedOptions.map((value) => (
-                    <DropdownMenuRadioItem
-                      key={value}
-                      value={value}
-                      closeOnClick={false}
-                    >
-                      {value}
-                    </DropdownMenuRadioItem>
-                  ))}
-                </DropdownMenuRadioGroup>
-              </MotionDropdownMenuGroup>
-            )}
-          </AnimatePresence>
-        </motion.div>
+        <SettingsPages />
       </DropdownMenuContent>
     </DropdownMenu>
   );

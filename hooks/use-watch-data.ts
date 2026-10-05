@@ -1,37 +1,70 @@
 import { useQuery } from '@tanstack/react-query';
-import ky from 'ky';
 
+import { type ConvexWatchResult, convexApi } from '@/utils/convex-api';
+import { publicAction } from '@/utils/convex-client';
 import { ProviderIFrame, ProviderTeamIFrame } from '@/utils/provider_classes';
 
-// TODO: add types for api
+const toWatchData = (data: ConvexWatchResult): API.WatchData => {
+  const info = new Map(
+    data.episodes.map((episode) => [episode.number, episode]),
+  );
+  const toEpisodes = (
+    episodes: ConvexWatchResult['providers'][number]['sources'][number]['episodes'],
+  ): API.EpisodeData[] =>
+    episodes.map(({ number, url, releasedAt }) => ({
+      episode: number,
+      video_url: url,
+      title: info.get(number)?.title,
+      episode_type: info.get(number)?.type,
+      releasedAt,
+    }));
+
+  const out = {
+    type: data.anime.mediaType === 'unknown' ? 'tv' : data.anime.mediaType,
+  } as API.WatchData;
+
+  for (const provider of data.providers) {
+    const language = provider.language as ProviderLanguage;
+    const [first] = provider.sources;
+    if (first && !first.team) {
+      const value = new ProviderIFrame(language);
+      value.episodes = toEpisodes(first.episodes);
+      out[provider.id] = value;
+      continue;
+    }
+
+    const value = new ProviderTeamIFrame(language);
+    for (const { team, translationType, episodes } of provider.sources) {
+      if (!team) continue;
+      // The title doubles as the key (favourites and share links store it),
+      // so a team listed for both dub and sub needs a suffix on its second
+      // entry. UIs show `canonicalTitle` instead (see getTeamName).
+      const title = value.teams[team.title]
+        ? `${team.title} — ${translationType === 'sub' ? 'субтитри' : 'озвучення'}`
+        : team.title;
+      value.teams[title] = {
+        id: team.id,
+        logo: team.logo ?? '',
+        canonicalTitle: team.title,
+        translationType,
+        episodes: toEpisodes(episodes),
+      };
+    }
+    value.sortTeams();
+    out[provider.id] = value;
+  }
+  return out;
+};
+
 const useWatchData = () => {
-  const { backendBranch } = useSettings();
   const { slug } = usePageStore();
 
   return useQuery({
     queryKey: ['watch-data', slug],
-    queryFn: async () => {
-      const data = await ky
-        .get(`${BACKEND_BRANCHES[backendBranch]}/watch/v2/${slug}`)
-        .json<API.WatchData>();
-      const out = data;
-      for (const [key, elem] of Object.entries(data)) {
-        if (typeof elem === 'string') continue;
-
-        if (elem.type === 'team-iframe') {
-          out[key] = new ProviderTeamIFrame(out[key].lang);
-          out[key].teams = (elem as ProviderTeamIFrame).teams || {};
-          out[key].sortTeams();
-        } else if (elem.type === 'iframe') {
-          out[key] = new ProviderIFrame(out[key].lang);
-          out[key].episodes = (elem as ProviderIFrame).episodes || [];
-        }
-      }
-
-      return out as API.WatchData;
-    },
+    queryFn: async () =>
+      toWatchData(await publicAction(convexApi.watch.resolve, { slug: slug! })),
     retry: false,
-    staleTime: Infinity,
+    staleTime: 5 * 60 * 1000,
     enabled: !!slug,
   });
 };

@@ -6,7 +6,10 @@ class ProviderBase {
 export class ProviderTeamIFrame extends ProviderBase {
   teams: {
     [key: string]: {
+      id?: string;
       logo: string;
+      canonicalTitle?: string;
+      translationType?: 'dub' | 'sub' | 'unknown';
       episodes: API.EpisodeDataIFrame[];
     };
   };
@@ -33,8 +36,11 @@ export class ProviderTeamIFrame extends ProviderBase {
       };
 
     const team: API.TeamData = {
+      id: this.teams[team_name].id,
       title: team_name,
       logo: this.teams[team_name].logo,
+      canonicalTitle: this.teams[team_name].canonicalTitle,
+      translationType: this.teams[team_name].translationType,
     };
 
     return team;
@@ -42,8 +48,11 @@ export class ProviderTeamIFrame extends ProviderBase {
 
   getTeams() {
     return Object.entries(this.teams).map(([name, team]) => ({
+      id: team.id,
       title: name,
       logo: team.logo,
+      canonicalTitle: team.canonicalTitle,
+      translationType: team.translationType,
     }));
   }
 
