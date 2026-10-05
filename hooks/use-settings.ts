@@ -135,6 +135,12 @@ export const useSettings = create<AppState>()(
         richPresence: state.richPresence,
       }),
       version: 0,
+      merge: (persisted, current) => ({
+        ...current,
+        convexSession: undefined,
+        userData: undefined,
+        ...(persisted as Partial<AppState>),
+      }),
       onRehydrateStorage: () => () => {
         if (!hasMigratedFromOldStorage) {
           hasMigratedFromOldStorage = true;

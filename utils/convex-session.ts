@@ -202,6 +202,7 @@ export async function logout() {
   await settingsHydrated();
   const session = useSettings.getState().convexSession;
   clearSession();
+  useSettings.getState().setSettings({ richPresence: false });
   if (session) {
     await authRequest('/auth/session/revoke', {
       refreshToken: session.refreshToken,

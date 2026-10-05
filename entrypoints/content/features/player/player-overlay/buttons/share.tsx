@@ -10,15 +10,11 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 
 import { usePlayer } from '../../context/player-context';
 import { getTeamName } from '../../teams';
 import { formatTime } from '../time-group';
+import ToolbarTooltip from '../toolbar-tooltip';
 import { useUiLock } from '../use-ui-lock';
 
 /** Reads "1:02:03", "2:03" or "123" as seconds. */
@@ -83,30 +79,15 @@ const Share: FC<Props> = ({ anchor }) => {
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
-      <Tooltip>
-        <TooltipTrigger
+      <ToolbarTooltip label="Поділитися" disabled={open}>
+        <PopoverTrigger
           render={
-            <PopoverTrigger
-              render={
-                <Button variant="ghost" size="icon-sm">
-                  <MaterialSymbolsShareOutlineRounded />
-                </Button>
-              }
-            />
+            <Button variant="ghost" size="icon-sm">
+              <MaterialSymbolsShareOutlineRounded />
+            </Button>
           }
         />
-        {!open && (
-          <TooltipContent
-            side="top"
-            sideOffset={32}
-            collisionBoundary={overlayRef.current as Element}
-            collisionPadding={8}
-            container={container}
-          >
-            Поділитися
-          </TooltipContent>
-        )}
-      </Tooltip>
+      </ToolbarTooltip>
       <PopoverContent
         className="bg-popover/60 w-56 gap-0 p-1 backdrop-blur-xl"
         container={container}

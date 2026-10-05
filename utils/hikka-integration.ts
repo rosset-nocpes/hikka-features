@@ -3,12 +3,13 @@ export async function Login() {
     | UserDataV2
     | undefined;
   if (!user) throw new Error('Не вдалося завершити вхід через hikka.io');
+  await useSettings.persist.rehydrate();
   return user;
 }
 
 export async function Logout() {
   await browser.runtime.sendMessage({ type: 'logout' });
-  useSettings.getState().setSettings({ richPresence: false });
+  await useSettings.persist.rehydrate();
 }
 
 export async function actionRichPresence(action: 'check' | 'remove') {

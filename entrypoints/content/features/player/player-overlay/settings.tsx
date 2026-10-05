@@ -33,13 +33,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { usePlayer } from '@/entrypoints/content/features/player/context/player-context';
 
+import ToolbarTooltip from './toolbar-tooltip';
 import { useUiLock } from './use-ui-lock';
 
 interface Submenu {
@@ -239,35 +235,20 @@ const Settings: FC<Props> = ({ anchor }) => {
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
-      <Tooltip>
-        <TooltipTrigger
+      <ToolbarTooltip label="Налаштування" disabled={open}>
+        <DropdownMenuTrigger
           render={
-            <DropdownMenuTrigger
-              render={
-                <Button variant="ghost" size="icon-sm">
-                  <MaterialSymbolsSettingsOutlineRounded
-                    className={cn(
-                      'size-5 transition-transform duration-200',
-                      open && 'rotate-45',
-                    )}
-                  />
-                </Button>
-              }
-            />
+            <Button variant="ghost" size="icon-sm">
+              <MaterialSymbolsSettingsOutlineRounded
+                className={cn(
+                  'size-5 transition-transform duration-200',
+                  open && 'rotate-45',
+                )}
+              />
+            </Button>
           }
         />
-        {!open && (
-          <TooltipContent
-            side="top"
-            sideOffset={32}
-            collisionBoundary={overlayRef.current as Element}
-            collisionPadding={8}
-            container={container}
-          >
-            Налаштування
-          </TooltipContent>
-        )}
-      </Tooltip>
+      </ToolbarTooltip>
       <DropdownMenuContent
         className="bg-popover/60 w-56 backdrop-blur-xl"
         container={container}
