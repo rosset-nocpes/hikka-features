@@ -78,13 +78,23 @@ class BIUScraper extends BaseScraper {
     for (const accordion of $accordions.toArray()) {
       const $acc = $(accordion);
       const headerText = $acc.find('.accordion-header h3').text().trim();
-      const volumeMatch = headerText.match(/Том\s+(\d+(?:\.\d+)?$)/i);
+      const volumeMatch = headerText.match(/^Том\s+(\d+(?:\.\d+)?)/i);
       const volumeNumber = volumeMatch ? Number(volumeMatch[1]) : 0;
 
-      const $sectionData = $acc.find('[data-chapter-section-url]');
+      const $pager = $acc.find('[data-chapter-group-pager-url-value]');
+      const sectionUrl =
+        $acc
+          .find('[data-chapter-section-url]')
+          .attr('data-chapter-section-url') ||
+        $pager.attr('data-chapter-group-pager-url-value');
+      const isFullyLoaded =
+        $pager.length > 0 &&
+        $pager.find('li.group').length >=
+          Number($pager.attr('data-chapter-group-pager-total-value'));
+
       const accChapters =
-        $sectionData.length && !$sectionData.attr('data-chapter-section-loaded')
-          ? await this.fetchSectionChapters($, $sectionData, volumeNumber)
+        sectionUrl && !isFullyLoaded
+          ? await this.fetchSectionChapters(sectionUrl, volumeNumber)
           : this.parseChaptersFromElements($, $acc, volumeNumber);
 
       accChapters.sort((a, b) => a.chapter - b.chapter);
@@ -158,13 +168,17 @@ class BIUScraper extends BaseScraper {
     volumeNumber: number = 0,
   ): Chapter[] {
     return $root
-      .find('li.group a[href*="/chapters/"]')
-      .map((_j, el) => {
-        const $link = $(el);
-        const chNum = Number($link.find('span').eq(0).text().trim());
-        const href = $link.attr('href') || '';
-        const translator = $link
-          .parent()
+      .find('li.group')
+      .toArray()
+      .flatMap((el) => {
+        const $row = $(el);
+        const $link = $row.find('a[href*="/chapters/"]').first();
+        const href = $link.attr('href');
+
+        if (!href) return [];
+
+        const chNum = Number($row.find('span').first().text().trim());
+        const translator = $row
           .find('a[href^="/scanlators"]')
           .map((_k, e) => $(e).text().trim())
           .toArray();
@@ -184,30 +198,25 @@ class BIUScraper extends BaseScraper {
               .eq(1)
               .text()
               .trim()
-              .match(/(?<=- ).*/)?.[0] || '',
+              .match(/^Розділ\s+\S+\s+—\s+(.*)$/s)?.[1] || '',
           translator: translator.join(', '),
-          date_upload: $link.find('span').eq(2).text().trim(),
+          date_upload:
+            $row
+              .find('p')
+              .first()
+              .text()
+              .match(/\d{2}\.\d{2}\.\d{4}/)?.[0] || '',
           url: this.resolveUrl(href),
         };
-      })
-      .toArray();
+      });
   }
 
   private async fetchSectionChapters(
-    $: cheerio.CheerioAPI,
-    $sectionData: cheerio.Cheerio<any>,
+    sectionPath: string,
     volumeNumber: number = 0,
   ): Promise<Chapter[]> {
-    const sectionUrl = new URL(
-      `${this.baseUrl}${$sectionData.attr('data-chapter-section-url')}`,
-    );
-    const params = JSON.parse(
-      $sectionData.attr('data-chapter-section-params') || '{}',
-    );
-
-    for (const [key, value] of Object.entries(params)) {
-      sectionUrl.searchParams.append(key, String(value));
-    }
+    const sectionUrl = new URL(sectionPath, this.baseUrl);
+    sectionUrl.searchParams.set('limit', 'all');
 
     const chaptersPage = await this.request(sectionUrl.toString());
     const $chapters = cheerio.load(chaptersPage);
