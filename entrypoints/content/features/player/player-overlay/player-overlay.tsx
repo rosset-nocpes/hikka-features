@@ -17,7 +17,7 @@ interface Props {
 
 const PlayerOverlay = ({ toggleWatchedState }: Props) => {
   const { adInProgress, uiShown } = useIFramePlayer();
-  const { setOverlayRef, provider, miniPlayer, videoPiPActive } = usePlayer();
+  const { setOverlayRef, miniPlayer, videoPiPActive } = usePlayer();
   const isMobile = useIsMobile();
 
   const isCompactMode = miniPlayer || videoPiPActive;
@@ -26,55 +26,53 @@ const PlayerOverlay = ({ toggleWatchedState }: Props) => {
     <div
       className={cn(
         'absolute flex size-full',
-        (adInProgress || provider === 'vidking') && 'pointer-events-none',
+        adInProgress && 'pointer-events-none',
         videoPiPActive && !miniPlayer && 'flex-col justify-end',
       )}
     >
-      {provider !== 'vidking' && (
+      <div
+        ref={setOverlayRef}
+        className={cn(
+          'relative flex flex-1 flex-col justify-end duration-300',
+          adInProgress && 'opacity-0',
+          !uiShown && 'cursor-none',
+        )}
+      >
+        <Gestrues />
+        <SpeedupPopup />
+        <ActionPopup />
+        <BufferingIndicator />
         <div
-          ref={setOverlayRef}
           className={cn(
-            'relative flex flex-1 flex-col justify-end duration-300',
-            adInProgress && 'opacity-0',
-            !uiShown && 'cursor-none',
+            'relative flex flex-col opacity-100 transition-opacity duration-300',
+            !isCompactMode && 'pb-20 md:pb-0',
+            !uiShown && 'opacity-0',
           )}
         >
-          <Gestrues />
-          <SpeedupPopup />
-          <ActionPopup />
-          <BufferingIndicator />
-          <div
-            className={cn(
-              'relative flex flex-col opacity-100 transition-opacity duration-300',
-              !isCompactMode && 'pb-20 md:pb-0',
-              !uiShown && 'opacity-0',
-            )}
-          >
-            <TooltipProvider>
-              {!videoPiPActive && (
-                <div
-                  className={cn(
-                    'flex w-full items-center',
-                    isCompactMode ? 'px-2' : 'px-3 md:px-2',
-                  )}
-                >
-                  <Time />
-                </div>
-              )}
+          <TooltipProvider>
+            {!videoPiPActive && (
               <div
                 className={cn(
                   'flex w-full items-center',
-                  isCompactMode
-                    ? 'justify-center p-1 pt-0'
-                    : 'justify-between p-3 pt-1 md:p-2',
+                  isCompactMode ? 'px-2' : 'px-3 md:px-2',
                 )}
               >
-                <VideoToolbar />
+                <Time />
               </div>
-            </TooltipProvider>
-          </div>
+            )}
+            <div
+              className={cn(
+                'flex w-full items-center',
+                isCompactMode
+                  ? 'justify-center p-1 pt-0'
+                  : 'justify-between p-3 pt-1 md:p-2',
+              )}
+            >
+              <VideoToolbar />
+            </div>
+          </TooltipProvider>
         </div>
-      )}
+      </div>
       {!isCompactMode && !isMobile && (
         <PlayerSidebar toggleWatchedState={toggleWatchedState} />
       )}
