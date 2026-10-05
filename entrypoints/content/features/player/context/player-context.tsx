@@ -11,6 +11,8 @@ import { useSidebar } from '@/components/ui/sidebar';
 import { removeSyncedFavorite, syncFavorite } from '@/utils/favorite-sync';
 import { ProviderIFrame, ProviderTeamIFrame } from '@/utils/provider_classes';
 
+import { pickPriorityTeam } from '../teams';
+
 interface PlayerState {
   /* Base */
   container?: HTMLElement;
@@ -82,7 +84,7 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
       const watchDataKey = getWatchDataKey(data);
       if (get().watchDataKey === watchDataKey) return;
 
-      const { defaultProvider, favoriteTeams } =
+      const { defaultProvider, favoriteTeams, teamPriority } =
         useSettings.getState().features.player;
 
       const providers_avaliable = getAvailablePlayers(data).map((e) => e.title);
@@ -111,45 +113,66 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
 
       history.replaceState(history.state, '', url.href);
 
-      // Determine provider
-      const provider =
+      // A shared link wins, then this anime's favourite team, then the team
+      // priority list, then the default provider's first team.
+      const providerOrder = providers_avaliable.includes(defaultProvider)
+        ? [
+            defaultProvider,
+            ...providers_avaliable.filter((name) => name !== defaultProvider),
+          ]
+        : providers_avaliable;
+      const sharedProvider =
         isShared && providers_avaliable.includes(sharedParams.provider!)
           ? sharedParams.provider!
-          : storedFavoriteTeam &&
-              providers_avaliable.includes(storedFavoriteTeam.provider)
-            ? storedFavoriteTeam.provider
-            : providers_avaliable.includes(defaultProvider)
-              ? defaultProvider
-              : providers_avaliable[0];
+          : undefined;
+      const favoriteSource =
+        storedFavoriteTeam && data[storedFavoriteTeam.provider];
+      const favoriteDisplayTeam =
+        favoriteSource instanceof ProviderTeamIFrame
+          ? favoriteSource
+              .getTeams()
+              .find(
+                (candidate) =>
+                  candidate.title === storedFavoriteTeam!.team ||
+                  candidate.canonicalTitle === storedFavoriteTeam!.team,
+              )
+          : undefined;
+      const priorityPick =
+        sharedProvider || favoriteDisplayTeam
+          ? undefined
+          : pickPriorityTeam(
+              data,
+              providerOrder,
+              teamPriority,
+              getWatched() + 1,
+            );
 
-      // Determine team
+      const provider =
+        sharedProvider ??
+        (favoriteDisplayTeam && storedFavoriteTeam!.provider) ??
+        priorityPick?.provider ??
+        providerOrder[0]!;
+
       let team: API.TeamData = {
         title: '',
         logo: '',
       };
       let favoriteTeam = storedFavoriteTeam;
-      if (data[provider] instanceof ProviderTeamIFrame) {
-        const first_team = data[provider].getTeams()[0];
-        const favoriteDisplayTeam = storedFavoriteTeam
-          ? data[provider]
-              .getTeams()
-              .find(
-                (candidate) =>
-                  candidate.title === storedFavoriteTeam.team ||
-                  candidate.canonicalTitle === storedFavoriteTeam.team,
-              )
-          : undefined;
-
-        if (isShared && data[provider].teams[sharedParams.team!]) {
-          team = data[provider].getTeam(sharedParams.team!);
-        } else if (favoriteDisplayTeam) {
+      const source = data[provider];
+      if (source instanceof ProviderTeamIFrame) {
+        if (isShared && source.teams[sharedParams.team!]) {
+          team = source.getTeam(sharedParams.team!);
+        } else if (
+          favoriteDisplayTeam &&
+          provider === storedFavoriteTeam!.provider
+        ) {
           team = favoriteDisplayTeam;
           favoriteTeam = {
             provider,
             team: favoriteDisplayTeam.title,
           };
         } else {
-          team = first_team;
+          team = priorityPick?.team ?? source.getTeams()[0]!;
         }
       }
 
@@ -178,9 +201,15 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
       const { watchData } = get();
       if (!watchData) return;
 
+      const { teamPriority } = useSettings.getState().features.player;
       const newTeamName =
         watchData[provider] instanceof ProviderTeamIFrame
-          ? watchData[provider].getTeams()[0]!
+          ? (pickPriorityTeam(
+              watchData,
+              [provider],
+              teamPriority,
+              getWatched() + 1,
+            )?.team ?? watchData[provider].getTeams()[0]!)
           : { title: '', logo: '' };
       const newEpisode =
         watchData[provider] instanceof ProviderTeamIFrame

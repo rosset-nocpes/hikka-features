@@ -18,6 +18,7 @@ import {
   login,
   logout,
   runAccountRequest,
+  syncAccountTeamPriority,
   syncFavorites,
 } from '@/utils/convex-session';
 
@@ -194,6 +195,7 @@ export default defineBackground(() => {
   pollCompatibility().catch(console.error);
   browser.runtime.onStartup.addListener(() => {
     syncFavorites().catch(console.error);
+    syncAccountTeamPriority().catch(console.error);
   });
   browser.alarms.onAlarm.addListener((alarm) => {
     if (alarm.name === compatibilityAlarm) {
@@ -273,6 +275,7 @@ export default defineBackground(() => {
         case 'login': {
           const user = await login();
           syncFavorites().catch(console.error);
+          syncAccountTeamPriority().catch(console.error);
           return user;
         }
 

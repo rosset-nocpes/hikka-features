@@ -17,6 +17,7 @@ import {
   convexClient,
   publicAction,
 } from './convex-client';
+import { syncTeamPriority } from './team-priority-sync';
 
 interface AuthResponse {
   accessToken: string;
@@ -42,6 +43,8 @@ const ACCOUNT_FUNCTIONS = new Set(
     convexApi.notifications.menu,
     convexApi.notifications.markSeen,
     convexApi.notifications.markAllSeen,
+    convexApi.teamPriority.get,
+    convexApi.teamPriority.set,
   ].map((reference) => getFunctionName(reference)),
 );
 
@@ -104,6 +107,8 @@ function clearSession() {
   useSettings.getState().setSettings({
     convexSession: undefined,
     userData: undefined,
+    // The next login merges this device's list into the account again.
+    teamPrioritySyncedAt: 0,
   });
 }
 
@@ -208,6 +213,14 @@ export async function logout() {
       refreshToken: session.refreshToken,
     }).catch(() => undefined);
   }
+}
+
+export async function syncAccountTeamPriority() {
+  await settingsHydrated();
+  await syncTeamPriority({
+    get: () => query(convexApi.teamPriority.get, {}),
+    set: (teamIds) => mutation(convexApi.teamPriority.set, { teamIds }),
+  });
 }
 
 const sameTeam = (left: string, right: string) =>

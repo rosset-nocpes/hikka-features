@@ -31,6 +31,17 @@ export interface ConvexWatchResult {
   refreshedAt: number;
 }
 
+export interface CatalogTeam {
+  id: string;
+  title: string;
+  logo?: string;
+}
+
+export interface TeamPriority {
+  teams: CatalogTeam[];
+  updatedAt: number;
+}
+
 export interface SyncedFavorite {
   animeSlug: string;
   provider: string;
@@ -91,6 +102,17 @@ export const convexApi = {
       { type: 'characters' | 'people'; slug: string },
       API.EditorContent
     >('editor:suggest'),
+  },
+  teams: {
+    list: makeFunctionReference<'query', NoArgs, CatalogTeam[]>('teams:list'),
+  },
+  teamPriority: {
+    get: makeFunctionReference<'query', NoArgs, TeamPriority | null>(
+      'teamPriority:get',
+    ),
+    set: makeFunctionReference<'mutation', { teamIds: string[] }, TeamPriority>(
+      'teamPriority:set',
+    ),
   },
   favorites: {
     list: makeFunctionReference<'query', NoArgs, SyncedFavorite[]>(

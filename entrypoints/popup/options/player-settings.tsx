@@ -7,7 +7,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useNavigation } from '@/hooks/use-navigation';
 
+import NavigationRow from '../_base/navigation-row';
 import SettingsGroup from '../_base/settings-group';
 import SwitchOption from '../_base/switch-option';
 
@@ -18,8 +20,9 @@ const miniModeTypeOptions = [
 
 const PlayerSettings = () => {
   const { features, updateFeatureSettings } = useSettings();
-  const { enabled, defaultProvider, disableBlur, miniModeType } =
+  const { enabled, defaultProvider, disableBlur, miniModeType, teamPriority } =
     features.player;
+  const { navigate } = useNavigation();
 
   return (
     <ScrollArea className="flex-1" scrollFade>
@@ -98,6 +101,15 @@ const PlayerSettings = () => {
               </SelectContent>
             </Select>
           </div>
+          <NavigationRow
+            label="Пріоритет команд"
+            description={
+              teamPriority.length
+                ? teamPriority.map((team) => team.title).join(', ')
+                : 'Яку команду обирати під час відкриття програвача'
+            }
+            onClick={() => navigate('teamPriority')}
+          />
         </SettingsGroup>
       </div>
     </ScrollArea>

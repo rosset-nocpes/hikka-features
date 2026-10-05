@@ -29,6 +29,7 @@ import LocalizedPosterSettings from './options/localized-poster-settings';
 import PlayerSettings from './options/player-settings';
 import ReaderSettings from './options/reader-settings';
 import RecommendationBlockSettings from './options/recommendation-block-settings';
+import TeamPrioritySettings from './options/team-priority-settings';
 import UserOptions from './options/user-options';
 
 const EASE_SMOOTH_OUT = [0.22, 1, 0.36, 1] as const;
@@ -130,6 +131,7 @@ const PAGE_TITLES: Record<Page, string> = {
   reader: 'Налаштування читалки',
   localizedPoster: 'Локалізовані постери',
   experimental: 'Експериментальні функції',
+  teamPriority: 'Пріоритет команд',
 };
 
 function App() {
@@ -266,6 +268,7 @@ function App() {
             {currentPage === 'reader' && <ReaderSettings />}
             {currentPage === 'localizedPoster' && <LocalizedPosterSettings />}
             {currentPage === 'experimental' && <ExperimentalSettingsPage />}
+            {currentPage === 'teamPriority' && <TeamPrioritySettings />}
           </motion.div>
         </AnimatePresence>
       </div>
