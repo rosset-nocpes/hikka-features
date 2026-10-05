@@ -9,7 +9,6 @@ import {
   useScroll,
 } from 'motion/react';
 import { forwardRef, memo, useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 
 import {
   HoverCard,
@@ -22,6 +21,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import useReadChapterData from '../../hooks/use-read-chapter-data';
 import { useReader } from '../../hooks/use-reader';
 import { ReaderType } from '../../reader.enums';
+import ZoomableImage from '../ui/novel/zoomable-image';
 
 const layoutAnimation = {
   initial: { opacity: 0 },
@@ -67,7 +67,7 @@ const NovelRenderer = () => {
     <>
       <motion.div
         id="scroll-indicator"
-        className="bg-primary absolute top-0 right-0 left-0 z-10 h-1 origin-left"
+        className="bg-primary absolute top-0 right-0 left-0 z-20 h-1 origin-left"
         style={{
           scaleX: animationComplete && !isLoading ? scrollYProgress : 0,
         }}
@@ -84,7 +84,10 @@ const NovelRenderer = () => {
             settings.type === ReaderType.Novel ? settings.fontSize : undefined,
         }}
       >
-        <ScrollArea ref={scrollRef} className="w-full max-w-4xl">
+        <ScrollArea
+          ref={scrollRef}
+          className="w-full max-w-4xl [&_[data-slot=scroll-area-scrollbar]]:z-20"
+        >
           <div className="mt-48 mb-10 flex flex-col">
             {currentChapter?.title && (
               <p className="text-muted-foreground text-sm font-bold tracking-widest uppercase">
@@ -192,82 +195,5 @@ const PageParser = memo(
     },
   ),
 );
-
-interface ZoomableImageProps {
-  src: string;
-  alt?: string;
-}
-
-const ZoomableImage = ({ src, alt }: ZoomableImageProps) => {
-  const [zoomed, setZoomed] = useState(false);
-  const { container } = useReader();
-
-  useEffect(() => {
-    if (!zoomed) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        e.stopPropagation();
-        setZoomed(false);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown, { capture: true });
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown, { capture: true });
-    };
-  }, [zoomed]);
-
-  const isGecko =
-    /Gecko\//.test(navigator.userAgent) &&
-    !/like Gecko/.test(navigator.userAgent) &&
-    !/Trident\//.test(navigator.userAgent);
-  const motionProps = isGecko
-    ? {
-        initial: { opacity: 0, scale: 0.9 },
-        animate: { opacity: 1, scale: 1 },
-        exit: { opacity: 0, scale: 0.9 },
-        transition: { type: 'spring', stiffness: 300, damping: 30 } as const,
-      }
-    : {
-        layoutId: src,
-      };
-
-  return (
-    <>
-      <motion.img
-        layoutId={src}
-        src={src}
-        alt={alt}
-        className="cursor-zoom-in"
-        onClick={() => setZoomed(true)}
-      />
-      {container &&
-        createPortal(
-          <AnimatePresence>
-            {zoomed && (
-              <motion.div
-                initial={{ backgroundColor: 'hsl(var(--background) / 0)' }}
-                animate={{ backgroundColor: 'hsl(var(--background) / 0.95)' }}
-                exit={{ backgroundColor: 'hsl(var(--background) / 0)' }}
-                className="absolute inset-0 z-9999 flex cursor-zoom-out items-center justify-center"
-                onClick={() => setZoomed(false)}
-              >
-                <motion.img
-                  {...motionProps}
-                  src={src}
-                  alt={alt}
-                  className="h-full max-h-[90vh] max-w-[90vw] rounded-lg border"
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>,
-          container,
-        )}
-    </>
-  );
-};
 
 export default NovelRenderer;

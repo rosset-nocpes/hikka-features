@@ -89,6 +89,7 @@ export const Reader = () => {
 
   return (
     <Card
+      data-reader-card
       className={cn(
         'relative z-10 flex size-full overflow-hidden rounded-none border-none duration-300 md:max-w-[1282px] md:rounded-lg md:border',
         settings.fullscreen && 'max-w-full! rounded-none! border-none!',
