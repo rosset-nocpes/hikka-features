@@ -18,17 +18,18 @@ const VideoToolbar = () => {
 
   const isCompactMode = miniPlayer || videoPiPActive;
 
+  // Mini mode: the desktop toolbar's left groups; expand and close live in
+  // the top bar (see PlayerNavbar).
   if (isCompactMode) {
     return (
-      <div className="border-shadow bg-background/70 flex max-w-full items-center gap-1 rounded-md p-1 backdrop-blur-xl">
-        <Play />
-        <Mute />
-        <div className="bg-border/70 mx-1 h-5 w-px" />
-        <div className="px-1">
+      <div className="flex min-w-0 gap-2">
+        <div className="border-shadow bg-background/60 flex shrink-0 gap-1 rounded-lg p-1 backdrop-blur-xl">
+          <Play />
+          <Mute />
+        </div>
+        <div className="border-shadow bg-background/60 flex min-w-0 items-center rounded-lg px-2 backdrop-blur-xl">
           <TimeGroup />
         </div>
-        <div className="bg-border/70 mx-1 h-5 w-px" />
-        <MiniPlayer />
       </div>
     );
   }

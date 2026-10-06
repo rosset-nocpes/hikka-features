@@ -64,7 +64,7 @@ const PlayerOverlay = ({ toggleWatchedState }: Props) => {
               className={cn(
                 'flex w-full items-center',
                 isCompactMode
-                  ? 'justify-center p-1 pt-0'
+                  ? 'justify-between p-2 pt-1'
                   : 'justify-between p-3 pt-1 md:p-2',
               )}
             >

@@ -1,5 +1,3 @@
-import { usePlayer } from '../context/player-context';
-
 export function formatTime(totalSeconds: number) {
   const s = Math.floor(totalSeconds);
 
@@ -19,24 +17,12 @@ export function formatTime(totalSeconds: number) {
 
 const TimeGroup = () => {
   const { currentTime, duration } = useIFramePlayer();
-  const { miniPlayer, videoPiPActive } = usePlayer();
-
-  const isCompact = miniPlayer || videoPiPActive;
 
   return (
-    <div
-      className={cn(
-        'pointer-events-none flex items-center gap-1 font-medium tabular-nums',
-        isCompact ? 'text-xs' : 'text-sm',
-      )}
-    >
+    <div className="pointer-events-none flex items-center gap-1 text-sm font-medium tabular-nums">
       {formatTime(currentTime)}
-      {!miniPlayer && (
-        <>
-          <div className="text-white/80">/</div>
-          {formatTime(duration)}
-        </>
-      )}
+      <div className="text-white/80">/</div>
+      {formatTime(duration)}
     </div>
   );
 };
