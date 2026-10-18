@@ -1,8 +1,10 @@
+import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import MaterialSymbolsFastForwardOutlineRounded from '~icons/material-symbols/fast-forward-outline-rounded';
 import MaterialSymbolsFastRewindOutlineRounded from '~icons/material-symbols/fast-rewind-outline-rounded';
 import MaterialSymbolsPauseOutlineRounded from '~icons/material-symbols/pause-outline-rounded';
 import MaterialSymbolsPlayArrowOutlineRounded from '~icons/material-symbols/play-arrow-outline-rounded';
+import MaterialSymbolsVolumeDownOutlineRounded from '~icons/material-symbols/volume-down-outline-rounded';
 import MaterialSymbolsVolumeOffOutlineRounded from '~icons/material-symbols/volume-off-outline-rounded';
 import MaterialSymbolsVolumeUpOutlineRounded from '~icons/material-symbols/volume-up-outline-rounded';
 
@@ -19,6 +21,16 @@ type PlayerOverlayAction =
   | {
       type: 'skip';
       seconds: number;
+    }
+  | {
+      type: 'volume';
+      percent: number;
+    }
+  | {
+      /** Held 2x playback; stays on screen until sent with `active: false`. */
+      type: 'speedup';
+      active: boolean;
+      speed: number;
     };
 
 type PopupAction = PlayerOverlayAction & {
@@ -36,36 +48,142 @@ export const dispatchPlayerOverlayAction = (
   );
 };
 
+const HIDE_DELAY = 750;
+
+/** Where the popup sits; actions in the same slot replace each other in place. */
+const getSlot = (action: PopupAction) => {
+  switch (action.type) {
+    case 'skip':
+      return action.seconds > 0 ? 'forward' : 'rewind';
+    case 'volume':
+    case 'speedup':
+      return 'top';
+    default:
+      return 'center';
+  }
+};
+
 const getActionLabel = (action: PopupAction) => {
-  if (action.type !== 'skip') return null;
-
-  const seconds = Math.abs(action.seconds);
-
-  return `${seconds} сек`;
+  switch (action.type) {
+    case 'skip':
+      return `${action.seconds > 0 ? '+' : '−'}${Math.abs(action.seconds)} сек`;
+    case 'volume':
+      return `${action.percent}%`;
+    case 'speedup':
+      return `${action.speed}x`;
+    default:
+      return null;
+  }
 };
 
 const ActionIcon = ({ action }: { action: PopupAction }) => {
   switch (action.type) {
     case 'play':
-      return <MaterialSymbolsPlayArrowOutlineRounded className="size-12" />;
+      return <MaterialSymbolsPlayArrowOutlineRounded />;
     case 'pause':
-      return <MaterialSymbolsPauseOutlineRounded className="size-12" />;
+      return <MaterialSymbolsPauseOutlineRounded />;
     case 'mute':
-      return <MaterialSymbolsVolumeOffOutlineRounded className="size-12" />;
+      return <MaterialSymbolsVolumeOffOutlineRounded />;
     case 'unmute':
-      return <MaterialSymbolsVolumeUpOutlineRounded className="size-12" />;
+      return <MaterialSymbolsVolumeUpOutlineRounded />;
+    case 'volume':
+      if (action.percent === 0)
+        return <MaterialSymbolsVolumeOffOutlineRounded />;
+      return action.percent < 50 ? (
+        <MaterialSymbolsVolumeDownOutlineRounded />
+      ) : (
+        <MaterialSymbolsVolumeUpOutlineRounded />
+      );
+    case 'speedup':
+      return <MaterialSymbolsFastForwardOutlineRounded />;
     case 'skip':
       return action.seconds > 0 ? (
-        <MaterialSymbolsFastForwardOutlineRounded className="size-12" />
+        <MaterialSymbolsFastForwardOutlineRounded />
       ) : (
-        <MaterialSymbolsFastRewindOutlineRounded className="size-12" />
+        <MaterialSymbolsFastRewindOutlineRounded />
       );
   }
 };
 
+/** Status chip that drops in at the top: volume level, held speedup. */
+const TopPopup = ({ action }: { action: PopupAction }) => (
+  <div className="pointer-events-none absolute inset-x-0 top-2 z-50 flex justify-center">
+    <motion.div
+      initial={{ opacity: 0, y: -8, scale: 0.9 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -8, scale: 0.9 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+      className="bg-background/60 border-shadow flex h-8 items-center gap-2 rounded-md px-2 text-sm font-medium tabular-nums backdrop-blur-xl [&_svg]:size-5"
+    >
+      {action.type === 'speedup' ? (
+        <>
+          {getActionLabel(action)}
+          <ActionIcon action={action} />
+        </>
+      ) : (
+        <>
+          <ActionIcon action={action} />
+          {action.type === 'volume' && (
+            <div className="bg-secondary h-1 w-20 overflow-hidden rounded-full">
+              <div
+                className="bg-primary h-full transition-[width] duration-150"
+                style={{ width: `${action.percent}%` }}
+              />
+            </div>
+          )}
+          <span className="w-9 text-right">{getActionLabel(action)}</span>
+        </>
+      )}
+    </motion.div>
+  </div>
+);
+
+/** Round flash over the video: playback toggles in the middle, skips on their side. */
+const FlashPopup = ({ action }: { action: PopupAction }) => {
+  const slot = getSlot(action);
+  const label = getActionLabel(action);
+
+  return (
+    <div
+      className={cn(
+        'pointer-events-none absolute inset-y-0 z-50 flex items-center justify-center',
+        slot === 'center' && 'inset-x-0',
+        slot === 'rewind' && 'left-0 w-1/3',
+        slot === 'forward' && 'right-0 w-1/3',
+      )}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.85 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 1.1 }}
+        transition={{ duration: 0.15, ease: 'easeOut' }}
+        className={cn(
+          'flex flex-col items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm [&_svg]:size-8',
+          slot === 'center' ? 'size-16' : 'size-20 gap-0.5',
+        )}
+      >
+        {/* Re-keyed so repeated skips nudge the icon. */}
+        <motion.div
+          key={action.id}
+          initial={{ scale: slot === 'center' ? 1 : 0.8 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 0.15 }}
+        >
+          <ActionIcon action={action} />
+        </motion.div>
+        {label && (
+          <div className="text-xs font-semibold tabular-nums">{label}</div>
+        )}
+      </motion.div>
+    </div>
+  );
+};
+
 const ActionPopup = () => {
   const { overlayRef } = usePlayer();
-  const [action, setAction] = useState<PopupAction | null>(null);
+  // A short-lived action, and a held one (speedup) the top slot falls back to.
+  const [flash, setFlash] = useState<PopupAction | null>(null);
+  const [held, setHeld] = useState<PopupAction | null>(null);
   const actionIdRef = useRef(0);
   const hideTimerRef = useRef<NodeJS.Timeout>(null);
 
@@ -77,15 +195,22 @@ const ActionPopup = () => {
       const detail = (event as CustomEvent<PlayerOverlayAction>).detail;
       if (!detail) return;
 
+      actionIdRef.current += 1;
+      const action = { ...detail, id: actionIdRef.current };
+
+      if (action.type === 'speedup') {
+        setHeld(action.active ? action : null);
+        return;
+      }
+
       if (hideTimerRef.current) {
         clearTimeout(hideTimerRef.current);
       }
 
-      actionIdRef.current += 1;
-      setAction({ ...detail, id: actionIdRef.current });
+      setFlash(action);
       hideTimerRef.current = setTimeout(() => {
-        setAction(null);
-      }, 750);
+        setFlash(null);
+      }, HIDE_DELAY);
     };
 
     ref.addEventListener(PLAYER_OVERLAY_ACTION_EVENT, handleAction);
@@ -98,20 +223,19 @@ const ActionPopup = () => {
     };
   }, [overlayRef]);
 
-  if (!action) return null;
-
-  const label = getActionLabel(action);
+  const flashOnTop = flash && getSlot(flash) === 'top';
+  const top = flashOnTop ? flash : held;
+  const main = flashOnTop ? null : flash;
 
   return (
-    <div
-      key={action.id}
-      className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center"
-    >
-      <div className="animate-in fade-in-0 zoom-in-95 flex size-24 flex-col items-center justify-center rounded-full bg-black/65 text-white shadow-lg duration-150">
-        <ActionIcon action={action} />
-        {label && <div className="mt-1 text-sm font-semibold">{label}</div>}
-      </div>
-    </div>
+    <>
+      <AnimatePresence>
+        {top && <TopPopup key={top.type} action={top} />}
+      </AnimatePresence>
+      <AnimatePresence>
+        {main && <FlashPopup key={getSlot(main)} action={main} />}
+      </AnimatePresence>
+    </>
   );
 };
 

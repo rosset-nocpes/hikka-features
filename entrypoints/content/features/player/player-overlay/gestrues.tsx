@@ -28,7 +28,8 @@ const Gestrues = () => {
     isMuted,
     volume,
   } = useIFramePlayer();
-  const { toggleFullscreen, overlayRef, miniPlayer } = usePlayer();
+  const { toggleFullscreen, toggleTheatreMode, overlayRef, miniPlayer } =
+    usePlayer();
   const { open, setOpen } = useSidebar();
 
   const scheduleHideOverlayUi = useCallback(() => {
@@ -96,6 +97,31 @@ const Gestrues = () => {
     });
   }, [isMuted, overlayRef, toggleMute, volume]);
 
+  const handleVolumeStep = useCallback(
+    (delta: number) => {
+      // `changeVolume` takes an absolute level, not a delta.
+      const base = isMuted ? 0 : volume;
+      const next = Math.round(Math.min(1, Math.max(0, base + delta)) * 100);
+      if (isMuted && next > 0) toggleMute();
+      changeVolume(next / 100);
+      dispatchPlayerOverlayAction(overlayRef.current, {
+        type: 'volume',
+        percent: next,
+      });
+    },
+    [changeVolume, isMuted, overlayRef, toggleMute, volume],
+  );
+
+  const handleSeekTo = useCallback(
+    (time: number) => {
+      pendingSeekTimeRef.current = null;
+      skipTotalRef.current = 0;
+      seek(time);
+      showOverlayUi();
+    },
+    [seek, showOverlayUi],
+  );
+
   useEffect(() => {
     return () => {
       if (skipResetTimerRef.current) {
@@ -132,6 +158,15 @@ const Gestrues = () => {
         return;
       }
 
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+      if (/^\d$/.test(e.key)) {
+        if (duration <= 0) return;
+        e.preventDefault();
+        handleSeekTo((Number(e.key) / 10) * duration);
+        return;
+      }
+
       switch (e.key.toLowerCase()) {
         case 'f':
           if (miniPlayer) break;
@@ -152,6 +187,11 @@ const Gestrues = () => {
           e.preventDefault();
           setOpen(!open);
           break;
+        case 't':
+          if (miniPlayer) break;
+          e.preventDefault();
+          toggleTheatreMode();
+          break;
         case 'arrowleft':
           e.preventDefault();
           handleSkip(-5);
@@ -160,13 +200,30 @@ const Gestrues = () => {
           e.preventDefault();
           handleSkip(5);
           break;
+        case 'j':
+          e.preventDefault();
+          handleSkip(-10);
+          break;
+        case 'l':
+          e.preventDefault();
+          handleSkip(10);
+          break;
+        case 'home':
+          e.preventDefault();
+          handleSeekTo(0);
+          break;
+        case 'end':
+          if (duration <= 0) break;
+          e.preventDefault();
+          handleSeekTo(Math.max(0, duration - 1));
+          break;
         case 'arrowup':
           e.preventDefault();
-          changeVolume(0.1);
+          handleVolumeStep(0.1);
           break;
         case 'arrowdown':
           e.preventDefault();
-          changeVolume(-0.1);
+          handleVolumeStep(-0.1);
           break;
         case 'escape':
           e.preventDefault();
@@ -183,46 +240,95 @@ const Gestrues = () => {
   }, [
     open,
     miniPlayer,
+    duration,
     setOpen,
     togglePlayPause,
     toggleFullscreen,
-    showOverlayUi,
-    changeVolume,
+    toggleTheatreMode,
     handleSkip,
+    handleSeekTo,
+    handleVolumeStep,
     handleToggleMute,
   ]);
 
+  // Hold on the video for 2x playback.
   useEffect(() => {
     const el = overlayRef.current;
     if (!el) return;
 
-    const handleMouseDown = () => {
+    let holdTimer: NodeJS.Timeout | null = null;
+    let restoreSpeed: number | null = null;
+
+    const cancelHold = () => {
+      if (!holdTimer) return;
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    };
+
+    const handleHoldStart = (event: MouseEvent | TouchEvent) => {
       speedupRef.current = false;
+      if (event instanceof MouseEvent && event.button !== 0) return;
+      // Holding a control (e.g. dragging the seek bar) must not speed up.
+      if ((event.target as Element).closest?.('[data-player-controls]')) return;
+
+      cancelHold();
+      holdTimer = setTimeout(() => {
+        holdTimer = null;
+        const { currentSpeed, changeSpeed } = useIFramePlayer.getState();
+        restoreSpeed = currentSpeed;
+        speedupRef.current = true;
+        changeSpeed(2);
+        dispatchPlayerOverlayAction(el, {
+          type: 'speedup',
+          active: true,
+          speed: 2,
+        });
+      }, 1000);
+    };
+
+    const handleHoldEnd = () => {
+      cancelHold();
+      if (restoreSpeed === null) return;
+      useIFramePlayer.getState().changeSpeed(restoreSpeed);
+      restoreSpeed = null;
+      dispatchPlayerOverlayAction(el, {
+        type: 'speedup',
+        active: false,
+        speed: 2,
+      });
+    };
+
+    const handleContextMenu = (event: Event) => {
+      // Touch long-presses open the context menu otherwise.
+      if (holdTimer || restoreSpeed !== null) event.preventDefault();
     };
 
     const handlePointerDown = (event: PointerEvent) => {
       pointerTypeRef.current = event.pointerType;
     };
 
-    const handleTouchStart = () => {
+    const handleTouchStart = (event: TouchEvent) => {
       pointerTypeRef.current = 'touch';
-      handleMouseDown();
-    };
-
-    const handleSpeedupStart = () => {
-      speedupRef.current = true;
+      handleHoldStart(event);
     };
 
     el.addEventListener('pointerdown', handlePointerDown);
-    el.addEventListener('mousedown', handleMouseDown);
+    el.addEventListener('mousedown', handleHoldStart);
     el.addEventListener('touchstart', handleTouchStart);
-    el.addEventListener('speedupstart', handleSpeedupStart);
+    el.addEventListener('mouseup', handleHoldEnd);
+    el.addEventListener('touchend', handleHoldEnd);
+    el.addEventListener('mouseleave', handleHoldEnd);
+    el.addEventListener('contextmenu', handleContextMenu);
 
     return () => {
+      handleHoldEnd();
       el.removeEventListener('pointerdown', handlePointerDown);
-      el.removeEventListener('mousedown', handleMouseDown);
+      el.removeEventListener('mousedown', handleHoldStart);
       el.removeEventListener('touchstart', handleTouchStart);
-      el.removeEventListener('speedupstart', handleSpeedupStart);
+      el.removeEventListener('mouseup', handleHoldEnd);
+      el.removeEventListener('touchend', handleHoldEnd);
+      el.removeEventListener('mouseleave', handleHoldEnd);
+      el.removeEventListener('contextmenu', handleContextMenu);
     };
   }, [overlayRef]);
 
@@ -237,6 +343,10 @@ const Gestrues = () => {
           return;
         }
         togglePlayPause();
+      }}
+      onDoubleClick={() => {
+        if (pointerTypeRef.current !== 'mouse' || miniPlayer) return;
+        toggleFullscreen();
       }}
       tabIndex={0}
     />

@@ -14,7 +14,9 @@ const Mute = () => {
   };
 
   return (
-    <ToolbarTooltip label={isMuted ? 'Увімкнути звук' : 'Вимкнути звук'}>
+    <ToolbarTooltip
+      label={isMuted || volume === 0 ? 'Увімкнути звук' : 'Вимкнути звук'}
+    >
       <Button variant="ghost" size="icon-sm" onClick={handleToggleMute}>
         {isMuted || volume === 0 ? (
           <MaterialSymbolsVolumeOffOutlineRounded className="size-5" />

@@ -11,6 +11,23 @@ import Settings from './settings';
 import Volume from './sliders/volume';
 import TimeGroup from './time-group';
 
+const GROUP =
+  'border-shadow bg-background/60 flex items-center gap-1 rounded-lg p-1 backdrop-blur-xl';
+
+const Divider = () => <div className="bg-border/70 mx-0.5 h-5 w-px shrink-0" />;
+
+/** Mute button with a volume slider that slides out on hover or focus. */
+const VolumeControl = () => (
+  <div className="group/volume flex items-center">
+    <Mute />
+    <div className="w-0 overflow-hidden opacity-0 transition-[width,opacity] duration-200 ease-out group-hover/volume:w-24 group-hover/volume:opacity-100 group-has-focus-visible/volume:w-24 group-has-focus-visible/volume:opacity-100 has-data-dragging:w-24 has-data-dragging:opacity-100">
+      <div className="w-24 px-2">
+        <Volume />
+      </div>
+    </div>
+  </div>
+);
+
 const VideoToolbar = () => {
   const { miniPlayer, videoPiPActive } = usePlayer();
   const mobileActionsRef = useRef<HTMLDivElement>(null);
@@ -18,16 +35,13 @@ const VideoToolbar = () => {
 
   const isCompactMode = miniPlayer || videoPiPActive;
 
-  // Mini mode: the desktop toolbar's left groups; expand and close live in
-  // the top bar (see PlayerNavbar).
   if (isCompactMode) {
     return (
-      <div className="flex min-w-0 gap-2">
-        <div className="border-shadow bg-background/60 flex shrink-0 gap-1 rounded-lg p-1 backdrop-blur-xl">
-          <Play />
-          <Mute />
-        </div>
-        <div className="border-shadow bg-background/60 flex min-w-0 items-center rounded-lg px-2 backdrop-blur-xl">
+      <div className={cn(GROUP, 'min-w-0')}>
+        <Play />
+        <Mute />
+        <Divider />
+        <div className="min-w-0">
           <TimeGroup />
         </div>
       </div>
@@ -37,38 +51,29 @@ const VideoToolbar = () => {
   return (
     <>
       <div className="flex w-full items-center justify-between gap-2 md:hidden">
-        <div className="border-shadow bg-background/60 flex min-w-0 items-center gap-1 rounded-lg p-1 backdrop-blur-xl">
+        <div className={cn(GROUP, 'min-w-0')}>
           <Play />
           <Mute />
-          <div className="bg-border/70 mx-1 h-5 w-px shrink-0" />
-          <div className="min-w-0 px-1">
+          <Divider />
+          <div className="min-w-0">
             <TimeGroup />
           </div>
         </div>
-        <div
-          ref={mobileActionsRef}
-          className="border-shadow bg-background/60 flex shrink-0 gap-1 rounded-lg p-1 backdrop-blur-xl"
-        >
+        <div ref={mobileActionsRef} className={cn(GROUP, 'shrink-0')}>
           <Settings anchor={mobileActionsRef} />
           <Fullscreen />
         </div>
       </div>
-      <div className="hidden gap-2 md:flex">
-        <div className="border-shadow bg-background/60 flex gap-1 rounded-lg p-1 backdrop-blur-xl">
-          <Play />
-          <Mute />
-          <Volume />
-        </div>
-        <div className="border-shadow bg-background/60 flex gap-1 rounded-lg px-2 backdrop-blur-xl">
-          <TimeGroup />
-        </div>
+      <div className={cn(GROUP, 'hidden md:flex')}>
+        <Play />
+        <VolumeControl />
+        <Divider />
+        <TimeGroup />
       </div>
-      <div
-        ref={actionsRef}
-        className="border-shadow bg-background/60 hidden gap-1 rounded-lg p-1 backdrop-blur-xl md:flex"
-      >
+      <div ref={actionsRef} className={cn(GROUP, 'hidden md:flex')}>
         <Share anchor={actionsRef} />
         <Settings anchor={actionsRef} />
+        <Divider />
         <MiniPlayer />
         <TheatreMode />
         <Fullscreen />

@@ -1,3 +1,5 @@
+import { useRef } from 'react';
+
 import { useIsMobile } from '@/components/hooks/use-mobile';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useIFramePlayer } from '@/hooks/use-iframe-player';
@@ -8,7 +10,6 @@ import ActionPopup from './action-popup';
 import BufferingIndicator from './buffering-indicator';
 import Gestrues from './gestrues';
 import Time from './sliders/time';
-import SpeedupPopup from './speedup-popup';
 import VideoToolbar from './video-toolbar';
 
 interface Props {
@@ -21,6 +22,24 @@ const PlayerOverlay = ({ toggleWatchedState }: Props) => {
   const isMobile = useIsMobile();
 
   const isCompactMode = miniPlayer || videoPiPActive;
+  const swallowTapRef = useRef(false);
+
+  // A tap on hidden controls only reveals them, so it can't hit a button
+  // the user can't see.
+  const handlePointerDownCapture = (e: React.PointerEvent) => {
+    swallowTapRef.current =
+      e.pointerType !== 'mouse' && !useIFramePlayer.getState().uiShown;
+    if (!swallowTapRef.current) return;
+    e.stopPropagation();
+    useIFramePlayer.setState({ uiShown: true });
+  };
+
+  const handleClickCapture = (e: React.MouseEvent) => {
+    if (!swallowTapRef.current) return;
+    swallowTapRef.current = false;
+    e.stopPropagation();
+    e.preventDefault();
+  };
 
   return (
     <div
@@ -39,12 +58,14 @@ const PlayerOverlay = ({ toggleWatchedState }: Props) => {
         )}
       >
         <Gestrues />
-        <SpeedupPopup />
         <ActionPopup />
         <BufferingIndicator />
         <div
+          data-player-controls
+          onPointerDownCapture={handlePointerDownCapture}
+          onClickCapture={handleClickCapture}
           className={cn(
-            'relative flex flex-col opacity-100 transition-opacity duration-300',
+            'relative isolate flex flex-col opacity-100 transition-opacity duration-300',
             !isCompactMode && 'pb-20 md:pb-0',
             !uiShown && 'opacity-0',
           )}

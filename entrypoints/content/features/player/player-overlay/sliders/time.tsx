@@ -214,17 +214,22 @@ const Time = ({ className, trackClassName }: TimeProps = {}) => {
               className="bg-secondary-foreground/30 absolute h-full"
               style={{ width: `${bufferedPercent}%` }}
             />
+            {showTooltip && (
+              <div
+                className="bg-secondary-foreground/30 absolute h-full"
+                style={{ width: `${(hoverTime / duration) * 100}%` }}
+              />
+            )}
             <SliderPrimitive.Indicator className="bg-primary absolute h-full" />
           </SliderPrimitive.Track>
           <SliderPrimitive.Thumb />
-          <div className="pointer-events-none absolute flex flex-col items-center opacity-0 transition-opacity duration-200 will-change-[left] data-visible:opacity-100" />
         </SliderPrimitive.Control>
       </SliderPrimitive.Root>
 
       {showTooltip && (
         <div
           ref={tooltipRef}
-          className="bg-background pointer-events-none fixed z-50 -translate-x-1/2 rounded-md px-2 py-1 text-xs font-medium tabular-nums shadow-md"
+          className="bg-popover text-popover-foreground border-shadow pointer-events-none fixed z-50 -translate-x-1/2 rounded-md px-2 py-1 text-xs font-medium tabular-nums"
           style={tooltipStyle}
         >
           {formatTime(hoverTime)}

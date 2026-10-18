@@ -11,7 +11,7 @@ const TheatreMode = () => {
 
   return (
     <ToolbarTooltip
-      label={theatreMode ? 'Вийти з режиму теару' : 'Режим теару'}
+      label={theatreMode ? 'Вийти з режиму театру' : 'Режим театру'}
     >
       <Button variant="ghost" size="icon-sm" onClick={toggleTheatreMode}>
         {theatreMode ? (
