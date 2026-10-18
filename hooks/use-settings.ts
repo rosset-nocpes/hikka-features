@@ -5,7 +5,7 @@ import {
   type StateStorage,
 } from 'zustand/middleware';
 
-import type { CatalogTeam } from '@/utils/convex-api';
+import type { CatalogTeam, PreferredTranslation } from '@/utils/convex-api';
 
 const extensionStorage: StateStorage = {
   getItem: async (name: string): Promise<any | null> => {
@@ -46,6 +46,8 @@ interface AppState {
       favoriteTeams: Record<string, { provider: string; team: string }>;
       /** Catalog teams, most preferred first (see pickPriorityTeam). */
       teamPriority: CatalogTeam[];
+      /** Version of those teams' releases to open and be notified about. */
+      teamPriorityTranslation: PreferredTranslation;
     };
     reader: {
       enabled: boolean;
@@ -95,6 +97,7 @@ export const useSettings = create<AppState>()(
           miniModeType: 'custom' as 'custom' | 'video-native',
           favoriteTeams: {},
           teamPriority: [],
+          teamPriorityTranslation: 'dub' as PreferredTranslation,
         },
         reader: {
           enabled: true,
@@ -215,6 +218,8 @@ const migrateFromOldStorage = async () => {
             oldStorage.playerAnimeFavoriteTeam ||
             state.features.player.favoriteTeams,
           teamPriority: state.features.player.teamPriority,
+          teamPriorityTranslation:
+            state.features.player.teamPriorityTranslation,
         },
         reader: {
           enabled:

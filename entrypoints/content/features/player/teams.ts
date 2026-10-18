@@ -1,3 +1,5 @@
+import type { PreferredTranslation } from '@/utils/convex-api';
+
 import { ProviderTeamIFrame } from '@/utils/provider_classes';
 
 /**
@@ -31,40 +33,39 @@ export const groupTeams = (teams: API.TeamData[], favorite?: string) => {
 };
 
 /**
- * The team-priority pick: the most preferred team that already has `episode`,
- * or failing that the most preferred team at all. A team's dub comes before
- * its other versions, then providers in the given order.
+ * The team-priority pick: the most preferred team that has `episode` in the
+ * chosen translation, then in another one, since opening the next episode
+ * matters more. Without it anywhere, the chosen translation comes first.
+ * Ties go to providers in the given order.
  */
 export const pickPriorityTeam = (
   data: API.WatchData,
   providers: string[],
   priority: { id: string }[],
+  translation: PreferredTranslation,
   episode: number,
 ) => {
-  let fallback: { provider: string; team: API.TeamData } | undefined;
-  for (const { id } of priority) {
-    const candidates = providers
-      .flatMap((provider) => {
-        const source = data[provider];
-        if (!(source instanceof ProviderTeamIFrame)) return [];
-        return source
-          .getTeams()
-          .filter((team) => team.id === id)
-          .map((team) => ({
-            pick: { provider, team },
-            episodes: source.teams[team.title]?.episodes ?? [],
-          }));
-      })
-      .sort(
-        (a, b) =>
-          Number(b.pick.team.translationType === 'dub') -
-          Number(a.pick.team.translationType === 'dub'),
-      );
+  const candidates = priority.flatMap(({ id }) =>
+    providers.flatMap((provider) => {
+      const source = data[provider];
+      if (!(source instanceof ProviderTeamIFrame)) return [];
+      return source
+        .getTeams()
+        .filter((team) => team.id === id)
+        .map((team) => ({
+          pick: { provider, team },
+          chosen: team.translationType === translation,
+          hasEpisode: (source.teams[team.title]?.episodes ?? []).some(
+            (entry) => entry.episode === episode,
+          ),
+        }));
+    }),
+  );
 
-    for (const { pick, episodes } of candidates) {
-      if (episodes.some((entry) => entry.episode === episode)) return pick;
-      fallback ??= pick;
-    }
-  }
-  return fallback;
+  return (
+    candidates.find(({ chosen, hasEpisode }) => chosen && hasEpisode) ??
+    candidates.find(({ hasEpisode }) => hasEpisode) ??
+    candidates.find(({ chosen }) => chosen) ??
+    candidates[0]
+  )?.pick;
 };

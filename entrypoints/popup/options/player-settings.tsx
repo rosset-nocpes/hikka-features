@@ -20,8 +20,14 @@ const miniModeTypeOptions = [
 
 const PlayerSettings = () => {
   const { features, updateFeatureSettings } = useSettings();
-  const { enabled, defaultProvider, disableBlur, miniModeType, teamPriority } =
-    features.player;
+  const {
+    enabled,
+    defaultProvider,
+    disableBlur,
+    miniModeType,
+    teamPriority,
+    teamPriorityTranslation,
+  } = features.player;
   const { navigate } = useNavigation();
 
   return (
@@ -105,7 +111,7 @@ const PlayerSettings = () => {
             label="Пріоритет команд"
             description={
               teamPriority.length
-                ? teamPriority.map((team) => team.title).join(', ')
+                ? `${teamPriorityTranslation === 'sub' ? 'Субтитри' : 'Озвучення'} · ${teamPriority.map((team) => team.title).join(', ')}`
                 : 'Яку команду обирати під час відкриття програвача'
             }
             onClick={() => navigate('teamPriority')}

@@ -84,8 +84,12 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
       const watchDataKey = getWatchDataKey(data);
       if (get().watchDataKey === watchDataKey) return;
 
-      const { defaultProvider, favoriteTeams, teamPriority } =
-        useSettings.getState().features.player;
+      const {
+        defaultProvider,
+        favoriteTeams,
+        teamPriority,
+        teamPriorityTranslation,
+      } = useSettings.getState().features.player;
 
       const providers_avaliable = getAvailablePlayers(data).map((e) => e.title);
       const { slug } = usePageStore.getState();
@@ -144,6 +148,7 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
               data,
               providerOrder,
               teamPriority,
+              teamPriorityTranslation,
               getWatched() + 1,
             );
 
@@ -201,13 +206,15 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
       const { watchData } = get();
       if (!watchData) return;
 
-      const { teamPriority } = useSettings.getState().features.player;
+      const { teamPriority, teamPriorityTranslation } =
+        useSettings.getState().features.player;
       const newTeamName =
         watchData[provider] instanceof ProviderTeamIFrame
           ? (pickPriorityTeam(
               watchData,
               [provider],
               teamPriority,
+              teamPriorityTranslation,
               getWatched() + 1,
             )?.team ?? watchData[provider].getTeams()[0]!)
           : { title: '', logo: '' };

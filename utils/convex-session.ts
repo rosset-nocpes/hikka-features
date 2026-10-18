@@ -1,5 +1,7 @@
 // Background-only: owns the Hikka/Convex session. Other contexts reach it
 // through `accountQuery`/`accountMutation` and the login/logout messages.
+import type { ConvexHttpClient } from 'convex/browser';
+
 import {
   type FunctionReference,
   type FunctionReturnType,
@@ -137,25 +139,43 @@ async function getAccessToken() {
   return await refreshing;
 }
 
-async function accountClient() {
+/** Convex refused the access token itself, e.g. after its issuer changed. */
+const tokenRejected = (error: unknown) =>
+  error instanceof Error &&
+  /"code":"(?:InvalidAuthHeader|NoAuthProvider)"/.test(error.message);
+
+/**
+ * Makes an account call, minting a new access token once when Convex no
+ * longer accepts the cached one.
+ */
+async function withAccount<T>(call: (client: ConvexHttpClient) => Promise<T>) {
   await assertCompatible();
   const client = convexClient();
-  client.setAuth(await getAccessToken());
-  return client;
+  const token = await getAccessToken();
+  client.setAuth(token);
+  try {
+    return await call(client);
+  } catch (error) {
+    if (!tokenRejected(error)) throw error;
+    // Another call may have replaced it already.
+    if (accessToken?.value === token) accessToken = undefined;
+    client.setAuth(await getAccessToken());
+    return await call(client);
+  }
 }
 
 async function query<Query extends FunctionReference<'query'>>(
   reference: Query,
   args: Query['_args'],
 ): Promise<FunctionReturnType<Query>> {
-  return await (await accountClient()).query(reference, args);
+  return await withAccount((client) => client.query(reference, args));
 }
 
 async function mutation<Mutation extends FunctionReference<'mutation'>>(
   reference: Mutation,
   args: Mutation['_args'],
 ): Promise<FunctionReturnType<Mutation>> {
-  return await (await accountClient()).mutation(reference, args);
+  return await withAccount((client) => client.mutation(reference, args));
 }
 
 /** Executes an account call forwarded by a content script or the popup. */
@@ -219,7 +239,7 @@ export async function syncAccountTeamPriority() {
   await settingsHydrated();
   await syncTeamPriority({
     get: () => query(convexApi.teamPriority.get, {}),
-    set: (teamIds) => mutation(convexApi.teamPriority.set, { teamIds }),
+    set: (input) => mutation(convexApi.teamPriority.set, input),
   });
 }
 

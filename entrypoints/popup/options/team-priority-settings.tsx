@@ -15,12 +15,29 @@ import {
   InputGroupInput,
 } from '@/components/ui/input-group';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
-import { type CatalogTeam, convexApi } from '@/utils/convex-api';
+import {
+  type CatalogTeam,
+  convexApi,
+  type PreferredTranslation,
+} from '@/utils/convex-api';
 import { publicQuery } from '@/utils/convex-client';
 import { queueTeamPrioritySync } from '@/utils/team-priority-sync';
 
 import SettingsGroup from '../_base/settings-group';
+
+const translationOptions: { value: PreferredTranslation; label: string }[] = [
+  { value: 'dub', label: 'Озвучення' },
+  { value: 'sub', label: 'Субтитри' },
+];
 
 const normalize = (value: string) =>
   value.toLocaleLowerCase('uk').replace(/\s+/g, '');
@@ -105,6 +122,7 @@ const PriorityRow: FC<RowProps> = ({
 const TeamPrioritySettings = () => {
   const { features, updateFeatureSettings, convexSession } = useSettings();
   const saved = features.player.teamPriority;
+  const translation = features.player.teamPriorityTranslation;
 
   // Pick up changes made on other devices.
   useEffect(() => {
@@ -126,8 +144,12 @@ const TeamPrioritySettings = () => {
     staleTime: Infinity,
   });
 
-  const save = (teamPriority: CatalogTeam[]) => {
-    updateFeatureSettings('player', { teamPriority });
+  const save = (
+    settings: Partial<
+      Pick<typeof features.player, 'teamPriority' | 'teamPriorityTranslation'>
+    >,
+  ) => {
+    updateFeatureSettings('player', settings);
     queueTeamPrioritySync();
   };
 
@@ -138,7 +160,7 @@ const TeamPrioritySettings = () => {
     const next = [...order];
     const [team] = next.splice(index, 1);
     next.splice(target, 0, team!);
-    save(next);
+    save({ teamPriority: next });
     // Moving the row in the DOM drops focus; put it back on its handle.
     requestAnimationFrame(() =>
       document
@@ -158,11 +180,38 @@ const TeamPrioritySettings = () => {
       <div className="flex flex-col gap-3 pb-4">
         <p className="px-1 text-xs font-medium text-pretty text-[#A1A1A1]">
           Програвач відкриється з першою командою зі списку, яка вже має
-          наступний епізод. Улюблена команда тайтлу має перевагу над списком.{' '}
+          наступний епізод у вибраному перекладі. Улюблена команда тайтлу має
+          перевагу над списком.{' '}
           {convexSession
-            ? 'Список синхронізується з акаунтом.'
-            : 'Увійдіть, щоб синхронізувати його між пристроями.'}
+            ? 'Список синхронізується з акаунтом. Коли одна з цих команд випустить у ньому нову серію тайтлу зі списку «Дивлюсь», на Hikka з’явиться сповіщення.'
+            : 'Увійдіть, щоб синхронізувати список між пристроями й отримувати сповіщення про нові серії тайтлів, які ви дивитеся.'}
         </p>
+
+        <SettingsGroup>
+          <div className="flex items-center justify-between px-4 py-3">
+            <label className="text-sm font-medium">Переклад</label>
+            <Select
+              items={translationOptions}
+              value={translation}
+              onValueChange={(value) => {
+                if (value) save({ teamPriorityTranslation: value });
+              }}
+            >
+              <SelectTrigger className="w-36">
+                <SelectValue placeholder="Оберіть переклад" />
+              </SelectTrigger>
+              <SelectContent alignItemWithTrigger={false}>
+                <SelectGroup>
+                  {translationOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+        </SettingsGroup>
 
         <SettingsGroup
           title="Порядок"
@@ -185,10 +234,16 @@ const TeamPrioritySettings = () => {
                   index={index}
                   onMove={(offset) => move(index, offset)}
                   onRemove={() =>
-                    save(order.filter((entry) => entry.id !== team.id))
+                    save({
+                      teamPriority: order.filter(
+                        (entry) => entry.id !== team.id,
+                      ),
+                    })
                   }
                   onDragEnd={() => {
-                    if (draftRef.current) save(draftRef.current);
+                    if (draftRef.current) {
+                      save({ teamPriority: draftRef.current });
+                    }
                     draftRef.current = undefined;
                     setDraft(undefined);
                   }}
@@ -243,7 +298,7 @@ const TeamPrioritySettings = () => {
               <button
                 key={team.id}
                 type="button"
-                onClick={() => save([...order, team])}
+                onClick={() => save({ teamPriority: [...order, team] })}
                 className="group/row hover:bg-accent/30 flex w-full items-center gap-3 px-4 py-2 text-left transition-[background-color]"
               >
                 <TeamAvatar team={team} />

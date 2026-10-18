@@ -1,10 +1,11 @@
+import type { Root } from 'react-dom/client';
+
 import {
   QueryClientProvider,
   useMutation,
   useQuery,
 } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { type ReactNode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import MaterialSymbolsLiveTvRounded from '~icons/material-symbols/live-tv-rounded';
 
@@ -23,73 +24,125 @@ import { HikkaPages } from '../core/core.enums';
 const POLL_INTERVAL_MS = 5 * 60 * 1_000;
 const BELL_PATH_PREFIX = 'M5 19q';
 const HIKKA_PROFILE_URL = 'https://api.hikka.io/user/me';
+const MENU_SELECTOR =
+  '[data-slot="dropdown-menu-content"], [data-slot="drawer-content"]';
+const TRANSLATION_SUFFIX = {
+  dub: ' в озвученні',
+  sub: ' із субтитрами',
+  unknown: '',
+} satisfies Record<NonNullable<ReleaseNotification['translationType']>, string>;
 const EMPTY_MENU: ReleaseNotificationMenu = {
   notifications: [],
   unseenCount: 0,
 };
+
+type Placement = 'desktop' | 'mobile';
 
 interface NativeCount {
   count: number;
   saturated: boolean;
 }
 
-interface BadgeTarget extends NativeCount {
-  container: HTMLElement;
-  nativeBadge?: HTMLElement;
-  placement: 'desktop' | 'mobile';
+/** A piece of UI and the element of Hikka's it is appended to. */
+interface Target {
+  /** The anchor, or undefined while it is not on the page. */
+  find: () => HTMLElement | undefined;
+  render: (anchor: HTMLElement) => ReactNode;
+  append?: ContentScriptAppendMode;
 }
 
-interface MenuTarget extends NativeCount {
-  list: HTMLElement;
-  header: HTMLElement;
-  titleGroup: HTMLElement;
-  nativeBadge?: HTMLElement;
-  nativeMarkAll?: HTMLButtonElement;
-  emptyState?: HTMLElement;
-}
+const TARGETS: Target[] = [
+  {
+    find: () => findBell('desktop'),
+    render: (anchor) => <BellCount container={anchor} placement="desktop" />,
+  },
+  {
+    find: () => findBell('mobile'),
+    render: (anchor) => <BellCount container={anchor} placement="mobile" />,
+  },
+  // The menu is only on the page while it is open.
+  {
+    find: () => findMenu()?.titleGroup,
+    render: (anchor) => <MenuCount titleGroup={anchor} />,
+  },
+  {
+    find: () => findMenu()?.header,
+    render: (anchor) => <MarkAllButton header={anchor} />,
+  },
+  {
+    find: () => findMenu()?.list,
+    append: 'first',
+    render: (anchor) => <MenuSection list={anchor} />,
+  },
+];
 
-interface NotificationDom {
-  badges: BadgeTarget[];
-  menu?: MenuTarget;
-}
-
+/**
+ * Merges favorite-team release notifications into Hikka's notification bell
+ * and menu. Each piece is rendered into Hikka's own DOM, so Hikka's styles
+ * apply, whenever its anchor is on the page: the menu's pieces are mounted
+ * again every time it opens.
+ */
 export default class ReleaseNotificationsFeature extends BaseFeature {
-  readonly id = 'release-notifications-menu';
+  readonly id = 'release-notifications';
   readonly pages = [HikkaPages.All];
+  private uis: { target: Target; ui: IntegratedContentScriptUi<Root> }[] = [];
 
   async init() {
-    this.ui = await createShadowRootUi(usePageStore.getState().ctx, {
-      name: this.id,
-      position: 'inline',
-      anchor: 'body',
-      append: 'last',
-      css: ':host { display: none !important; }',
-      onMount(container) {
-        const wrapper = document.createElement('div');
-        container.append(wrapper);
+    const { ctx } = usePageStore.getState();
+    this.uis = TARGETS.map((target) => ({
+      target,
+      ui: createIntegratedUi(ctx, {
+        tag: this.id,
+        position: 'inline',
+        anchor: target.find,
+        append: target.append,
+        onMount(wrapper) {
+          // Lays the UI out as if it were the anchor's own children.
+          wrapper.style.display = 'contents';
 
-        const root = createRoot(wrapper);
-        root.render(
-          <QueryClientProvider client={queryClient}>
-            <ReleaseNotificationsController />
-          </QueryClientProvider>,
-        );
-        return root;
-      },
-      onRemove: (root) => root?.unmount(),
-    });
+          const root = createRoot(wrapper);
+          root.render(
+            <QueryClientProvider client={queryClient}>
+              {target.render(wrapper.parentElement!)}
+            </QueryClientProvider>,
+          );
+          return root;
+        },
+        onRemove: (root) => root?.unmount(),
+      }),
+    }));
     this.mount();
+  }
+
+  override get isMounted(): boolean {
+    const available = this.uis.filter(({ target }) => target.find());
+    return (
+      available.length > 0 &&
+      available.every(({ ui }) => ui.mounted && ui.wrapper.isConnected)
+    );
+  }
+
+  override mount() {
+    for (const { target, ui } of this.uis) {
+      if (!target.find()) continue;
+      if (ui.mounted && ui.wrapper.isConnected) continue;
+      // Hikka removed the anchor along with the UI; start over in the new one.
+      if (ui.mounted) ui.remove();
+      ui.mount();
+    }
+  }
+
+  override unmount() {
+    for (const { ui } of this.uis) {
+      if (ui.mounted) ui.remove();
+    }
   }
 }
 
-/**
- * Merges favorite-team release notifications into hikka.io's native
- * notification bell and menu.
- */
-const ReleaseNotificationsController = () => {
+/** The account's release notifications; every piece shares the cache. */
+const useReleaseNotifications = () => {
   const signedIn = useSettings((state) => Boolean(state.convexSession));
   const hikkaId = useSettings((state) => state.userData?.hikkaId);
-  const [dom, setDom] = useState<NotificationDom>({ badges: [] });
   const queryKey = ['release-notifications', hikkaId];
   const enabled = signedIn && hikkaId !== undefined;
 
@@ -124,7 +177,6 @@ const ReleaseNotificationsController = () => {
     onError: (error) =>
       console.error('Failed to mark release notifications as seen', error),
   });
-  const hasUnseen = data.unseenCount > 0;
 
   const markSeen = (notification: ReleaseNotification) => {
     if (notification.seen) return;
@@ -135,47 +187,115 @@ const ReleaseNotificationsController = () => {
       );
   };
 
+  return { data, enabled, refetch, markSeen, markAllSeen, markingAllSeen };
+};
+
+/** Reads Hikka's DOM again whenever anything under `root` changes. */
+const useDomValue = <T,>(root: HTMLElement, read: () => T) => {
+  const [value, setValue] = useState(read);
+
   useEffect(() => {
-    const scan = () => {
-      const next = findNotificationDom();
-      setDom((current) =>
-        sameNotificationDom(current, next) ? current : next,
-      );
-    };
-    const observer = new MutationObserver(scan);
-    observer.observe(document.body, {
+    const update = () => setValue(() => read());
+    const observer = new MutationObserver(update);
+    observer.observe(root, {
       childList: true,
       characterData: true,
       subtree: true,
     });
-    scan();
+    update();
     return () => observer.disconnect();
-  }, []);
+  }, [root, read]);
+
+  return value;
+};
+
+/** Hikka's own count badge under `root`, hidden while ours replaces it. */
+const useNativeCount = (root: HTMLElement, replaced: boolean) => {
+  const badge = useDomValue(root, () => findNativeCountBadge(root));
+  const label = useDomValue(
+    root,
+    () => findNativeCountBadge(root)?.textContent?.trim() ?? '',
+  );
 
   useEffect(() => {
-    if (dom.menu && enabled) void refetch();
-  }, [dom.menu, enabled, refetch]);
+    if (badge && replaced) return hideNativeElement(badge);
+  }, [badge, replaced]);
+
+  return parseNativeCount(label);
+};
+
+const BellCount = ({
+  container,
+  placement,
+}: {
+  container: HTMLElement;
+  placement: Placement;
+}) => {
+  const { data } = useReleaseNotifications();
+  const native = useNativeCount(container, data.unseenCount > 0);
+  if (data.unseenCount === 0) return null;
+
+  return (
+    <NotificationCount
+      count={native.count + data.unseenCount}
+      saturated={native.saturated}
+      placement={placement}
+    />
+  );
+};
+
+const MenuCount = ({ titleGroup }: { titleGroup: HTMLElement }) => {
+  const { data } = useReleaseNotifications();
+  const native = useNativeCount(titleGroup, data.unseenCount > 0);
+  if (data.unseenCount === 0) return null;
+
+  return (
+    <HeaderNotificationCount
+      count={native.count + data.unseenCount}
+      saturated={native.saturated}
+    />
+  );
+};
+
+/** Hikka shows its own button only while it has unread notifications. */
+const MarkAllButton = ({ header }: { header: HTMLElement }) => {
+  const { data, markAllSeen, markingAllSeen } = useReleaseNotifications();
+  const nativeMarkAll = useDomValue(header, () => findNativeMarkAll(header));
+  if (data.unseenCount === 0 || nativeMarkAll) return null;
+
+  return (
+    <button
+      type="button"
+      data-hf-release-mark-all
+      className="border-border bg-background hover:bg-accent inline-flex shrink-0 items-center justify-center rounded-full border px-3.5 py-1 text-xs font-medium disabled:pointer-events-none disabled:opacity-50"
+      disabled={markingAllSeen}
+      onClick={() => markAllSeen()}
+    >
+      Прочитати всі
+    </button>
+  );
+};
+
+const MenuSection = ({ list }: { list: HTMLElement }) => {
+  const { data, enabled, refetch, markSeen, markAllSeen, markingAllSeen } =
+    useReleaseNotifications();
+  const emptyState = useDomValue(
+    list,
+    () =>
+      list.querySelector<HTMLElement>(':scope > [data-slot="empty"]') ??
+      undefined,
+  );
+  const hasNotifications = data.notifications.length > 0;
+  const hasUnseen = data.unseenCount > 0;
+
+  // Mounted as the menu opens, which is when fresh data matters most.
+  useEffect(() => {
+    if (enabled) void refetch();
+  }, [enabled, refetch]);
 
   useEffect(() => {
-    const restore: Array<() => void> = [];
-
-    if (data.notifications.length > 0 && dom.menu?.emptyState) {
-      restore.push(hideNativeElement(dom.menu.emptyState));
-    }
-
-    if (data.unseenCount > 0) {
-      for (const target of dom.badges) {
-        if (target.nativeBadge) {
-          restore.push(hideNativeElement(target.nativeBadge));
-        }
-      }
-      if (dom.menu?.nativeBadge) {
-        restore.push(hideNativeElement(dom.menu.nativeBadge));
-      }
-    }
-
-    return () => restore.forEach((show) => show());
-  }, [data.notifications.length, data.unseenCount, dom]);
+    if (emptyState && hasNotifications) return hideNativeElement(emptyState);
+  }, [emptyState, hasNotifications]);
 
   // Hikka's own "mark all read" button also clears extension notifications.
   useEffect(() => {
@@ -187,9 +307,7 @@ const ReleaseNotificationsController = () => {
         button &&
         !button.hasAttribute('data-hf-release-mark-all') &&
         button.textContent?.trim() === 'Прочитати всі' &&
-        button.closest(
-          '[data-slot="dropdown-menu-content"], [data-slot="drawer-content"]',
-        )
+        button.closest(MENU_SELECTOR)
       ) {
         markAllSeen();
       }
@@ -200,56 +318,12 @@ const ReleaseNotificationsController = () => {
       document.removeEventListener('click', handleNativeMarkAll, true);
   }, [hasUnseen, markingAllSeen, markAllSeen]);
 
+  if (!hasNotifications) return null;
   return (
-    <>
-      {data.unseenCount > 0 &&
-        dom.badges.map((target) =>
-          createPortal(
-            <NotificationCount
-              count={target.count + data.unseenCount}
-              saturated={target.saturated}
-              placement={target.placement}
-            />,
-            target.container,
-            target.placement,
-          ),
-        )}
-
-      {dom.menu && data.unseenCount > 0
-        ? createPortal(
-            <HeaderNotificationCount
-              count={dom.menu.count + data.unseenCount}
-              saturated={dom.menu.saturated}
-            />,
-            dom.menu.titleGroup,
-          )
-        : null}
-
-      {dom.menu && data.unseenCount > 0 && !dom.menu.nativeMarkAll
-        ? createPortal(
-            <button
-              type="button"
-              data-hf-release-mark-all
-              className="border-border bg-background hover:bg-accent inline-flex shrink-0 items-center justify-center rounded-full border px-3.5 py-1 text-xs font-medium disabled:pointer-events-none disabled:opacity-50"
-              disabled={markingAllSeen}
-              onClick={() => markAllSeen()}
-            >
-              Прочитати всі
-            </button>,
-            dom.menu.header,
-          )
-        : null}
-
-      {dom.menu && data.notifications.length > 0
-        ? createPortal(
-            <ReleaseNotificationSection
-              notifications={data.notifications}
-              onNotificationClick={markSeen}
-            />,
-            dom.menu.list,
-          )
-        : null}
-    </>
+    <ReleaseNotificationSection
+      notifications={data.notifications}
+      onNotificationClick={markSeen}
+    />
   );
 };
 
@@ -260,12 +334,12 @@ const ReleaseNotificationSection = ({
   notifications: ReleaseNotification[];
   onNotificationClick: (notification: ReleaseNotification) => void;
 }) => (
-  <div data-hf-release-notifications>
+  <div>
     <div className="border-border surface-inset text-muted-foreground border-b px-3 py-1.5 text-xs font-medium">
       Улюблені команди
     </div>
     {notifications.map((notification) => {
-      const description = `Команда «${notification.teamTitle}» випустила серію ${notification.episodeNumber}`;
+      const description = `Команда «${notification.teamTitle}» випустила серію ${notification.episodeNumber}${TRANSLATION_SUFFIX[notification.translationType ?? 'unknown']}`;
       return (
         <div
           key={notification.id}
@@ -275,10 +349,8 @@ const ReleaseNotificationSection = ({
               : 'border-l-primary-foreground/60 bg-primary-foreground/10'
           }`}
         >
-          <div className="relative size-10 shrink-0">
-            <div className="border-border bg-secondary/40 flex size-10 items-center justify-center rounded-md border [&_svg]:size-5">
-              <MaterialSymbolsLiveTvRounded />
-            </div>
+          <div className="border-border bg-secondary/40 flex size-10 shrink-0 items-center justify-center rounded-md border [&_svg]:size-5">
+            <MaterialSymbolsLiveTvRounded />
           </div>
 
           <div className="relative flex min-w-0 flex-1 flex-col gap-1">
@@ -288,11 +360,9 @@ const ReleaseNotificationSection = ({
               className="absolute inset-0 z-10"
               onClick={() => onNotificationClick(notification)}
             />
-            <div className="flex items-center justify-between gap-2">
-              <span className="truncate text-sm leading-tight font-medium">
-                {notification.animeTitle ?? 'Новий епізод'}
-              </span>
-            </div>
+            <span className="truncate text-sm leading-tight font-medium">
+              {notification.animeTitle ?? 'Новий епізод'}
+            </span>
             <p className="text-muted-foreground group-hover/item:text-foreground line-clamp-2 text-xs">
               {description}
             </p>
@@ -304,7 +374,7 @@ const ReleaseNotificationSection = ({
             <time
               dateTime={new Date(notification.createdAt).toISOString()}
               title={new Date(notification.createdAt).toLocaleString('uk-UA')}
-              className="text-muted-foreground shrink-0 text-xs opacity-60 group-hover/item:opacity-100"
+              className="text-muted-foreground text-xs opacity-60 group-hover/item:opacity-100"
             >
               {formatRelativeTime(notification.createdAt)}
             </time>
@@ -319,7 +389,7 @@ const NotificationCount = ({
   count,
   saturated,
   placement,
-}: NativeCount & { placement: BadgeTarget['placement'] }) => (
+}: NativeCount & { placement: Placement }) => (
   <span
     data-hf-release-count
     className={`border-warning-border bg-warning text-warning-foreground absolute flex h-4 min-w-4 items-center justify-center rounded-full border px-1 text-[0.625rem] leading-none font-bold tabular-nums ${
@@ -339,47 +409,30 @@ const HeaderNotificationCount = ({ count, saturated }: NativeCount) => (
   </div>
 );
 
-function findNotificationDom(): NotificationDom {
-  return {
-    badges: findBadgeTargets(),
-    menu: findMenuTarget(),
-  };
-}
-
-function findBadgeTargets(): BadgeTarget[] {
-  return Array.from(
-    document.querySelectorAll<HTMLElement>(
-      '[data-slot="dropdown-menu-trigger"], [data-slot="drawer-trigger"]',
-    ),
-  ).flatMap((trigger) => {
+/** The bell's trigger in the header, or the mobile one's icon wrapper. */
+function findBell(placement: Placement): HTMLElement | undefined {
+  const slot =
+    placement === 'mobile' ? 'drawer-trigger' : 'dropdown-menu-trigger';
+  for (const trigger of document.querySelectorAll<HTMLElement>(
+    `[data-slot="${slot}"]`,
+  )) {
     const bellPath = Array.from(trigger.querySelectorAll('path')).find((path) =>
       path.getAttribute('d')?.startsWith(BELL_PATH_PREFIX),
     );
-    if (!bellPath) return [];
+    if (!bellPath) continue;
 
-    const mobile = trigger.dataset.slot === 'drawer-trigger';
     const iconContainer = bellPath.closest('svg')?.parentElement;
-    const container =
-      mobile && iconContainer?.classList.contains('relative')
-        ? iconContainer
-        : trigger;
-    const nativeBadge = findNativeCountBadge(container);
-    return [
-      {
-        container,
-        nativeBadge,
-        placement: mobile ? 'mobile' : 'desktop',
-        ...parseNativeCount(nativeBadge),
-      },
-    ];
-  });
+    return placement === 'mobile' &&
+      iconContainer?.classList.contains('relative')
+      ? iconContainer
+      : trigger;
+  }
+  return undefined;
 }
 
-function findMenuTarget(): MenuTarget | undefined {
-  const roots = document.querySelectorAll<HTMLElement>(
-    '[data-slot="dropdown-menu-content"], [data-slot="drawer-content"]',
-  );
-  for (const root of roots) {
+/** The open notification menu (desktop dropdown or mobile drawer). */
+function findMenu() {
+  for (const root of document.querySelectorAll<HTMLElement>(MENU_SELECTOR)) {
     const title = Array.from(root.querySelectorAll('span')).find(
       (candidate) => candidate.textContent?.trim() === 'Сповіщення',
     );
@@ -388,29 +441,17 @@ function findMenuTarget(): MenuTarget | undefined {
     );
     const titleGroup = title?.parentElement;
     const header = titleGroup?.parentElement;
-    if (!list || !titleGroup || !header) continue;
-
-    const nativeBadge = findNativeCountBadge(titleGroup);
-    const nativeMarkAll = Array.from(
-      header.querySelectorAll<HTMLButtonElement>('button'),
-    ).find(
-      (button) =>
-        !button.hasAttribute('data-hf-release-mark-all') &&
-        button.textContent?.trim() === 'Прочитати всі',
-    );
-    return {
-      list,
-      header,
-      titleGroup,
-      nativeBadge,
-      nativeMarkAll,
-      emptyState:
-        list.querySelector<HTMLElement>(':scope > [data-slot="empty"]') ??
-        undefined,
-      ...parseNativeCount(nativeBadge),
-    };
+    if (list && titleGroup && header) return { list, header, titleGroup };
   }
   return undefined;
+}
+
+function findNativeMarkAll(header: HTMLElement) {
+  return Array.from(header.querySelectorAll<HTMLButtonElement>('button')).find(
+    (button) =>
+      !button.hasAttribute('data-hf-release-mark-all') &&
+      button.textContent?.trim() === 'Прочитати всі',
+  );
 }
 
 function findNativeCountBadge(container: HTMLElement): HTMLElement | undefined {
@@ -424,42 +465,11 @@ function findNativeCountBadge(container: HTMLElement): HTMLElement | undefined {
   );
 }
 
-function parseNativeCount(element?: HTMLElement): NativeCount {
-  const label = element?.textContent?.trim() ?? '';
+function parseNativeCount(label: string): NativeCount {
   return {
     count: Number.parseInt(label, 10) || 0,
     saturated: label.endsWith('+'),
   };
-}
-
-function sameNotificationDom(current: NotificationDom, next: NotificationDom) {
-  if (!sameMenuTarget(current.menu, next.menu)) return false;
-  if (current.badges.length !== next.badges.length) return false;
-  return current.badges.every((badge, index) => {
-    const candidate = next.badges[index];
-    return (
-      candidate !== undefined &&
-      badge.container === candidate.container &&
-      badge.nativeBadge === candidate.nativeBadge &&
-      badge.placement === candidate.placement &&
-      badge.count === candidate.count &&
-      badge.saturated === candidate.saturated
-    );
-  });
-}
-
-function sameMenuTarget(current?: MenuTarget, next?: MenuTarget) {
-  if (!current || !next) return current === next;
-  return (
-    current.list === next.list &&
-    current.header === next.header &&
-    current.titleGroup === next.titleGroup &&
-    current.nativeBadge === next.nativeBadge &&
-    current.nativeMarkAll === next.nativeMarkAll &&
-    current.emptyState === next.emptyState &&
-    current.count === next.count &&
-    current.saturated === next.saturated
-  );
 }
 
 function hideNativeElement(element: HTMLElement) {

@@ -5,6 +5,7 @@ import type { CompatibilityResponse } from '@/utils/compatibility';
 // Hand-written mirror of the backend contract (features-backend/convex).
 
 type TranslationType = 'dub' | 'sub' | 'unknown';
+export type PreferredTranslation = 'dub' | 'sub';
 
 export interface ConvexEpisodeInfo {
   number: number;
@@ -39,6 +40,7 @@ export interface CatalogTeam {
 
 export interface TeamPriority {
   teams: CatalogTeam[];
+  translationType: PreferredTranslation;
   updatedAt: number;
 }
 
@@ -58,6 +60,8 @@ export interface ReleaseNotification {
   animeSlug: string;
   animeTitle?: string;
   teamTitle: string;
+  /** Missing from backends deployed before it was added. */
+  translationType?: TranslationType;
   episodeNumber: number;
   episodeTitle?: string;
   createdAt: number;
@@ -110,9 +114,11 @@ export const convexApi = {
     get: makeFunctionReference<'query', NoArgs, TeamPriority | null>(
       'teamPriority:get',
     ),
-    set: makeFunctionReference<'mutation', { teamIds: string[] }, TeamPriority>(
-      'teamPriority:set',
-    ),
+    set: makeFunctionReference<
+      'mutation',
+      { teamIds: string[]; translationType: PreferredTranslation },
+      TeamPriority
+    >('teamPriority:set'),
   },
   favorites: {
     list: makeFunctionReference<'query', NoArgs, SyncedFavorite[]>(

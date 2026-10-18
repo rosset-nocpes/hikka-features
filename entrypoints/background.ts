@@ -10,7 +10,6 @@ import {
   COMPATIBILITY_STORAGE_KEY,
   EXTENSION_API_PROTOCOL,
   type ExtensionCompatibilityState,
-  RELOAD_TABS_STORAGE_KEY,
 } from '@/utils/compatibility';
 import { convexApi } from '@/utils/convex-api';
 import { type ConvexAuthRequest, convexClient } from '@/utils/convex-client';
@@ -53,14 +52,6 @@ interface HikkaContentStatusRequest {
   type: 'hikka-content-status';
 }
 
-interface CompatibilityStatusRequest {
-  type: 'extension-compatibility-status';
-}
-
-interface ExtensionUpdateRequest {
-  type: 'extension-update';
-}
-
 type MessageRequest =
   | LoginRequest
   | LogoutRequest
@@ -71,114 +62,26 @@ type MessageRequest =
   | IFramePlayerCommand
   | HikkaContentLoadedRequest
   | HikkaContentUnloadedRequest
-  | HikkaContentStatusRequest
-  | CompatibilityStatusRequest
-  | ExtensionUpdateRequest;
+  | HikkaContentStatusRequest;
 
 export default defineBackground(() => {
   const hikkaContentTabs = new Set<number>();
   const compatibilityAlarm = 'extension-compatibility';
-  const updateCheckCooldown = 6 * 60 * 60 * 1000;
 
-  const getStoredCompatibility = async () => {
-    const stored = await browser.storage.local.get(COMPATIBILITY_STORAGE_KEY);
-    return stored[COMPATIBILITY_STORAGE_KEY] as
-      | ExtensionCompatibilityState
-      | undefined;
-  };
-
-  const publishCompatibility = async (state: ExtensionCompatibilityState) => {
-    await browser.storage.local.set({
-      [COMPATIBILITY_STORAGE_KEY]: state,
-    });
-    const tabs = await browser.tabs.query({
-      url: ['https://hikka.io/*', 'https://dev.hikka.io/*'],
-    });
-    await Promise.allSettled(
-      tabs.flatMap((tab) =>
-        tab.id === undefined
-          ? []
-          : [
-              browser.tabs.sendMessage(tab.id, {
-                type: 'extension-compatibility',
-                state,
-              }),
-            ],
-      ),
-    );
-    return state;
-  };
-
-  const requestExtensionUpdate = async (
-    state: ExtensionCompatibilityState,
-    force = false,
-  ) => {
-    if (
-      !force &&
-      state.updateCheckedAt &&
-      Date.now() - state.updateCheckedAt < updateCheckCooldown
-    ) {
-      return state;
-    }
-
-    const result = await browser.runtime.requestUpdateCheck();
-    return await publishCompatibility({
-      ...state,
-      updateCheckedAt: Date.now(),
-      storeStatus: result.status,
-    });
-  };
-
+  /** Stored so API calls stop once the backend drops this version. */
   const pollCompatibility = async () => {
     const extensionVersion = browser.runtime.getManifest().version;
-    const [compatibility, previous] = await Promise.all([
-      convexClient().query(convexApi.compatibility.get, {
-        extensionVersion,
-        protocol: EXTENSION_API_PROTOCOL,
-      }),
-      getStoredCompatibility(),
-    ]);
-    const sameRelease =
-      previous?.extensionVersion === extensionVersion &&
-      previous.latestVersion === compatibility.latestVersion;
-    const state = await publishCompatibility({
-      ...compatibility,
-      extensionVersion,
-      updateReady: sameRelease ? previous.updateReady : false,
-      checkedAt: Date.now(),
-      updateCheckedAt: sameRelease ? previous.updateCheckedAt : undefined,
-      storeStatus: sameRelease ? previous.storeStatus : undefined,
-    });
-
-    return state.status === 'current'
-      ? state
-      : await requestExtensionUpdate(state);
-  };
-
-  const applyExtensionUpdate = async () => {
-    const state = await getStoredCompatibility();
-    if (!state) return await pollCompatibility();
-    if (!state.updateReady) return await requestExtensionUpdate(state, true);
-
-    const tabs = await browser.tabs.query({
-      url: ['https://hikka.io/*', 'https://dev.hikka.io/*'],
-    });
+    const compatibility = await convexClient().query(
+      convexApi.compatibility.get,
+      { extensionVersion, protocol: EXTENSION_API_PROTOCOL },
+    );
     await browser.storage.local.set({
-      [RELOAD_TABS_STORAGE_KEY]: tabs.flatMap((tab) =>
-        tab.id === undefined ? [] : [tab.id],
-      ),
+      [COMPATIBILITY_STORAGE_KEY]: {
+        ...compatibility,
+        extensionVersion,
+        checkedAt: Date.now(),
+      } satisfies ExtensionCompatibilityState,
     });
-    browser.runtime.reload();
-    return state;
-  };
-
-  const reloadTabsAfterUpdate = async () => {
-    const stored = await browser.storage.local.get(RELOAD_TABS_STORAGE_KEY);
-    const tabIds = stored[RELOAD_TABS_STORAGE_KEY] as number[] | undefined;
-    if (!tabIds?.length) return;
-
-    await browser.storage.local.remove(RELOAD_TABS_STORAGE_KEY);
-    await Promise.allSettled(tabIds.map((tabId) => browser.tabs.reload(tabId)));
   };
 
   const ensureCompatibilityAlarm = async () => {
@@ -190,36 +93,22 @@ export default defineBackground(() => {
     }
   };
 
-  ensureCompatibilityAlarm();
-  reloadTabsAfterUpdate().catch(console.error);
-  pollCompatibility().catch(console.error);
-  browser.runtime.onStartup.addListener(() => {
+  const syncAccount = () => {
     syncFavorites().catch(console.error);
     syncAccountTeamPriority().catch(console.error);
-  });
+  };
+
+  ensureCompatibilityAlarm();
+  pollCompatibility().catch(console.error);
+  browser.runtime.onStartup.addListener(syncAccount);
+  // Updates and reloads skip onStartup.
+  browser.runtime.onInstalled.addListener(syncAccount);
   browser.alarms.onAlarm.addListener((alarm) => {
     if (alarm.name === compatibilityAlarm) {
       pollCompatibility().catch(console.error);
+      // Also retries a failed upload, which release notifications depend on.
+      syncAccountTeamPriority().catch(console.error);
     }
-  });
-  browser.runtime.onUpdateAvailable.addListener(({ version }) => {
-    const extensionVersion = browser.runtime.getManifest().version;
-    getStoredCompatibility()
-      .then((state) =>
-        publishCompatibility({
-          // Defaults surface the banner even if the backend was never reached.
-          status: 'update_available',
-          latestVersion: version,
-          minimumVersion: extensionVersion,
-          protocolSupported: true,
-          checkedAt: Date.now(),
-          ...state,
-          extensionVersion,
-          updateReady: true,
-          storeStatus: 'update_available',
-        }),
-      )
-      .catch(console.error);
   });
   browser.tabs.onRemoved.addListener((tabId) => {
     hikkaContentTabs.delete(tabId);
@@ -257,25 +146,12 @@ export default defineBackground(() => {
               hikkaContentTabs.has(sender.tab.id),
           };
 
-        case 'extension-compatibility-status':
-          try {
-            return await pollCompatibility();
-          } catch (error) {
-            const stored = await getStoredCompatibility();
-            if (stored) return stored;
-            throw error;
-          }
-
-        case 'extension-update':
-          return await applyExtensionUpdate();
-
         case 'convex-auth':
           return await runAccountRequest(typedRequest);
 
         case 'login': {
           const user = await login();
-          syncFavorites().catch(console.error);
-          syncAccountTeamPriority().catch(console.error);
+          syncAccount();
           return user;
         }
 
