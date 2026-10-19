@@ -25,7 +25,11 @@ The background worker owns the account session (`utils/convex-session.ts`).
 Refresh tokens rotate on every use, so content scripts and the popup never
 refresh on their own: they call `accountQuery`/`accountMutation`, which forward
 the request to the background. Public functions (`watch:resolve`,
-`catalog:get`, `editor:suggest`) are called directly.
+`catalog:get`, `editor:suggest`) are called directly. Watch together keeps a
+live WebSocket connection per tab (`acquireLiveClient`), shared by the room,
+the invite toasts and the friend list until the last of them releases it; the
+background only lends it short-lived access tokens and still does every
+refresh.
 
 ## Extension/backend compatibility
 

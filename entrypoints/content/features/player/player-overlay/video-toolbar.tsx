@@ -7,6 +7,7 @@ import Mute from './buttons/mute';
 import Play from './buttons/play';
 import Share from './buttons/share';
 import TheatreMode from './buttons/theatre-mode';
+import WatchTogether from './buttons/watch-together';
 import Settings from './settings';
 import Volume from './sliders/volume';
 import TimeGroup from './time-group';
@@ -71,6 +72,7 @@ const VideoToolbar = () => {
         <TimeGroup />
       </div>
       <div ref={actionsRef} className={cn(GROUP, 'hidden md:flex')}>
+        <WatchTogether anchor={actionsRef} />
         <Share anchor={actionsRef} />
         <Settings anchor={actionsRef} />
         <Divider />

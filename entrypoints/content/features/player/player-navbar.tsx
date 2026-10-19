@@ -1,5 +1,4 @@
-import type { FC, PointerEvent as ReactPointerEvent } from 'react';
-
+import { type FC, type PointerEvent as ReactPointerEvent, useRef } from 'react';
 import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
 import MaterialSymbolsDragIndicator from '~icons/material-symbols/drag-indicator';
 import MaterialSymbolsOpenInFullRounded from '~icons/material-symbols/open-in-full-rounded';
@@ -9,6 +8,7 @@ import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 
 import { usePlayer } from './context/player-context';
 import { removePlayer } from './player';
+import WatchTogether from './player-overlay/buttons/watch-together';
 
 const GLASS = 'bg-background/60 backdrop-blur-xl';
 
@@ -22,6 +22,7 @@ const PlayerNavbar: FC<Props> = ({ onDragStart }) => {
     usePlayer();
   const { uiShown } = useIFramePlayer();
   const { open } = useSidebar();
+  const actionsRef = useRef<HTMLDivElement>(null);
 
   const isCompactMode = miniPlayer || videoPiPActive;
 
@@ -61,10 +62,12 @@ const PlayerNavbar: FC<Props> = ({ onDragStart }) => {
         </span>
       </div>
       <div
+        ref={actionsRef}
         className={cn(
           'absolute z-20 flex gap-2 duration-300',
-          open ? 'top-4 right-4' : 'top-2 right-2',
-          !uiShown && !open ? 'opacity-0' : 'opacity-100',
+          // Clears the open floating sidebar, which phones don't have.
+          open ? 'top-2 right-2 md:top-4 md:right-4' : 'top-2 right-2',
+          !uiShown && (open ? 'max-md:opacity-0' : 'opacity-0'),
         )}
       >
         {isCompactMode ? (
@@ -89,11 +92,23 @@ const PlayerNavbar: FC<Props> = ({ onDragStart }) => {
             </Button>
           </>
         ) : (
-          <SidebarTrigger
-            variant="ghost"
-            size="icon-sm"
-            className={cn('hidden duration-300 md:inline-flex', !open && GLASS)}
-          />
+          <>
+            {/* Phones have no room for it in the toolbar row. */}
+            <WatchTogether
+              anchor={actionsRef}
+              side="bottom"
+              compact
+              className={cn(GLASS, 'md:hidden')}
+            />
+            <SidebarTrigger
+              variant="ghost"
+              size="icon-sm"
+              className={cn(
+                'hidden duration-300 md:inline-flex',
+                !open && GLASS,
+              )}
+            />
+          </>
         )}
       </div>
     </>

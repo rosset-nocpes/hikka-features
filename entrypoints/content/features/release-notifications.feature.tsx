@@ -16,6 +16,7 @@ import {
   convexApi,
 } from '@/utils/convex-api';
 import { accountMutation, accountQuery } from '@/utils/convex-client';
+import { getHikkaViewerId } from '@/utils/hikka-viewer';
 
 import { queryClient } from '..';
 import { BaseFeature } from '../core/base-feature';
@@ -23,7 +24,6 @@ import { HikkaPages } from '../core/core.enums';
 
 const POLL_INTERVAL_MS = 5 * 60 * 1_000;
 const BELL_PATH_PREFIX = 'M5 19q';
-const HIKKA_PROFILE_URL = 'https://api.hikka.io/user/me';
 const MENU_SELECTOR =
   '[data-slot="dropdown-menu-content"], [data-slot="drawer-content"]';
 const TRANSLATION_SUFFIX = {
@@ -498,17 +498,4 @@ function formatRelativeTime(createdAt: number) {
     return formatter.format(Math.round(seconds / (24 * 60 * 60)), 'day');
   }
   return new Date(createdAt).toLocaleDateString('uk-UA');
-}
-
-async function getHikkaViewerId() {
-  const response = await fetch(HIKKA_PROFILE_URL, {
-    cache: 'no-store',
-    credentials: 'include',
-    headers: { accept: 'application/json' },
-    signal: AbortSignal.timeout(8_000),
-  });
-  if (!response.ok) return undefined;
-
-  const profile = (await response.json()) as { reference?: unknown };
-  return typeof profile.reference === 'string' ? profile.reference : undefined;
 }

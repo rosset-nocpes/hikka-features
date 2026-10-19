@@ -1,4 +1,4 @@
-import { ConvexHttpClient } from 'convex/browser';
+import { ConvexClient, ConvexHttpClient } from 'convex/browser';
 import {
   type FunctionReference,
   type FunctionReturnType,
@@ -18,6 +18,11 @@ export interface ConvexAuthRequest {
   kind: 'query' | 'mutation';
   name: string;
   args: Record<string, unknown>;
+}
+
+export interface ConvexTokenRequest {
+  type: 'convex-token';
+  forceRefresh: boolean;
 }
 
 export function convexClient() {
@@ -70,6 +75,60 @@ function viaBackground(
     name: getFunctionName(reference),
     args,
   } satisfies ConvexAuthRequest);
+}
+
+let live: { client: ConvexClient; holders: number } | undefined;
+
+/**
+ * The tab's WebSocket client for live account queries, shared by everyone
+ * who needs one until the last of them calls `release`. The background keeps
+ * the session and only lends it short-lived access tokens.
+ */
+export async function acquireLiveClient() {
+  await assertCompatible();
+  if (!CONVEX_URL) throw new Error('WXT_CONVEX_URL is not configured');
+
+  if (!live) {
+    // Otherwise hikka.io would ask to confirm leaving while a call is pending.
+    const client = new ConvexClient(CONVEX_URL, {
+      unsavedChangesWarning: false,
+    });
+    client.setAuth(
+      async ({ forceRefreshToken }) =>
+        ((await browser.runtime.sendMessage({
+          type: 'convex-token',
+          forceRefresh: forceRefreshToken,
+        } satisfies ConvexTokenRequest)) as string | null) ?? null,
+    );
+    live = { client, holders: 0 };
+  }
+
+  const current = live;
+  current.holders += 1;
+  let released = false;
+  return {
+    client: current.client,
+    release: () => {
+      if (released) return;
+      released = true;
+      current.holders -= 1;
+      if (current.holders > 0 || live !== current) return;
+      live = undefined;
+      void current.client.close();
+    },
+  };
+}
+
+/** Makes one call on the live client, e.g. a mutation from a click. */
+export async function withLiveClient<T>(
+  call: (client: ConvexClient) => Promise<T>,
+) {
+  const { client, release } = await acquireLiveClient();
+  try {
+    return await call(client);
+  } finally {
+    release();
+  }
 }
 
 export async function accountQuery<Query extends FunctionReference<'query'>>(

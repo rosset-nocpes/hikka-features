@@ -12,8 +12,13 @@ import {
   type ExtensionCompatibilityState,
 } from '@/utils/compatibility';
 import { convexApi } from '@/utils/convex-api';
-import { type ConvexAuthRequest, convexClient } from '@/utils/convex-client';
 import {
+  type ConvexAuthRequest,
+  type ConvexTokenRequest,
+  convexClient,
+} from '@/utils/convex-client';
+import {
+  accountToken,
   login,
   logout,
   runAccountRequest,
@@ -34,12 +39,6 @@ interface RichPresenceCheckRequest {
   action: string;
 }
 
-interface WatchTogetherRequest {
-  type: 'watch-together';
-  action: 'create' | 'join' | 'leave';
-  roomId?: string;
-}
-
 interface HikkaContentLoadedRequest {
   type: 'hikka-content-loaded';
 }
@@ -56,8 +55,8 @@ type MessageRequest =
   | LoginRequest
   | LogoutRequest
   | ConvexAuthRequest
+  | ConvexTokenRequest
   | RichPresenceCheckRequest
-  | WatchTogetherRequest
   | RemoteFetchRequest
   | IFramePlayerCommand
   | HikkaContentLoadedRequest
@@ -148,6 +147,14 @@ export default defineBackground(() => {
 
         case 'convex-auth':
           return await runAccountRequest(typedRequest);
+
+        case 'convex-token':
+          // Only the player on hikka.io keeps a live connection.
+          if (sender.frameId !== 0 || !sender.url || !isHikkaUrl(sender.url)) {
+            return null;
+          }
+
+          return await accountToken(typedRequest.forceRefresh);
 
         case 'login': {
           const user = await login();

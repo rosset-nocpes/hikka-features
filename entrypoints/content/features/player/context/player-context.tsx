@@ -19,6 +19,7 @@ interface PlayerState {
   /* Player-related  */
   watchData?: API.WatchData; // todo: remove it from there
   watchDataKey?: string;
+  slug?: string;
   provider?: string;
   team?: API.TeamData;
   favoriteTeam?: FavoriteTeam;
@@ -33,6 +34,10 @@ interface PlayerState {
   /* Temporary */
   sharedParams?: SharedPlayerParams;
   isShared?: boolean;
+  /** Watch together room code from an invite link. */
+  roomInvite?: string;
+  /** The invite was accepted before the page opened, e.g. from a toast. */
+  roomInviteAccepted?: boolean;
 }
 
 interface PlayerActions {
@@ -42,6 +47,9 @@ interface PlayerActions {
   setFavoriteTeam: (team: string) => void;
   removeFavoriteTeam: () => void;
   setEpisode: (episode: API.EpisodeData) => void;
+  /** Shows exactly this source and episode; false when it isn't available. */
+  selectSource: (provider: string, team: string, episode: number) => boolean;
+  dismissRoomInvite: () => void;
   toggleFullscreen: () => void;
   toggleTheatreMode: () => void;
   toggleMiniPlayer: () => void;
@@ -109,11 +117,19 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
         sharedParams.team !== null &&
         !!sharedParams.episode;
 
+      const roomInvite = params.get('room') ?? undefined;
+      const roomInviteAccepted = params.has('join');
+
       // cleanup url
       const url = new URL(window.location.href);
-      ['playerProvider', 'playerTeam', 'playerEpisode', 'time'].map((param) =>
-        url.searchParams.delete(param),
-      );
+      [
+        'playerProvider',
+        'playerTeam',
+        'playerEpisode',
+        'time',
+        'room',
+        'join',
+      ].map((param) => url.searchParams.delete(param));
 
       history.replaceState(history.state, '', url.href);
 
@@ -193,6 +209,7 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
       set({
         watchData: data,
         watchDataKey,
+        slug,
         provider,
         team,
         favoriteTeam,
@@ -200,6 +217,8 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
         currentEpisode: targetEpisode ?? episodeData[0],
         sharedParams,
         isShared,
+        roomInvite,
+        roomInviteAccepted,
       });
     },
     setProvider: (provider) => {
@@ -232,12 +251,7 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
           ? watchData[provider].teams[newTeamName.title].episodes
           : watchData[provider].episodes;
 
-      useIFramePlayer.setState({
-        speedOptions:
-          provider === 'ashdi'
-            ? [1, 1.25, 1.5, 2]
-            : useIFramePlayer.getInitialState().speedOptions,
-      });
+      setSpeedOptions(provider);
 
       set({
         provider,
@@ -303,6 +317,31 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
       removeSyncedFavorite(slug).catch(console.error);
     },
     setEpisode: (episode) => set({ currentEpisode: episode }),
+    selectSource: (provider, team, episode) => {
+      const source = get().watchData?.[provider];
+      const episodeData =
+        source instanceof ProviderTeamIFrame
+          ? source.teams[team]?.episodes
+          : source instanceof ProviderIFrame
+            ? source.episodes
+            : undefined;
+      const currentEpisode = episodeData?.find((ep) => ep.episode === episode);
+      if (!currentEpisode) return false;
+
+      if (provider !== get().provider) setSpeedOptions(provider);
+      set({
+        provider,
+        team:
+          source instanceof ProviderTeamIFrame
+            ? source.getTeam(team)
+            : { title: '', logo: '' },
+        episodeData,
+        currentEpisode,
+      });
+      return true;
+    },
+    dismissRoomInvite: () =>
+      set({ roomInvite: undefined, roomInviteAccepted: undefined }),
     toggleFullscreen: () => {
       const { fullscreen } = get();
       const wrapper = get().container?.querySelector('#player-frame');
@@ -409,6 +448,7 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
         /* Player-related  */
         watchData: undefined,
         watchDataKey: undefined,
+        slug: undefined,
         provider: undefined,
         team: undefined,
         episodeData: undefined,
@@ -421,10 +461,20 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
         /* Temporary */
         sharedParams: undefined,
         isShared: undefined,
+        roomInvite: undefined,
+        roomInviteAccepted: undefined,
       });
     },
   };
 });
+
+const setSpeedOptions = (provider: string) =>
+  useIFramePlayer.setState({
+    speedOptions:
+      provider === 'ashdi'
+        ? [1, 1.25, 1.5, 2]
+        : useIFramePlayer.getInitialState().speedOptions,
+  });
 
 interface SharedPlayerParams {
   provider: string | null;

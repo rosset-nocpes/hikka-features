@@ -43,6 +43,21 @@ interface IFramePlayerActions {
   reset: () => void;
 }
 
+/** A playback change the user asked for, unlike one the player reports. */
+export type PlaybackIntent =
+  | { type: 'play' | 'pause' }
+  | { type: 'seek'; position: number }
+  | { type: 'rate'; rate: number };
+
+let playbackIntentListener: ((intent: PlaybackIntent) => void) | undefined;
+
+/** Lets watch together share the user's playback changes with the room. */
+export const onPlaybackIntent = (
+  listener: ((intent: PlaybackIntent) => void) | undefined,
+) => {
+  playbackIntentListener = listener;
+};
+
 export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
   (set, get) => ({
     isReady: false,
@@ -66,10 +81,12 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
 
     play: () => {
       sendIFramePlayerCommand({ action: 'play' });
+      playbackIntentListener?.({ type: 'play' });
     },
 
     pause: () => {
       sendIFramePlayerCommand({ action: 'pause' });
+      playbackIntentListener?.({ type: 'pause' });
     },
 
     toggleMute: () => {
@@ -90,6 +107,7 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
 
     seek: (time: number) => {
       sendIFramePlayerCommand({ action: 'seek', value: time });
+      playbackIntentListener?.({ type: 'seek', position: time });
     },
 
     setCurrentQuality: (quality: string) => {
@@ -127,6 +145,7 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
         value: speed,
         index,
       });
+      playbackIntentListener?.({ type: 'rate', rate: speed });
     },
 
     checkBuffering: () => {

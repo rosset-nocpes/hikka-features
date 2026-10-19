@@ -139,6 +139,17 @@ async function getAccessToken() {
   return await refreshing;
 }
 
+/**
+ * Lends an access token to a content script's live connection, or null when
+ * signed out. Only the background refreshes, as refresh tokens rotate.
+ */
+export async function accountToken(forceRefresh: boolean) {
+  await settingsHydrated();
+  if (!useSettings.getState().convexSession) return null;
+  if (forceRefresh) accessToken = undefined;
+  return await getAccessToken().catch(() => null);
+}
+
 /** Convex refused the access token itself, e.g. after its issuer changed. */
 const tokenRejected = (error: unknown) =>
   error instanceof Error &&

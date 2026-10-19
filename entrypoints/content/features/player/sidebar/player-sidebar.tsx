@@ -47,9 +47,6 @@ const PlayerSidebar: FC<Props> = ({ toggleWatchedState, className }) => {
           <EpisodeList toggleWatchedState={toggleWatchedState} />
         </ScrollArea>
       </SidebarContent>
-      {/* <SidebarFooter>
-        <WatchTogetherButton />
-      </SidebarFooter> */}
     </Sidebar>
   );
 };

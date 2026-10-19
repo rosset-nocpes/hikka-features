@@ -1,20 +1,4 @@
-import {
-  AnimatePresence,
-  animate,
-  motion,
-  useIsPresent,
-  useMotionValue,
-} from 'motion/react';
-import {
-  type FC,
-  type PropsWithChildren,
-  type ReactNode,
-  type RefObject,
-  useCallback,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from 'react';
+import { type FC, type ReactNode, type RefObject, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import MaterialSymbolsArrowBackRounded from '~icons/material-symbols/arrow-back-rounded';
 import MaterialSymbolsChevronRightRounded from '~icons/material-symbols/chevron-right-rounded';
@@ -35,6 +19,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { usePlayer } from '@/entrypoints/content/features/player/context/player-context';
 
+import MenuPages from './menu-pages';
 import ToolbarTooltip from './toolbar-tooltip';
 import { useUiLock } from './use-ui-lock';
 
@@ -46,14 +31,6 @@ interface Submenu {
   options: Array<{ value: string; label: string }>;
   select: (value: string) => void;
 }
-
-const transition = { duration: 0.24, ease: [0.22, 1, 0.36, 1] } as const;
-
-const slide = {
-  enter: (direction: number) => ({ x: direction * 24, opacity: 0 }),
-  center: { x: 0, opacity: 1 },
-  exit: (direction: number) => ({ x: direction * -24, opacity: 0 }),
-};
 
 const formatSpeed = (speed: number) => (speed === 1 ? 'Звичайна' : `${speed}x`);
 
@@ -115,111 +92,62 @@ const useSubmenus = (): Submenu[] => {
 const selectedLabel = ({ options, value }: Submenu) =>
   options.find((option) => option.value === value)?.label ?? (value || 'Авто');
 
-const Page: FC<
-  PropsWithChildren<{ direction: number; onHeight: (height: number) => void }>
-> = ({ direction, onHeight, children }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const isPresent = useIsPresent();
-
-  useLayoutEffect(() => {
-    const node = ref.current;
-    if (!node || !isPresent) return;
-    const observer = new ResizeObserver(() => onHeight(node.offsetHeight));
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [isPresent, onHeight]);
-
-  return (
-    <motion.div
-      ref={ref}
-      custom={direction}
-      variants={slide}
-      initial="enter"
-      animate="center"
-      exit="exit"
-      transition={transition}
-      className={cn(
-        !isPresent && 'pointer-events-none absolute inset-x-0 bottom-0',
-      )}
-    >
-      {children}
-    </motion.div>
-  );
-};
-
 const SettingsPages = () => {
   const submenus = useSubmenus();
   const [activeId, setActiveId] = useState<Submenu['id']>();
-  const height = useMotionValue<number | 'auto'>('auto');
-
-  const resize = useCallback(
-    (next: number) => {
-      if (height.get() === 'auto') height.set(next);
-      else animate(height, next, transition);
-    },
-    [height],
-  );
 
   const active = submenus.find((submenu) => submenu.id === activeId);
-  const direction = active ? 1 : -1;
   const goBack = () => setActiveId(undefined);
 
   return (
-    <motion.div
-      style={{ height }}
-      className="relative flex flex-col justify-end overflow-hidden"
-    >
-      <AnimatePresence initial={false} custom={direction}>
-        {active ? (
-          <Page key={active.id} direction={direction} onHeight={resize}>
-            <DropdownMenuRadioGroup
-              value={active.value}
-              onValueChange={(value: string) => {
-                active.select(value);
-                goBack();
-              }}
-            >
-              {active.options.map(({ value, label }) => (
-                <DropdownMenuRadioItem
-                  key={value}
-                  value={value}
-                  closeOnClick={false}
-                  className="tabular-nums"
-                >
-                  <span className="truncate">{label}</span>
-                </DropdownMenuRadioItem>
-              ))}
-            </DropdownMenuRadioGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="text-muted-foreground font-medium"
-              closeOnClick={false}
-              onClick={goBack}
-            >
-              <MaterialSymbolsArrowBackRounded />
-              {active.label}
-            </DropdownMenuItem>
-          </Page>
-        ) : (
-          <Page key="root" direction={direction} onHeight={resize}>
-            {submenus.map((submenu) => (
-              <DropdownMenuItem
-                key={submenu.id}
+    <MenuPages page={active?.id ?? 'root'} direction={active ? 1 : -1}>
+      {active ? (
+        <>
+          <DropdownMenuRadioGroup
+            value={active.value}
+            onValueChange={(value: string) => {
+              active.select(value);
+              goBack();
+            }}
+          >
+            {active.options.map(({ value, label }) => (
+              <DropdownMenuRadioItem
+                key={value}
+                value={value}
                 closeOnClick={false}
-                onClick={() => setActiveId(submenu.id)}
+                className="tabular-nums"
               >
-                {submenu.icon}
-                {submenu.label}
-                <span className="text-muted-foreground ml-auto flex min-w-0 items-center gap-0.5 text-xs tabular-nums">
-                  <span className="truncate">{selectedLabel(submenu)}</span>
-                  <MaterialSymbolsChevronRightRounded className="size-4" />
-                </span>
-              </DropdownMenuItem>
+                <span className="truncate">{label}</span>
+              </DropdownMenuRadioItem>
             ))}
-          </Page>
-        )}
-      </AnimatePresence>
-    </motion.div>
+          </DropdownMenuRadioGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            className="text-muted-foreground font-medium"
+            closeOnClick={false}
+            onClick={goBack}
+          >
+            <MaterialSymbolsArrowBackRounded />
+            {active.label}
+          </DropdownMenuItem>
+        </>
+      ) : (
+        submenus.map((submenu) => (
+          <DropdownMenuItem
+            key={submenu.id}
+            closeOnClick={false}
+            onClick={() => setActiveId(submenu.id)}
+          >
+            {submenu.icon}
+            {submenu.label}
+            <span className="text-muted-foreground ml-auto flex min-w-0 items-center gap-0.5 text-xs tabular-nums">
+              <span className="truncate">{selectedLabel(submenu)}</span>
+              <MaterialSymbolsChevronRightRounded className="size-4" />
+            </span>
+          </DropdownMenuItem>
+        ))
+      )}
+    </MenuPages>
   );
 };
 

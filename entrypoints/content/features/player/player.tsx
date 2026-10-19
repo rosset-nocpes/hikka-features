@@ -20,6 +20,8 @@ import PlayerIFrameEffects from './player-iframe-effects';
 import PlayerMiniBar from './player-mini-bar';
 import PlayerNavbar from './player-navbar';
 import PlayerOverlay from './player-overlay/player-overlay';
+import { useWatchTogether } from './watch-together/use-watch-together';
+import WatchTogetherInvite from './watch-together/watch-together-invite';
 
 const MOUNT_TAG = 'player-ui';
 
@@ -61,6 +63,7 @@ export default function player() {
     },
     onRemove: (root) => {
       root?.unmount();
+      useWatchTogether.getState().leave();
 
       const { fullscreen, toggleFullscreen, setVideoPiPActive } =
         usePlayer.getState();
@@ -202,6 +205,7 @@ export const Player = () => {
           )}
           <PlayerNavbar onDragStart={startDrag} />
           <PlayerOverlay toggleWatchedState={toggleWatchedState} />
+          {layout === 'full' && <WatchTogetherInvite />}
         </>
       )}
     </Card>

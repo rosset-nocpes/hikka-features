@@ -73,6 +73,65 @@ export interface ReleaseNotificationMenu {
   unseenCount: number;
 }
 
+// A type rather than an interface, so it fits Convex's argument constraint.
+export type WatchRoomSelection = {
+  provider: string;
+  /** Team key in the watch data; empty for providers without teams. */
+  team: string;
+  episode: number;
+};
+
+export interface WatchRoomProfile {
+  id: string;
+  username?: string;
+  avatar?: string;
+}
+
+export interface WatchRoomMember extends WatchRoomProfile {
+  self: boolean;
+}
+
+export interface WatchRoom extends WatchRoomSelection {
+  code: string;
+  animeSlug: string;
+  playing: boolean;
+  /** Seconds into the episode at `updatedAt`, a server timestamp. */
+  position: number;
+  rate: number;
+  updatedAt: number;
+  updatedBy: string;
+  ownerId: string;
+  /** The owner's friends see the room and join without the code. */
+  friendsCanJoin: boolean;
+  /** In the order they joined. */
+  members: WatchRoomMember[];
+}
+
+/** A room the user can join from their inbox. */
+export interface WatchRoomListing {
+  code: string;
+  animeSlug: string;
+  animeTitle?: string;
+  episode: number;
+  memberCount: number;
+  /** Who sent the invite, or the friend who owns the room. */
+  friend: WatchRoomProfile;
+}
+
+export interface WatchRoomInbox {
+  invites: Array<WatchRoomListing & { id: string }>;
+  rooms: WatchRoomListing[];
+}
+
+export interface WatchRoomFriend extends WatchRoomProfile {
+  status: 'member' | 'invited' | 'none';
+}
+
+export type WatchRoomAction =
+  | { type: 'play' | 'pause' | 'seek'; position: number }
+  | { type: 'rate'; position: number; rate: number }
+  | { type: 'select'; from: WatchRoomSelection; to: WatchRoomSelection };
+
 type NoArgs = Record<string, never>;
 
 export const convexApi = {
@@ -154,5 +213,57 @@ export const convexApi = {
     markAllSeen: makeFunctionReference<'mutation', NoArgs, null>(
       'notifications:markAllSeen',
     ),
+  },
+  watchRooms: {
+    create: makeFunctionReference<
+      'mutation',
+      WatchRoomSelection & {
+        animeSlug: string;
+        playing: boolean;
+        position: number;
+        rate: number;
+      },
+      { code: string }
+    >('watchRooms:create'),
+    get: makeFunctionReference<'query', { code: string }, WatchRoom | null>(
+      'watchRooms:get',
+    ),
+    heartbeat: makeFunctionReference<
+      'mutation',
+      { code: string },
+      { now: number } | null
+    >('watchRooms:heartbeat'),
+    control: makeFunctionReference<
+      'mutation',
+      { code: string; action: WatchRoomAction },
+      null
+    >('watchRooms:control'),
+    leave: makeFunctionReference<'mutation', { code: string }, null>(
+      'watchRooms:leave',
+    ),
+    share: makeFunctionReference<
+      'mutation',
+      { code: string; friendsCanJoin: boolean },
+      null
+    >('watchRooms:share'),
+    friends: makeFunctionReference<
+      'query',
+      { code: string },
+      WatchRoomFriend[]
+    >('watchRooms:friends'),
+    invite: makeFunctionReference<
+      'mutation',
+      { code: string; userId: string },
+      null
+    >('watchRooms:invite'),
+    decline: makeFunctionReference<'mutation', { id: string }, null>(
+      'watchRooms:decline',
+    ),
+    inbox: makeFunctionReference<'query', NoArgs, WatchRoomInbox>(
+      'watchRooms:inbox',
+    ),
+  },
+  friends: {
+    refresh: makeFunctionReference<'action', NoArgs, null>('friends:refresh'),
   },
 };
