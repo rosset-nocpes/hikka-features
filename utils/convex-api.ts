@@ -105,6 +105,8 @@ export interface WatchRoom extends WatchRoomSelection {
   friendsCanJoin: boolean;
   /** In the order they joined. */
   members: WatchRoomMember[];
+  /** The user joined from another tab since this one. */
+  joinedElsewhere: boolean;
 }
 
 /** A room the user can join from their inbox. */
@@ -130,7 +132,13 @@ export interface WatchRoomFriend extends WatchRoomProfile {
 export type WatchRoomAction =
   | { type: 'play' | 'pause' | 'seek'; position: number }
   | { type: 'rate'; position: number; rate: number }
-  | { type: 'select'; from: WatchRoomSelection; to: WatchRoomSelection };
+  | {
+      type: 'select';
+      from: WatchRoomSelection;
+      to: WatchRoomSelection;
+      /** Replaces a room speed the new source's players don't offer. */
+      rate?: number;
+    };
 
 type NoArgs = Record<string, never>;
 
@@ -222,25 +230,36 @@ export const convexApi = {
         playing: boolean;
         position: number;
         rate: number;
+        tab: string;
       },
       { code: string }
     >('watchRooms:create'),
-    get: makeFunctionReference<'query', { code: string }, WatchRoom | null>(
-      'watchRooms:get',
-    ),
+    get: makeFunctionReference<
+      'query',
+      { code: string; tab: string },
+      WatchRoom | null
+    >('watchRooms:get'),
     heartbeat: makeFunctionReference<
       'mutation',
-      { code: string },
+      {
+        code: string;
+        /** The tab the user is in; the one they joined from last counts. */
+        tab: string;
+        /** Sent with the first beat, which joins the room. */
+        join?: { animeSlug: string };
+      },
       { now: number } | null
     >('watchRooms:heartbeat'),
     control: makeFunctionReference<
       'mutation',
-      { code: string; action: WatchRoomAction },
+      { code: string; action: WatchRoomAction; tab: string },
       null
     >('watchRooms:control'),
-    leave: makeFunctionReference<'mutation', { code: string }, null>(
-      'watchRooms:leave',
-    ),
+    leave: makeFunctionReference<
+      'mutation',
+      { code: string; tab: string },
+      null
+    >('watchRooms:leave'),
     share: makeFunctionReference<
       'mutation',
       { code: string; friendsCanJoin: boolean },
