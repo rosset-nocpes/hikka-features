@@ -9,7 +9,6 @@ import { HikkaPages } from '../../core/core.enums';
 import FriendsActivityBlock from './friends-activity-block';
 import { HomePlacement, useBlockView } from './home-placement';
 import { LayoutDialog } from './layout-dialog';
-import { syncUserTheme } from './user-theme';
 
 /**
  * Follows the homepage as hikka.io re-renders it, resizes between layouts
@@ -84,7 +83,7 @@ export default class FriendsActivityFeature extends BaseFeature {
       onMount: (container, _shadow, host) => {
         const wrapper = document.createElement('div');
         container.append(wrapper);
-        syncUserTheme(container);
+        syncFeatureTheme(container, { themeVariables: true });
 
         this.layout = new Layout(host);
         const root = createRoot(wrapper);

@@ -317,7 +317,7 @@ const FriendsActivityBlock = () => {
     // The site's own cards are see-through (`--surface`, which the extension
     // doesn't define, so it comes from the page), and edge to edge on phones
     // in the centre column.
-    <Card className="flex flex-col gap-4 overflow-hidden bg-[var(--surface,hsl(var(--card)))] p-4 [:host([data-bleed])_&]:max-sm:rounded-none [:host([data-bleed])_&]:max-sm:border-x-0">
+    <Card className="flex flex-col gap-4 overflow-hidden bg-[var(--surface,var(--card))] p-4 [:host([data-bleed])_&]:max-sm:rounded-none [:host([data-bleed])_&]:max-sm:border-x-0">
       <CardHeader className="min-h-8 flex-row items-center gap-2 space-y-0 p-0">
         <CardTitle className="text-lg leading-7 font-bold tracking-normal">
           {BLOCK_TITLE}

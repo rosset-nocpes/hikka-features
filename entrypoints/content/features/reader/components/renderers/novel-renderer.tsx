@@ -249,9 +249,15 @@ const ZoomableImage = ({ src, alt }: ZoomableImageProps) => {
           <AnimatePresence>
             {zoomed && (
               <motion.div
-                initial={{ backgroundColor: 'hsl(var(--background) / 0)' }}
-                animate={{ backgroundColor: 'hsl(var(--background) / 0.95)' }}
-                exit={{ backgroundColor: 'hsl(var(--background) / 0)' }}
+                initial={{
+                  backgroundColor: 'oklch(from var(--background) l c h / 0)',
+                }}
+                animate={{
+                  backgroundColor: 'oklch(from var(--background) l c h / 0.95)',
+                }}
+                exit={{
+                  backgroundColor: 'oklch(from var(--background) l c h / 0)',
+                }}
                 className="absolute inset-0 z-9999 flex cursor-zoom-out items-center justify-center"
                 onClick={() => setZoomed(false)}
               >

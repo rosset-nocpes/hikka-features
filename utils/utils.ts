@@ -11,10 +11,12 @@ export const getThemeVariables = (): string => {
   const isDark = document.documentElement.classList.contains('dark');
   const variables = new Map<string, string>();
 
-  const unwrapHsl = (value: string): string => {
-    const match = value.match(/hsl\((.*)\)/i);
-    return match ? match[1].trim() : value;
-  };
+  // hikka.io writes whole colours, as the extension's tokens are; older
+  // themes wrote bare `h s% l%` triplets.
+  const asColor = (value: string): string =>
+    /^[\d.]+(deg)?[\s,]+[\d.]+%[\s,]+[\d.]+%$/.test(value)
+      ? `hsl(${value})`
+      : value;
 
   try {
     const rules = Array.from(userStyles.sheet.cssRules);
@@ -31,7 +33,7 @@ export const getThemeVariables = (): string => {
           .map((prop) =>
             variables.set(
               prop,
-              unwrapHsl(rule.style.getPropertyValue(prop).trim()),
+              asColor(rule.style.getPropertyValue(prop).trim()),
             ),
           );
       }
@@ -41,6 +43,16 @@ export const getThemeVariables = (): string => {
     extractVariables(':root:root');
     extractVariables('.dark');
     if (isDark) extractVariables('.dark.dark');
+
+    // The site derives its accent from the user's brand colour; so does the
+    // extension's primary, at the lightness the site gives accent text.
+    const brand = variables.get('--brand');
+    if (brand) {
+      variables.set(
+        '--primary',
+        `oklch(from ${brand} ${isDark ? 0.722 : 0.5} c h)`,
+      );
+    }
 
     return Array.from(variables.entries())
       .map(([key, value]) => `${key}: ${value};`)
@@ -62,16 +74,27 @@ export const syncFeatureTheme = (
   container: HTMLElement,
   options: { themeVariables?: boolean } = {},
 ): void => {
+  let applied = new Set<string>();
+
   const applyThemeVariables = () => {
+    const variables = new Map<string, string>();
     for (const declaration of getThemeVariables().split(';')) {
       const separatorIndex = declaration.indexOf(':');
       if (separatorIndex === -1) continue;
-
-      container.style.setProperty(
+      variables.set(
         declaration.slice(0, separatorIndex).trim(),
         declaration.slice(separatorIndex + 1).trim(),
       );
     }
+
+    // A colour the user reset falls back to the extension's own.
+    for (const name of applied) {
+      if (!variables.has(name)) container.style.removeProperty(name);
+    }
+    for (const [name, value] of variables) {
+      container.style.setProperty(name, value);
+    }
+    applied = new Set(variables.keys());
   };
 
   const applyTheme = () => {
@@ -89,6 +112,15 @@ export const syncFeatureTheme = (
     attributes: true,
     attributeFilter: ['class', 'style'],
   });
+  if (options.themeVariables) {
+    // hikka.io rewrites #user-styles when the user's theme loads or they
+    // edit it.
+    observer.observe(document.head, {
+      childList: true,
+      characterData: true,
+      subtree: true,
+    });
+  }
 
   applyTheme();
 };
