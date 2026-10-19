@@ -61,6 +61,21 @@ interface AppState {
     recommendationBlock: {
       enabled: boolean;
     };
+    /**
+     * Where the "friends are watching" block sits among the homepage's
+     * widgets, which hikka.io keeps in the account and can't hold ours.
+     */
+    friendsActivity: {
+      hidden: boolean;
+      /** Its column, for when neither neighbour is on the page. */
+      side: 'left' | 'center' | 'right';
+      /**
+       * The site widgets right before and after it, by slug; null at either
+       * end of its column, which survives storage as undefined wouldn't.
+       */
+      after: string | null;
+      before: string | null;
+    };
     editorCharacters: {
       enabled: boolean;
     };
@@ -110,6 +125,12 @@ export const useSettings = create<AppState>()(
         },
         recommendationBlock: {
           enabled: true,
+        },
+        friendsActivity: {
+          hidden: false,
+          side: 'left' as 'left' | 'center' | 'right',
+          after: 'profile' as string | null,
+          before: 'tracker' as string | null,
         },
         editorCharacters: {
           enabled: true,

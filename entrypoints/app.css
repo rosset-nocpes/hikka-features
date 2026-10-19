@@ -151,7 +151,10 @@
 }
 
 @layer base {
+  /* `:host` too: inside a content script's shadow root, `:root` matches
+     nothing, and light pages would leave these to the site's own values. */
   :root,
+  :host,
   .novel-theme-light {
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;

@@ -47,6 +47,10 @@ const ACCOUNT_FUNCTIONS = new Set(
     convexApi.notifications.markAllSeen,
     convexApi.teamPriority.get,
     convexApi.teamPriority.set,
+    convexApi.activity.report,
+    convexApi.activity.clear,
+    convexApi.activity.settings,
+    convexApi.activity.setSharing,
   ].map((reference) => getFunctionName(reference)),
 );
 

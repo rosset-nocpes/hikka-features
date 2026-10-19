@@ -140,6 +140,18 @@ export type WatchRoomAction =
       rate?: number;
     };
 
+/** What a friend is watching in the extension's player. */
+export interface FriendActivity {
+  friend: WatchRoomProfile;
+  animeSlug: string;
+  episode: number;
+  playing: boolean;
+  /** Server time of the last report. */
+  updatedAt: number;
+  /** Their watch together room; `code` when the user may join it. */
+  room?: { memberCount: number; code?: string };
+}
+
 type NoArgs = Record<string, never>;
 
 export const convexApi = {
@@ -284,5 +296,31 @@ export const convexApi = {
   },
   friends: {
     refresh: makeFunctionReference<'action', NoArgs, null>('friends:refresh'),
+  },
+  activity: {
+    report: makeFunctionReference<
+      'mutation',
+      {
+        animeSlug: string;
+        episode: number;
+        playing: boolean;
+        roomCode?: string;
+      },
+      { shared: boolean }
+    >('activity:report'),
+    clear: makeFunctionReference<'mutation', NoArgs, null>('activity:clear'),
+    settings: makeFunctionReference<
+      'query',
+      NoArgs,
+      { shareActivity: boolean }
+    >('activity:settings'),
+    setSharing: makeFunctionReference<
+      'mutation',
+      { shareActivity: boolean },
+      null
+    >('activity:setSharing'),
+    friends: makeFunctionReference<'query', NoArgs, FriendActivity[]>(
+      'activity:friends',
+    ),
   },
 };

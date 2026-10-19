@@ -9,6 +9,7 @@ import { useIFramePlayer } from '@/hooks/use-iframe-player';
 import { syncFeatureTheme } from '@/utils/utils';
 
 import { queryClient } from '../..';
+import { startActivityReporter } from './activity-reporter';
 import { PlayerProvider, usePlayer } from './context/player-context';
 import {
   type PlayerLayout,
@@ -26,6 +27,7 @@ import WatchTogetherInvite from './watch-together/watch-together-invite';
 const MOUNT_TAG = 'player-ui';
 
 let playerUiPromise: ReturnType<typeof createShadowRootUi> | undefined;
+let stopActivityReporter: (() => void) | undefined;
 
 export default function player() {
   playerUiPromise ??= createShadowRootUi(usePageStore.getState().ctx, {
@@ -47,6 +49,8 @@ export default function player() {
       const style = document.createElement('style');
       container.appendChild(style);
 
+      stopActivityReporter = startActivityReporter();
+
       const root = createRoot(wrapper);
       root.render(
         <QueryClientProvider client={queryClient}>
@@ -64,6 +68,8 @@ export default function player() {
     onRemove: (root) => {
       root?.unmount();
       useWatchTogether.getState().leave();
+      stopActivityReporter?.();
+      stopActivityReporter = undefined;
 
       const { fullscreen, toggleFullscreen, setVideoPiPActive } =
         usePlayer.getState();

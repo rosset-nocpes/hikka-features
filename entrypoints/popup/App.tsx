@@ -17,6 +17,7 @@ import { version } from '@/package.json';
 
 import NavigationRow from './_base/navigation-row';
 import SettingsGroup from './_base/settings-group';
+import ActivitySettings from './options/activity-settings';
 import AniBackgroundSettings from './options/anibackground-settings';
 import AniButtonsSettings from './options/anibuttons-settings';
 import CharacterSuggestionsSettings from './options/character-suggestion-settings';
@@ -54,6 +55,7 @@ const staggerContainerVariants = {
 function HomePage() {
   const { navigate } = useNavigation();
   const reduceMotion = useReducedMotion();
+  const signedIn = useSettings((state) => Boolean(state.convexSession));
 
   return (
     <ScrollArea className="h-full" scrollFade>
@@ -65,7 +67,13 @@ function HomePage() {
       >
         <motion.div variants={groupVariants}>
           <SettingsGroup>
-            <UserOptions />
+            {/* Rows are separated by borders, so no empty one when signed out. */}
+            {signedIn
+              ? [
+                  <UserOptions key="user" />,
+                  <ActivitySettings key="activity" grouped />,
+                ]
+              : [<UserOptions key="user" />]}
           </SettingsGroup>
         </motion.div>
 
