@@ -1,4 +1,4 @@
-import { type FC, type RefObject, useEffect, useState } from 'react';
+import { type FC, type RefObject, useState } from 'react';
 import MaterialSymbolsCheckRounded from '~icons/material-symbols/check-rounded';
 import MaterialSymbolsContentCopyOutlineRounded from '~icons/material-symbols/content-copy-outline-rounded';
 import MaterialSymbolsShareOutlineRounded from '~icons/material-symbols/share-outline-rounded';
@@ -10,12 +10,13 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
+import { useCopy } from '@/hooks/use-copy';
 
 import { usePlayer } from '../../context/player-context';
 import { getTeamName } from '../../teams';
 import { formatTime } from '../time-group';
 import ToolbarTooltip from '../toolbar-tooltip';
-import { useUiLock } from '../use-ui-lock';
+import { useToolbarMenuPosition, useUiLock } from '../use-ui-lock';
 
 /** Reads "1:02:03", "2:03" or "123" as seconds. */
 const parseTime = (value: string) => {
@@ -30,19 +31,14 @@ interface Props {
 }
 
 const Share: FC<Props> = ({ anchor }) => {
-  const { container, overlayRef, provider, team, currentEpisode } = usePlayer();
+  const { provider, team, currentEpisode } = usePlayer();
+  const position = useToolbarMenuPosition(anchor);
   const [open, setOpen] = useState(false);
   const [withTime, setWithTime] = useState(false);
   const [time, setTime] = useState(0);
   const [timeText, setTimeText] = useState('');
-  const [copied, setCopied] = useState(false);
+  const { copied, copy, clear } = useCopy();
   useUiLock(open);
-
-  useEffect(() => {
-    if (!copied) return;
-    const timeout = setTimeout(() => setCopied(false), 2000);
-    return () => clearTimeout(timeout);
-  }, [copied]);
 
   const handleOpenChange = (next: boolean) => {
     setOpen(next);
@@ -52,7 +48,7 @@ const Share: FC<Props> = ({ anchor }) => {
     setTime(now);
     setTimeText(formatTime(now));
     setWithTime(false);
-    setCopied(false);
+    clear();
   };
 
   /** Applies the typed time, or restores the last valid one. */
@@ -74,7 +70,7 @@ const Share: FC<Props> = ({ anchor }) => {
     url.searchParams.set('playerEpisode', String(currentEpisode.episode));
     if (withTime) url.searchParams.set('time', String(commitTime()));
 
-    void navigator.clipboard.writeText(url.href).then(() => setCopied(true));
+    void copy(url.href);
   };
 
   return (
@@ -90,13 +86,7 @@ const Share: FC<Props> = ({ anchor }) => {
       </ToolbarTooltip>
       <PopoverContent
         className="bg-popover/60 w-56 gap-0 p-1 backdrop-blur-xl"
-        container={container}
-        anchor={anchor}
-        side="top"
-        sideOffset={20}
-        align="end"
-        collisionBoundary={overlayRef.current as Element}
-        collisionPadding={8}
+        {...position}
       >
         <div className="text-muted-foreground truncate px-2 py-1.5 text-xs font-medium">
           Епізод {currentEpisode?.episode}

@@ -14,15 +14,6 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from '@/components/ui/input-group';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import {
   type CatalogTeam,
@@ -31,16 +22,16 @@ import {
 } from '@/utils/convex-api';
 import { publicQuery } from '@/utils/convex-client';
 import { queueTeamPrioritySync } from '@/utils/team-priority-sync';
+import { looseKey } from '@/utils/utils';
 
+import SelectOption from '../_base/select-option';
 import SettingsGroup from '../_base/settings-group';
+import SettingsPage from '../_base/settings-page';
 
 const translationOptions: { value: PreferredTranslation; label: string }[] = [
   { value: 'dub', label: 'Озвучення' },
   { value: 'sub', label: 'Субтитри' },
 ];
-
-const normalize = (value: string) =>
-  value.toLocaleLowerCase('uk').replace(/\s+/g, '');
 
 const TeamAvatar = ({ team }: { team: CatalogTeam }) => (
   <Avatar className="size-8 rounded-md after:rounded-md">
@@ -170,152 +161,127 @@ const TeamPrioritySettings = () => {
   };
 
   const selected = new Set(order.map((team) => team.id));
-  const query = normalize(search);
+  const query = looseKey(search);
   const results = (catalog.data ?? []).filter(
-    (team) => !selected.has(team.id) && normalize(team.title).includes(query),
+    (team) => !selected.has(team.id) && looseKey(team.title).includes(query),
   );
 
   return (
-    <ScrollArea className="h-full" scrollFade>
-      <div className="flex flex-col gap-3 pb-4">
-        <p className="px-1 text-xs font-medium text-pretty text-[#A1A1A1]">
-          Програвач відкриється з першою командою зі списку, яка вже має
-          наступний епізод у вибраному перекладі. Улюблена команда тайтлу має
-          перевагу над списком.{' '}
-          {convexSession
-            ? 'Список синхронізується з акаунтом. Коли одна з цих команд випустить у ньому нову серію тайтлу зі списку «Дивлюсь», на Hikka з’явиться сповіщення.'
-            : 'Увійдіть, щоб синхронізувати список між пристроями й отримувати сповіщення про нові серії тайтлів, які ви дивитеся.'}
-        </p>
+    <SettingsPage>
+      <p className="px-1 text-xs font-medium text-pretty text-[#A1A1A1]">
+        Програвач відкриється з першою командою зі списку, яка вже має наступний
+        епізод у вибраному перекладі. Улюблена команда тайтлу має перевагу над
+        списком.{' '}
+        {convexSession
+          ? 'Список синхронізується з акаунтом. Коли одна з цих команд випустить у ньому нову серію тайтлу зі списку «Дивлюсь», на Hikka з’явиться сповіщення.'
+          : 'Увійдіть, щоб синхронізувати список між пристроями й отримувати сповіщення про нові серії тайтлів, які ви дивитеся.'}
+      </p>
 
-        <SettingsGroup>
-          <div className="flex items-center justify-between px-4 py-3">
-            <label className="text-sm font-medium">Переклад</label>
-            <Select
-              items={translationOptions}
-              value={translation}
-              onValueChange={(value) => {
-                if (value) save({ teamPriorityTranslation: value });
-              }}
-            >
-              <SelectTrigger className="w-36">
-                <SelectValue placeholder="Оберіть переклад" />
-              </SelectTrigger>
-              <SelectContent alignItemWithTrigger={false}>
-                <SelectGroup>
-                  {translationOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-        </SettingsGroup>
+      <SettingsGroup>
+        <SelectOption
+          label="Переклад"
+          value={translation}
+          options={translationOptions}
+          onChange={(value) => save({ teamPriorityTranslation: value })}
+          width="w-36"
+        />
+      </SettingsGroup>
 
-        <SettingsGroup
-          title="Порядок"
-          icon={<MaterialSymbolsFormatListNumberedRounded className="size-4" />}
-        >
-          {order.length ? (
-            <Reorder.Group
-              axis="y"
-              values={order}
-              onReorder={(next: CatalogTeam[]) => {
-                draftRef.current = next;
-                setDraft(next);
-              }}
-              className="flex flex-col"
-            >
-              {order.map((team, index) => (
-                <PriorityRow
-                  key={team.id}
-                  team={team}
-                  index={index}
-                  onMove={(offset) => move(index, offset)}
-                  onRemove={() =>
-                    save({
-                      teamPriority: order.filter(
-                        (entry) => entry.id !== team.id,
-                      ),
-                    })
-                  }
-                  onDragEnd={() => {
-                    if (draftRef.current) {
-                      save({ teamPriority: draftRef.current });
-                    }
-                    draftRef.current = undefined;
-                    setDraft(undefined);
-                  }}
-                />
-              ))}
-            </Reorder.Group>
-          ) : (
-            <p className="px-4 py-3 text-xs font-medium text-[#A1A1A1]">
-              Список порожній. Додайте команди нижче, починаючи з
-              найулюбленішої.
-            </p>
-          )}
-        </SettingsGroup>
-
-        <SettingsGroup
-          title="Додати команду"
-          icon={<MaterialSymbolsAddRounded className="size-4" />}
-        >
-          <div className="p-3">
-            <InputGroup>
-              <InputGroupAddon>
-                <MaterialSymbolsSearchRounded />
-              </InputGroupAddon>
-              <InputGroupInput
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Пошук команди"
-                aria-label="Пошук команди"
-              />
-            </InputGroup>
-          </div>
-          {catalog.isPending ? (
-            <div className="text-muted-foreground flex items-center justify-center gap-2 px-4 py-3 text-xs font-medium">
-              <Spinner />
-              Завантаження команд
-            </div>
-          ) : catalog.isError ? (
-            <div className="flex items-center justify-between gap-3 px-4 py-3">
-              <span className="text-destructive text-xs font-medium">
-                Не вдалося завантажити команди.
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => catalog.refetch()}
-              >
-                Повторити
-              </Button>
-            </div>
-          ) : results.length ? (
-            results.map((team) => (
-              <button
+      <SettingsGroup
+        title="Порядок"
+        icon={<MaterialSymbolsFormatListNumberedRounded className="size-4" />}
+      >
+        {order.length ? (
+          <Reorder.Group
+            axis="y"
+            values={order}
+            onReorder={(next: CatalogTeam[]) => {
+              draftRef.current = next;
+              setDraft(next);
+            }}
+            className="flex flex-col"
+          >
+            {order.map((team, index) => (
+              <PriorityRow
                 key={team.id}
-                type="button"
-                onClick={() => save({ teamPriority: [...order, team] })}
-                className="group/row hover:bg-accent/30 flex w-full items-center gap-3 px-4 py-2 text-left transition-[background-color]"
-              >
-                <TeamAvatar team={team} />
-                <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                  {team.title}
-                </span>
-                <MaterialSymbolsAddRounded className="text-muted-foreground group-hover/row:text-foreground size-5 shrink-0" />
-              </button>
-            ))
-          ) : (
-            <p className="px-4 py-3 text-xs font-medium text-[#A1A1A1]">
-              {search ? 'Нічого не знайдено.' : 'Усі команди вже у списку.'}
-            </p>
-          )}
-        </SettingsGroup>
-      </div>
-    </ScrollArea>
+                team={team}
+                index={index}
+                onMove={(offset) => move(index, offset)}
+                onRemove={() =>
+                  save({
+                    teamPriority: order.filter((entry) => entry.id !== team.id),
+                  })
+                }
+                onDragEnd={() => {
+                  if (draftRef.current) {
+                    save({ teamPriority: draftRef.current });
+                  }
+                  draftRef.current = undefined;
+                  setDraft(undefined);
+                }}
+              />
+            ))}
+          </Reorder.Group>
+        ) : (
+          <p className="px-4 py-3 text-xs font-medium text-[#A1A1A1]">
+            Список порожній. Додайте команди нижче, починаючи з найулюбленішої.
+          </p>
+        )}
+      </SettingsGroup>
+
+      <SettingsGroup
+        title="Додати команду"
+        icon={<MaterialSymbolsAddRounded className="size-4" />}
+      >
+        <div className="p-3">
+          <InputGroup>
+            <InputGroupAddon>
+              <MaterialSymbolsSearchRounded />
+            </InputGroupAddon>
+            <InputGroupInput
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Пошук команди"
+              aria-label="Пошук команди"
+            />
+          </InputGroup>
+        </div>
+        {catalog.isPending ? (
+          <div className="text-muted-foreground flex items-center justify-center gap-2 px-4 py-3 text-xs font-medium">
+            <Spinner />
+            Завантаження команд
+          </div>
+        ) : catalog.isError ? (
+          <div className="flex items-center justify-between gap-3 px-4 py-3">
+            <span className="text-destructive text-xs font-medium">
+              Не вдалося завантажити команди.
+            </span>
+            <Button variant="ghost" size="sm" onClick={() => catalog.refetch()}>
+              Повторити
+            </Button>
+          </div>
+        ) : results.length ? (
+          results.map((team) => (
+            <button
+              key={team.id}
+              type="button"
+              onClick={() => save({ teamPriority: [...order, team] })}
+              className="group/row hover:bg-accent/30 flex w-full items-center gap-3 px-4 py-2 text-left transition-[background-color]"
+            >
+              <TeamAvatar team={team} />
+              <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                {team.title}
+              </span>
+              <MaterialSymbolsAddRounded className="text-muted-foreground group-hover/row:text-foreground size-5 shrink-0" />
+            </button>
+          ))
+        ) : (
+          <p className="px-4 py-3 text-xs font-medium text-[#A1A1A1]">
+            {search ? 'Нічого не знайдено.' : 'Усі команди вже у списку.'}
+          </p>
+        )}
+      </SettingsGroup>
+    </SettingsPage>
   );
 };
 

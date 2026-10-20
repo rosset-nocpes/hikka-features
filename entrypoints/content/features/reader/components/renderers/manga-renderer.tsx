@@ -1,6 +1,5 @@
-/** biome-ignore-all lint/correctness/useHookAtTopLevel: . */
 import { WheelGesturesPlugin } from 'embla-carousel-wheel-gestures';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'motion/react';
 import {
   type ComponentPropsWithoutRef,
   useEffect,
@@ -17,9 +16,10 @@ import {
 } from '@/components/ui/carousel';
 import { Spinner } from '@/components/ui/spinner';
 
+import type { MangaSettings } from '../../reader.types';
+
 import useReadChapterData from '../../hooks/use-read-chapter-data';
 import { useReader } from '../../hooks/use-reader';
-import { ReaderType } from '../../reader.enums';
 import MangaNextPage from '../ui/manga-next-page';
 import MangaPageIndicator from '../ui/manga/manga-page-indicator';
 import MangaScaleIndicator from '../ui/manga/manga-scale-indicator';
@@ -68,16 +68,17 @@ const MangaPageImage = ({ src, ...props }: MangaPageImageProps) => {
   return <img key={retryCount} src={src} onError={handleError} {...props} />;
 };
 
+/** Only rendered for manga. */
 const MangaRenderer = () => {
   const {
-    settings,
+    settings: readerSettings,
     setSettings,
     carouselApi,
     setCarouselApi,
     currentChapter,
     nextChapter,
   } = useReader();
-  if (settings.type !== ReaderType.Manga) return;
+  const settings = readerSettings as MangaSettings;
 
   const { data: chapterImages } = useReadChapterData();
   const [isLoading, setIsLoading] = useState(true);
@@ -147,57 +148,23 @@ const MangaRenderer = () => {
       }
     };
 
-    // const handleScroll = () => {
-    //   if (carouselApi && carouselApi.selectedScrollSnap() !== selectedPageIndex)
-    //     setSelectedPageIndex(carouselApi.selectedScrollSnap());
-    // };
-
     window.addEventListener('keydown', handleKeyDown);
-    // carouselApi.on('scroll', handleScroll);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      // carouselApi.off('scroll', handleScroll);
-    };
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [carouselApi, isLoading]);
 
   useEffect(() => {
     if (!currentChapter || !carouselApi) return;
 
+    // Scrolling past the "next chapter" page opens that chapter.
     const handleScroll = () => {
-      const isTransitionPage = !carouselApi.canScrollNext();
-      const isLastImage =
-        carouselApi.selectedScrollSnap() ===
-        carouselApi.scrollSnapList().length - 2;
-
-      if (isTransitionPage && !isLoading) {
-        nextChapter();
-        carouselApi.scrollTo(0);
-      }
-
-      // if (isLastImage) {
-      //   const current = mangaData.chapters.findIndex(
-      //     (chap) => chap.id === currentChapter.id,
-      //   );
-      //   const lastRead = getRead() - 1;
-
-      //   if (current === -1) return;
-
-      //   if (lastRead - current) {
-      //     (
-      //       document.body.querySelector(
-      //         'div.rounded-lg.border:nth-child(2) button',
-      //       ) as HTMLButtonElement
-      //     )?.click();
-      //   }
-      // }
+      if (!carouselApi.canScrollNext() && !isLoading) nextChapter();
     };
 
     carouselApi.on('scroll', handleScroll);
-
     return () => {
       carouselApi.off('scroll', handleScroll);
     };
-  }, [carouselApi, currentChapter, isLoading]);
+  }, [carouselApi, currentChapter, isLoading, nextChapter]);
 
   useLayoutEffect(() => {
     const scrollContainer = scrollContainerRef.current;

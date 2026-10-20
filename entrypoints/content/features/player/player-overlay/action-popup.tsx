@@ -180,7 +180,7 @@ const FlashPopup = ({ action }: { action: PopupAction }) => {
 };
 
 const ActionPopup = () => {
-  const { overlayRef } = usePlayer();
+  const { overlay } = usePlayer();
   // A short-lived action, and a held one (speedup) the top slot falls back to.
   const [flash, setFlash] = useState<PopupAction | null>(null);
   const [held, setHeld] = useState<PopupAction | null>(null);
@@ -188,7 +188,7 @@ const ActionPopup = () => {
   const hideTimerRef = useRef<NodeJS.Timeout>(null);
 
   useEffect(() => {
-    const ref = overlayRef.current;
+    const ref = overlay;
     if (!ref) return;
 
     const handleAction = (event: Event) => {
@@ -221,7 +221,7 @@ const ActionPopup = () => {
         clearTimeout(hideTimerRef.current);
       }
     };
-  }, [overlayRef]);
+  }, [overlay]);
 
   const flashOnTop = flash && getSlot(flash) === 'top';
   const top = flashOnTop ? flash : held;

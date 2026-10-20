@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/sheet';
 
 import { useReader } from '../../../hooks/use-reader';
-import reader from '../../../reader';
+import { closeReader } from '../../../reader';
 import { READER_POWERED_BY } from '../../../reader.constants';
 import ChapterList from '../../sidebar/chapter-list';
 import { SettingsItems } from '../../sidebar/settings/reader-settings';
@@ -79,11 +79,7 @@ const ReaderMobileToolbar = () => {
             </div>
           </SheetContent>
         </Sheet>
-        <Button
-          variant="secondary"
-          size="md"
-          onClick={() => reader().then((x) => x.remove())}
-        >
+        <Button variant="secondary" size="md" onClick={closeReader}>
           <MaterialSymbolsCloseRounded />
         </Button>
       </div>

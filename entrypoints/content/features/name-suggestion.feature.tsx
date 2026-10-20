@@ -1,104 +1,44 @@
-import type { Root } from 'react-dom/client';
-
-import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useState } from 'react';
-import { createRoot } from 'react-dom/client';
+import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Kbd } from '@/components/ui/kbd';
-import { syncFeatureTheme } from '@/utils/utils';
 
-import { queryClient } from '..';
-import { BaseFeature } from '../core/base-feature';
+import { AnchoredUisFeature, createFeatureUi } from '../core/base-feature';
 import { HikkaPages } from '../core/core.enums';
 
-export default class NameSuggestionFeature extends BaseFeature {
+export default class NameSuggestionFeature extends AnchoredUisFeature {
   readonly id = 'name-suggestion';
   readonly pages = [
     HikkaPages.EditCreateCharacter,
     HikkaPages.EditCreatePerson,
     HikkaPages.AllContent,
   ];
-  private uis: {
-    target: NameSuggestionTarget;
-    ui: ShadowRootContentScriptUi<Root>;
-  }[] = [];
 
   async init() {
     this.uis = await Promise.all(
-      NAME_SUGGESTION_TARGETS.map(async (target) => ({
-        target,
-        ui: await createShadowRootUi(usePageStore.getState().ctx, {
+      NAME_SUGGESTION_TARGETS.map(async (target) => {
+        const ui = await createFeatureUi({
           name: this.id,
           position: 'overlay',
           alignment: 'bottom-right',
           anchor: () => getNameSuggestionInput(target)?.parentElement,
-          inheritStyles: true,
-          css: `:host(${this.id}) { margin-top: -1rem !important; width: 100% !important; }`,
+          hostCss: 'margin-top: -1rem !important; width: 100% !important;',
           onMount(container) {
-            const wrapper = document.createElement('div');
-            container.append(wrapper);
-
-            syncFeatureTheme(container, { themeVariables: true });
-
             if (container.parentElement) {
               container.parentElement.style.right = '0.25rem';
               container.parentElement.style.bottom = '0.25rem';
             }
-
-            const root = createRoot(wrapper);
-            root.render(
-              <QueryClientProvider client={queryClient}>
-                <NameSuggestionButton target={target} />
-              </QueryClientProvider>,
-            );
-
-            return root;
           },
-          onRemove: (root) => {
-            root?.unmount();
-          },
-        }),
-      })),
+          render: () => <NameSuggestionButton target={target} />,
+        });
+        return {
+          present: () => !!getNameSuggestionInput(target),
+          ui,
+          element: () => ui.shadowHost,
+        };
+      }),
     );
-  }
-
-  override get isMounted(): boolean {
-    const availableUis = this.uis.filter(({ target }) =>
-      getNameSuggestionInput(target),
-    );
-
-    return (
-      availableUis.length > 0 &&
-      availableUis.every(({ ui }) => ui.mounted && ui.shadowHost.isConnected)
-    );
-  }
-
-  override mount() {
-    this.uis.forEach(({ target, ui }) => {
-      if (!getNameSuggestionInput(target)) {
-        return;
-      }
-
-      if (ui.mounted && ui.shadowHost.isConnected) {
-        return;
-      }
-
-      if (ui.mounted) {
-        ui.remove();
-      }
-
-      ui.mount();
-    });
-  }
-
-  override unmount() {
-    this.uis.forEach(({ ui }) => {
-      if (ui.mounted) {
-        ui.remove();
-      }
-    });
   }
 }
 
@@ -116,50 +56,50 @@ const getNameSuggestionInput = (target: NameSuggestionTarget) =>
     `input[placeholder*="${target.placeholder}"]`,
   );
 
+/** Types `value` into the site's input the way the user would. */
+const fillInput = (input: HTMLInputElement, value: string) => {
+  input.value = value;
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+};
+
 const NameSuggestionButton = ({ target }: { target: NameSuggestionTarget }) => {
   const { data } = useEditorContent();
   const { enabled } = useSettings().features.editorCharacters;
-
-  const targetInput = getNameSuggestionInput(target);
   const suggestion = data?.suggestion?.[target.suggestionKey];
+  const [inputValue, setInputValue] = useState(
+    () => getNameSuggestionInput(target)?.value,
+  );
 
-  const [inputValue, setInputValue] = useState(targetInput?.value);
+  const applySuggestion = () => {
+    const input = getNameSuggestionInput(target);
+    if (input && suggestion) fillInput(input, suggestion);
+  };
 
-  const applySuggestion = useCallback(() => {
-    if (targetInput && suggestion) {
-      targetInput.value = suggestion;
-      targetInput.dispatchEvent(new Event('input', { bubbles: true }));
-
-      setInputValue(suggestion);
-    }
-  }, [targetInput, suggestion]);
-
+  // Tab in the empty input takes the suggestion.
   useEffect(() => {
-    if (!targetInput || !enabled) return;
+    const input = getNameSuggestionInput(target);
+    if (!input || !enabled) return;
 
     const handleKeydown = (e: KeyboardEvent) => {
       if (
         e.key === 'Tab' &&
-        document.activeElement === targetInput &&
-        !inputValue
+        document.activeElement === input &&
+        !input.value &&
+        suggestion
       ) {
         e.preventDefault();
-        applySuggestion();
+        fillInput(input, suggestion);
       }
     };
+    const handleInput = () => setInputValue(input.value);
 
-    const handleInput = (e: Event) => {
-      setInputValue((e.target as HTMLInputElement).value);
-    };
-
-    targetInput.addEventListener('input', handleInput);
+    input.addEventListener('input', handleInput);
     document.addEventListener('keydown', handleKeydown);
-
     return () => {
-      targetInput.removeEventListener('input', handleInput);
+      input.removeEventListener('input', handleInput);
       document.removeEventListener('keydown', handleKeydown);
     };
-  }, [enabled, targetInput, inputValue, applySuggestion]);
+  }, [enabled, target, suggestion]);
 
   const isVisible = enabled && suggestion && !inputValue;
 

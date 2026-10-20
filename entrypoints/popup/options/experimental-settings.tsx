@@ -1,46 +1,29 @@
 import { AnimatePresence, motion } from 'motion/react';
 import MaterialSymbolsExperiment from '~icons/material-symbols/experiment';
 
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { useNavigation } from '@/hooks/use-navigation';
 
+import FeatureSwitch from '../_base/feature-switch';
 import SettingsGroup from '../_base/settings-group';
-import SwitchOption from '../_base/switch-option';
+import SettingsPage from '../_base/settings-page';
 
-const ExperimentalSettingsPage = () => {
-  const { features, updateFeatureSettings } = useSettings();
-  const { burunyaaMode, devTools } = features.devOptions;
-
-  return (
-    <ScrollArea className="flex-1" scrollFade>
-      <div className="flex flex-col gap-3 pb-4">
-        <SettingsGroup>
-          <SwitchOption
-            grouped
-            label="Burunyaa режим"
-            checked={burunyaaMode}
-            onClick={() => {
-              updateFeatureSettings('devOptions', {
-                burunyaaMode: !burunyaaMode,
-              });
-            }}
-          />
-          <SwitchOption
-            grouped
-            label="Режим розробника"
-            description="Додає функції, які полегшують роботу з розширенням"
-            checked={devTools}
-            onClick={() => {
-              updateFeatureSettings('devOptions', {
-                devTools: !devTools,
-              });
-            }}
-          />
-        </SettingsGroup>
-      </div>
-    </ScrollArea>
-  );
-};
+const ExperimentalSettingsPage = () => (
+  <SettingsPage>
+    <SettingsGroup>
+      <FeatureSwitch
+        feature="devOptions"
+        option="burunyaaMode"
+        label="Burunyaa режим"
+      />
+      <FeatureSwitch
+        feature="devOptions"
+        option="devTools"
+        label="Режим розробника"
+        description="Додає функції, які полегшують роботу з розширенням"
+      />
+    </SettingsGroup>
+  </SettingsPage>
+);
 
 export function ExperimentalSettingsIcon() {
   const { enabled } = useSettings().features.devOptions;

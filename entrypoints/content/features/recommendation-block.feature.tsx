@@ -1,18 +1,15 @@
 import type { FC } from 'react';
 
-import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { createRoot } from 'react-dom/client';
 import MaterialSymbolsPersonalizedRecommendations from '~icons/material-symbols/personalized-recommendations';
 
+import { HFLogo } from '@/components/feature-card';
 import BlockButton from '@/components/hikka/block-button';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import EmptyState from '@/components/ui/empty-state';
-import HFLogoSmallDark from '@/public/hikka-features-small-dark.svg';
-import HFLogoSmall from '@/public/hikka-features-small.svg';
+import { reveal } from '@/utils/motion';
 
-import { queryClient } from '..';
-import { BaseFeature } from '../core/base-feature';
+import { BaseFeature, createFeatureUi } from '../core/base-feature';
 import { HikkaPages } from '../core/core.enums';
 
 export default class RecommendationBlockFeature extends BaseFeature {
@@ -24,31 +21,13 @@ export default class RecommendationBlockFeature extends BaseFeature {
   ];
 
   async init() {
-    this.ui = await createShadowRootUi(usePageStore.getState().ctx, {
+    this.ui = await createFeatureUi({
       name: this.id,
       position: 'inline',
       append: 'after',
       anchor: '#content-center > section:last-of-type',
-      css: `:host(${this.id}) { margin-top: -2rem !important; }`,
-      inheritStyles: true,
-      onMount(container) {
-        const wrapper = document.createElement('div');
-        container.append(wrapper);
-
-        syncFeatureTheme(container, { themeVariables: true });
-
-        const root = createRoot(wrapper);
-        root.render(
-          <QueryClientProvider client={queryClient}>
-            <RecommendationBlock />
-          </QueryClientProvider>,
-        );
-
-        return root;
-      },
-      onRemove: (root) => {
-        root?.unmount();
-      },
+      hostCss: 'margin-top: -2rem !important;',
+      render: () => <RecommendationBlock />,
     });
   }
 }
@@ -64,24 +43,13 @@ const RecommendationBlock: FC = () => {
     <AnimatePresence>
       {enabled && content_data && (
         <motion.div
-          initial={{ opacity: 0, height: 0, scale: 0.93, marginTop: 0 }}
-          animate={{
-            opacity: 1,
-            height: 'auto',
-            scale: 1,
-            marginTop: '2rem',
-          }}
-          exit={{ opacity: 0, height: 0, scale: 0.93, marginTop: 0 }}
-          transition={{ duration: 0.2, ease: 'easeOut' }}
+          {...reveal('height', { marginTop: '2rem' })}
           className="flex flex-col gap-4 lg:gap-6"
         >
           <div className="flex items-center justify-between gap-2">
             <h3 className="flex items-center justify-between gap-2">
               Схожий контент
-              <img
-                src={isHikkaDarkMode() ? HFLogoSmall : HFLogoSmallDark}
-                style={{ width: '21px', height: '20px' }}
-              />
+              <HFLogo />
             </h3>
             <BlockButton
               href={`https://myanimelist.net/${contentType === 'novel' ? 'manga' : contentType}/${content_data.mal_id}`}
@@ -125,20 +93,12 @@ const RecommendationBlock: FC = () => {
                     <img
                       className="bg-secondary/30 absolute inset-0 h-full w-full object-cover"
                       src={item.image}
-                      alt={
-                        item.title_ua ||
-                        item.title_en ||
-                        item.title_ja ||
-                        item.title_original
-                      }
+                      alt={hikkaTitle(item)}
                       loading="lazy"
                     />
                   </AspectRatio>
                   <span className="line-clamp-2 text-sm leading-5 font-medium">
-                    {item?.title_ua ||
-                      item?.title_en ||
-                      item?.title_ja ||
-                      item?.title_original}
+                    {hikkaTitle(item)}
                   </span>
                 </a>
               ))}

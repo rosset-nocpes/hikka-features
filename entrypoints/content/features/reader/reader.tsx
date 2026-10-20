@@ -1,12 +1,9 @@
-import { QueryClientProvider } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { createRoot } from 'react-dom/client';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { syncFeatureTheme } from '@/utils/utils';
 
-import { queryClient } from '../..';
+import { createFeatureUi } from '../../core/base-feature';
 import ReaderNavbar from './components/reader-navbar';
 import MangaRenderer from './components/renderers/manga-renderer';
 import NovelRenderer from './components/renderers/novel-renderer';
@@ -17,50 +14,32 @@ import { ReaderProvider, useReader } from './hooks/use-reader';
 import { ReaderType } from './reader.enums';
 
 const MOUNT_TAG = 'reader-ui';
-let readerUiPromise: ReturnType<typeof createShadowRootUi> | undefined;
+let readerUiPromise: ReturnType<typeof createFeatureUi> | undefined;
 
-export default function reader() {
-  readerUiPromise ??= createShadowRootUi(usePageStore.getState().ctx, {
+function reader() {
+  readerUiPromise ??= createFeatureUi({
     name: MOUNT_TAG,
     position: 'modal',
     zIndex: 100,
-    inheritStyles: true,
-    onMount(container) {
-      const wrapper = document.createElement('div');
-      container.append(wrapper);
-
+    themeVariables: false,
+    onMount(container, wrapper) {
       wrapper.className =
         'size-full md:backdrop-blur-xs bg-black/60 flex items-center justify-center md:p-8 duration-300';
-
-      container.className = 'h-full';
-      syncFeatureTheme(container);
-
+      container.classList.add('h-full');
       Fonts.injectAllFonts();
-
-      const root = createRoot(wrapper);
-      root.render(
-        <QueryClientProvider client={queryClient}>
-          <SidebarProvider className="h-full w-full">
-            <ReaderProvider container={container}>
-              <div
-                className="fixed z-0 size-full"
-                onClick={() => reader().then((x) => x.remove())}
-              />
-              <Reader />
-            </ReaderProvider>
-          </SidebarProvider>
-        </QueryClientProvider>,
-      );
-
-      return root;
     },
-    onRemove: (root) => {
+    render: (container) => (
+      <SidebarProvider className="h-full w-full">
+        <ReaderProvider container={container}>
+          <div className="fixed z-0 size-full" onClick={closeReader} />
+          <Reader />
+        </ReaderProvider>
+      </SidebarProvider>
+    ),
+    onRemove: () => {
       const { settings, toggleFullscreen } = useReader.getState();
       if (settings.fullscreen) toggleFullscreen();
-
-      root?.unmount();
       document.body.classList.remove('h-full', 'overflow-hidden');
-
       useReader.getState().reset();
     },
   });
@@ -68,19 +47,21 @@ export default function reader() {
   return readerUiPromise;
 }
 
-export const Reader = () => {
-  const { settings } = useReader();
+export const openReader = () => {
+  document.body.classList.add('h-full', 'overflow-hidden');
+  void reader().then((ui) => ui.mount());
+};
 
-  // const scrollContainerRef = useRef<HTMLDivElement>(null);
+export const closeReader = () => void reader().then((ui) => ui.remove());
+
+const Reader = () => {
+  const { settings } = useReader();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      switch (e.key) {
-        case 'Escape':
-          e.preventDefault();
-          reader().then((x) => x.remove());
-          break;
-      }
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      closeReader();
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -103,9 +84,7 @@ export const Reader = () => {
         {settings.type === ReaderType.Manga && <MangaRenderer />}
         {settings.type === ReaderType.Novel && <NovelRenderer />}
       </CardContent>
-      <ReaderSidebar
-      // scrollContainerRef={scrollContainerRef}
-      />
+      <ReaderSidebar />
     </Card>
   );
 };

@@ -1,26 +1,21 @@
-class ProviderBase {
-  type!: API.ProviderType;
-  lang!: ProviderLanguage;
-}
+type TeamEntry = Omit<API.TeamData, 'title'> & {
+  episodes: API.EpisodeData[];
+};
 
-export class ProviderTeamIFrame extends ProviderBase {
-  teams: {
-    [key: string]: {
-      id?: string;
-      logo: string;
-      canonicalTitle?: string;
-      translationType?: 'dub' | 'sub' | 'unknown';
-      episodes: API.EpisodeDataIFrame[];
-    };
-  };
+const toTeam = (title: string, team: TeamEntry): API.TeamData => ({
+  id: team.id,
+  title,
+  logo: team.logo,
+  canonicalTitle: team.canonicalTitle,
+  translationType: team.translationType,
+});
 
-  constructor(lang = ProviderLanguage.UKRAINIAN) {
-    super();
+/** A provider whose episodes are split by team, keyed by team title. */
+export class ProviderTeamIFrame {
+  readonly type = 'team-iframe';
+  teams: Record<string, TeamEntry> = {};
 
-    this.type = 'team-iframe';
-    this.lang = lang;
-    this.teams = {};
-  }
+  constructor(readonly lang = ProviderLanguage.UKRAINIAN) {}
 
   sortTeams() {
     this.teams = Object.fromEntries(
@@ -28,51 +23,22 @@ export class ProviderTeamIFrame extends ProviderBase {
     );
   }
 
-  getTeam(team_name: string) {
-    if (!this.teams[team_name])
-      return {
-        title: '',
-        logo: '',
-      };
-
-    const team: API.TeamData = {
-      id: this.teams[team_name].id,
-      title: team_name,
-      logo: this.teams[team_name].logo,
-      canonicalTitle: this.teams[team_name].canonicalTitle,
-      translationType: this.teams[team_name].translationType,
-    };
-
-    return team;
+  getTeam(title: string): API.TeamData {
+    const team = this.teams[title];
+    return team ? toTeam(title, team) : { title: '', logo: '' };
   }
 
-  getTeams() {
-    return Object.entries(this.teams).map(([name, team]) => ({
-      id: team.id,
-      title: name,
-      logo: team.logo,
-      canonicalTitle: team.canonicalTitle,
-      translationType: team.translationType,
-    }));
-  }
-
-  isEmpty() {
-    return Object.keys(this.teams).length === 0;
+  getTeams(): API.TeamData[] {
+    return Object.entries(this.teams).map(([title, team]) =>
+      toTeam(title, team),
+    );
   }
 }
 
-export class ProviderIFrame extends ProviderBase {
-  episodes: API.EpisodeDataIFrame[];
+/** A provider that plays every episode in a single player. */
+export class ProviderIFrame {
+  readonly type = 'iframe';
+  episodes: API.EpisodeData[] = [];
 
-  constructor(lang = ProviderLanguage.UKRAINIAN) {
-    super();
-
-    this.type = 'iframe';
-    this.lang = lang;
-    this.episodes = [];
-  }
-
-  isEmpty() {
-    return this.episodes.length === 0;
-  }
+  constructor(readonly lang = ProviderLanguage.UKRAINIAN) {}
 }

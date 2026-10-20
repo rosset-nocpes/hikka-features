@@ -1,4 +1,4 @@
-import { type FC, Fragment, useEffect, useRef } from 'react';
+import { Fragment, useEffect, useRef } from 'react';
 
 import MissingDivider, { countMissing } from '@/components/missing-divider';
 import { Badge } from '@/components/ui/badge';
@@ -8,12 +8,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { getHikkaProgress } from '@/utils/hikka-progress';
 
-import { getWatched, usePlayer } from '../context/player-context';
-
-interface Props {
-  toggleWatchedState: (state: boolean) => void;
-}
+import { usePlayer } from '../context/player-context';
 
 const dateFormatter = new Intl.DateTimeFormat('uk-UA', {
   day: 'numeric',
@@ -54,7 +51,7 @@ const revealRow = (row: HTMLElement, block: 'center' | 'nearest') => {
   }
 };
 
-const EpisodeList: FC<Props> = ({ toggleWatchedState }) => {
+const EpisodeList = () => {
   const { episodeData, currentEpisode, setEpisode } = usePlayer();
   const currentRowRef = useRef<HTMLLIElement>(null);
   const revealedRef = useRef(false);
@@ -72,16 +69,11 @@ const EpisodeList: FC<Props> = ({ toggleWatchedState }) => {
 
   if (!episodeData?.length) return null;
 
-  const watched = getWatched();
+  const watched = getHikkaProgress();
   // Decided per list so every row shares the same layout and height.
   const numbered = episodeData.some((episode) => getEpisodeTitle(episode));
   const numberWidth = `${String(Math.max(...episodeData.map((episode) => episode.episode))).length}ch`;
   const dated = episodeData.some((episode) => episode.releasedAt);
-
-  const handleSelectEpisode = (value: API.EpisodeData) => {
-    setEpisode(value);
-    toggleWatchedState(false);
-  };
 
   return (
     <SidebarGroup>
@@ -113,7 +105,7 @@ const EpisodeList: FC<Props> = ({ toggleWatchedState }) => {
                       !isCurrent &&
                       'text-muted-foreground',
                   )}
-                  onClick={() => handleSelectEpisode(ep)}
+                  onClick={() => setEpisode(ep)}
                   isActive={isCurrent}
                 >
                   {numbered && (

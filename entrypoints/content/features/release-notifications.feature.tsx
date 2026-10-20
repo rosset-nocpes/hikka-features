@@ -1,12 +1,5 @@
-import type { Root } from 'react-dom/client';
-
-import {
-  QueryClientProvider,
-  useMutation,
-  useQuery,
-} from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { type ReactNode, useEffect, useState } from 'react';
-import { createRoot } from 'react-dom/client';
 import MaterialSymbolsLiveTvRounded from '~icons/material-symbols/live-tv-rounded';
 
 import { useSettings } from '@/hooks/use-settings';
@@ -18,9 +11,9 @@ import {
 import { accountMutation, accountQuery } from '@/utils/convex-client';
 import { getHikkaViewerId } from '@/utils/hikka-viewer';
 
-import { queryClient } from '..';
-import { BaseFeature } from '../core/base-feature';
+import { AnchoredUisFeature, renderApp } from '../core/base-feature';
 import { HikkaPages } from '../core/core.enums';
+import { queryClient } from '../core/query-client';
 
 const POLL_INTERVAL_MS = 5 * 60 * 1_000;
 const BELL_PATH_PREFIX = 'M5 19q';
@@ -82,16 +75,14 @@ const TARGETS: Target[] = [
  * apply, whenever its anchor is on the page: the menu's pieces are mounted
  * again every time it opens.
  */
-export default class ReleaseNotificationsFeature extends BaseFeature {
+export default class ReleaseNotificationsFeature extends AnchoredUisFeature {
   readonly id = 'release-notifications';
   readonly pages = [HikkaPages.All];
-  private uis: { target: Target; ui: IntegratedContentScriptUi<Root> }[] = [];
 
   async init() {
     const { ctx } = usePageStore.getState();
-    this.uis = TARGETS.map((target) => ({
-      target,
-      ui: createIntegratedUi(ctx, {
+    this.uis = TARGETS.map((target) => {
+      const ui = createIntegratedUi(ctx, {
         tag: this.id,
         position: 'inline',
         anchor: target.find,
@@ -99,43 +90,12 @@ export default class ReleaseNotificationsFeature extends BaseFeature {
         onMount(wrapper) {
           // Lays the UI out as if it were the anchor's own children.
           wrapper.style.display = 'contents';
-
-          const root = createRoot(wrapper);
-          root.render(
-            <QueryClientProvider client={queryClient}>
-              {target.render(wrapper.parentElement!)}
-            </QueryClientProvider>,
-          );
-          return root;
+          return renderApp(wrapper, target.render(wrapper.parentElement!));
         },
         onRemove: (root) => root?.unmount(),
-      }),
-    }));
-    this.mount();
-  }
-
-  override get isMounted(): boolean {
-    const available = this.uis.filter(({ target }) => target.find());
-    return (
-      available.length > 0 &&
-      available.every(({ ui }) => ui.mounted && ui.wrapper.isConnected)
-    );
-  }
-
-  override mount() {
-    for (const { target, ui } of this.uis) {
-      if (!target.find()) continue;
-      if (ui.mounted && ui.wrapper.isConnected) continue;
-      // Hikka removed the anchor along with the UI; start over in the new one.
-      if (ui.mounted) ui.remove();
-      ui.mount();
-    }
-  }
-
-  override unmount() {
-    for (const { ui } of this.uis) {
-      if (ui.mounted) ui.remove();
-    }
+      });
+      return { present: () => !!target.find(), ui, element: () => ui.wrapper };
+    });
   }
 }
 

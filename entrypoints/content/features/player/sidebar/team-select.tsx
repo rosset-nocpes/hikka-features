@@ -1,9 +1,10 @@
 import { ChevronsUpDown } from 'lucide-react';
 import { motion } from 'motion/react';
-import { type FC, useMemo } from 'react';
+import { useMemo } from 'react';
 import MaterialSymbolsStarRateOutlineRounded from '~icons/material-symbols/star-rate-outline-rounded';
 import MaterialSymbolsStarRounded from '~icons/material-symbols/star-rounded';
 
+import SwapIcon from '@/components/swap-icon';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,48 +19,37 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { ProviderTeamIFrame } from '@/utils/provider_classes';
 
-import { usePlayer } from '../context/player-context';
+import {
+  episodesOf,
+  isFavoriteTeam,
+  usePlayer,
+} from '../context/player-context';
 import { getTeamName, groupTeams } from '../teams';
 
-interface Props {
-  toggleWatchedState: (state: boolean) => void;
-}
-
+/** "1-12, 14" for the episode numbers a team has. */
 const getEpisodeRanges = (episodes: { episode: number }[]) => {
-  if (!episodes.length) return '';
-
-  const episodeNumbers = [...new Set(episodes.map((e) => e.episode))].sort(
+  const numbers = [...new Set(episodes.map((e) => e.episode))].sort(
     (a, b) => a - b,
   );
-
-  const ranges = [];
-  let start = episodeNumbers[0];
-  let end = episodeNumbers[0];
-
-  for (let i = 1; i < episodeNumbers.length; i++) {
-    if (episodeNumbers[i] === end + 1) {
-      end = episodeNumbers[i];
-    } else {
-      ranges.push(start === end ? `${start}` : `${start}-${end}`);
-      start = episodeNumbers[i];
-      end = episodeNumbers[i];
-    }
+  const ranges: [start: number, end: number][] = [];
+  for (const number of numbers) {
+    const last = ranges.at(-1);
+    if (last && number === last[1] + 1) last[1] = number;
+    else ranges.push([number, number]);
   }
-
-  ranges.push(start === end ? `${start}` : `${start}-${end}`);
-
-  return ranges.join(', ');
+  return ranges
+    .map(([start, end]) => (start === end ? `${start}` : `${start}-${end}`))
+    .join(', ');
 };
 
-const TeamSelect: FC<Props> = ({ toggleWatchedState }) => {
+const TeamSelect = () => {
   const {
     container,
     provider,
     team,
     setTeam,
     favoriteTeam,
-    setFavoriteTeam,
-    removeFavoriteTeam,
+    toggleFavoriteTeam,
     episodeData,
     watchData: data,
   } = usePlayer();
@@ -72,28 +62,6 @@ const TeamSelect: FC<Props> = ({ toggleWatchedState }) => {
   }, [data, provider, favoriteTeam]);
 
   if (!data || !provider || !team) return;
-
-  const handleSelectTeam = (value: API.TeamData) => {
-    setTeam(value);
-    toggleWatchedState(false);
-  };
-
-  const handleFavorite = (
-    e: React.MouseEvent<HTMLButtonElement>,
-    team: API.TeamData,
-  ) => {
-    e.stopPropagation();
-
-    if (
-      favoriteTeam?.provider === provider &&
-      favoriteTeam?.team === team.title
-    ) {
-      removeFavoriteTeam();
-      return;
-    }
-
-    setFavoriteTeam(team.title);
-  };
 
   return (
     data[provider] instanceof ProviderTeamIFrame && (
@@ -147,7 +115,7 @@ const TeamSelect: FC<Props> = ({ toggleWatchedState }) => {
                       }}
                     >
                       <DropdownMenuItem
-                        onClick={() => handleSelectTeam(team)}
+                        onClick={() => setTeam(team)}
                         className="group/item p-0 font-normal"
                       >
                         <div className="flex w-full items-center justify-between gap-2 px-1 py-1.5 text-left text-sm">
@@ -166,9 +134,7 @@ const TeamSelect: FC<Props> = ({ toggleWatchedState }) => {
                             </span>
                             <span className="truncate text-xs">
                               {getEpisodeRanges(
-                                (data[provider] as ProviderTeamIFrame).teams[
-                                  team.title
-                                ].episodes,
+                                episodesOf(data, provider, team.title) ?? [],
                               )}
                             </span>
                           </div>
@@ -177,37 +143,28 @@ const TeamSelect: FC<Props> = ({ toggleWatchedState }) => {
                             size="icon-sm"
                             className={cn(
                               'group',
-                              !(
-                                favoriteTeam?.provider === provider &&
-                                favoriteTeam?.team === team.title
+                              !isFavoriteTeam(
+                                { favoriteTeam, provider },
+                                team,
                               ) && 'hidden group-hover/item:inline-flex',
                             )}
-                            onClick={(e) => handleFavorite(e, team)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleFavoriteTeam(team);
+                            }}
                           >
-                            <div className="relative">
-                              <div
-                                className={cn(
-                                  'absolute inset-0 flex items-center justify-center transition-[opacity,filter,scale] duration-300 ease-in-out will-change-[opacity,filter,scale]',
-                                  favoriteTeam?.provider === provider &&
-                                    favoriteTeam?.team === team.title
-                                    ? 'blur-0 scale-100 opacity-100'
-                                    : 'scale-[0.25] opacity-0 blur-xs',
-                                )}
-                              >
+                            <SwapIcon
+                              active={isFavoriteTeam(
+                                { favoriteTeam, provider },
+                                team,
+                              )}
+                              on={
                                 <MaterialSymbolsStarRounded className="size-5! text-yellow-400 transition-transform duration-300 group-hover:scale-125" />
-                              </div>
-                              <div
-                                className={cn(
-                                  'transition-[opacity,filter,scale] duration-300 ease-in-out will-change-[opacity,filter,scale]',
-                                  favoriteTeam?.provider === provider &&
-                                    favoriteTeam?.team === team.title
-                                    ? 'scale-[0.25] opacity-0 blur-xs'
-                                    : 'blur-0 scale-100 opacity-100',
-                                )}
-                              >
+                              }
+                              off={
                                 <MaterialSymbolsStarRateOutlineRounded className="text-muted-foreground group-hover:text-foreground size-5! transition-transform duration-300 group-hover:scale-125" />
-                              </div>
-                            </div>
+                              }
+                            />
                           </Button>
                         </div>
                       </DropdownMenuItem>

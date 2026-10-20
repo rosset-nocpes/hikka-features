@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react';
-import { type FC, type RefObject, useEffect, useState } from 'react';
+import { type FC, type RefObject, useState } from 'react';
 import MaterialSymbolsArrowBackRounded from '~icons/material-symbols/arrow-back-rounded';
 import MaterialSymbolsCheckRounded from '~icons/material-symbols/check-rounded';
 import MaterialSymbolsChevronRightRounded from '~icons/material-symbols/chevron-right-rounded';
@@ -31,10 +31,11 @@ import {
 } from '@/components/ui/popover';
 import { Spinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
+import { useCopy } from '@/hooks/use-copy';
 import { useLiveQuery } from '@/hooks/use-live-query';
 import { useSettings } from '@/hooks/use-settings';
 import { convexApi } from '@/utils/convex-api';
-import { withLiveClient } from '@/utils/convex-client';
+import { refreshFriends } from '@/utils/convex-client';
 
 import { usePlayer } from '../../context/player-context';
 import {
@@ -50,7 +51,7 @@ import { openRoom } from '../../watch-together/open-room';
 import { useWatchTogether } from '../../watch-together/use-watch-together';
 import MenuPages from '../menu-pages';
 import ToolbarTooltip from '../toolbar-tooltip';
-import { useUiLock } from '../use-ui-lock';
+import { useToolbarMenuPosition, useUiLock } from '../use-ui-lock';
 
 const MotionAvatar = motion.create(Avatar);
 const MotionAvatarGroup = motion.create(AvatarGroup);
@@ -74,12 +75,6 @@ const inviteLink = ({ animeSlug, code }: WatchRoom) => {
   url.searchParams.set('room', code);
   return url.href;
 };
-
-/** Reads the user's mutual follows again, at most every few minutes. */
-const refreshFriends = () =>
-  withLiveClient((client) =>
-    client.action(convexApi.friends.refresh, {}),
-  ).catch(console.error);
 
 /**
  * The newest members, so whoever just joined pops in on the right while the
@@ -333,23 +328,11 @@ const RoomMenu = ({
   onLeave: () => void;
 }) => {
   const { error, leave, share } = useWatchTogether();
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopy();
   const [sharing, setSharing] = useState<boolean>();
   const isOwner = room.members.some(
     (member) => member.self && member.id === room.ownerId,
   );
-
-  useEffect(() => {
-    if (!copied) return;
-    const timeout = setTimeout(() => setCopied(false), 2000);
-    return () => clearTimeout(timeout);
-  }, [copied]);
-
-  const copyInvite = () => {
-    void navigator.clipboard
-      .writeText(inviteLink(room))
-      .then(() => setCopied(true));
-  };
 
   const toggleSharing = (friendsCanJoin: boolean) => {
     setSharing(friendsCanJoin);
@@ -411,7 +394,7 @@ const RoomMenu = ({
         Запросити друзів
         <MaterialSymbolsChevronRightRounded className="text-muted-foreground ml-auto" />
       </MenuItem>
-      <MenuItem onClick={copyInvite}>
+      <MenuItem onClick={() => void copy(inviteLink(room))}>
         {copied ? (
           <MaterialSymbolsCheckRounded className="text-success" />
         ) : (
@@ -448,7 +431,7 @@ const WatchTogether: FC<Props> = ({
   compact,
   className,
 }) => {
-  const { container, overlayRef } = usePlayer();
+  const position = useToolbarMenuPosition(anchor, side);
   const { status, room } = useWatchTogether();
   const signedIn = useSettings((state) => Boolean(state.convexSession));
   const [open, setOpen] = useState(false);
@@ -490,13 +473,7 @@ const WatchTogether: FC<Props> = ({
       </ToolbarTooltip>
       <PopoverContent
         className="bg-popover/60 w-56 gap-0 p-1 backdrop-blur-xl"
-        container={container}
-        anchor={anchor}
-        side={side}
-        sideOffset={side === 'top' ? 20 : 8}
-        align="end"
-        collisionBoundary={overlayRef.current as Element}
-        collisionPadding={8}
+        {...position}
       >
         <MenuPages
           page={friendsPage ? 'friends' : joined ? 'room' : 'start'}

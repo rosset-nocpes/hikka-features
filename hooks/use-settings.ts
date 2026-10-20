@@ -26,7 +26,6 @@ interface AppState {
   // State Values
   convexSession?: { refreshToken: string };
   userData?: UserDataV2;
-  richPresence: boolean;
   /** Account `updatedAt` of the team priority at the last sync; 0 = never. */
   teamPrioritySyncedAt: number;
 
@@ -143,7 +142,6 @@ export const useSettings = create<AppState>()(
       },
       convexSession: undefined,
       userData: undefined,
-      richPresence: false,
       teamPrioritySyncedAt: 0,
 
       // Generic setter
@@ -164,7 +162,6 @@ export const useSettings = create<AppState>()(
         features: state.features,
         convexSession: state.convexSession,
         userData: state.userData,
-        richPresence: state.richPresence,
         teamPrioritySyncedAt: state.teamPrioritySyncedAt,
       }),
       version: 0,
@@ -214,7 +211,6 @@ const migrateFromOldStorage = async () => {
     state = {
       ...state,
       userData: oldStorage.userData || state.userData,
-      richPresence: oldStorage.richPresence ?? state.richPresence,
       features: {
         ...state.features,
         aniBackground: {

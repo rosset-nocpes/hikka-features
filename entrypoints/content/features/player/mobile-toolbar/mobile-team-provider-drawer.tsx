@@ -1,5 +1,3 @@
-import type { FC } from 'react';
-
 import { motion } from 'motion/react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -13,15 +11,11 @@ import {
 } from '@/components/ui/drawer';
 import { Separator } from '@/components/ui/separator';
 
-import { getAvailablePlayers, usePlayer } from '../context/player-context';
-import { getTeamName } from '../teams';
+import { usePlayer } from '../context/player-context';
+import { getTeamName, groupProviders } from '../teams';
 import MobileTeamSelect from './mobile-team-select';
 
-interface Props {
-  toggleWatchedState: (state: boolean) => void;
-}
-
-const MobileTeamProviderDrawer: FC<Props> = ({ toggleWatchedState }) => {
+const MobileTeamProviderDrawer = () => {
   const {
     container,
     provider,
@@ -31,28 +25,6 @@ const MobileTeamProviderDrawer: FC<Props> = ({ toggleWatchedState }) => {
   } = usePlayer();
 
   if (!data) return;
-
-  const avaliable_players = getAvailablePlayers(data);
-  const grouped_players: Record<ProviderLanguage, string[]> =
-    ALL_LANGUAGES.reduce(
-      (acc, lang) => {
-        const players = avaliable_players
-          .filter((p) => p.lang === lang)
-          .map((p) => p.title);
-
-        if (players.length) {
-          acc[lang] = players;
-        }
-
-        return acc;
-      },
-      {} as Record<ProviderLanguage, string[]>,
-    );
-
-  const handleSelectPlayer = (value: string) => {
-    setProvider(value);
-    toggleWatchedState(false);
-  };
 
   return (
     <Drawer>
@@ -78,22 +50,20 @@ const MobileTeamProviderDrawer: FC<Props> = ({ toggleWatchedState }) => {
           className="flex flex-col gap-4 overflow-y-auto p-4 pt-0"
         >
           <div className="flex flex-col gap-2">
-            {(
-              Object.entries(grouped_players) as [ProviderLanguage, string[]][]
-            ).map(([lang, players]) => (
+            {groupProviders(data).map(({ lang, titles }) => (
               <div key={lang} className="flex flex-col gap-2">
                 <span className="px-2 py-1.5 text-sm font-semibold">
                   {LANGUAGE_GROUP_NAMES[lang]}
                 </span>
                 <div className="flex flex-wrap gap-2">
-                  {players.map((elem) => (
+                  {titles.map((title) => (
                     <Button
-                      key={elem}
-                      onClick={() => handleSelectPlayer(elem)}
-                      variant={provider === elem ? 'default' : 'outline'}
+                      key={title}
+                      onClick={() => setProvider(title)}
+                      variant={provider === title ? 'default' : 'outline'}
                       className="flex-[1_0_calc(33.3%-0.5rem)] text-lg font-semibold"
                     >
-                      {elem.toUpperCase()}
+                      {title.toUpperCase()}
                     </Button>
                   ))}
                 </div>

@@ -8,17 +8,13 @@ import { usePlayer } from '../context/player-context';
 import PlayerSidebar from '../sidebar/player-sidebar';
 import ActionPopup from './action-popup';
 import BufferingIndicator from './buffering-indicator';
-import Gestrues from './gestrues';
+import Gestures from './gestures';
 import Time from './sliders/time';
 import VideoToolbar from './video-toolbar';
 
-interface Props {
-  toggleWatchedState: (state: boolean) => void;
-}
-
-const PlayerOverlay = ({ toggleWatchedState }: Props) => {
+const PlayerOverlay = () => {
   const { adInProgress, uiShown } = useIFramePlayer();
-  const { setOverlayRef, miniPlayer, videoPiPActive } = usePlayer();
+  const { setOverlay, miniPlayer, videoPiPActive } = usePlayer();
   const isMobile = useIsMobile();
 
   const isCompactMode = miniPlayer || videoPiPActive;
@@ -50,14 +46,14 @@ const PlayerOverlay = ({ toggleWatchedState }: Props) => {
       )}
     >
       <div
-        ref={setOverlayRef}
+        ref={setOverlay}
         className={cn(
           'relative flex flex-1 flex-col justify-end duration-300',
           adInProgress && 'opacity-0',
           !uiShown && 'cursor-none',
         )}
       >
-        <Gestrues />
+        <Gestures />
         <ActionPopup />
         <BufferingIndicator />
         <div
@@ -94,9 +90,7 @@ const PlayerOverlay = ({ toggleWatchedState }: Props) => {
           </TooltipProvider>
         </div>
       </div>
-      {!isCompactMode && !isMobile && (
-        <PlayerSidebar toggleWatchedState={toggleWatchedState} />
-      )}
+      {!isCompactMode && !isMobile && <PlayerSidebar />}
     </div>
   );
 };

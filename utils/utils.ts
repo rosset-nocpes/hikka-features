@@ -1,15 +1,21 @@
-export const getLocalMALId = () =>
-  parseInt(
-    (document.head.querySelector('[name=mal-id][content]') as HTMLMetaElement)
-      ?.content,
-  );
+/** A Hikka title's name to show: Ukrainian first. */
+export const hikkaTitle = (content: any): string | undefined =>
+  content?.title_ua ||
+  content?.title_en ||
+  content?.title_ja ||
+  content?.title_original;
 
-export const getThemeVariables = (): string => {
+/** A name without case and spaces, for matching and searching names. */
+export const looseKey = (value: string) =>
+  value.toLocaleLowerCase('uk').replace(/\s+/g, '');
+
+/** The colours of the user's hikka.io theme, by custom property. */
+const getThemeVariables = () => {
+  const variables = new Map<string, string>();
   const userStyles = document.getElementById('user-styles') as HTMLStyleElement;
-  if (!userStyles?.sheet) return '';
+  if (!userStyles?.sheet) return variables;
 
   const isDark = document.documentElement.classList.contains('dark');
-  const variables = new Map<string, string>();
 
   // hikka.io writes whole colours, as the extension's tokens are; older
   // themes wrote bare `h s% l%` triplets.
@@ -26,16 +32,14 @@ export const getThemeVariables = (): string => {
         (rule): rule is CSSStyleRule =>
           rule instanceof CSSStyleRule && rule.selectorText === selector,
       );
-
-      if (rule) {
-        Array.from(rule.style)
-          .filter((prop) => prop.startsWith('--'))
-          .map((prop) =>
-            variables.set(
-              prop,
-              asColor(rule.style.getPropertyValue(prop).trim()),
-            ),
+      if (!rule) return;
+      for (const prop of Array.from(rule.style)) {
+        if (prop.startsWith('--')) {
+          variables.set(
+            prop,
+            asColor(rule.style.getPropertyValue(prop).trim()),
           );
+        }
       }
     };
 
@@ -53,23 +57,21 @@ export const getThemeVariables = (): string => {
         `oklch(from ${brand} ${isDark ? 0.722 : 0.5} c h)`,
       );
     }
-
-    return Array.from(variables.entries())
-      .map(([key, value]) => `${key}: ${value};`)
-      .join(' ');
   } catch (error) {
     console.warn(
       '[hikka Features] Failed to read CSS rules from #user-styles:',
       error,
     );
-    return '';
+    variables.clear();
   }
+  return variables;
 };
 
 export const isHikkaDarkMode = (): boolean =>
   document.documentElement.classList.contains('dark') ||
   getComputedStyle(document.documentElement).colorScheme === 'dark';
 
+/** Follows hikka.io's dark mode and, with `themeVariables`, its colours. */
 export const syncFeatureTheme = (
   container: HTMLElement,
   options: { themeVariables?: boolean } = {},
@@ -77,15 +79,7 @@ export const syncFeatureTheme = (
   let applied = new Set<string>();
 
   const applyThemeVariables = () => {
-    const variables = new Map<string, string>();
-    for (const declaration of getThemeVariables().split(';')) {
-      const separatorIndex = declaration.indexOf(':');
-      if (separatorIndex === -1) continue;
-      variables.set(
-        declaration.slice(0, separatorIndex).trim(),
-        declaration.slice(separatorIndex + 1).trim(),
-      );
-    }
+    const variables = getThemeVariables();
 
     // A colour the user reset falls back to the extension's own.
     for (const name of applied) {
@@ -99,11 +93,7 @@ export const syncFeatureTheme = (
 
   const applyTheme = () => {
     if (!container.isConnected) return observer.disconnect();
-
-    if (options.themeVariables) {
-      applyThemeVariables();
-    }
-
+    if (options.themeVariables) applyThemeVariables();
     container.classList.toggle('dark', isHikkaDarkMode());
   };
 

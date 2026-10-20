@@ -9,6 +9,7 @@ import {
   COMPATIBILITY_STORAGE_KEY,
   type ExtensionCompatibilityState,
 } from '@/utils/compatibility';
+import { convexApi } from '@/utils/convex-api';
 
 export const CONVEX_URL = import.meta.env.WXT_CONVEX_URL ?? '';
 export const CONVEX_SITE_URL = import.meta.env.WXT_CONVEX_SITE_URL ?? '';
@@ -118,6 +119,12 @@ export async function acquireLiveClient() {
     },
   };
 }
+
+/** Reads the user's mutual follows again; the server limits how often. */
+export const refreshFriends = () =>
+  withLiveClient((client) =>
+    client.action(convexApi.friends.refresh, {}),
+  ).catch(console.error);
 
 /** Makes one call on the live client, e.g. a mutation from a click. */
 export async function withLiveClient<T>(

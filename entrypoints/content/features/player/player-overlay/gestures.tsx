@@ -1,17 +1,21 @@
 import { useCallback, useEffect, useRef } from 'react';
 
 import { useSidebar } from '@/components/ui/sidebar';
-import { useIFramePlayer } from '@/hooks/use-iframe-player';
+import {
+  cancelUiHide,
+  scheduleUiHide,
+  showUi,
+  useIFramePlayer,
+} from '@/hooks/use-iframe-player';
 
 import { usePlayer } from '../context/player-context';
 import { removePlayer } from '../player';
 import { dispatchPlayerOverlayAction } from './action-popup';
 
-const Gestrues = () => {
-  const gestrueRef = useRef<HTMLDivElement>(null);
+/** Clicks, taps, holds and keyboard shortcuts on the video. */
+const Gestures = () => {
   const speedupRef = useRef(false);
   const pointerTypeRef = useRef<string | null>(null);
-  const hideUiTimerRef = useRef<NodeJS.Timeout | null>(null);
   const pendingSeekTimeRef = useRef<number | null>(null);
   const skipTotalRef = useRef(0);
   const skipResetTimerRef = useRef<NodeJS.Timeout>(null);
@@ -28,35 +32,19 @@ const Gestrues = () => {
     isMuted,
     volume,
   } = useIFramePlayer();
-  const { toggleFullscreen, toggleTheatreMode, overlayRef, miniPlayer } =
+  const { toggleFullscreen, toggleTheatreMode, overlay, miniPlayer } =
     usePlayer();
   const { open, setOpen } = useSidebar();
-
-  const scheduleHideOverlayUi = useCallback(() => {
-    if (hideUiTimerRef.current) {
-      clearTimeout(hideUiTimerRef.current);
-    }
-    hideUiTimerRef.current = setTimeout(() => {
-      const { isPlaying, uiLocked } = useIFramePlayer.getState();
-      if (!isPlaying || uiLocked) return;
-      useIFramePlayer.setState({ uiShown: false });
-    }, 4000);
-  }, []);
-
-  const showOverlayUi = useCallback(() => {
-    useIFramePlayer.setState({ uiShown: true });
-    scheduleHideOverlayUi();
-  }, [scheduleHideOverlayUi]);
 
   const togglePlayPause = useCallback(() => {
     if (isPlaying) {
       pause();
-      dispatchPlayerOverlayAction(overlayRef.current, { type: 'pause' });
+      dispatchPlayerOverlayAction(overlay, { type: 'pause' });
     } else {
       play();
-      dispatchPlayerOverlayAction(overlayRef.current, { type: 'play' });
+      dispatchPlayerOverlayAction(overlay, { type: 'play' });
     }
-  }, [isPlaying, overlayRef, play, pause]);
+  }, [isPlaying, overlay, play, pause]);
 
   const handleSkip = useCallback(
     (seconds: number) => {
@@ -73,7 +61,7 @@ const Gestrues = () => {
       pendingSeekTimeRef.current = newTime;
       skipTotalRef.current = nextSkipTotal;
       seek(newTime);
-      dispatchPlayerOverlayAction(overlayRef.current, {
+      dispatchPlayerOverlayAction(overlay, {
         type: 'skip',
         seconds: nextSkipTotal,
       });
@@ -87,15 +75,15 @@ const Gestrues = () => {
         skipTotalRef.current = 0;
       }, 750);
     },
-    [currentTime, duration, overlayRef, seek],
+    [currentTime, duration, overlay, seek],
   );
 
   const handleToggleMute = useCallback(() => {
     toggleMute();
-    dispatchPlayerOverlayAction(overlayRef.current, {
+    dispatchPlayerOverlayAction(overlay, {
       type: isMuted || volume === 0 ? 'unmute' : 'mute',
     });
-  }, [isMuted, overlayRef, toggleMute, volume]);
+  }, [isMuted, overlay, toggleMute, volume]);
 
   const handleVolumeStep = useCallback(
     (delta: number) => {
@@ -104,12 +92,12 @@ const Gestrues = () => {
       const next = Math.round(Math.min(1, Math.max(0, base + delta)) * 100);
       if (isMuted && next > 0) toggleMute();
       changeVolume(next / 100);
-      dispatchPlayerOverlayAction(overlayRef.current, {
+      dispatchPlayerOverlayAction(overlay, {
         type: 'volume',
         percent: next,
       });
     },
-    [changeVolume, isMuted, overlayRef, toggleMute, volume],
+    [changeVolume, isMuted, overlay, toggleMute, volume],
   );
 
   const handleSeekTo = useCallback(
@@ -117,33 +105,23 @@ const Gestrues = () => {
       pendingSeekTimeRef.current = null;
       skipTotalRef.current = 0;
       seek(time);
-      showOverlayUi();
+      showUi();
     },
-    [seek, showOverlayUi],
+    [seek],
+  );
+
+  useEffect(
+    () => () => {
+      if (skipResetTimerRef.current) clearTimeout(skipResetTimerRef.current);
+      cancelUiHide();
+    },
+    [],
   );
 
   useEffect(() => {
-    return () => {
-      if (skipResetTimerRef.current) {
-        clearTimeout(skipResetTimerRef.current);
-      }
-      if (hideUiTimerRef.current) {
-        clearTimeout(hideUiTimerRef.current);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!isPlaying || !uiShown) {
-      if (hideUiTimerRef.current) {
-        clearTimeout(hideUiTimerRef.current);
-        hideUiTimerRef.current = null;
-      }
-      return;
-    }
-
-    scheduleHideOverlayUi();
-  }, [isPlaying, scheduleHideOverlayUi, uiShown]);
+    if (isPlaying && uiShown) scheduleUiHide();
+    else cancelUiHide();
+  }, [isPlaying, uiShown]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -253,7 +231,7 @@ const Gestrues = () => {
 
   // Hold on the video for 2x playback.
   useEffect(() => {
-    const el = overlayRef.current;
+    const el = overlay;
     if (!el) return;
 
     let holdTimer: NodeJS.Timeout | null = null;
@@ -330,16 +308,15 @@ const Gestrues = () => {
       el.removeEventListener('mouseleave', handleHoldEnd);
       el.removeEventListener('contextmenu', handleContextMenu);
     };
-  }, [overlayRef]);
+  }, [overlay]);
 
   return (
     <div
-      ref={gestrueRef}
       className="flex flex-1 focus:ring-0 focus:outline-hidden"
       onClick={() => {
         if (speedupRef.current) return;
         if (pointerTypeRef.current !== 'mouse' && !uiShown) {
-          showOverlayUi();
+          showUi();
           return;
         }
         togglePlayPause();
@@ -353,4 +330,4 @@ const Gestrues = () => {
   );
 };
 
-export default Gestrues;
+export default Gestures;

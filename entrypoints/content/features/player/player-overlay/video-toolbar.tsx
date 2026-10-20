@@ -1,12 +1,14 @@
 import { useRef } from 'react';
 
 import { usePlayer } from '../context/player-context';
-import Fullscreen from './buttons/fullscreen';
-import MiniPlayer from './buttons/mini-player';
-import Mute from './buttons/mute';
-import Play from './buttons/play';
 import Share from './buttons/share';
-import TheatreMode from './buttons/theatre-mode';
+import {
+  Fullscreen,
+  MiniPlayer,
+  Mute,
+  Play,
+  TheatreMode,
+} from './buttons/toggles';
 import WatchTogether from './buttons/watch-together';
 import Settings from './settings';
 import Volume from './sliders/volume';

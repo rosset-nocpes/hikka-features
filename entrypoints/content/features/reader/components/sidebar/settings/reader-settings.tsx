@@ -1,4 +1,5 @@
 import { Check, ChevronsUpDown } from 'lucide-react';
+import { Fragment } from 'react';
 import MaterialSymbolsPageInfoOutlineRounded from '~icons/material-symbols/page-info-outline-rounded';
 
 import { Button } from '@/components/ui/button';
@@ -282,9 +283,8 @@ const ThemeSelect = ({ config, value, onChange }: any) => (
     </span>
     <ButtonGroup className="w-full">
       {config.options?.map((option: any, index: number) => (
-        <>
+        <Fragment key={option.value}>
           <Button
-            key={option.value}
             className={cn(
               'bg-background flex-1 items-center justify-center p-0',
               option.value,
@@ -301,7 +301,7 @@ const ThemeSelect = ({ config, value, onChange }: any) => (
             )}
           </Button>
           {index < config.options.length - 1 && <ButtonGroupSeparator />}
-        </>
+        </Fragment>
       ))}
     </ButtonGroup>
   </div>

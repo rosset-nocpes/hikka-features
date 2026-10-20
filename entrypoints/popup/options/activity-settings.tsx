@@ -1,5 +1,3 @@
-import type { FC } from 'react';
-
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { convexApi } from '@/utils/convex-api';
@@ -9,12 +7,8 @@ import SwitchOption from '../_base/switch-option';
 
 const QUERY_KEY = ['activity-settings'];
 
-interface Props {
-  grouped?: boolean;
-}
-
 /** Kept in the account, so it holds on every device the user signs in on. */
-const ActivitySettings: FC<Props> = ({ grouped }) => {
+const ActivitySettings = () => {
   const queryClient = useQueryClient();
   const { data } = useQuery({
     queryKey: QUERY_KEY,
@@ -30,7 +24,6 @@ const ActivitySettings: FC<Props> = ({ grouped }) => {
 
   return (
     <SwitchOption
-      grouped={grouped}
       checked={data?.shareActivity ?? false}
       label="Ділитися активністю"
       description="Друзі, з якими ви взаємно підписані, бачать, що ви дивитеся у програвачі"

@@ -1,21 +1,16 @@
-import { QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
-import { createRoot } from 'react-dom/client';
 import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
 import MaterialSymbolsLoginRounded from '~icons/material-symbols/login-rounded';
 
 import type { WatchRoomInbox } from '@/utils/convex-api';
 
 import { useLiveQuery } from '@/hooks/use-live-query';
-import { useSettings } from '@/hooks/use-settings';
 import { convexApi } from '@/utils/convex-api';
 import { withLiveClient } from '@/utils/convex-client';
-import { getHikkaViewerId } from '@/utils/hikka-viewer';
-import { syncFeatureTheme } from '@/utils/utils';
+import { useHikkaViewer } from '@/utils/hikka-viewer';
 
-import { queryClient } from '..';
-import { BaseFeature } from '../core/base-feature';
+import { BaseFeature, createFeatureUi } from '../core/base-feature';
 import { HikkaPages } from '../core/core.enums';
 import {
   MemberAvatar,
@@ -41,44 +36,22 @@ export default class WatchTogetherInvitesFeature extends BaseFeature {
   readonly pages = [HikkaPages.All];
 
   async init() {
-    this.ui = await createShadowRootUi(usePageStore.getState().ctx, {
+    this.ui = await createFeatureUi({
       name: this.id,
       position: 'inline',
       anchor: 'body',
       append: 'last',
-      inheritStyles: true,
-      onMount: (container) => {
-        const wrapper = document.createElement('div');
-        container.append(wrapper);
-        syncFeatureTheme(container);
-
-        const root = createRoot(wrapper);
-        root.render(
-          <QueryClientProvider client={queryClient}>
-            <InviteToasts />
-          </QueryClientProvider>,
-        );
-        return root;
-      },
-      onRemove: (root) => root?.unmount(),
+      themeVariables: false,
+      render: () => <InviteToasts />,
     });
   }
 }
 
 const InviteToasts = () => {
-  const signedIn = useSettings((state) => Boolean(state.convexSession));
-  const hikkaId = useSettings((state) => state.userData?.hikkaId);
   // Only the Hikka user the extension is signed in as gets its invites.
-  const { data: isViewer } = useQuery({
-    queryKey: ['hikka-viewer', hikkaId],
-    enabled: signedIn && hikkaId !== undefined,
-    queryFn: async () => (await getHikkaViewerId()) === hikkaId,
-    staleTime: Infinity,
-    retry: false,
-  });
   const inbox = useLiveQuery(
     convexApi.watchRooms.inbox,
-    isViewer ? {} : 'skip',
+    useHikkaViewer() === 'account' ? {} : 'skip',
   )?.data;
   // Hidden as soon as they are answered, before the inbox catches up.
   const [answered, setAnswered] = useState<ReadonlySet<string>>(new Set());

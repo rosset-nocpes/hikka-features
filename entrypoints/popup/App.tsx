@@ -15,21 +15,16 @@ import '../app.css';
 import { type Page, useNavigation } from '@/hooks/use-navigation';
 import { version } from '@/package.json';
 
+import FeatureSwitch from './_base/feature-switch';
 import NavigationRow from './_base/navigation-row';
 import SettingsGroup from './_base/settings-group';
 import ActivitySettings from './options/activity-settings';
-import AniBackgroundSettings from './options/anibackground-settings';
-import AniButtonsSettings from './options/anibuttons-settings';
-import CharacterSuggestionsSettings from './options/character-suggestion-settings';
-import {
-  default as ExperimentalSettingsPage,
+import ExperimentalSettingsPage, {
   ExperimentalSettingsIcon,
 } from './options/experimental-settings';
-import FandubSettings from './options/fandub-settings';
 import LocalizedPosterSettings from './options/localized-poster-settings';
 import PlayerSettings from './options/player-settings';
 import ReaderSettings from './options/reader-settings';
-import RecommendationBlockSettings from './options/recommendation-block-settings';
 import TeamPrioritySettings from './options/team-priority-settings';
 import UserOptions from './options/user-options';
 
@@ -71,7 +66,7 @@ function HomePage() {
             {signedIn
               ? [
                   <UserOptions key="user" />,
-                  <ActivitySettings key="activity" grouped />,
+                  <ActivitySettings key="activity" />,
                 ]
               : [<UserOptions key="user" />]}
           </SettingsGroup>
@@ -100,7 +95,11 @@ function HomePage() {
             title="Оформлення"
             icon={<MaterialSymbolsImageRounded className="size-4" />}
           >
-            <AniBackgroundSettings grouped />
+            <FeatureSwitch
+              feature="aniBackground"
+              label="Обкладинки"
+              description="Покращене оформлення на сторінках тайтлів, персонажів та правок"
+            />
             <NavigationRow
               label="Локалізовані постери"
               description="Налаштування локалізованих постерів"
@@ -114,9 +113,21 @@ function HomePage() {
             title="Контент"
             icon={<MaterialSymbolsViewListRounded className="size-4" />}
           >
-            <AniButtonsSettings grouped />
-            <FandubSettings grouped />
-            <RecommendationBlockSettings grouped />
+            <FeatureSwitch
+              feature="aniButtons"
+              label="Інші джерела"
+              description="Додаткові посилання на сторінках тайтлів"
+            />
+            <FeatureSwitch
+              feature="fandubBlock"
+              label="Блок фандаб команд"
+              description="Посилання на фандаб команди, які озвучили аніме тайтл"
+            />
+            <FeatureSwitch
+              feature="recommendationBlock"
+              label="Блок рекомендацій"
+              description="Блок із контентом, який схожий на той, який ви дивитеся"
+            />
           </SettingsGroup>
         </motion.div>
 
@@ -125,7 +136,12 @@ function HomePage() {
             title="Редагування"
             icon={<MaterialSymbolsDrawRounded className="size-4" />}
           >
-            <CharacterSuggestionsSettings grouped />
+            <FeatureSwitch
+              feature="editorCharacters"
+              label="Пропозиції перекладу імен"
+              description="Показує переклад імені українською при редагуванні персонажа"
+              beta
+            />
           </SettingsGroup>
         </motion.div>
       </motion.div>

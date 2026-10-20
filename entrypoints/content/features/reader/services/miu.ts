@@ -130,7 +130,7 @@ class MIUScraper extends BaseScraper {
         date_upload: $el.children().first().text().trim(),
         volume: Number($el.attr('manga-tom') || 0),
         chapter: Number($el.attr('manga-chappter') || 0),
-        title: text.includes('-') ? text.split('-')[1].trim() : '',
+        title: text.split('-')[1]?.trim() ?? '',
         url: href,
       });
     });

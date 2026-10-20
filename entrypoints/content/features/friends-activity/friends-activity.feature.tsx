@@ -1,10 +1,6 @@
-import { QueryClientProvider } from '@tanstack/react-query';
-import { createRoot } from 'react-dom/client';
-
 import { useSettings } from '@/hooks/use-settings';
 
-import { queryClient } from '../..';
-import { BaseFeature } from '../../core/base-feature';
+import { BaseFeature, createFeatureUi } from '../../core/base-feature';
 import { HikkaPages } from '../../core/core.enums';
 import FriendsActivityBlock from './friends-activity-block';
 import { HomePlacement, useBlockView } from './home-placement';
@@ -72,34 +68,22 @@ export default class FriendsActivityFeature extends BaseFeature {
   private layout?: Layout;
 
   async init() {
-    this.ui = await createShadowRootUi(usePageStore.getState().ctx, {
+    this.ui = await createFeatureUi({
       name: this.id,
       position: 'inline',
       // Any of the widget columns; the layout moves it where it belongs.
       anchor: () =>
         document.querySelector('main#feed, aside#feed-left, aside#feed-right'),
       append: 'last',
-      inheritStyles: true,
-      onMount: (container, _shadow, host) => {
-        const wrapper = document.createElement('div');
-        container.append(wrapper);
-        syncFeatureTheme(container, { themeVariables: true });
-
+      onMount: (_container, _wrapper, host) => {
         this.layout = new Layout(host);
-        const root = createRoot(wrapper);
-        root.render(
-          <QueryClientProvider client={queryClient}>
-            <FriendsActivityBlock />
-          </QueryClientProvider>,
-        );
-        return root;
       },
-      onRemove: (root) => {
+      onRemove: () => {
         this.layout?.stop();
         this.layout = undefined;
-        root?.unmount();
         useBlockView.setState({ visible: false });
       },
+      render: () => <FriendsActivityBlock />,
     });
   }
 }

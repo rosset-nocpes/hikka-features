@@ -100,6 +100,23 @@ export function icon(name: keyof typeof ICONS, className: string) {
   return svg;
 }
 
+/** The extension's mark in the text colour, so either theme works. */
+export const LOGO_PATHS: [d: string, fill: string][] = [
+  [
+    'M4.7144 4.38911L2 7.11024L4.91029 9.99967L2 13.0013L4.74239 15.6663L7.65267 12.7769L10.535 15.6663L13.2774 12.9452L10.3391 10.0558L13.3333 7.11024L10.535 4.33301L7.65267 7.3066L4.7144 4.38911Z',
+    '#BF4147',
+  ],
+  [
+    'M14.1927 12.8525V12.2673H18.164V9.55991H14.1927V7.25939L11.3494 10.0565L14.1927 12.8525Z',
+    'currentColor',
+  ],
+  ['M11.5406 15.6673H14.1927V13.0358L11.5406 15.6673Z', 'currentColor'],
+  [
+    'M14.3413 7.11323L11.5409 4.33398H19.0001V7.23028H14.2223L14.3413 7.11323Z',
+    'currentColor',
+  ],
+];
+
 /** The extension's mark, to tell its block from the site's own. */
 export function logo(className: string) {
   const svg = document.createElementNS(SVG, 'svg');
@@ -107,22 +124,7 @@ export function logo(className: string) {
   svg.setAttribute('fill', 'none');
   svg.setAttribute('aria-label', 'Hikka Features');
   svg.setAttribute('class', className);
-  const paths: [d: string, fill: string][] = [
-    [
-      'M4.7144 4.38911L2 7.11024L4.91029 9.99967L2 13.0013L4.74239 15.6663L7.65267 12.7769L10.535 15.6663L13.2774 12.9452L10.3391 10.0558L13.3333 7.11024L10.535 4.33301L7.65267 7.3066L4.7144 4.38911Z',
-      '#BF4147',
-    ],
-    [
-      'M14.1927 12.8525V12.2673H18.164V9.55991H14.1927V7.25939L11.3494 10.0565L14.1927 12.8525Z',
-      'currentColor',
-    ],
-    ['M11.5406 15.6673H14.1927V13.0358L11.5406 15.6673Z', 'currentColor'],
-    [
-      'M14.3413 7.11323L11.5409 4.33398H19.0001V7.23028H14.2223L14.3413 7.11323Z',
-      'currentColor',
-    ],
-  ];
-  for (const [d, fill] of paths) {
+  for (const [d, fill] of LOGO_PATHS) {
     const path = document.createElementNS(SVG, 'path');
     path.setAttribute('d', d);
     path.setAttribute('fill', fill);

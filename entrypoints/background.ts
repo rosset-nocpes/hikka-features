@@ -34,11 +34,6 @@ interface LogoutRequest {
   type: 'logout';
 }
 
-interface RichPresenceCheckRequest {
-  type: 'rich-presence-check';
-  action: string;
-}
-
 interface HikkaContentLoadedRequest {
   type: 'hikka-content-loaded';
 }
@@ -56,7 +51,6 @@ type MessageRequest =
   | LogoutRequest
   | ConvexAuthRequest
   | ConvexTokenRequest
-  | RichPresenceCheckRequest
   | RemoteFetchRequest
   | IFramePlayerCommand
   | HikkaContentLoadedRequest
@@ -164,19 +158,6 @@ export default defineBackground(() => {
 
         case 'logout':
           await logout();
-          return true;
-
-        case 'rich-presence-check':
-          browser.tabs
-            .query({ url: 'https://hikka.io/anime/*-*' })
-            .then((tabs) => {
-              browser.tabs.sendMessage(sender.tab!.id!, {
-                type: 'rich-presence-reply',
-                action: typedRequest.action,
-                tabs_count: tabs.length,
-              });
-            });
-
           return true;
 
         case 'remote-fetch':

@@ -11,14 +11,3 @@ export async function Logout() {
   await browser.runtime.sendMessage({ type: 'logout' });
   await useSettings.persist.rehydrate();
 }
-
-export async function actionRichPresence(action: 'check' | 'remove') {
-  const { richPresence } = useSettings.getState();
-
-  if (richPresence) {
-    browser.runtime.sendMessage({
-      type: 'rich-presence-check',
-      action: action,
-    });
-  }
-}

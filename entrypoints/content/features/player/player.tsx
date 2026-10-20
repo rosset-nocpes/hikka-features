@@ -1,16 +1,12 @@
-import { QueryClientProvider } from '@tanstack/react-query';
-import { useLayoutEffect, useRef, useState } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import { useLayoutEffect, useRef } from 'react';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
-// import { Toaster } from '@/components/ui/sonner';
 import { useIFramePlayer } from '@/hooks/use-iframe-player';
-import { syncFeatureTheme } from '@/utils/utils';
 
-import { queryClient } from '../..';
+import { createFeatureUi } from '../../core/base-feature';
 import { startActivityReporter } from './activity-reporter';
-import { PlayerProvider, usePlayer } from './context/player-context';
+import { usePlayer } from './context/player-context';
 import {
   type PlayerLayout,
   useLayoutTransition,
@@ -26,47 +22,27 @@ import WatchTogetherInvite from './watch-together/watch-together-invite';
 
 const MOUNT_TAG = 'player-ui';
 
-let playerUiPromise: ReturnType<typeof createShadowRootUi> | undefined;
+let playerUiPromise: ReturnType<typeof createFeatureUi> | undefined;
 let stopActivityReporter: (() => void) | undefined;
 
-export default function player() {
-  playerUiPromise ??= createShadowRootUi(usePageStore.getState().ctx, {
+function player() {
+  playerUiPromise ??= createFeatureUi({
     name: MOUNT_TAG,
     position: 'modal',
     zIndex: 100,
-    inheritStyles: true,
-    onMount(container) {
+    themeVariables: false,
+    onMount(container, wrapper) {
       usePlayer.getState().setContainer(container);
-
-      const wrapper = document.createElement('div');
-      container.append(wrapper);
-
       wrapper.className = 'size-full';
-
-      container.className = 'h-full';
-      syncFeatureTheme(container);
-
-      const style = document.createElement('style');
-      container.appendChild(style);
-
+      container.classList.add('h-full');
       stopActivityReporter = startActivityReporter();
-
-      const root = createRoot(wrapper);
-      root.render(
-        <QueryClientProvider client={queryClient}>
-          <SidebarProvider className="h-full w-full">
-            <PlayerProvider container={container}>
-              <PlayerFrame />
-              {/*<Toaster position="top-center" />*/}
-            </PlayerProvider>
-          </SidebarProvider>
-        </QueryClientProvider>,
-      );
-
-      return root;
     },
-    onRemove: (root) => {
-      root?.unmount();
+    render: () => (
+      <SidebarProvider className="h-full w-full">
+        <PlayerFrame />
+      </SidebarProvider>
+    ),
+    onRemove: () => {
       useWatchTogether.getState().leave();
       stopActivityReporter?.();
       stopActivityReporter = undefined;
@@ -75,8 +51,7 @@ export default function player() {
         usePlayer.getState();
       if (fullscreen) toggleFullscreen();
       setVideoPiPActive(false);
-      document.body.classList.remove('h-full');
-      document.body.classList.remove('overflow-hidden');
+      document.body.classList.remove('h-full', 'overflow-hidden');
 
       useIFramePlayer.getState().reset();
       playerUiPromise = undefined;
@@ -89,6 +64,18 @@ export default function player() {
 export const isPlayerMounted = () =>
   !!document.getElementsByTagName(MOUNT_TAG)[0];
 
+/** Shows `data` in the player, opening it or bringing it out of mini mode. */
+export const openPlayer = (data: API.WatchData) => {
+  const { initialize, setMiniPlayer, setVideoPiPActive } = usePlayer.getState();
+  initialize(data);
+  if (isPlayerMounted()) {
+    setMiniPlayer(false);
+    setVideoPiPActive(false);
+  } else {
+    void player().then((ui) => ui.mount());
+  }
+};
+
 export const removePlayer = () => {
   playerUiPromise?.then((ui) => {
     if (ui.mounted || document.getElementsByTagName(MOUNT_TAG)[0]) {
@@ -98,7 +85,7 @@ export const removePlayer = () => {
 };
 
 const PlayerFrame = () => {
-  const { miniPlayer, videoPiPActive, container } = usePlayer();
+  const { miniPlayer, videoPiPActive, fullscreen, container } = usePlayer();
   const { disableBlur } = useSettings().features.player;
   const { setOpen } = useSidebar();
 
@@ -107,15 +94,19 @@ const PlayerFrame = () => {
   // A layout effect: the page must settle before the player measures its
   // new size for the mini player transition.
   useLayoutEffect(() => {
-    setOpen(!isCompactMode);
     container?.parentElement?.classList.toggle(
       'pointer-events-none',
       isCompactMode,
     );
     document.body.classList.toggle('h-full', !isCompactMode);
     document.body.classList.toggle('overflow-hidden', !isCompactMode);
-    // oxlint-disable-next-line eslint-plugin-react-hooks/exhaustive-deps
   }, [isCompactMode, container]);
+
+  // The sidebar gives way to the video in fullscreen and the compact modes.
+  useLayoutEffect(() => {
+    setOpen(!isCompactMode && !fullscreen);
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCompactMode, fullscreen]);
 
   return (
     <div
@@ -139,7 +130,7 @@ const PlayerFrame = () => {
   );
 };
 
-export const Player = () => {
+const Player = () => {
   const {
     currentEpisode,
     fullscreen,
@@ -147,7 +138,6 @@ export const Player = () => {
     miniPlayer,
     videoPiPActive,
   } = usePlayer();
-  const [getWatchedState, toggleWatchedState] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   const layout: PlayerLayout = miniPlayer
@@ -175,10 +165,7 @@ export const Player = () => {
           'bg-background/60 h-auto w-[min(calc(100vw-1rem),480px)] backdrop-blur-xl',
       )}
     >
-      <PlayerIFrameEffects
-        toggleWatchedState={toggleWatchedState}
-        watched={getWatchedState}
-      />
+      <PlayerIFrameEffects />
       {layout === 'mini' && (
         <div
           className="absolute inset-x-0 top-0 z-10 h-12 cursor-grab touch-none"
@@ -206,11 +193,9 @@ export const Player = () => {
         <PlayerMiniBar onDragStart={startDrag} />
       ) : (
         <>
-          {layout === 'full' && (
-            <PlayerMobileToolbar toggleWatchedState={toggleWatchedState} />
-          )}
+          {layout === 'full' && <PlayerMobileToolbar />}
           <PlayerNavbar onDragStart={startDrag} />
-          <PlayerOverlay toggleWatchedState={toggleWatchedState} />
+          <PlayerOverlay />
           {layout === 'full' && <WatchTogetherInvite />}
         </>
       )}

@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
 import { useEffect, useId, useState } from 'react';
 import MaterialSymbolsGroupOutlineRounded from '~icons/material-symbols/group-outline-rounded';
 import MaterialSymbolsLoginRounded from '~icons/material-symbols/login-rounded';
@@ -17,51 +16,39 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
-import { hikkaAnimeFetcher } from '@/hooks/use-hikka-anime';
+import { useHikkaContent } from '@/hooks/use-hikka';
 import { useLiveQuery } from '@/hooks/use-live-query';
 import { useSettings } from '@/hooks/use-settings';
 import { convexApi } from '@/utils/convex-api';
-import { withLiveClient } from '@/utils/convex-client';
+import { refreshFriends, withLiveClient } from '@/utils/convex-client';
 import { Login } from '@/utils/hikka-integration';
-import { getHikkaViewerId } from '@/utils/hikka-viewer';
+import { useHikkaViewer } from '@/utils/hikka-viewer';
 
+import { memberName } from '../player/watch-together/menu';
 import { openRoom } from '../player/watch-together/open-room';
 import { useBlockView } from './home-placement';
-import { BLOCK_TITLE } from './site-layout';
+import { BLOCK_TITLE, LOGO_PATHS } from './site-layout';
 
 /** Who sees what: guests and other accounts nothing, at all. */
 type Mode = 'hidden' | 'sign-in' | 'friends';
 
 function useMode(): Mode {
   const signedIn = useSettings((state) => Boolean(state.convexSession));
-  const hikkaId = useSettings((state) => state.userData?.hikkaId);
-  const { data: viewerId } = useQuery({
-    queryKey: ['hikka-viewer-id'],
-    // Guests have none, and a query can't resolve to undefined.
-    queryFn: async () => (await getHikkaViewerId()) ?? null,
-    staleTime: Infinity,
-    retry: false,
-  });
+  const viewer = useHikkaViewer();
 
-  if (!viewerId) return 'hidden';
+  if (!viewer || viewer === 'guest') return 'hidden';
   if (!signedIn) return 'sign-in';
   // Friends belong to the account the extension is signed in as.
-  return hikkaId === viewerId ? 'friends' : 'hidden';
+  return viewer === 'account' ? 'friends' : 'hidden';
 }
 
 const Dot = () => <span aria-hidden>·</span>;
 
 const Row = ({ activity }: { activity: FriendActivity }) => {
   const { friend, animeSlug, episode, playing, room } = activity;
-  const { data: anime } = useQuery({
-    queryKey: ['hikka-anime-data', animeSlug],
-    queryFn: () => hikkaAnimeFetcher(animeSlug),
-    staleTime: Infinity,
-    retry: false,
-  });
-  const title: string =
-    anime?.title_ua || anime?.title_en || anime?.title_ja || animeSlug;
-  const name = friend.username ?? 'Глядач';
+  const { data: anime } = useHikkaContent('anime', animeSlug);
+  const title: string = hikkaTitle(anime) || animeSlug;
+  const name = memberName(friend);
   const href = `/anime/${animeSlug}`;
 
   return (
@@ -208,22 +195,9 @@ const Mark = () => (
     aria-label="Hikka Features"
     className="h-5 w-[21px] shrink-0"
   >
-    <path
-      d="M4.7144 4.38911L2 7.11024L4.91029 9.99967L2 13.0013L4.74239 15.6663L7.65267 12.7769L10.535 15.6663L13.2774 12.9452L10.3391 10.0558L13.3333 7.11024L10.535 4.33301L7.65267 7.3066L4.7144 4.38911Z"
-      fill="#BF4147"
-    />
-    <path
-      d="M14.1927 12.8525V12.2673H18.164V9.55991H14.1927V7.25939L11.3494 10.0565L14.1927 12.8525Z"
-      fill="currentColor"
-    />
-    <path
-      d="M11.5406 15.6673H14.1927V13.0358L11.5406 15.6673Z"
-      fill="currentColor"
-    />
-    <path
-      d="M14.3413 7.11323L11.5409 4.33398H19.0001V7.23028H14.2223L14.3413 7.11323Z"
-      fill="currentColor"
-    />
+    {LOGO_PATHS.map(([d, fill]) => (
+      <path key={d} d={d} fill={fill} />
+    ))}
   </svg>
 );
 
@@ -233,9 +207,7 @@ const FriendsList = () => {
   // Friends are the mutual follows among extension users; read them again
   // now and then (the server limits how often).
   useEffect(() => {
-    void withLiveClient((client) =>
-      client.action(convexApi.friends.refresh, {}),
-    ).catch(console.error);
+    void refreshFriends();
   }, []);
 
   if (activities?.length === 0) {

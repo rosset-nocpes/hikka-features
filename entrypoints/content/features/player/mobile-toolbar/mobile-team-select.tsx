@@ -3,18 +3,18 @@ import { Fragment, useMemo } from 'react';
 import MaterialSymbolsStarRateOutlineRounded from '~icons/material-symbols/star-rate-outline-rounded';
 import MaterialSymbolsStarRounded from '~icons/material-symbols/star-rounded';
 
+import SwapIcon from '@/components/swap-icon';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 
-import { usePlayer } from '../context/player-context';
+import { isFavoriteTeam, usePlayer } from '../context/player-context';
 import { getTeamName, groupTeams } from '../teams';
 
 const MobileTeamSelect = () => {
   const {
     provider,
     favoriteTeam,
-    setFavoriteTeam,
-    removeFavoriteTeam,
+    toggleFavoriteTeam,
     team,
     setTeam,
     watchData: data,
@@ -28,25 +28,6 @@ const MobileTeamSelect = () => {
   }, [data, provider, favoriteTeam]);
 
   if (!data || !provider || !team) return;
-
-  const handleSelectTeam = (value: API.TeamData) => {
-    setTeam(value);
-    // toggleWatchedState(false);
-  };
-
-  const handleFavorite = (
-    e: React.MouseEvent<HTMLButtonElement>,
-    team: API.TeamData,
-  ) => {
-    e.stopPropagation();
-
-    if (favoriteTeam?.team === team.title) {
-      removeFavoriteTeam();
-      return;
-    }
-
-    setFavoriteTeam(team.title);
-  };
 
   return (
     <motion.div layout className="flex flex-col gap-2 overflow-y-auto">
@@ -68,7 +49,7 @@ const MobileTeamSelect = () => {
             >
               <Button
                 variant="outline"
-                onClick={() => handleSelectTeam(t)}
+                onClick={() => setTeam(t)}
                 className={cn(
                   'group/item hover:bg-secondary/20 w-full p-1 font-normal',
                   t.title === team.title &&
@@ -83,45 +64,26 @@ const MobileTeamSelect = () => {
                   <span className="truncate text-lg font-semibold">
                     {getTeamName(t)}
                   </span>
-                  {/*<span className="truncate text-xs">
-                    {getEpisodeRanges(
-                      (data[provider] as ProviderTeamIFrame).teams[t.title]
-                        .episodes,
-                    )}
-                  </span>*/}
                 </div>
                 <Button
                   variant="ghost"
                   size="icon-md"
                   className="group relative"
-                  onClick={(e) => handleFavorite(e, t)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFavoriteTeam(t);
+                  }}
                 >
-                  <div
-                    className={cn(
-                      'absolute inset-0 flex items-center justify-center transition-all duration-300 ease-in-out will-change-[transform,opacity,filter]',
-                      favoriteTeam?.provider === provider &&
-                        favoriteTeam?.team === t.title
-                        ? 'blur-0 scale-100 opacity-100'
-                        : 'scale-[0.25] opacity-0 blur-xs',
-                    )}
-                  >
-                    <MaterialSymbolsStarRounded className="size-7! text-yellow-300 transition-transform duration-300" />
-                  </div>
-                  <div
-                    className={cn(
-                      'opacity transition-[transform,filter] duration-300 ease-in-out will-change-[transform,opacity,filter]',
-                      favoriteTeam?.provider === provider &&
-                        favoriteTeam?.team === t.title
-                        ? 'scale-[0.25] opacity-0 blur-xs'
-                        : 'blur-0 scale-100 opacity-100',
-                    )}
-                  >
-                    <MaterialSymbolsStarRateOutlineRounded className="text-muted-foreground size-7! transition-transform duration-300" />
-                  </div>
+                  <SwapIcon
+                    active={isFavoriteTeam({ favoriteTeam, provider }, t)}
+                    on={
+                      <MaterialSymbolsStarRounded className="size-7! text-yellow-300" />
+                    }
+                    off={
+                      <MaterialSymbolsStarRateOutlineRounded className="text-muted-foreground size-7!" />
+                    }
+                  />
                 </Button>
-                {/*<div className="flex w-full items-center justify-between gap-2  text-left text-sm">
-
-                </div>*/}
               </Button>
             </motion.div>
           ))}

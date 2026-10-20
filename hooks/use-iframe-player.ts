@@ -33,8 +33,6 @@ interface IFramePlayerActions {
   pause: () => void;
   seek: (time: number) => void;
   toggleMute: () => void;
-  mute: () => void;
-  unmute: () => void;
   setCurrentQuality: (quality: string) => void;
   setCurrentSubtitle: (subtitle: string) => void;
   changeVolume: (volume: number) => void;
@@ -58,26 +56,51 @@ export const onPlaybackIntent = (
   playbackIntentListener = listener;
 };
 
+const UI_HIDE_MS = 4000;
+let uiHideTimer: ReturnType<typeof setTimeout> | undefined;
+
+/** Hides the controls in a moment, unless playback stops or they're held. */
+export const scheduleUiHide = () => {
+  clearTimeout(uiHideTimer);
+  uiHideTimer = setTimeout(() => {
+    const { isPlaying, uiLocked } = useIFramePlayer.getState();
+    if (isPlaying && !uiLocked) useIFramePlayer.setState({ uiShown: false });
+  }, UI_HIDE_MS);
+};
+
+export const cancelUiHide = () => clearTimeout(uiHideTimer);
+
+/** Shows the controls, which hide again in a moment. */
+export const showUi = () => {
+  useIFramePlayer.setState({ uiShown: true });
+  scheduleUiHide();
+};
+
+/** A new episode's player starts from this; its provider sets the speeds. */
+const initialPlayback: Omit<IFramePlayerState, 'speedOptions'> = {
+  isReady: false,
+  isPlaying: false,
+  isMuted: false,
+  qualities: [],
+  currentQuality: '',
+  currentTime: 0,
+  currentSpeed: 1,
+  currentSubtitle: '',
+  subtitles: [],
+  volume: 1,
+  duration: 0,
+  isBuffering: false,
+  bufferedTime: 0,
+  adInProgress: false,
+  uiShown: true,
+  uiLocked: false,
+  endedCount: 0,
+};
+
 export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
   (set, get) => ({
-    isReady: false,
-    isPlaying: false,
-    isMuted: false,
-    qualities: [],
-    currentQuality: '',
-    currentTime: 0,
-    currentSpeed: 1,
-    currentSubtitle: '',
-    subtitles: [],
+    ...initialPlayback,
     speedOptions: [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2],
-    volume: 1,
-    duration: 0,
-    isBuffering: false,
-    bufferedTime: 0,
-    adInProgress: false,
-    uiShown: true,
-    uiLocked: false,
-    endedCount: 0,
 
     play: () => {
       sendIFramePlayerCommand({ action: 'play' });
@@ -90,19 +113,7 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
     },
 
     toggleMute: () => {
-      if (get().isMuted) {
-        sendIFramePlayerCommand({ action: 'unmute' });
-      } else {
-        sendIFramePlayerCommand({ action: 'mute' });
-      }
-    },
-
-    mute: () => {
-      sendIFramePlayerCommand({ action: 'mute' });
-    },
-
-    unmute: () => {
-      sendIFramePlayerCommand({ action: 'unmute' });
+      sendIFramePlayerCommand({ action: get().isMuted ? 'unmute' : 'mute' });
     },
 
     seek: (time: number) => {
@@ -152,27 +163,7 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
       sendIFramePlayerCommand({ action: 'get-buffered' });
     },
 
-    reset: () => {
-      set({
-        isReady: false,
-        isPlaying: false,
-        isMuted: false,
-        qualities: [],
-        currentQuality: '',
-        currentTime: 0,
-        currentSpeed: 1,
-        currentSubtitle: '',
-        subtitles: [],
-        volume: 1,
-        duration: 0,
-        isBuffering: false,
-        bufferedTime: 0,
-        adInProgress: false,
-        uiShown: true,
-        uiLocked: false,
-        endedCount: 0,
-      });
-    },
+    reset: () => set(initialPlayback),
   }),
 );
 
@@ -236,7 +227,7 @@ window.addEventListener('message', (event: MessageEvent) => {
           isPlaying: false,
         }));
         break;
-      case 'quality':
+      case 'quality': {
         const quality = event.data.data ?? event.data.answer;
         if (typeof quality !== 'string' || !quality) break;
 
@@ -247,6 +238,7 @@ window.addEventListener('message', (event: MessageEvent) => {
 
         useIFramePlayer.setState({ currentQuality: quality });
         break;
+      }
       case 'qualities':
         if (!Array.isArray(event.data.answer)) break;
 
@@ -315,16 +307,18 @@ window.addEventListener('message', (event: MessageEvent) => {
           usePlayer.getState().setVideoPiPActive(false);
         }
         break;
-      case 'ui':
+      case 'ui': {
         const shouldShow = Boolean(event.data.data);
-        if (!shouldShow) {
-          if (useIFramePlayer.getState().uiLocked) break;
-          const overlayRef = usePlayer.getState().overlayRef;
-          const isOverlayHovered = overlayRef?.current?.matches(':hover');
-          if (isOverlayHovered) break;
+        if (
+          !shouldShow &&
+          (useIFramePlayer.getState().uiLocked ||
+            usePlayer.getState().overlay?.matches(':hover'))
+        ) {
+          break;
         }
         useIFramePlayer.setState({ uiShown: shouldShow });
         break;
+      }
     }
   }
 });

@@ -20,6 +20,7 @@ import {
   publicAction,
 } from './convex-client';
 import { syncTeamPriority } from './team-priority-sync';
+import { looseKey } from './utils';
 
 interface AuthResponse {
   accessToken: string;
@@ -242,7 +243,6 @@ export async function logout() {
   await settingsHydrated();
   const session = useSettings.getState().convexSession;
   clearSession();
-  useSettings.getState().setSettings({ richPresence: false });
   if (session) {
     await authRequest('/auth/session/revoke', {
       refreshToken: session.refreshToken,
@@ -257,10 +257,6 @@ export async function syncAccountTeamPriority() {
     set: (input) => mutation(convexApi.teamPriority.set, input),
   });
 }
-
-const sameTeam = (left: string, right: string) =>
-  left.toLocaleLowerCase('uk').replace(/\s+/g, '') ===
-  right.toLocaleLowerCase('uk').replace(/\s+/g, '');
 
 /**
  * Uploads favorites that only exist locally, then mirrors the account's
@@ -284,7 +280,8 @@ export async function syncFavorites() {
         .find((provider) => provider.id === favorite.provider)
         ?.sources.find(
           (candidate) =>
-            candidate.team && sameTeam(candidate.team.title, favorite.team),
+            candidate.team &&
+            looseKey(candidate.team.title) === looseKey(favorite.team),
         );
       if (!source?.team) throw new Error('Team is no longer available');
 

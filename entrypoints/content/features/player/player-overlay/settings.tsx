@@ -17,11 +17,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { usePlayer } from '@/entrypoints/content/features/player/context/player-context';
 
 import MenuPages from './menu-pages';
 import ToolbarTooltip from './toolbar-tooltip';
-import { useUiLock } from './use-ui-lock';
+import { useToolbarMenuPosition, useUiLock } from './use-ui-lock';
 
 interface Submenu {
   id: 'quality' | 'subtitles' | 'speed';
@@ -157,7 +156,7 @@ interface Props {
 }
 
 const Settings: FC<Props> = ({ anchor }) => {
-  const { container, overlayRef } = usePlayer();
+  const position = useToolbarMenuPosition(anchor);
   const [open, setOpen] = useState(false);
   useUiLock(open);
 
@@ -179,13 +178,7 @@ const Settings: FC<Props> = ({ anchor }) => {
       </ToolbarTooltip>
       <DropdownMenuContent
         className="bg-popover/60 w-56 backdrop-blur-xl"
-        container={container}
-        anchor={anchor}
-        side="top"
-        sideOffset={20}
-        align="end"
-        collisionBoundary={overlayRef.current as Element}
-        collisionPadding={8}
+        {...position}
       >
         <SettingsPages />
       </DropdownMenuContent>

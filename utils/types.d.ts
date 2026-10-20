@@ -13,13 +13,4 @@ declare global {
     description?: string;
     avatar: string;
   };
-
-  interface PlayerState {
-    provider: string;
-    team: string;
-    episodeData: API.EpisodeData[];
-    currentEpisode: API.EpisodeData;
-    sidebarMode: 'offcanvas' | 'icon';
-    container: HTMLElement;
-  }
 }

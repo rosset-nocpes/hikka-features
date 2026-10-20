@@ -5,12 +5,11 @@ import MaterialSymbolsDragIndicator from '~icons/material-symbols/drag-indicator
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { useHikkaContent } from '@/hooks/use-hikka';
 
 import { usePlayer } from './context/player-context';
 import { removePlayer } from './player';
-import MiniPlayer from './player-overlay/buttons/mini-player';
-import Mute from './player-overlay/buttons/mute';
-import Play from './player-overlay/buttons/play';
+import { MiniPlayer, Mute, Play } from './player-overlay/buttons/toggles';
 import Time from './player-overlay/sliders/time';
 import { getTeamName } from './teams';
 
@@ -19,14 +18,10 @@ interface Props {
 }
 
 const PlayerMiniBar = ({ onDragStart }: Props) => {
-  const { currentEpisode, team } = usePlayer();
-  const { data: animeData } = useHikkaAnime();
-
-  const title =
-    animeData?.title_ua ||
-    animeData?.title_en ||
-    animeData?.title_ja ||
-    animeData?.title_original;
+  const { currentEpisode, team, slug } = usePlayer();
+  // The player's anime, which the page may no longer show.
+  const { data: anime } = useHikkaContent('anime', slug);
+  const title = hikkaTitle(anime);
 
   const teamName = team && getTeamName(team);
   const subtitle = currentEpisode?.episode
@@ -59,7 +54,7 @@ const PlayerMiniBar = ({ onDragStart }: Props) => {
             type="button"
             className="truncate text-left text-sm font-medium hover:underline"
             onClick={() => {
-              history.pushState({}, '', `/anime/${animeData?.slug}`);
+              history.pushState({}, '', `/anime/${slug}`);
               window.dispatchEvent(new PopStateEvent('popstate'));
             }}
           >

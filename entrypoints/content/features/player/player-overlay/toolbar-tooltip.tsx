@@ -15,7 +15,7 @@ interface Props {
 }
 
 const ToolbarTooltip: FC<Props> = ({ label, children, disabled }) => {
-  const { container, overlayRef } = usePlayer();
+  const { container, overlay } = usePlayer();
   const uiShown = useIFramePlayer((state) => state.uiShown);
 
   return (
@@ -29,7 +29,7 @@ const ToolbarTooltip: FC<Props> = ({ label, children, disabled }) => {
       <TooltipContent
         side="top"
         sideOffset={32}
-        collisionBoundary={overlayRef.current ?? undefined}
+        collisionBoundary={overlay ?? undefined}
         collisionPadding={8}
         container={container}
       >

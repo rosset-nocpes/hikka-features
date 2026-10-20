@@ -2,6 +2,23 @@ import type { PreferredTranslation } from '@/utils/convex-api';
 
 import { ProviderTeamIFrame } from '@/utils/provider_classes';
 
+/** The providers in the watch data, with the language each plays in. */
+export const providersOf = (data: API.WatchData) =>
+  Object.entries(data).flatMap(([title, entry]) =>
+    typeof entry === 'string' ? [] : [{ title, lang: entry.lang }],
+  );
+
+/** Providers by language, in the order the menus list languages. */
+export const groupProviders = (data: API.WatchData) => {
+  const providers = providersOf(data);
+  return ALL_LANGUAGES.flatMap((lang) => {
+    const titles = providers
+      .filter((provider) => provider.lang === lang)
+      .map((provider) => provider.title);
+    return titles.length ? [{ lang, titles }] : [];
+  });
+};
+
 /**
  * Name to show for a team. `title` is the team's key, which gets a dub/sub
  * suffix when one team has both, so it is not meant for display.

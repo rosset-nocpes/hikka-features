@@ -9,13 +9,14 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer';
+import { getHikkaProgress } from '@/utils/hikka-progress';
 
-import { getWatched, usePlayer } from '../context/player-context';
+import { usePlayer } from '../context/player-context';
 
 const MobileEpisodeDrawer = () => {
   const [open, setOpen] = useState(false);
   const { container, currentEpisode, setEpisode, episodeData } = usePlayer();
-  const watched = getWatched();
+  const watched = getHikkaProgress();
 
   const handleSelectEpisode = (episode: API.EpisodeData) => {
     setEpisode(episode);

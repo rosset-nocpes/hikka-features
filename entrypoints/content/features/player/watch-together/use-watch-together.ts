@@ -332,7 +332,7 @@ class RoomSession {
       this.seekCooldown = SEEK_COOLDOWN_MS;
       // Their play or pause flashes like the user's own would.
       if (previous.playing !== room.playing) {
-        dispatchPlayerOverlayAction(usePlayer.getState().overlayRef.current, {
+        dispatchPlayerOverlayAction(usePlayer.getState().overlay, {
           type: room.playing ? 'play' : 'pause',
         });
       }
