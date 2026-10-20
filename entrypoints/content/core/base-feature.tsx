@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { createRoot, type Root } from 'react-dom/client';
 
-import { syncFeatureTheme } from '@/utils/utils';
+import { hikkaTheme } from '@/utils/hikka-theme';
 
 import { HIKKA_PAGE_CHECKERS } from './core.constant';
 import { HikkaPages } from './core.enums';
@@ -56,7 +56,7 @@ export function createFeatureUi({
     onMount(container, _shadow, host) {
       const wrapper = document.createElement('div');
       container.append(wrapper);
-      syncFeatureTheme(container, { themeVariables });
+      hikkaTheme.follow(container, { themeVariables });
       onMount?.(container, wrapper, host);
       return renderApp(wrapper, render(container));
     },
@@ -65,6 +65,41 @@ export function createFeatureUi({
       root?.unmount();
     },
   } as ShadowRootContentScriptUiOptions<Root>);
+}
+
+type ModalUiOptions = Pick<
+  FeatureUiOptions,
+  'name' | 'render' | 'onMount' | 'onRemove'
+>;
+
+/**
+ * A full-page UI opened on demand, such as the player. It is created on the
+ * first open and mounted again on each later one.
+ */
+export class ModalUi {
+  private ui?: ReturnType<typeof createFeatureUi>;
+
+  constructor(private readonly options: ModalUiOptions) {}
+
+  get isOpen(): boolean {
+    return !!document.getElementsByTagName(this.options.name)[0];
+  }
+
+  open() {
+    this.ui ??= createFeatureUi({
+      position: 'modal',
+      zIndex: 100,
+      themeVariables: false,
+      ...this.options,
+    });
+    void this.ui.then((ui) => ui.mount());
+  }
+
+  close() {
+    void this.ui?.then((ui) => {
+      if (ui.mounted || this.isOpen) ui.remove();
+    });
+  }
 }
 
 export abstract class BaseFeature {

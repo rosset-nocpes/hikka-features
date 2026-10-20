@@ -3,7 +3,7 @@ import { create } from 'zustand';
 
 import type { CarouselApi } from '@/components/ui/carousel';
 
-import { getHikkaProgress } from '@/utils/hikka-progress';
+import { hikkaTracker } from '@/utils/hikka-tracker';
 
 import type {
   Chapter,
@@ -110,7 +110,7 @@ export const useReader = create<ReaderState & ReaderActions>((set, get) => {
           ...TYPE_SETTINGS[type],
         } as ReaderSettings,
         // Where the user's progress on hikka.io stops.
-        currentChapter: chapters[getHikkaProgress()] ?? chapters[0],
+        currentChapter: chapters[hikkaTracker.progress] ?? chapters[0],
         container,
       }));
     },

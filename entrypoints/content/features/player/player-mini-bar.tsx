@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useHikkaContent } from '@/hooks/use-hikka';
 
 import { usePlayer } from './context/player-context';
-import { removePlayer } from './player';
+import { closePlayer } from './player';
 import { MiniPlayer, Mute, Play } from './player-overlay/buttons/toggles';
 import Time from './player-overlay/sliders/time';
 import { getTeamName } from './teams';
@@ -71,7 +71,7 @@ const PlayerMiniBar = ({ onDragStart }: Props) => {
             variant="ghost"
             size="icon-sm"
             aria-label="Закрити програвач"
-            onClick={removePlayer}
+            onClick={closePlayer}
           >
             <MaterialSymbolsCloseRounded />
           </Button>

@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 
 import { useSidebar } from '@/components/ui/sidebar';
 import { useIFramePlayer } from '@/hooks/use-iframe-player';
-import { advanceHikkaProgress, getHikkaProgress } from '@/utils/hikka-progress';
+import { hikkaTracker } from '@/utils/hikka-tracker';
 
 import { episodesOf, usePlayer } from './context/player-context';
 
@@ -87,12 +87,12 @@ const PlayerIFrameEffects = () => {
       !duration ||
       watchedRef.current ||
       currentTime / duration <= WATCHED_SHARE ||
-      getHikkaProgress() + 1 !== currentEpisode.episode
+      hikkaTracker.progress + 1 !== currentEpisode.episode
     ) {
       return;
     }
 
-    advanceHikkaProgress();
+    hikkaTracker.advance();
     watchedRef.current = true;
   }, [currentEpisode, currentTime, duration, isReady]);
 

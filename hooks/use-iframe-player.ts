@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 import { usePlayer } from '@/entrypoints/content/features/player/context/player-context';
 import {
+  type IFramePlayerEvent,
   isIFramePlayerEvent,
   sendIFramePlayerCommand,
 } from '@/integrations/iframe-player/protocol';
@@ -57,24 +58,30 @@ export const onPlaybackIntent = (
 };
 
 const UI_HIDE_MS = 4000;
-let uiHideTimer: ReturnType<typeof setTimeout> | undefined;
 
-/** Hides the controls in a moment, unless playback stops or they're held. */
-export const scheduleUiHide = () => {
-  clearTimeout(uiHideTimer);
-  uiHideTimer = setTimeout(() => {
-    const { isPlaying, uiLocked } = useIFramePlayer.getState();
-    if (isPlaying && !uiLocked) useIFramePlayer.setState({ uiShown: false });
-  }, UI_HIDE_MS);
-};
+/** The overlay's controls: shown on activity, hidden again during playback. */
+class PlayerControls {
+  private hideTimer?: ReturnType<typeof setTimeout>;
 
-export const cancelUiHide = () => clearTimeout(uiHideTimer);
+  /** Shows the controls, which hide again in a moment. */
+  show = () => {
+    useIFramePlayer.setState({ uiShown: true });
+    this.scheduleHide();
+  };
 
-/** Shows the controls, which hide again in a moment. */
-export const showUi = () => {
-  useIFramePlayer.setState({ uiShown: true });
-  scheduleUiHide();
-};
+  /** Hides the controls in a moment, unless playback stops or they're held. */
+  scheduleHide = () => {
+    clearTimeout(this.hideTimer);
+    this.hideTimer = setTimeout(() => {
+      const { isPlaying, uiLocked } = useIFramePlayer.getState();
+      if (isPlaying && !uiLocked) useIFramePlayer.setState({ uiShown: false });
+    }, UI_HIDE_MS);
+  };
+
+  cancelHide = () => clearTimeout(this.hideTimer);
+}
+
+export const playerControls = new PlayerControls();
 
 /** A new episode's player starts from this; its provider sets the speeds. */
 const initialPlayback: Omit<IFramePlayerState, 'speedOptions'> = {
@@ -175,150 +182,91 @@ const getCurrentPlayerIFrameWindow = () => {
   return iframe?.contentWindow;
 };
 
-const shouldHandlePlayerMessage = (event: MessageEvent) => {
-  const currentIFrameWindow = getCurrentPlayerIFrameWindow();
+const set = useIFramePlayer.setState;
 
-  return !!currentIFrameWindow && event.source === currentIFrameWindow;
+const strings = (value: unknown) =>
+  Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string' && !!item)
+    : [];
+
+/** The selected subtitle, or the list of them. */
+const subtitles = ({ data, answer }: IFramePlayerEvent) => {
+  if (data !== undefined) {
+    set({ currentSubtitle: typeof data === 'string' ? data : '' });
+  } else if (Array.isArray(answer)) {
+    set({ subtitles: strings(answer) });
+  }
+};
+
+/** How the store follows each event the episode's player reports. */
+const PLAYER_EVENTS: Record<string, (event: IFramePlayerEvent) => void> = {
+  inited: () => set({ isReady: true }),
+  start: () => {
+    sendIFramePlayerCommand({ action: 'get-quality' });
+    sendIFramePlayerCommand({ action: 'get-qualities' });
+    sendIFramePlayerCommand({ action: 'get-subtitles' });
+    sendIFramePlayerCommand({ action: 'get-volume' });
+  },
+  play: () => set({ isPlaying: true }),
+  pause: () => set({ isPlaying: false }),
+  end: () =>
+    set((state) => ({ endedCount: state.endedCount + 1, isPlaying: false })),
+  duration: ({ data }) => set({ duration: Number(data) }),
+  time: ({ data }) => set({ currentTime: Number(data) }),
+  mute: () => set({ isMuted: true }),
+  unmute: () => set({ isMuted: false }),
+  volume: ({ data, answer }) => set({ volume: Number(data ?? answer) }),
+  quality: ({ data, answer }) => {
+    const quality = data ?? answer;
+    if (typeof quality !== 'string' || !quality) return;
+    if (quality === '1') sendIFramePlayerCommand({ action: 'get-quality' });
+    else set({ currentQuality: quality });
+  },
+  qualities: ({ answer }) => {
+    if (!Array.isArray(answer)) return;
+    if (answer[0] === 1) sendIFramePlayerCommand({ action: 'get-qualities' });
+    else set({ qualities: strings(answer) });
+  },
+  speed: ({ data, answer }) => {
+    if (data || answer) set({ currentSpeed: Number(data || answer) });
+  },
+  vast_start: () => set({ adInProgress: true }),
+  vast_finish: () => set({ adInProgress: false }),
+  buffering: () => set({ isBuffering: true }),
+  buffered: ({ answer }) =>
+    set({ isBuffering: false, bufferedTime: Number(answer) }),
+  subtitle: subtitles,
+  subtitles,
+  pip: ({ data }) => {
+    const { setVideoPiPActive } = usePlayer.getState();
+    if (!data) setVideoPiPActive(false);
+    else if (
+      useSettings.getState().features.player.miniModeType === 'video-native'
+    ) {
+      setVideoPiPActive(true);
+    }
+  },
+  ui: ({ data }) => {
+    const shouldShow = Boolean(data);
+    if (
+      !shouldShow &&
+      (useIFramePlayer.getState().uiLocked ||
+        usePlayer.getState().overlay?.matches(':hover'))
+    ) {
+      return;
+    }
+    set({ uiShown: shouldShow });
+  },
 };
 
 window.addEventListener('message', (event: MessageEvent) => {
-  if (isIFramePlayerEvent(event.data)) {
-    if (!shouldHandlePlayerMessage(event)) return;
-    if (event.data.event !== 'inited' && !useIFramePlayer.getState().isReady) {
-      return;
-    }
-
-    switch (event.data.event) {
-      case 'play':
-        useIFramePlayer.setState({ isPlaying: true });
-        break;
-      case 'pause':
-        useIFramePlayer.setState({ isPlaying: false });
-        break;
-      case 'duration':
-        useIFramePlayer.setState({ duration: Number(event.data.data) });
-        break;
-      case 'time':
-        useIFramePlayer.setState({ currentTime: Number(event.data.data) });
-        break;
-      case 'mute':
-        useIFramePlayer.setState({ isMuted: true });
-        break;
-      case 'unmute':
-        useIFramePlayer.setState({ isMuted: false });
-        break;
-      case 'volume':
-        useIFramePlayer.setState({
-          volume: Number(event.data.data ?? event.data.answer),
-        });
-        break;
-      case 'inited':
-        useIFramePlayer.setState({ isReady: true });
-        break;
-      case 'start':
-        sendIFramePlayerCommand({ action: 'get-quality' });
-        sendIFramePlayerCommand({ action: 'get-qualities' });
-        sendIFramePlayerCommand({ action: 'get-subtitles' });
-        sendIFramePlayerCommand({ action: 'get-volume' });
-        break;
-      case 'end':
-        useIFramePlayer.setState((state) => ({
-          endedCount: state.endedCount + 1,
-          isPlaying: false,
-        }));
-        break;
-      case 'quality': {
-        const quality = event.data.data ?? event.data.answer;
-        if (typeof quality !== 'string' || !quality) break;
-
-        if (quality === '1') {
-          sendIFramePlayerCommand({ action: 'get-quality' });
-          break;
-        }
-
-        useIFramePlayer.setState({ currentQuality: quality });
-        break;
-      }
-      case 'qualities':
-        if (!Array.isArray(event.data.answer)) break;
-
-        if (event.data.answer[0] === 1) {
-          sendIFramePlayerCommand({ action: 'get-qualities' });
-          break;
-        }
-
-        useIFramePlayer.setState({
-          qualities: event.data.answer.filter(
-            (quality): quality is string =>
-              typeof quality === 'string' && !!quality,
-          ),
-        });
-        break;
-      case 'speed':
-        if (!event.data.data && !event.data.answer) break;
-
-        useIFramePlayer.setState({
-          currentSpeed: Number(event.data.data || event.data.answer),
-        });
-        break;
-      case 'vast_start':
-        useIFramePlayer.setState({ adInProgress: true });
-        break;
-      case 'vast_finish':
-        useIFramePlayer.setState({ adInProgress: false });
-        break;
-      case 'buffering':
-        useIFramePlayer.setState({ isBuffering: true });
-        break;
-      case 'buffered':
-        useIFramePlayer.setState({
-          isBuffering: false,
-          bufferedTime: Number(event.data.answer),
-        });
-        break;
-      case 'subtitle':
-      case 'subtitles':
-        if (event.data.data !== undefined) {
-          useIFramePlayer.setState({
-            currentSubtitle:
-              typeof event.data.data === 'string' ? event.data.data : '',
-          });
-          break;
-        }
-
-        if (Array.isArray(event.data.answer)) {
-          useIFramePlayer.setState({
-            subtitles: event.data.answer.filter(
-              (subtitle): subtitle is string =>
-                typeof subtitle === 'string' && !!subtitle,
-            ),
-          });
-          break;
-        }
-
-        break;
-      case 'pip':
-        if (event.data.data) {
-          const { miniModeType } = useSettings.getState().features.player;
-          if (miniModeType === 'video-native') {
-            usePlayer.getState().setVideoPiPActive(true);
-          }
-        } else {
-          usePlayer.getState().setVideoPiPActive(false);
-        }
-        break;
-      case 'ui': {
-        const shouldShow = Boolean(event.data.data);
-        if (
-          !shouldShow &&
-          (useIFramePlayer.getState().uiLocked ||
-            usePlayer.getState().overlay?.matches(':hover'))
-        ) {
-          break;
-        }
-        useIFramePlayer.setState({ uiShown: shouldShow });
-        break;
-      }
-    }
+  if (!isIFramePlayerEvent(event.data)) return;
+  const iframeWindow = getCurrentPlayerIFrameWindow();
+  if (!iframeWindow || event.source !== iframeWindow) return;
+  if (event.data.event !== 'inited' && !useIFramePlayer.getState().isReady) {
+    return;
+  }
+  if (Object.hasOwn(PLAYER_EVENTS, event.data.event)) {
+    PLAYER_EVENTS[event.data.event]!(event.data);
   }
 });

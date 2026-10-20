@@ -1,13 +1,13 @@
 import '../app.css';
+import { sendToBackground } from '@/utils/messaging';
+
 import { FeatureManager } from './core/feature-manager';
 
 export default defineContentScript({
   matches: ['https://hikka.io/*', 'https://dev.hikka.io/*'],
   cssInjectionMode: 'ui',
   async main(ctx) {
-    void browser.runtime
-      .sendMessage({ type: 'hikka-content-loaded' })
-      .catch(() => undefined);
+    void sendToBackground('hikka-content-loaded').catch(() => undefined);
 
     usePageStore.getState().setCTX(ctx);
 
@@ -15,9 +15,7 @@ export default defineContentScript({
     manager.init();
 
     ctx.onInvalidated(() => {
-      void browser.runtime
-        .sendMessage({ type: 'hikka-content-unloaded' })
-        .catch(() => undefined);
+      void sendToBackground('hikka-content-unloaded').catch(() => undefined);
       manager.stop();
     });
   },

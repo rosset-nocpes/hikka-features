@@ -3,7 +3,7 @@ import type { FunctionReference, FunctionReturnType } from 'convex/server';
 import { getFunctionName } from 'convex/server';
 import { useEffect, useState } from 'react';
 
-import { acquireLiveClient } from '@/utils/convex-client';
+import { liveConvex } from '@/utils/convex-client';
 
 interface LiveQueryState<Result> {
   key: string;
@@ -32,7 +32,7 @@ export function useLiveQuery<Query extends FunctionReference<'query'>>(
     let cleanup: (() => void) | undefined;
     let cancelled = false;
 
-    acquireLiveClient().then(
+    liveConvex.acquire().then(
       ({ client, release }) => {
         if (cancelled) return release();
         const unsubscribe = client.onUpdate(

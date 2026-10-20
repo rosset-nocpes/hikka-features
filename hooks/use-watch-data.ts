@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { type ConvexWatchResult, convexApi } from '@/utils/convex-api';
-import { publicAction } from '@/utils/convex-client';
+import { convex } from '@/utils/convex-client';
 import { ProviderIFrame, ProviderTeamIFrame } from '@/utils/provider_classes';
 
 const toWatchData = (data: ConvexWatchResult): API.WatchData => {
@@ -62,7 +62,9 @@ const useWatchData = () => {
   return useQuery({
     queryKey: ['watch-data', slug],
     queryFn: async () =>
-      toWatchData(await publicAction(convexApi.watch.resolve, { slug: slug! })),
+      toWatchData(
+        await convex.action(convexApi.watch.resolve, { slug: slug! }),
+      ),
     retry: false,
     staleTime: 5 * 60 * 1000,
     enabled: !!slug,

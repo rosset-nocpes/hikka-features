@@ -10,14 +10,14 @@ import {
 } from '@/hooks/use-iframe-player';
 import { useSettings } from '@/hooks/use-settings';
 import { sendIFramePlayerCommand } from '@/integrations/iframe-player/protocol';
+import { account } from '@/utils/account';
 import {
   convexApi,
   type WatchRoom,
   type WatchRoomAction,
   type WatchRoomSelection,
 } from '@/utils/convex-api';
-import { acquireLiveClient } from '@/utils/convex-client';
-import { Login } from '@/utils/hikka-integration';
+import { liveConvex } from '@/utils/convex-client';
 
 import { usePlayer } from '../context/player-context';
 import { dispatchPlayerOverlayAction } from '../player-overlay/action-popup';
@@ -156,7 +156,7 @@ class RoomSession {
   constructor(private readonly onEnd: (error: unknown) => void) {}
 
   async connect(open: (client: ConvexClient, tab: string) => Promise<string>) {
-    const { client, release } = await acquireLiveClient();
+    const { client, release } = await liveConvex.acquire();
     if (this.closed) {
       release();
       this.assertOpen();
@@ -617,7 +617,7 @@ export const useWatchTogether = create<
     set({ status: 'connecting', room: undefined, error: undefined });
 
     try {
-      if (!useSettings.getState().convexSession) await Login();
+      if (!account.signedIn) await account.login();
       await current.connect(open);
       if (session === current) set({ status: 'joined' });
     } catch (error) {

@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 
-import { scheduleUiHide, showUi } from '@/hooks/use-iframe-player';
-import { removeSyncedFavorite, syncFavorite } from '@/utils/favorite-sync';
-import { getHikkaProgress } from '@/utils/hikka-progress';
+import { playerControls } from '@/hooks/use-iframe-player';
+import { account } from '@/utils/account';
+import { hikkaTracker } from '@/utils/hikka-tracker';
 import { ProviderIFrame, ProviderTeamIFrame } from '@/utils/provider_classes';
 
 import { pickPriorityTeam, providersOf } from '../teams';
@@ -88,7 +88,7 @@ export const episodesOf = (
 
 /** The episode after the user's progress on hikka.io, else the first. */
 const nextUnwatched = (episodes: API.EpisodeData[]) =>
-  episodes.find((episode) => episode.episode === getHikkaProgress() + 1) ??
+  episodes.find((episode) => episode.episode === hikkaTracker.progress + 1) ??
   episodes[0];
 
 /** The team the user's priority picks on `provider`, else its first one. */
@@ -103,7 +103,7 @@ const priorityTeam = (data: API.WatchData, provider: string) => {
       [provider],
       teamPriority,
       teamPriorityTranslation,
-      getHikkaProgress() + 1,
+      hikkaTracker.progress + 1,
     )?.team ?? source.getTeams()[0]!
   );
 };
@@ -208,7 +208,7 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
               providerOrder,
               teamPriority,
               teamPriorityTranslation,
-              getHikkaProgress() + 1,
+              hikkaTracker.progress + 1,
             );
 
       const provider =
@@ -284,19 +284,21 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
 
       if (isFavoriteTeam(get(), team)) {
         setFavoriteTeam(slug);
-        removeSyncedFavorite(slug).catch(console.error);
+        account.removeFavorite(slug).catch(console.error);
         return;
       }
 
       setFavoriteTeam(slug, { provider, team: team.title });
       const selected = watchData && teamOf(watchData, provider, team.title);
-      syncFavorite({
-        animeSlug: slug,
-        provider,
-        teamId: selected?.id,
-        teamTitle: selected?.canonicalTitle ?? team.title,
-        translationType: selected?.translationType,
-      }).catch(console.error);
+      account
+        .saveFavorite({
+          animeSlug: slug,
+          provider,
+          teamId: selected?.id,
+          teamTitle: selected?.canonicalTitle ?? team.title,
+          translationType: selected?.translationType,
+        })
+        .catch(console.error);
     },
     setEpisode: (episode) => set({ currentEpisode: episode }),
     selectSource: (provider, team, episode) => {
@@ -354,21 +356,21 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
     setOverlay: (el) => {
       // Mice reveal the controls by moving; a tap only keeps shown ones up.
       el?.addEventListener('pointerenter', (event) => {
-        if (event.pointerType === 'mouse') showUi();
+        if (event.pointerType === 'mouse') playerControls.show();
       });
       el?.addEventListener('pointermove', (event) => {
-        if (event.pointerType === 'mouse') showUi();
+        if (event.pointerType === 'mouse') playerControls.show();
       });
       el?.addEventListener('pointerdown', (event) => {
         if (
           event.pointerType !== 'mouse' &&
           useIFramePlayer.getState().uiShown
         ) {
-          showUi();
+          playerControls.show();
         }
       });
       el?.addEventListener('pointerleave', (event) => {
-        if (event.pointerType === 'mouse') scheduleUiHide();
+        if (event.pointerType === 'mouse') playerControls.scheduleHide();
       });
 
       set({ overlay: el });

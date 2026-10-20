@@ -4,7 +4,7 @@ import type { CompatibilityResponse } from '@/utils/compatibility';
 
 // Hand-written mirror of the backend contract (features-backend/convex).
 
-type TranslationType = 'dub' | 'sub' | 'unknown';
+export type TranslationType = 'dub' | 'sub' | 'unknown';
 export type PreferredTranslation = 'dub' | 'sub';
 
 export interface ConvexEpisodeInfo {

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { convexApi } from '@/utils/convex-api';
-import { publicQuery } from '@/utils/convex-client';
+import { convex } from '@/utils/convex-client';
 
 const useNotionData = () => {
   const { slug } = usePageStore();
@@ -9,7 +9,7 @@ const useNotionData = () => {
   return useQuery({
     queryKey: ['notion-data', slug],
     queryFn: async (): Promise<API.NotionData> => {
-      const data = await publicQuery(convexApi.catalog.get, { slug: slug! });
+      const data = await convex.query(convexApi.catalog.get, { slug: slug! });
       if (!data) throw new Error('Not found');
       return {
         poster: data.poster,

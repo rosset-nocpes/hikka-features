@@ -4,8 +4,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import { useIFramePlayer } from '@/hooks/use-iframe-player';
 
-import { createFeatureUi } from '../../core/base-feature';
-import { startActivityReporter } from './activity-reporter';
+import { ModalUi } from '../../core/base-feature';
+import { activityReporter } from './activity-reporter';
 import { usePlayer } from './context/player-context';
 import {
   type PlayerLayout,
@@ -20,69 +20,48 @@ import PlayerOverlay from './player-overlay/player-overlay';
 import { useWatchTogether } from './watch-together/use-watch-together';
 import WatchTogetherInvite from './watch-together/watch-together-invite';
 
-const MOUNT_TAG = 'player-ui';
+const playerUi = new ModalUi({
+  name: 'player-ui',
+  onMount(container, wrapper) {
+    usePlayer.getState().setContainer(container);
+    wrapper.className = 'size-full';
+    container.classList.add('h-full');
+    activityReporter.start();
+  },
+  render: () => (
+    <SidebarProvider className="h-full w-full">
+      <PlayerFrame />
+    </SidebarProvider>
+  ),
+  onRemove: () => {
+    useWatchTogether.getState().leave();
+    activityReporter.stop();
 
-let playerUiPromise: ReturnType<typeof createFeatureUi> | undefined;
-let stopActivityReporter: (() => void) | undefined;
+    const { fullscreen, toggleFullscreen, setVideoPiPActive } =
+      usePlayer.getState();
+    if (fullscreen) toggleFullscreen();
+    setVideoPiPActive(false);
+    document.body.classList.remove('h-full', 'overflow-hidden');
 
-function player() {
-  playerUiPromise ??= createFeatureUi({
-    name: MOUNT_TAG,
-    position: 'modal',
-    zIndex: 100,
-    themeVariables: false,
-    onMount(container, wrapper) {
-      usePlayer.getState().setContainer(container);
-      wrapper.className = 'size-full';
-      container.classList.add('h-full');
-      stopActivityReporter = startActivityReporter();
-    },
-    render: () => (
-      <SidebarProvider className="h-full w-full">
-        <PlayerFrame />
-      </SidebarProvider>
-    ),
-    onRemove: () => {
-      useWatchTogether.getState().leave();
-      stopActivityReporter?.();
-      stopActivityReporter = undefined;
+    useIFramePlayer.getState().reset();
+  },
+});
 
-      const { fullscreen, toggleFullscreen, setVideoPiPActive } =
-        usePlayer.getState();
-      if (fullscreen) toggleFullscreen();
-      setVideoPiPActive(false);
-      document.body.classList.remove('h-full', 'overflow-hidden');
-
-      useIFramePlayer.getState().reset();
-      playerUiPromise = undefined;
-    },
-  });
-
-  return playerUiPromise;
-}
-
-export const isPlayerMounted = () =>
-  !!document.getElementsByTagName(MOUNT_TAG)[0];
+export const isPlayerOpen = () => playerUi.isOpen;
 
 /** Shows `data` in the player, opening it or bringing it out of mini mode. */
 export const openPlayer = (data: API.WatchData) => {
   const { initialize, setMiniPlayer, setVideoPiPActive } = usePlayer.getState();
   initialize(data);
-  if (isPlayerMounted()) {
+  if (playerUi.isOpen) {
     setMiniPlayer(false);
     setVideoPiPActive(false);
   } else {
-    void player().then((ui) => ui.mount());
+    playerUi.open();
   }
 };
 
-export const removePlayer = () => {
-  playerUiPromise?.then((ui) => {
-    if (ui.mounted || document.getElementsByTagName(MOUNT_TAG)[0]) {
-      ui.remove();
-    }
-  });
-};
+export const closePlayer = () => playerUi.close();
 
 const PlayerFrame = () => {
   const { miniPlayer, videoPiPActive, fullscreen, container } = usePlayer();
@@ -123,7 +102,7 @@ const PlayerFrame = () => {
           'fixed inset-0 z-0 bg-black/60 backdrop-blur-xs transition-[opacity,visibility] duration-300',
           isCompactMode && 'invisible opacity-0',
         )}
-        onClick={removePlayer}
+        onClick={closePlayer}
       />
       <Player />
     </div>

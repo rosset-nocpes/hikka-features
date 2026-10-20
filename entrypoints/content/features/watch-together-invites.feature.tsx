@@ -7,7 +7,7 @@ import type { WatchRoomInbox } from '@/utils/convex-api';
 
 import { useLiveQuery } from '@/hooks/use-live-query';
 import { convexApi } from '@/utils/convex-api';
-import { withLiveClient } from '@/utils/convex-client';
+import { liveConvex } from '@/utils/convex-client';
 import { useHikkaViewer } from '@/utils/hikka-viewer';
 
 import { BaseFeature, createFeatureUi } from '../core/base-feature';
@@ -66,9 +66,9 @@ const InviteToasts = () => {
 
   const decline = (invite: Invite) => {
     answer(invite);
-    void withLiveClient((client) =>
-      client.mutation(convexApi.watchRooms.decline, { id: invite.id }),
-    ).catch(console.error);
+    void liveConvex
+      .mutation(convexApi.watchRooms.decline, { id: invite.id })
+      .catch(console.error);
   };
 
   const invites = (inbox?.invites ?? [])

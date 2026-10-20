@@ -10,7 +10,7 @@ import { reveal } from '@/utils/motion';
 export const HFLogo = () => (
   <img
     alt=""
-    src={isHikkaDarkMode() ? HFLogoSmall : HFLogoSmallDark}
+    src={hikkaTheme.isDark ? HFLogoSmall : HFLogoSmallDark}
     style={{ width: '21px', height: '20px' }}
   />
 );

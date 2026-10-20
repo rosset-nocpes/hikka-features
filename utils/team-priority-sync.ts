@@ -1,12 +1,10 @@
 import { useSettings } from '@/hooks/use-settings';
 
-import {
-  type CatalogTeam,
-  convexApi,
-  type PreferredTranslation,
-  type TeamPriority,
+import type {
+  CatalogTeam,
+  PreferredTranslation,
+  TeamPriority,
 } from './convex-api';
-import { accountMutation, accountQuery } from './convex-client';
 
 interface TeamPriorityInput {
   teamIds: string[];
@@ -92,22 +90,4 @@ export async function syncTeamPriority(account: TeamPriorityAccount) {
           },
         }),
   });
-}
-
-let queue = Promise.resolve();
-
-/**
- * Syncs from an extension page through the background. Runs are queued, so a
- * pull never interleaves with the push of a later edit.
- */
-export function queueTeamPrioritySync() {
-  queue = queue
-    .then(() =>
-      syncTeamPriority({
-        get: () => accountQuery(convexApi.teamPriority.get, {}),
-        set: (input) => accountMutation(convexApi.teamPriority.set, input),
-      }),
-    )
-    .catch(console.error);
-  return queue;
 }

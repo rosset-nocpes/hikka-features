@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { SidebarProvider } from '@/components/ui/sidebar';
 
-import { createFeatureUi } from '../../core/base-feature';
+import { ModalUi } from '../../core/base-feature';
 import ReaderNavbar from './components/reader-navbar';
 import MangaRenderer from './components/renderers/manga-renderer';
 import NovelRenderer from './components/renderers/novel-renderer';
@@ -13,46 +13,36 @@ import PageSwitcher from './components/ui/page-switcher';
 import { ReaderProvider, useReader } from './hooks/use-reader';
 import { ReaderType } from './reader.enums';
 
-const MOUNT_TAG = 'reader-ui';
-let readerUiPromise: ReturnType<typeof createFeatureUi> | undefined;
-
-function reader() {
-  readerUiPromise ??= createFeatureUi({
-    name: MOUNT_TAG,
-    position: 'modal',
-    zIndex: 100,
-    themeVariables: false,
-    onMount(container, wrapper) {
-      wrapper.className =
-        'size-full md:backdrop-blur-xs bg-black/60 flex items-center justify-center md:p-8 duration-300';
-      container.classList.add('h-full');
-      Fonts.injectAllFonts();
-    },
-    render: (container) => (
-      <SidebarProvider className="h-full w-full">
-        <ReaderProvider container={container}>
-          <div className="fixed z-0 size-full" onClick={closeReader} />
-          <Reader />
-        </ReaderProvider>
-      </SidebarProvider>
-    ),
-    onRemove: () => {
-      const { settings, toggleFullscreen } = useReader.getState();
-      if (settings.fullscreen) toggleFullscreen();
-      document.body.classList.remove('h-full', 'overflow-hidden');
-      useReader.getState().reset();
-    },
-  });
-
-  return readerUiPromise;
-}
+const readerUi = new ModalUi({
+  name: 'reader-ui',
+  onMount(container, wrapper) {
+    wrapper.className =
+      'size-full md:backdrop-blur-xs bg-black/60 flex items-center justify-center md:p-8 duration-300';
+    container.classList.add('h-full');
+    Fonts.injectAllFonts();
+  },
+  render: (container) => (
+    <SidebarProvider className="h-full w-full">
+      <ReaderProvider container={container}>
+        <div className="fixed z-0 size-full" onClick={closeReader} />
+        <Reader />
+      </ReaderProvider>
+    </SidebarProvider>
+  ),
+  onRemove: () => {
+    const { settings, toggleFullscreen } = useReader.getState();
+    if (settings.fullscreen) toggleFullscreen();
+    document.body.classList.remove('h-full', 'overflow-hidden');
+    useReader.getState().reset();
+  },
+});
 
 export const openReader = () => {
   document.body.classList.add('h-full', 'overflow-hidden');
-  void reader().then((ui) => ui.mount());
+  readerUi.open();
 };
 
-export const closeReader = () => void reader().then((ui) => ui.remove());
+export const closeReader = () => readerUi.close();
 
 const Reader = () => {
   const { settings } = useReader();

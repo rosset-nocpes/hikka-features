@@ -15,13 +15,13 @@ import {
   InputGroupInput,
 } from '@/components/ui/input-group';
 import { Spinner } from '@/components/ui/spinner';
+import { account } from '@/utils/account';
 import {
   type CatalogTeam,
   convexApi,
   type PreferredTranslation,
 } from '@/utils/convex-api';
-import { publicQuery } from '@/utils/convex-client';
-import { queueTeamPrioritySync } from '@/utils/team-priority-sync';
+import { convex } from '@/utils/convex-client';
 import { looseKey } from '@/utils/utils';
 
 import SelectOption from '../_base/select-option';
@@ -117,7 +117,7 @@ const TeamPrioritySettings = () => {
 
   // Pick up changes made on other devices.
   useEffect(() => {
-    queueTeamPrioritySync();
+    void account.syncTeamPriority();
   }, []);
   const [search, setSearch] = useState('');
 
@@ -129,7 +129,7 @@ const TeamPrioritySettings = () => {
 
   const catalog = useQuery({
     queryKey: ['catalog-teams'],
-    queryFn: () => publicQuery(convexApi.teams.list, {}),
+    queryFn: () => convex.query(convexApi.teams.list, {}),
     select: (teams) =>
       teams.toSorted((a, b) => a.title.localeCompare(b.title, 'uk')),
     staleTime: Infinity,
@@ -141,7 +141,7 @@ const TeamPrioritySettings = () => {
     >,
   ) => {
     updateFeatureSettings('player', settings);
-    queueTeamPrioritySync();
+    void account.syncTeamPriority();
   };
 
   const move = (index: number, offset: -1 | 1) => {

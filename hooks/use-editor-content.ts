@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { convexApi } from '@/utils/convex-api';
-import { publicAction } from '@/utils/convex-client';
+import { convex } from '@/utils/convex-client';
 
 import { hikkaApiPath } from './use-hikka';
 
@@ -29,7 +29,7 @@ const useEditorContent = () => {
       if (!slug || (type !== 'characters' && type !== 'people')) {
         throw new Error('Unsupported content type');
       }
-      return await publicAction(convexApi.editor.suggest, { type, slug });
+      return await convex.action(convexApi.editor.suggest, { type, slug });
     },
     retry: false,
     staleTime: 0,

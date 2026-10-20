@@ -8,7 +8,7 @@ import {
   type ReleaseNotificationMenu,
   convexApi,
 } from '@/utils/convex-api';
-import { accountMutation, accountQuery } from '@/utils/convex-client';
+import { convex } from '@/utils/convex-client';
 import { getHikkaViewerId } from '@/utils/hikka-viewer';
 
 import { AnchoredUisFeature, renderApp } from '../core/base-feature';
@@ -112,14 +112,15 @@ const useReleaseNotifications = () => {
     // Only show the extension account's notifications to that Hikka user.
     queryFn: async () =>
       (await getHikkaViewerId()) === hikkaId
-        ? await accountQuery(convexApi.notifications.menu, { limit: 50 })
+        ? await convex.accountQuery(convexApi.notifications.menu, { limit: 50 })
         : EMPTY_MENU,
     refetchInterval: POLL_INTERVAL_MS,
     retry: false,
   });
 
   const { mutate: markAllSeen, isPending: markingAllSeen } = useMutation({
-    mutationFn: () => accountMutation(convexApi.notifications.markAllSeen, {}),
+    mutationFn: () =>
+      convex.accountMutation(convexApi.notifications.markAllSeen, {}),
     // Keep an in-flight poll from overwriting the cleared state.
     onMutate: () => queryClient.cancelQueries({ queryKey }),
     onSuccess: () =>
@@ -140,7 +141,10 @@ const useReleaseNotifications = () => {
 
   const markSeen = (notification: ReleaseNotification) => {
     if (notification.seen) return;
-    accountMutation(convexApi.notifications.markSeen, { id: notification.id })
+    convex
+      .accountMutation(convexApi.notifications.markSeen, {
+        id: notification.id,
+      })
       .then(() => refetch())
       .catch((error) =>
         console.error('Failed to mark release notification as seen', error),

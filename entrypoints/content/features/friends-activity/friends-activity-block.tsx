@@ -19,9 +19,9 @@ import { Switch } from '@/components/ui/switch';
 import { useHikkaContent } from '@/hooks/use-hikka';
 import { useLiveQuery } from '@/hooks/use-live-query';
 import { useSettings } from '@/hooks/use-settings';
+import { account } from '@/utils/account';
 import { convexApi } from '@/utils/convex-api';
-import { refreshFriends, withLiveClient } from '@/utils/convex-client';
-import { Login } from '@/utils/hikka-integration';
+import { liveConvex } from '@/utils/convex-client';
 import { useHikkaViewer } from '@/utils/hikka-viewer';
 
 import { memberName } from '../player/watch-together/menu';
@@ -162,9 +162,8 @@ const SharingSettings = () => {
   const toggle = (shareActivity: boolean) => {
     setPending(shareActivity);
     // Resolves once the live query shows it.
-    void withLiveClient((client) =>
-      client.mutation(convexApi.activity.setSharing, { shareActivity }),
-    )
+    void liveConvex
+      .mutation(convexApi.activity.setSharing, { shareActivity })
       .catch(console.error)
       .finally(() => setPending(undefined));
   };
@@ -207,7 +206,7 @@ const FriendsList = () => {
   // Friends are the mutual follows among extension users; read them again
   // now and then (the server limits how often).
   useEffect(() => {
-    void refreshFriends();
+    void account.refreshFriends();
   }, []);
 
   if (activities?.length === 0) {
@@ -252,7 +251,8 @@ const SignIn = () => {
           disabled={pending}
           onClick={() => {
             setPending(true);
-            Login()
+            account
+              .login()
               .catch(console.error)
               .finally(() => setPending(false));
           }}

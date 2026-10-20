@@ -15,7 +15,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
-import { getHikkaProgress } from '@/utils/hikka-progress';
+import { hikkaTracker } from '@/utils/hikka-tracker';
 
 import { allChapters, sortVolumes } from '../../../chapters';
 import useReadData from '../../../hooks/use-read-data';
@@ -70,7 +70,7 @@ const VolumesView = () => {
   );
 
   if (!volumes) return;
-  const progress = getHikkaProgress();
+  const progress = hikkaTracker.progress;
 
   return (
     <SidebarGroup>

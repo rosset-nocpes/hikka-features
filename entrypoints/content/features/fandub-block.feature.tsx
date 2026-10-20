@@ -75,7 +75,7 @@ const FandubBlock = () => {
               rel="noopener"
             >
               <img
-                src={isHikkaDarkMode() ? HFxCPRBadge : HFxCPRBadgeDark}
+                src={hikkaTheme.isDark ? HFxCPRBadge : HFxCPRBadgeDark}
                 style={{ height: '20px' }}
               />
             </a>

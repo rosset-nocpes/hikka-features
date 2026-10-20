@@ -6,11 +6,9 @@ import { ReaderContentMode } from '../reader.enums';
 import BaseScraper from './_scraper';
 
 class BIUScraper extends BaseScraper {
-  name = 'BIUScraper';
-  baseUrl = 'https://baka.in.ua';
-  endpoints = {
-    search: `${this.baseUrl}/search`,
-  };
+  constructor() {
+    super('BIUScraper', 'https://baka.in.ua');
+  }
 
   async search(data: any) {
     const titles = [data.title_ua, data.title_en, data.title_original].filter(
@@ -20,7 +18,7 @@ class BIUScraper extends BaseScraper {
     for (const title of titles) {
       try {
         const r = await this.request(
-          `${this.endpoints.search}?filter=fiction&search[]=${encodeURIComponent(title)}`,
+          `search?filter=fiction&search[]=${encodeURIComponent(title)}`,
         );
 
         const $page = cheerio.load(r);
@@ -164,6 +162,4 @@ class BIUScraper extends BaseScraper {
   }
 }
 
-const biuScraper = new BIUScraper();
-
-export default biuScraper;
+export const biuScraper = new BIUScraper();

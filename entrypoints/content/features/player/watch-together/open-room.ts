@@ -1,5 +1,5 @@
 import { usePlayer } from '../context/player-context';
-import { isPlayerMounted } from '../player';
+import { isPlayerOpen } from '../player';
 import { useWatchTogether } from './use-watch-together';
 
 /**
@@ -7,7 +7,7 @@ import { useWatchTogether } from './use-watch-together';
  * here when the open player shows its anime, otherwise on the anime's page.
  */
 export const openRoom = (animeSlug: string, code: string) => {
-  if (isPlayerMounted() && usePlayer.getState().slug === animeSlug) {
+  if (isPlayerOpen() && usePlayer.getState().slug === animeSlug) {
     void useWatchTogether.getState().join(code);
     return;
   }

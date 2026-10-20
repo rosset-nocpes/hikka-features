@@ -34,8 +34,8 @@ import { Switch } from '@/components/ui/switch';
 import { useCopy } from '@/hooks/use-copy';
 import { useLiveQuery } from '@/hooks/use-live-query';
 import { useSettings } from '@/hooks/use-settings';
+import { account } from '@/utils/account';
 import { convexApi } from '@/utils/convex-api';
-import { refreshFriends } from '@/utils/convex-client';
 
 import { usePlayer } from '../../context/player-context';
 import {
@@ -446,7 +446,7 @@ const WatchTogether: FC<Props> = ({
     if (!next) return;
     setPage('menu');
     // Friends' rooms and the invite list depend on who follows whom.
-    if (signedIn) void refreshFriends();
+    if (signedIn) void account.refreshFriends();
   };
 
   return (

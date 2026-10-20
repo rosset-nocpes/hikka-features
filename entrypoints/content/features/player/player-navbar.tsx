@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 
 import { usePlayer } from './context/player-context';
-import { removePlayer } from './player';
+import { closePlayer } from './player';
 import WatchTogether from './player-overlay/buttons/watch-together';
 
 const GLASS = 'bg-background/60 backdrop-blur-xl';
@@ -40,7 +40,7 @@ const PlayerNavbar: FC<Props> = ({ onDragStart }) => {
             size="icon-sm"
             className={GLASS}
             aria-label="Закрити програвач"
-            onClick={removePlayer}
+            onClick={closePlayer}
           >
             <MaterialSymbolsCloseRounded />
           </Button>
@@ -86,7 +86,7 @@ const PlayerNavbar: FC<Props> = ({ onDragStart }) => {
               size="icon-sm"
               className={GLASS}
               aria-label="Закрити програвач"
-              onClick={removePlayer}
+              onClick={closePlayer}
             >
               <MaterialSymbolsCloseRounded />
             </Button>

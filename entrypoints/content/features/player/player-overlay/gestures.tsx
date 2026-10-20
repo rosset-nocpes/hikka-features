@@ -1,15 +1,10 @@
 import { useCallback, useEffect, useRef } from 'react';
 
 import { useSidebar } from '@/components/ui/sidebar';
-import {
-  cancelUiHide,
-  scheduleUiHide,
-  showUi,
-  useIFramePlayer,
-} from '@/hooks/use-iframe-player';
+import { playerControls, useIFramePlayer } from '@/hooks/use-iframe-player';
 
 import { usePlayer } from '../context/player-context';
-import { removePlayer } from '../player';
+import { closePlayer } from '../player';
 import { dispatchPlayerOverlayAction } from './action-popup';
 
 /** Clicks, taps, holds and keyboard shortcuts on the video. */
@@ -105,7 +100,7 @@ const Gestures = () => {
       pendingSeekTimeRef.current = null;
       skipTotalRef.current = 0;
       seek(time);
-      showUi();
+      playerControls.show();
     },
     [seek],
   );
@@ -113,14 +108,14 @@ const Gestures = () => {
   useEffect(
     () => () => {
       if (skipResetTimerRef.current) clearTimeout(skipResetTimerRef.current);
-      cancelUiHide();
+      playerControls.cancelHide();
     },
     [],
   );
 
   useEffect(() => {
-    if (isPlaying && uiShown) scheduleUiHide();
-    else cancelUiHide();
+    if (isPlaying && uiShown) playerControls.scheduleHide();
+    else playerControls.cancelHide();
   }, [isPlaying, uiShown]);
 
   useEffect(() => {
@@ -205,7 +200,7 @@ const Gestures = () => {
           break;
         case 'escape':
           e.preventDefault();
-          removePlayer();
+          closePlayer();
           break;
       }
     };
@@ -316,7 +311,7 @@ const Gestures = () => {
       onClick={() => {
         if (speedupRef.current) return;
         if (pointerTypeRef.current !== 'mouse' && !uiShown) {
-          showUi();
+          playerControls.show();
           return;
         }
         togglePlayPause();

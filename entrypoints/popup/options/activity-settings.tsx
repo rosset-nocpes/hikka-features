@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { convexApi } from '@/utils/convex-api';
-import { accountMutation, accountQuery } from '@/utils/convex-client';
+import { convex } from '@/utils/convex-client';
 
 import SwitchOption from '../_base/switch-option';
 
@@ -12,11 +12,11 @@ const ActivitySettings = () => {
   const queryClient = useQueryClient();
   const { data } = useQuery({
     queryKey: QUERY_KEY,
-    queryFn: () => accountQuery(convexApi.activity.settings, {}),
+    queryFn: () => convex.accountQuery(convexApi.activity.settings, {}),
   });
   const { mutate } = useMutation({
     mutationFn: (shareActivity: boolean) =>
-      accountMutation(convexApi.activity.setSharing, { shareActivity }),
+      convex.accountMutation(convexApi.activity.setSharing, { shareActivity }),
     onMutate: (shareActivity) =>
       queryClient.setQueryData(QUERY_KEY, { shareActivity }),
     onSettled: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),

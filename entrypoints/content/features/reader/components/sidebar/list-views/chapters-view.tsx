@@ -7,7 +7,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { getHikkaProgress } from '@/utils/hikka-progress';
+import { hikkaTracker } from '@/utils/hikka-tracker';
 
 import type { Chapter } from '../../../reader.types';
 
@@ -76,7 +76,7 @@ const ChaptersView: FC<Props> = ({ scrollRef }) => {
   }, [container, currentChapter, rowVirtualizer, rows]);
 
   if (!chapters) return;
-  const progress = getHikkaProgress();
+  const progress = hikkaTracker.progress;
 
   return (
     <SidebarGroup>

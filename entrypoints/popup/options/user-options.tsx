@@ -6,7 +6,7 @@ import HikkaLogo from '@/assets/hikka_logo.svg';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { Login, Logout } from '@/utils/hikka-integration';
+import { account } from '@/utils/account';
 
 const authErrorMessage = (error: unknown) => {
   const message = error instanceof Error ? error.message : '';
@@ -31,7 +31,7 @@ const UserOptions = () => {
     setPending(action);
     setError(undefined);
     try {
-      await (action === 'login' ? Login() : Logout());
+      await (action === 'login' ? account.login() : account.logout());
     } catch (cause) {
       setError(authErrorMessage(cause));
     } finally {

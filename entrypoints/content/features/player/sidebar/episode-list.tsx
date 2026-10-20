@@ -8,7 +8,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { getHikkaProgress } from '@/utils/hikka-progress';
+import { hikkaTracker } from '@/utils/hikka-tracker';
 
 import { usePlayer } from '../context/player-context';
 
@@ -69,7 +69,7 @@ const EpisodeList = () => {
 
   if (!episodeData?.length) return null;
 
-  const watched = getHikkaProgress();
+  const watched = hikkaTracker.progress;
   // Decided per list so every row shares the same layout and height.
   const numbered = episodeData.some((episode) => getEpisodeTitle(episode));
   const numberWidth = `${String(Math.max(...episodeData.map((episode) => episode.episode))).length}ch`;
