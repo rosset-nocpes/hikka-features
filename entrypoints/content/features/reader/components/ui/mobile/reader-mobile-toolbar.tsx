@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import {
   Sheet,
   SheetContent,
-  SheetFooter,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -14,7 +13,6 @@ import {
 
 import { useReader } from '../../../hooks/use-reader';
 import { closeReader } from '../../../reader';
-import { READER_POWERED_BY } from '../../../reader.constants';
 import ChapterList from '../../sidebar/chapter-list';
 import { SettingsItems } from '../../sidebar/settings/reader-settings';
 import SortOptions from '../../sidebar/sort-options';
@@ -22,7 +20,7 @@ import SortOptions from '../../sidebar/sort-options';
 const ReaderMobileToolbar = () => {
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  const { settings, container, currentChapter } = useReader();
+  const { container, currentChapter } = useReader();
 
   useEffect(() => {
     setSheetOpen(false);
@@ -47,17 +45,9 @@ const ReaderMobileToolbar = () => {
             <SheetHeader>
               <SheetTitle>Налаштування</SheetTitle>
             </SheetHeader>
-            <SettingsItems />
-            <SheetFooter className="text-muted-foreground flex flex-col text-center text-xs">
-              <a
-                href={READER_POWERED_BY[settings.type]?.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="py-1"
-              >
-                {READER_POWERED_BY[settings.type]?.label}
-              </a>
-            </SheetFooter>
+            <div className="overflow-y-auto px-4 pb-4">
+              <SettingsItems />
+            </div>
           </SheetContent>
         </Sheet>
         <Sheet modal={false} open={sheetOpen} onOpenChange={setSheetOpen}>
