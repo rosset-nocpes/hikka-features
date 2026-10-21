@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client';
 import MaterialSymbolsSadTabRounded from '~icons/material-symbols/sad-tab-rounded';
 
 import BlockEntry from '@/components/block-entry';
+import BlockHeader from '@/components/hikka/block-header';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -62,26 +63,25 @@ const FandubBlock: FC = () => {
     <AnimatePresence>
       {enabled && (
         <motion.div
-          className="border-border bg-secondary/20 overflow-hidden rounded-lg border"
+          className="flex min-w-0 flex-col gap-3"
           initial={{ opacity: 0, height: 0, scale: 0.93 }}
           animate={{ opacity: 1, height: 'auto', scale: 1 }}
           exit={{ opacity: 0, height: 0, scale: 0.93 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
         >
-          <div className="flex flex-col gap-6 p-4">
-            <h4 className="flex items-center justify-between">
-              Від команд
-              <a
-                href="https://drbryanman.github.io/CPRcatalog/#/"
-                target="_blank"
-                rel="noopener"
-              >
-                <img
-                  src={isHikkaDarkMode() ? HFxCPRBadge : HFxCPRBadgeDark}
-                  style={{ height: '20px' }}
-                />
-              </a>
-            </h4>
+          <BlockHeader title="Від команд">
+            <a
+              href="https://drbryanman.github.io/CPRcatalog/#/"
+              target="_blank"
+              rel="noopener"
+            >
+              <img
+                src={isHikkaDarkMode() ? HFxCPRBadge : HFxCPRBadgeDark}
+                style={{ height: '20px' }}
+              />
+            </a>
+          </BlockHeader>
+          <div className="surface border-border relative isolate flex min-w-0 flex-col gap-4 overflow-clip rounded-lg border p-4">
             <div className="flex flex-col gap-2">
               {isLoading &&
                 Array.from({ length: 4 }).map((_, i) => (

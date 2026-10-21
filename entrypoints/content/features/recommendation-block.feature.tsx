@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { createRoot } from 'react-dom/client';
 import MaterialSymbolsPersonalizedRecommendations from '~icons/material-symbols/personalized-recommendations';
 
-import BlockButton from '@/components/hikka/block-button';
+import BlockHeader from '@/components/hikka/block-header';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import EmptyState from '@/components/ui/empty-state';
 import HFLogoSmallDark from '@/public/hikka-features-small-dark.svg';
@@ -73,21 +73,19 @@ const RecommendationBlock: FC = () => {
           }}
           exit={{ opacity: 0, height: 0, scale: 0.93, marginTop: 0 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
-          className="flex flex-col gap-4 lg:gap-6"
+          className="flex min-w-0 flex-col gap-5"
         >
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="flex items-center justify-between gap-2">
-              Схожий контент
+          <BlockHeader
+            title="Схожий контент"
+            href={`https://myanimelist.net/${contentType === 'novel' ? 'manga' : contentType}/${content_data.mal_id}`}
+            disabled={isLoading || data?.recommendations.length === 0}
+            icon={
               <img
                 src={isHikkaDarkMode() ? HFLogoSmall : HFLogoSmallDark}
                 style={{ width: '21px', height: '20px' }}
               />
-            </h3>
-            <BlockButton
-              href={`https://myanimelist.net/${contentType === 'novel' ? 'manga' : contentType}/${content_data.mal_id}`}
-              disabled={isLoading || data?.recommendations.length === 0}
-            />
-          </div>
+            }
+          />
           <div className="no-scrollbar md:gradient-mask-none auto-cols-scroll grid-cols-scroll grid-min-6 relative -mx-4 -my-4 grid grid-flow-col gap-4 overflow-x-scroll p-4 sm:grid-cols-4 md:grid-cols-5 lg:gap-6">
             {isLoading &&
               Array.from({ length: 5 }).map((_, index) => (

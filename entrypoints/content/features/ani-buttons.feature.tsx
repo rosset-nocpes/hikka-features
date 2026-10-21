@@ -2,6 +2,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { createRoot, type Root } from 'react-dom/client';
 
+import BlockHeader from '@/components/hikka/block-header';
 import { buttonVariants } from '@/components/ui/button';
 import { ButtonGroup } from '@/components/ui/button-group';
 import HFLogoSmallDark from '@/public/hikka-features-small-dark.svg';
@@ -288,7 +289,6 @@ interface AniButtonsContentProps {
 }
 
 const AniButtonsContent = ({ data, isModal }: AniButtonsContentProps) => {
-  const isEdit = usePageStore((s) => s.contentType === 'edit');
   const content_type: MediaType | InfoType =
     data?.data_type ?? data?.content_type;
   const title = pickTitle(data);
@@ -329,38 +329,35 @@ const AniButtonsContent = ({ data, isModal }: AniButtonsContentProps) => {
 
   return (
     <motion.div
-      className={cn(
-        'border-border overflow-hidden rounded-lg border',
-        !isEdit && 'bg-secondary/20',
-      )}
+      className="flex min-w-0 flex-col gap-3"
       initial={{ opacity: 0, height: 0, scale: 0.93, marginBottom: 0 }}
       animate={{ opacity: 1, height: 'auto', scale: 1, marginBottom: '2rem' }}
       exit={{ opacity: 0, height: 0, scale: 0.93, marginBottom: 0 }}
       transition={{ duration: 0.2, ease: 'easeOut' }}
     >
-      <div className="flex flex-col gap-6 p-4">
-        <h4 className="flex items-center justify-between">
-          Інші джерела
+      <BlockHeader
+        title="Інші джерела"
+        icon={
           <img
             alt=""
             src={isHikkaDarkMode() ? HFLogoSmall : HFLogoSmallDark}
             style={{ width: '21px', height: '20px' }}
           />
-        </h4>
-        <div className="grid grid-cols-2 gap-2">
-          {sources.map((source) => (
-            <a
-              key={source}
-              href={getUrl(source)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:bg-secondary/60 flex items-center gap-2 rounded-sm p-1 text-sm font-medium transition"
-            >
-              <Favicon host={SOURCES_HOSTS[source]} />
-              {SOURCE_TITLES[source]}
-            </a>
-          ))}
-        </div>
+        }
+      />
+      <div className="surface border-border relative isolate grid min-w-0 grid-cols-2 gap-2 overflow-clip rounded-lg border p-4">
+        {sources.map((source) => (
+          <a
+            key={source}
+            href={getUrl(source)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:bg-secondary/60 flex items-center gap-2 rounded-sm p-1 text-sm font-medium transition"
+          >
+            <Favicon host={SOURCES_HOSTS[source]} />
+            {SOURCE_TITLES[source]}
+          </a>
+        ))}
       </div>
     </motion.div>
   );
