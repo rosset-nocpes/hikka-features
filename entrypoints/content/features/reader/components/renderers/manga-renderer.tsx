@@ -229,7 +229,8 @@ const MangaRenderer = () => {
                   alt="Chapter page"
                   loading="lazy"
                   referrerPolicy="no-referrer"
-                  className="max-w-none"
+                  // Phones fit the strip to their width; zoom is a pinch away.
+                  className="max-w-none max-md:w-full!"
                   style={{
                     width: settings.scrollMode
                       ? `${(settings.scale - 0.6) * 1000}px`

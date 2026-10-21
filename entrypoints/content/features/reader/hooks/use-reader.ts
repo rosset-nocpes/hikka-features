@@ -32,6 +32,8 @@ export interface ReaderState {
   settings: ReaderSettings;
   /* Manga-related (idk where to put it for now) */
   carouselApi?: CarouselApi;
+  /** Phones hide the reader's bars on a tap at the page. */
+  barsHidden: boolean;
 }
 
 interface ReaderActions {
@@ -47,6 +49,7 @@ interface ReaderActions {
   toggleFullscreen: () => Promise<void>;
   syncFullscreen: (val: boolean) => void;
   setCarouselApi: (api: CarouselApi) => void;
+  toggleBars: () => void;
   reset: () => void;
 }
 
@@ -100,6 +103,7 @@ export const useReader = create<ReaderState & ReaderActions>((set, get) => {
 
   return {
     settings: baseSettings(),
+    barsHidden: false,
 
     initialize: (type, data, container) => {
       const chapters = allChapters(data);
@@ -141,12 +145,14 @@ export const useReader = create<ReaderState & ReaderActions>((set, get) => {
         settings: { ...state.settings, fullscreen: value },
       })),
     setCarouselApi: (api) => set({ carouselApi: api }),
+    toggleBars: () => set({ barsHidden: !get().barsHidden }),
     reset: () =>
       set({
         container: undefined,
         currentChapter: undefined,
         settings: baseSettings(),
         carouselApi: undefined,
+        barsHidden: false,
       }),
   };
 });

@@ -12,7 +12,8 @@ import {
   useLayoutTransition,
   useMiniPlayerDrag,
 } from './mini-player-layout';
-import PlayerMobileToolbar from './mobile-toolbar/player-mobile-toolbar';
+import PlayerMobilePanel from './mobile/player-mobile-panel';
+import { useStackedLayout } from './mobile/use-stacked-layout';
 import PlayerIFrameEffects from './player-iframe-effects';
 import PlayerMiniBar from './player-mini-bar';
 import PlayerNavbar from './player-navbar';
@@ -118,6 +119,7 @@ const Player = () => {
     videoPiPActive,
   } = usePlayer();
   const cardRef = useRef<HTMLDivElement>(null);
+  const stacked = useStackedLayout();
 
   const layout: PlayerLayout = miniPlayer
     ? 'mini'
@@ -142,6 +144,8 @@ const Player = () => {
           'aspect-video h-auto w-[min(calc(100vw-1rem),420px)]',
         layout === 'bar' &&
           'bg-background/60 h-auto w-[min(calc(100vw-1rem),480px)] backdrop-blur-xl',
+        // Phones held upright: the video on top, its episode panel below.
+        stacked && 'bg-background flex-col',
       )}
     >
       <PlayerIFrameEffects />
@@ -154,6 +158,7 @@ const Player = () => {
       <CardContent
         className={cn(
           'flex min-h-0 min-w-0 flex-1 flex-col p-0 duration-300',
+          stacked && 'aspect-video w-full flex-none bg-black',
           layout === 'bar' &&
             'pointer-events-none invisible absolute inset-0 z-0',
         )}
@@ -172,7 +177,7 @@ const Player = () => {
         <PlayerMiniBar onDragStart={startDrag} />
       ) : (
         <>
-          {layout === 'full' && <PlayerMobileToolbar />}
+          {stacked && <PlayerMobilePanel />}
           <PlayerNavbar onDragStart={startDrag} />
           <PlayerOverlay />
           {layout === 'full' && <WatchTogetherInvite />}

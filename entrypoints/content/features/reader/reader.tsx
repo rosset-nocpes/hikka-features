@@ -1,5 +1,6 @@
-import { useEffect } from 'react';
+import { type MouseEvent, useEffect } from 'react';
 
+import { useIsMobile } from '@/components/hooks/use-mobile';
 import { Card, CardContent } from '@/components/ui/card';
 import { SidebarProvider } from '@/components/ui/sidebar';
 
@@ -44,8 +45,18 @@ export const openReader = () => {
 
 export const closeReader = () => readerUi.close();
 
+/** Taps on these keep their own meaning rather than toggling the bars. */
+const INTERACTIVE = 'button, a, input, img.cursor-zoom-in, .cursor-help';
+
 const Reader = () => {
-  const { settings } = useReader();
+  const { settings, toggleBars } = useReader();
+  const isMobile = useIsMobile();
+
+  const handlePageTap = (e: MouseEvent) => {
+    if (!isMobile) return;
+    if ((e.target as Element).closest(INTERACTIVE)) return;
+    toggleBars();
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -69,7 +80,10 @@ const Reader = () => {
 
       <ReaderNavbar />
 
-      <CardContent className="relative flex min-h-0 min-w-0 flex-1 flex-col gap-2 p-0">
+      <CardContent
+        className="relative flex min-h-0 min-w-0 flex-1 flex-col gap-2 p-0"
+        onClick={handlePageTap}
+      >
         <PageSwitcher />
         {settings.type === ReaderType.Manga && <MangaRenderer />}
         {settings.type === ReaderType.Novel && <NovelRenderer />}

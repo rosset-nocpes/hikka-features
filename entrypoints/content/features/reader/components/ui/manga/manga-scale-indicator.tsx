@@ -21,7 +21,7 @@ const MangaScaleIndicator = () => {
   return (
     <div
       className={cn(
-        'bg-sidebar absolute right-2 bottom-2 z-20 flex h-8 cursor-default items-center gap-2 rounded-md px-1 font-medium duration-300',
+        'bg-sidebar absolute right-2 bottom-2 z-20 hidden h-8 cursor-default items-center gap-2 rounded-md px-1 font-medium duration-300 md:flex',
         !settings.scrollMode && '-bottom-8',
       )}
     >

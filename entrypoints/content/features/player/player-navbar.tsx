@@ -2,11 +2,16 @@ import { type FC, type PointerEvent as ReactPointerEvent, useRef } from 'react';
 import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
 import MaterialSymbolsDragIndicator from '~icons/material-symbols/drag-indicator';
 import MaterialSymbolsOpenInFullRounded from '~icons/material-symbols/open-in-full-rounded';
+import MaterialSymbolsViewListRounded from '~icons/material-symbols/view-list-rounded';
 
+import { useIsMobile } from '@/components/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
+import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 
 import { usePlayer } from './context/player-context';
+import PlayerMobilePanel from './mobile/player-mobile-panel';
+import { useStackedLayout } from './mobile/use-stacked-layout';
 import { closePlayer } from './player';
 import WatchTogether from './player-overlay/buttons/watch-together';
 
@@ -18,13 +23,22 @@ interface Props {
 }
 
 const PlayerNavbar: FC<Props> = ({ onDragStart }) => {
-  const { currentEpisode, miniPlayer, videoPiPActive, toggleMiniPlayer } =
-    usePlayer();
+  const {
+    container,
+    currentEpisode,
+    miniPlayer,
+    videoPiPActive,
+    toggleMiniPlayer,
+  } = usePlayer();
   const { uiShown } = useIFramePlayer();
   const { open } = useSidebar();
   const actionsRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
+  const stacked = useStackedLayout();
 
   const isCompactMode = miniPlayer || videoPiPActive;
+  // Phones on their side or in fullscreen have no room for the panel.
+  const panelInDrawer = isMobile && !stacked && !isCompactMode;
 
   return (
     <>
@@ -45,10 +59,12 @@ const PlayerNavbar: FC<Props> = ({ onDragStart }) => {
             <MaterialSymbolsCloseRounded />
           </Button>
         )}
+        {/* The panel under the video already names the episode. */}
         <span
           className={cn(
             GLASS,
             'flex h-8 items-center rounded-md px-2 font-medium',
+            stacked && 'hidden',
             isCompactMode
               ? 'cursor-grab touch-none gap-0.5 pl-1 active:cursor-grabbing'
               : 'cursor-default',
@@ -100,6 +116,25 @@ const PlayerNavbar: FC<Props> = ({ onDragStart }) => {
               compact
               className={cn(GLASS, 'md:hidden')}
             />
+            {panelInDrawer && (
+              <Drawer swipeDirection="right">
+                <DrawerTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      className={GLASS}
+                      aria-label="Епізоди та джерело"
+                    />
+                  }
+                >
+                  <MaterialSymbolsViewListRounded />
+                </DrawerTrigger>
+                <DrawerContent container={container}>
+                  <PlayerMobilePanel className="pt-[max(1rem,env(safe-area-inset-top))]" />
+                </DrawerContent>
+              </Drawer>
+            )}
             <SidebarTrigger
               variant="ghost"
               size="icon-sm"

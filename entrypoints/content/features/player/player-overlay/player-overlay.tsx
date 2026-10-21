@@ -5,6 +5,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { useIFramePlayer } from '@/hooks/use-iframe-player';
 
 import { usePlayer } from '../context/player-context';
+import { useStackedLayout } from '../mobile/use-stacked-layout';
 import PlayerSidebar from '../sidebar/player-sidebar';
 import ActionPopup from './action-popup';
 import BufferingIndicator from './buffering-indicator';
@@ -16,6 +17,7 @@ const PlayerOverlay = () => {
   const { adInProgress, uiShown } = useIFramePlayer();
   const { setOverlay, miniPlayer, videoPiPActive } = usePlayer();
   const isMobile = useIsMobile();
+  const stacked = useStackedLayout();
 
   const isCompactMode = miniPlayer || videoPiPActive;
   const swallowTapRef = useRef(false);
@@ -40,7 +42,9 @@ const PlayerOverlay = () => {
   return (
     <div
       className={cn(
-        'absolute flex size-full',
+        'absolute flex',
+        // Stacked, the overlay covers the video only, not the panel below.
+        stacked ? 'inset-x-0 top-0 aspect-video' : 'size-full',
         adInProgress && 'pointer-events-none',
         videoPiPActive && !miniPlayer && 'flex-col justify-end',
       )}
@@ -62,7 +66,6 @@ const PlayerOverlay = () => {
           onClickCapture={handleClickCapture}
           className={cn(
             'relative isolate flex flex-col opacity-100 transition-opacity duration-300',
-            !isCompactMode && 'pb-20 md:pb-0',
             !uiShown && 'opacity-0',
           )}
         >
