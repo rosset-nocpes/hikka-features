@@ -27,8 +27,8 @@ export default class RecommendationBlockFeature extends BaseFeature {
     this.ui = await createShadowRootUi(usePageStore.getState().ctx, {
       name: this.id,
       position: 'inline',
-      append: 'after',
-      anchor: '#content-center > section:last-of-type',
+      append: 'before',
+      anchor: '#content-center > div:last-of-type',
       css: `:host(${this.id}) { margin-top: -2rem !important; }`,
       inheritStyles: true,
       onMount(container) {
