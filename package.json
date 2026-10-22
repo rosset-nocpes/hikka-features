@@ -1,6 +1,6 @@
 {
   "name": "hikka-features",
-  "version": "3.2.0",
+  "version": "3.0.0",
   "private": true,
   "description": "Універсальне розширення для hikka.io",
   "type": "module",
@@ -12,6 +12,7 @@
     "zip": "wxt zip",
     "zip:firefox": "wxt zip -b firefox",
     "compile": "tsc --noEmit",
+    "check:contract": "tsc -p tests/contract/tsconfig.json",
     "postinstall": "wxt prepare",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",

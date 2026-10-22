@@ -44,16 +44,35 @@ an incompatible Convex contract. Existing function names remain the protocol 1
 contract, and future breaking contracts must use new function names so both can
 run against the same database during rollout.
 
-The background worker checks `compatibility:get` on startup and hourly. Once
-Convex reports the client as unsupported, it stops calling the API until the
-browser installs a newer build, which browsers do on their own.
+Breaking backend changes never force an update. Browsers update the extension
+on their own, so the backend serves the old and the new contract side by side
+until nobody uses the old one:
 
-Release in this order:
+1. Add the new contract under new function names (e.g. `watch:resolveV2`),
+   leaving the old functions as they are, and deploy the backend.
+2. Point `utils/convex-api.ts` at the new names, increment
+   `EXTENSION_API_PROTOCOL`, add it to `supportedProtocols` in Convex, and
+   publish the extension.
+3. Every install reports its version and protocol once a day
+   (`compatibility:report`, an anonymous count). Once
+   `compatibility:usage` shows no recent installs on the old protocol, delete
+   the old functions and drop the protocol from `supportedProtocols`.
 
-1. Deploy additive backend support while retaining the previous protocol.
-2. Publish and wait for the new extension version in every browser store.
-3. Set `latestVersion` in Convex.
-4. Later raise `minimumVersion` or remove the old protocol.
+Additive changes (new functions, optional arguments, extra result fields) need
+none of this: deploy the backend, then publish the extension.
+
+`utils/convex-api.ts` mirrors the backend's functions by hand. `bun run
+check:contract` type-checks it against `../features-backend`'s generated API
+and lists every function whose name, kind, arguments or result disagree. It
+must pass for both the released and the new extension before a backend
+deploy, and for the current one before deleting old functions.
+
+As a safety net, the background checks `compatibility:get` on startup and
+hourly, and any context checks again (at most once a minute) when a Convex
+call fails with anything but a `ConvexError`. If Convex reports the build as
+unsupported, calls fail with `EXTENSION_UPDATE_REQUIRED`, the toolbar icon
+shows a red badge, the popup explains why, and Chrome is asked to fetch the
+update it would install anyway. Users are never sent to the store.
 
 The backend command is documented in `features-backend/convex/README.md`.
 

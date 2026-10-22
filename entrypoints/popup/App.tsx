@@ -18,6 +18,7 @@ import { version } from '@/package.json';
 import FeatureSwitch from './_base/feature-switch';
 import NavigationRow from './_base/navigation-row';
 import SettingsGroup from './_base/settings-group';
+import UpdateBanner from './_base/update-banner';
 import ActivitySettings from './options/activity-settings';
 import ExperimentalSettingsPage, {
   ExperimentalSettingsIcon,
@@ -267,6 +268,7 @@ function App() {
           </motion.span>
         </AnimatePresence>
       </h1>
+      <UpdateBanner />
       <div className="relative flex-1">
         <AnimatePresence initial={false} custom={direction} mode="popLayout">
           <motion.div

@@ -161,6 +161,11 @@ export const convexApi = {
       { extensionVersion: string; protocol: number },
       CompatibilityResponse
     >('compatibility:get'),
+    report: makeFunctionReference<
+      'mutation',
+      { extensionVersion: string; protocol: number },
+      null
+    >('compatibility:report'),
   },
   watch: {
     resolve: makeFunctionReference<

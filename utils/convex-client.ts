@@ -4,11 +4,14 @@ import {
   type FunctionReturnType,
   getFunctionName,
 } from 'convex/server';
+import { ConvexError } from 'convex/values';
 
 import {
   COMPATIBILITY_STORAGE_KEY,
+  EXTENSION_API_PROTOCOL,
   type ExtensionCompatibilityState,
 } from '@/utils/compatibility';
+import { convexApi } from '@/utils/convex-api';
 import { sendToBackground } from '@/utils/messaging';
 
 export const CONVEX_URL = import.meta.env.WXT_CONVEX_URL ?? '';
@@ -18,6 +21,11 @@ const requireConvexUrl = () => {
   if (!CONVEX_URL) throw new Error('WXT_CONVEX_URL is not configured');
   return CONVEX_URL;
 };
+
+/** How soon a failed call may ask about compatibility again. */
+const RECHECK_INTERVAL = 60_000;
+let lastRecheck = 0;
+let rechecking: Promise<void> | undefined;
 
 /**
  * The backend over HTTP. Public calls go straight to it; account calls go
@@ -30,6 +38,44 @@ class Convex {
   /** A client of its own, e.g. for one account call's token. */
   createClient() {
     return new ConvexHttpClient(requireConvexUrl());
+  }
+
+  /** Asks the backend whether it still serves this build, and stores it. */
+  async refreshCompatibility() {
+    const extensionVersion = browser.runtime.getManifest().version;
+    const compatibility = await this.createClient().query(
+      convexApi.compatibility.get,
+      { extensionVersion, protocol: EXTENSION_API_PROTOCOL },
+    );
+    await browser.storage.local.set({
+      [COMPATIBILITY_STORAGE_KEY]: {
+        ...compatibility,
+        extensionVersion,
+        checkedAt: Date.now(),
+      } satisfies ExtensionCompatibilityState,
+    });
+  }
+
+  /**
+   * Rethrows a failed call's error, as `EXTENSION_UPDATE_REQUIRED` when the
+   * backend has dropped this build since the last check. A backend that
+   * changed under an old build fails with plain errors (a missing function,
+   * rejected arguments), so those recheck, at most once a minute.
+   */
+  async explainFailure(error: unknown): Promise<never> {
+    if (!(error instanceof ConvexError)) {
+      if (Date.now() - lastRecheck > RECHECK_INTERVAL) {
+        lastRecheck = Date.now();
+        rechecking ??= this.refreshCompatibility()
+          .catch(console.error)
+          .finally(() => {
+            rechecking = undefined;
+          });
+      }
+      await rechecking;
+      await this.assertCompatible();
+    }
+    throw error;
   }
 
   /** Stops API calls once the backend reports this build as unsupported. */
@@ -51,7 +97,9 @@ class Convex {
     args: Query['_args'],
   ): Promise<FunctionReturnType<Query>> {
     await this.assertCompatible();
-    return await this.public().query(query, args);
+    return await this.public()
+      .query(query, args)
+      .catch((error) => this.explainFailure(error));
   }
 
   async action<Action extends FunctionReference<'action'>>(
@@ -59,7 +107,9 @@ class Convex {
     args: Action['_args'],
   ): Promise<FunctionReturnType<Action>> {
     await this.assertCompatible();
-    return await this.public().action(action, args);
+    return await this.public()
+      .action(action, args)
+      .catch((error) => this.explainFailure(error));
   }
 
   async accountQuery<Query extends FunctionReference<'query'>>(
@@ -121,7 +171,7 @@ class LiveConvex {
   async run<T>(call: (client: ConvexClient) => Promise<T>) {
     const { client, release } = await this.acquire();
     try {
-      return await call(client);
+      return await call(client).catch((error) => convex.explainFailure(error));
     } finally {
       release();
     }

@@ -4,6 +4,7 @@ import {
   COMPATIBILITY_STORAGE_KEY,
   EXTENSION_API_PROTOCOL,
   type ExtensionCompatibilityState,
+  USAGE_REPORT_STORAGE_KEY,
 } from '@/utils/compatibility';
 import { convexApi } from '@/utils/convex-api';
 import { convex } from '@/utils/convex-client';
@@ -71,13 +72,22 @@ export default defineBackground(() => {
   });
 
   void ensureCompatibilityAlarm();
-  pollCompatibility().catch(console.error);
+  pollCompatibility();
+  void browser.storage.local
+    .get(COMPATIBILITY_STORAGE_KEY)
+    .then((stored) => showCompatibility(stored[COMPATIBILITY_STORAGE_KEY]));
+  // Tabs store a recheck too, after a call failed.
+  browser.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local' && COMPATIBILITY_STORAGE_KEY in changes) {
+      void showCompatibility(changes[COMPATIBILITY_STORAGE_KEY]!.newValue);
+    }
+  });
   browser.runtime.onStartup.addListener(syncAccount);
   // Updates and reloads skip onStartup.
   browser.runtime.onInstalled.addListener(syncAccount);
   browser.alarms.onAlarm.addListener((alarm) => {
     if (alarm.name !== COMPATIBILITY_ALARM) return;
-    pollCompatibility().catch(console.error);
+    pollCompatibility();
     // Also retries a failed upload, which release notifications depend on.
     accountSession.syncTeamPriority().catch(console.error);
   });
@@ -90,21 +100,43 @@ export default defineBackground(() => {
 });
 
 /** Stored so API calls stop once the backend drops this version. */
-async function pollCompatibility() {
+function pollCompatibility() {
+  convex.refreshCompatibility().catch(console.error);
+  reportUsage().catch(console.error);
+}
+
+/**
+ * Counts this install once a day, so the backend knows when nobody runs an
+ * old protocol anymore and its functions can go.
+ */
+async function reportUsage() {
   const extensionVersion = browser.runtime.getManifest().version;
-  const compatibility = await convex
-    .createClient()
-    .query(convexApi.compatibility.get, {
-      extensionVersion,
-      protocol: EXTENSION_API_PROTOCOL,
-    });
-  await browser.storage.local.set({
-    [COMPATIBILITY_STORAGE_KEY]: {
-      ...compatibility,
-      extensionVersion,
-      checkedAt: Date.now(),
-    } satisfies ExtensionCompatibilityState,
+  const report = `${new Date().toISOString().slice(0, 10)}:${extensionVersion}`;
+  const stored = await browser.storage.local.get(USAGE_REPORT_STORAGE_KEY);
+  if (stored[USAGE_REPORT_STORAGE_KEY] === report) return;
+  await convex.createClient().mutation(convexApi.compatibility.report, {
+    extensionVersion,
+    protocol: EXTENSION_API_PROTOCOL,
   });
+  await browser.storage.local.set({ [USAGE_REPORT_STORAGE_KEY]: report });
+}
+
+/**
+ * Badges the toolbar icon while the backend no longer serves this build,
+ * and asks the browser to fetch the update it would install on its own.
+ */
+async function showCompatibility(state: unknown) {
+  const compatibility = state as ExtensionCompatibilityState | undefined;
+  const unsupported =
+    compatibility?.extensionVersion === browser.runtime.getManifest().version &&
+    compatibility.status === 'unsupported';
+  // Firefox builds are still on Manifest V2.
+  const action = browser.action ?? browser.browserAction;
+  await action.setBadgeText({ text: unsupported ? '!' : '' });
+  if (!unsupported) return;
+  await action.setBadgeBackgroundColor({ color: '#dc2626' });
+  // Chrome only; it installs the update once the extension is idle.
+  await browser.runtime.requestUpdateCheck?.().catch(console.error);
 }
 
 async function ensureCompatibilityAlarm() {

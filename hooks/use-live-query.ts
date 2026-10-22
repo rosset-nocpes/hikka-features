@@ -3,7 +3,7 @@ import type { FunctionReference, FunctionReturnType } from 'convex/server';
 import { getFunctionName } from 'convex/server';
 import { useEffect, useState } from 'react';
 
-import { liveConvex } from '@/utils/convex-client';
+import { convex, liveConvex } from '@/utils/convex-client';
 
 interface LiveQueryState<Result> {
   key: string;
@@ -39,7 +39,11 @@ export function useLiveQuery<Query extends FunctionReference<'query'>>(
           query,
           queryArgs,
           (data) => setState({ key, data }),
-          (error) => setState({ key, error }),
+          (error) => {
+            convex.explainFailure(error).catch((explained: Error) => {
+              if (!cancelled) setState({ key, error: explained });
+            });
+          },
         );
         cleanup = () => {
           unsubscribe();

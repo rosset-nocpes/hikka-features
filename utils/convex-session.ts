@@ -270,11 +270,13 @@ class AccountSession {
     try {
       return await call(client);
     } catch (error) {
-      if (!tokenRejected(error)) throw error;
+      if (!tokenRejected(error)) return await convex.explainFailure(error);
       // Another call may have replaced it already.
       if (this.accessToken?.value === token) this.accessToken = undefined;
       client.setAuth(await this.token());
-      return await call(client);
+      return await call(client).catch((retryError) =>
+        convex.explainFailure(retryError),
+      );
     }
   }
 
