@@ -1,14 +1,12 @@
-import { QueryClientProvider } from '@tanstack/react-query';
 import { Check, ClipboardCopy } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useState } from 'react';
-import { createRoot } from 'react-dom/client';
 
+import SwapIcon from '@/components/swap-icon';
 import { Button } from '@/components/ui/button';
-import { syncFeatureTheme } from '@/utils/utils';
+import { useCopy } from '@/hooks/use-copy';
+import { reveal } from '@/utils/motion';
 
-import { queryClient } from '..';
-import { BaseFeature } from '../core/base-feature';
+import { BaseFeature, createFeatureUi } from '../core/base-feature';
 import { HikkaPages } from '../core/core.enums';
 
 export default class DevButtonsFeature extends BaseFeature {
@@ -20,119 +18,50 @@ export default class DevButtonsFeature extends BaseFeature {
   ];
 
   async init() {
-    this.ui = await createShadowRootUi(usePageStore.getState().ctx, {
+    this.ui = await createFeatureUi({
       name: this.id,
       position: 'inline',
       append: 'last',
       anchor: '#content-hero',
-      css: `:host(${this.id}) { margin-bottom: -1rem !important; }`,
-      inheritStyles: true,
-      onMount(container) {
-        const wrapper = document.createElement('div');
-        container.append(wrapper);
-
-        syncFeatureTheme(container, { themeVariables: true });
-
-        const root = createRoot(wrapper);
-        root.render(
-          <QueryClientProvider client={queryClient}>
-            <DevButtons />
-          </QueryClientProvider>,
-        );
-
-        return root;
-      },
-      onRemove: (root) => {
-        root?.unmount();
-      },
+      hostCss: 'margin-bottom: -1rem !important;',
+      render: () => <DevButtons />,
     });
   }
 }
 
+/** The page's slug and MAL id, copied with a click. */
 const DevButtons = () => {
   const { devTools } = useSettings().features.devOptions;
-  const [copiedButton, setCopiedButton] = useState<string | null>(null);
+  const { copied, copy } = useCopy(1000);
+  const { data } = useHikka();
 
-  const data = useHikka()?.data;
   if (!data) return;
-
-  const handleCopy = async (text: string, buttonId: string) => {
-    await navigator.clipboard.writeText(text);
-    setCopiedButton(buttonId);
-    setTimeout(() => {
-      setCopiedButton(null);
-    }, 1000);
-  };
-
-  const slug = data.slug;
-  const mal_id = data.mal_id;
 
   return (
     <AnimatePresence>
       {devTools && (
         <motion.div
           className="flex gap-2"
-          initial={{ opacity: 0, height: 0, scale: 0.93, marginBottom: 0 }}
-          animate={{
-            opacity: 1,
-            height: 'auto',
-            scale: 1,
-            marginBottom: '1rem',
-          }}
-          exit={{ opacity: 0, height: 0, scale: 0.93, marginBottom: 0 }}
-          transition={{ duration: 0.2, ease: 'easeOut' }}
+          {...reveal('height', { marginBottom: '1rem' })}
         >
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-2 overflow-hidden"
-            onClick={() => handleCopy(slug, 'slug')}
-          >
-            <Indicator isCopied={copiedButton === 'slug'} />
-            <span className="truncate">{slug}</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-2"
-            onClick={() => handleCopy(mal_id, 'mal_id')}
-          >
-            <Indicator isCopied={copiedButton === 'mal_id'} />
-            {mal_id}
-          </Button>
+          {[data.slug, data.mal_id].filter(Boolean).map((value) => (
+            <Button
+              key={value}
+              variant="ghost"
+              size="sm"
+              className="gap-2 overflow-hidden"
+              onClick={() => copy(String(value))}
+            >
+              <SwapIcon
+                active={copied === String(value)}
+                on={<Check className="size-4" />}
+                off={<ClipboardCopy className="size-4" />}
+              />
+              <span className="truncate">{value}</span>
+            </Button>
+          ))}
         </motion.div>
       )}
     </AnimatePresence>
-  );
-};
-
-interface IndicatorProps {
-  isCopied: boolean;
-}
-
-const Indicator = ({ isCopied }: IndicatorProps) => {
-  return (
-    <div className="relative">
-      <div
-        className={cn(
-          'absolute inset-0 flex items-center justify-center transition-[opacity,filter,scale] duration-300 ease-in-out will-change-[opacity,filter,scale]',
-          isCopied
-            ? 'blur-0 scale-100 opacity-100'
-            : 'scale-[0.25] opacity-0 blur-xs',
-        )}
-      >
-        <Check className="size-4" />
-      </div>
-      <div
-        className={cn(
-          'transition-[opacity,filter,scale] duration-300 ease-in-out will-change-[opacity,filter,scale]',
-          isCopied
-            ? 'scale-[0.25] opacity-0 blur-xs'
-            : 'blur-0 scale-100 opacity-100',
-        )}
-      >
-        <ClipboardCopy className="size-4" />
-      </div>
-    </div>
   );
 };

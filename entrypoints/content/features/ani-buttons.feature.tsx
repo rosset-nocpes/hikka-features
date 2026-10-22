@@ -1,44 +1,34 @@
-import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { createRoot, type Root } from 'react-dom/client';
+import { type Root } from 'react-dom/client';
 
-import BlockHeader from '@/components/hikka/block-header';
+import FeatureCard from '@/components/feature-card';
 import { buttonVariants } from '@/components/ui/button';
 import { ButtonGroup } from '@/components/ui/button-group';
-import HFLogoSmallDark from '@/public/hikka-features-small-dark.svg';
-import HFLogoSmall from '@/public/hikka-features-small.svg';
+import { reveal } from '@/utils/motion';
 
-import { queryClient } from '..';
-import { BaseFeature } from '../core/base-feature';
+import { BaseFeature, createFeatureUi } from '../core/base-feature';
 import { HikkaPages } from '../core/core.enums';
 
-const SOURCES_HOSTS: Record<SourcesType, string> = {
-  mal: 'myanimelist.net',
-  anilist: 'anilist.co',
-  anidb: 'anidb.net',
-  ann: 'animenewsnetwork.com',
-  wiki: 'en.wikipedia.org',
-  mu: 'mangaupdates.com',
-};
+type SourceContentType = MediaType | InfoType;
 
-const SOURCE_TITLES: Record<SourcesType, string> = {
-  mal: 'MyAnimeList',
-  anilist: 'AniList',
-  anidb: 'AniDB',
-  ann: 'ANN',
-  wiki: 'Wikipedia',
-  mu: 'MU',
+const SOURCES: Record<SourcesType, { host: string; title: string }> = {
+  mal: { host: 'myanimelist.net', title: 'MyAnimeList' },
+  anilist: { host: 'anilist.co', title: 'AniList' },
+  anidb: { host: 'anidb.net', title: 'AniDB' },
+  ann: { host: 'animenewsnetwork.com', title: 'ANN' },
+  wiki: { host: 'en.wikipedia.org', title: 'Wikipedia' },
+  mu: { host: 'mangaupdates.com', title: 'MU' },
 };
 
 const SOURCE_PATH_OVERRIDES: Partial<
-  Record<MediaType | InfoType, Partial<Record<'mal' | 'al' | 'ad', string>>>
+  Record<SourceContentType, Partial<Record<'mal' | 'al' | 'ad', string>>>
 > = {
   character: { al: 'characters' },
   person: { mal: 'people', al: 'staff', ad: 'creator' },
   novel: { mal: 'manga', al: 'manga' },
 };
 
-const CONTENT_LINKS: Record<MediaType | InfoType, SourcesType[]> = {
+const CONTENT_LINKS: Record<SourceContentType, SourcesType[]> = {
   anime: ['mal', 'anilist', 'anidb', 'ann', 'wiki'],
   manga: ['mal', 'anilist', 'wiki', 'mu'],
   character: ['mal', 'anilist', 'anidb', 'ann'],
@@ -46,10 +36,10 @@ const CONTENT_LINKS: Record<MediaType | InfoType, SourcesType[]> = {
   novel: ['mal', 'anilist', 'wiki', 'mu'],
 };
 
-const MEDIA_TYPES: readonly MediaType[] = ['anime', 'manga', 'novel'];
+const MEDIA_TYPES: readonly string[] = ['anime', 'manga', 'novel'];
 
-const isMediaType = (t: string | undefined): t is MediaType =>
-  !!t && (MEDIA_TYPES as readonly string[]).includes(t);
+/** The dialog hikka.io opens for a character or person from a list. */
+const MODAL = '[data-slug][data-content-type]';
 
 const pickTitle = (data: any): string | undefined =>
   [
@@ -65,43 +55,45 @@ const pickTitle = (data: any): string | undefined =>
 
 const buildSourceUrl = (
   source: SourcesType,
-  ctx: { data: any; content_type: MediaType | InfoType; title?: string },
+  data: any,
+  contentType: SourceContentType,
 ): string | undefined => {
-  const { data, content_type, title } = ctx;
-  const override = (k: 'mal' | 'al' | 'ad') =>
-    SOURCE_PATH_OVERRIDES[content_type]?.[k];
-  const external = (s: SourcesType): string | undefined =>
-    isMediaType(content_type)
-      ? data?.external?.find((o: any) => o.url?.includes(SOURCES_HOSTS[s]))?.url
+  const title = pickTitle(data);
+  const override = (key: 'mal' | 'al' | 'ad') =>
+    SOURCE_PATH_OVERRIDES[contentType]?.[key];
+  const external = () =>
+    MEDIA_TYPES.includes(contentType)
+      ? data?.external?.find((link: any) =>
+          link.url?.includes(SOURCES[source].host),
+        )?.url
       : undefined;
 
   switch (source) {
     case 'mal':
-      return `https://myanimelist.net/${override('mal') ?? content_type}${
+      return `https://myanimelist.net/${override('mal') ?? contentType}${
         data?.mal_id ? `/${data.mal_id}` : `.php?q=${title}`
       }`;
     case 'anilist':
-      return `https://anilist.co/search/${override('al') ?? content_type}?search=${title}&sort=SEARCH_MATCH`;
+      return `https://anilist.co/search/${override('al') ?? contentType}?search=${title}&sort=SEARCH_MATCH`;
     case 'anidb': {
       // AniDB expects "Surname GivenName" for people/characters.
+      const words = title?.split(' ');
       const swapped =
-        (content_type === 'person' || content_type === 'character') &&
-        title?.split(' ').length === 2
-          ? `${title.split(' ')[1]} ${title.split(' ')[0]}`
+        (contentType === 'person' || contentType === 'character') &&
+        words?.length === 2
+          ? `${words[1]} ${words[0]}`
           : title;
       return (
-        external('anidb') ??
-        `https://anidb.net/${override('ad') ?? content_type}/?adb.search=${swapped}&do.search=1`
+        external() ??
+        `https://anidb.net/${override('ad') ?? contentType}/?adb.search=${swapped}&do.search=1`
       );
     }
     case 'ann':
-      return (
-        external('ann') ?? `https://www.animenewsnetwork.com/search?q=${title}`
-      );
+      return external() ?? `https://www.animenewsnetwork.com/search?q=${title}`;
     case 'wiki':
-      return content_type === 'character'
+      return contentType === 'character'
         ? undefined
-        : (external('wiki') ??
+        : (external() ??
             `https://en.wikipedia.org/w/index.php?search=${title}`);
     case 'mu':
       return `https://www.mangaupdates.com/series?search=${title}&perpage=25`;
@@ -132,82 +124,39 @@ export default class AniButtonsFeature extends BaseFeature {
   async init() {
     const isEdit = () => document.location.pathname.startsWith('/edit/');
 
-    this.ui = await createShadowRootUi(usePageStore.getState().ctx, {
+    this.ui = await createFeatureUi({
       name: this.id,
       position: 'inline',
       append: (anchor, ui) => {
-        if (isEdit()) {
-          anchor.append(ui);
-        } else {
-          anchor.parentElement?.insertBefore(ui, anchor);
-        }
+        if (isEdit()) anchor.append(ui);
+        else anchor.parentElement?.insertBefore(ui, anchor);
       },
       anchor: () =>
         isEdit() ? 'div.grid > div' : '#content-right-side > #content-stats',
-      css: `:host(${this.id}) { margin-bottom: -2rem !important; }`,
-      inheritStyles: true,
-      onMount(container) {
-        const wrapper = document.createElement('div');
-        container.append(wrapper);
-
-        syncFeatureTheme(container, { themeVariables: true });
-
-        const root = createRoot(wrapper);
-        root.render(
-          <QueryClientProvider client={queryClient}>
-            <AniButtons />
-          </QueryClientProvider>,
-        );
-
-        return root;
-      },
-      onRemove: (root) => {
-        root?.unmount();
-      },
+      hostCss: 'margin-bottom: -2rem !important;',
+      render: () => <PageSources />,
     });
 
-    this.modalUi = await createShadowRootUi(usePageStore.getState().ctx, {
+    this.modalUi = await createFeatureUi({
       name: this.id,
       position: 'inline',
       append: 'first',
-      anchor: '[data-slug][data-content-type] [data-slot="dialog-footer"]',
-      css: `:host(${this.id}) { width: 100%; }`,
-      inheritStyles: true,
-      onMount(container) {
-        const wrapper = document.createElement('div');
-        container.append(wrapper);
-
-        syncFeatureTheme(container, { themeVariables: true });
-
-        const modal = document.querySelector<HTMLElement>(
-          '[data-slug][data-content-type]',
+      anchor: `${MODAL} [data-slot="dialog-footer"]`,
+      hostCss: 'width: 100%;',
+      render: () => {
+        const modal = document.querySelector<HTMLElement>(MODAL);
+        return (
+          <ModalSources
+            slug={modal?.dataset.slug}
+            contentType={modal?.dataset.contentType}
+          />
         );
-        const modalSlug = modal?.dataset.slug;
-        const modalContentType = modal?.dataset.contentType;
-
-        const root = createRoot(wrapper);
-        root.render(
-          <QueryClientProvider client={queryClient}>
-            <AniButtons
-              modalSlug={modalSlug}
-              modalContentType={modalContentType}
-            />
-          </QueryClientProvider>,
-        );
-
-        return root;
-      },
-      onRemove: (root) => {
-        root?.unmount();
       },
     });
   }
 
   override get shouldMount(): boolean {
-    return (
-      super.shouldMount ||
-      !!document.querySelector('[data-slug][data-content-type]')
-    );
+    return super.shouldMount || !!document.querySelector(MODAL);
   }
 
   override get isMounted(): boolean {
@@ -215,28 +164,8 @@ export default class AniButtonsFeature extends BaseFeature {
   }
 
   override mount() {
-    if (super.shouldMount && this.ui && !this.ui.mounted) {
-      this.ui.mount();
-    }
-
+    if (super.shouldMount && this.ui && !this.ui.mounted) this.ui.mount();
     this.syncModalUi();
-    this.startModalObserver();
-  }
-
-  override unmount() {
-    if (this.ui?.mounted) {
-      this.ui.remove();
-    }
-
-    if (this.modalUi?.mounted) {
-      this.modalUi.remove();
-    }
-
-    this.modalObserver?.disconnect();
-    this.modalObserver = null;
-  }
-
-  private startModalObserver() {
     this.modalObserver?.disconnect();
     this.modalObserver = new MutationObserver(() => this.syncModalUi());
     this.modalObserver.observe(document.body, {
@@ -245,16 +174,19 @@ export default class AniButtonsFeature extends BaseFeature {
     });
   }
 
-  private syncModalUi() {
-    const modalOpen = !!document.querySelector(
-      '[data-slug][data-content-type]',
-    );
+  override unmount() {
+    if (this.ui?.mounted) this.ui.remove();
+    if (this.modalUi?.mounted) this.modalUi.remove();
+    this.modalObserver?.disconnect();
+    this.modalObserver = null;
+  }
 
+  private syncModalUi() {
+    const modalOpen = !!document.querySelector(MODAL);
     if (modalOpen && this.modalUi && !this.modalUi.mounted) {
       this.modalUi.mount();
     } else if (!modalOpen && this.modalUi?.mounted) {
       this.modalUi.remove();
-
       if (!super.shouldMount) {
         this.modalObserver?.disconnect();
         this.modalObserver = null;
@@ -263,102 +195,73 @@ export default class AniButtonsFeature extends BaseFeature {
   }
 }
 
-interface AniButtonsProps {
-  modalSlug?: string;
-  modalContentType?: string;
-}
+const contentTypeOf = (data: any): SourceContentType =>
+  data?.data_type ?? data?.content_type;
 
-const AniButtons = ({ modalSlug, modalContentType }: AniButtonsProps = {}) => {
+const PageSources = () => {
   const { enabled } = useSettings().features.aniButtons;
-  const pageResult = useHikka();
-  const modalResult = useHikkaContent(modalSlug, modalContentType);
-
-  const data = modalSlug ? modalResult.data : pageResult.data;
-  const isModal = !!modalSlug || !!modalContentType;
+  const { data } = useHikka();
+  const contentType = contentTypeOf(data);
 
   return (
     <AnimatePresence>
-      {enabled && data && <AniButtonsContent data={data} isModal={isModal} />}
+      {enabled && data && (
+        <FeatureCard title="Інші джерела" marginBottom="2rem">
+          <div className="grid grid-cols-2 gap-2">
+            {(CONTENT_LINKS[contentType] ?? []).map((source) => (
+              <a
+                key={source}
+                href={buildSourceUrl(source, data, contentType)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:bg-secondary/60 flex items-center gap-2 rounded-sm p-1 text-sm font-medium transition"
+              >
+                <Favicon host={SOURCES[source].host} />
+                {SOURCES[source].title}
+              </a>
+            ))}
+          </div>
+        </FeatureCard>
+      )}
     </AnimatePresence>
   );
 };
 
-interface AniButtonsContentProps {
-  data: any;
-  isModal: boolean;
-}
-
-const AniButtonsContent = ({ data, isModal }: AniButtonsContentProps) => {
-  const content_type: MediaType | InfoType =
-    data?.data_type ?? data?.content_type;
-  const title = pickTitle(data);
-
-  const sources = CONTENT_LINKS[content_type] ?? [];
-
-  const getUrl = (source: SourcesType): string | undefined =>
-    buildSourceUrl(source, { data, content_type, title });
-
-  if (isModal) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, height: 0, scale: 0.93 }}
-        animate={{ opacity: 1, height: 'auto', scale: 1 }}
-        exit={{ opacity: 0, height: 0, scale: 0.93 }}
-        transition={{ duration: 0.2, ease: 'easeOut' }}
-      >
-        <ButtonGroup>
-          {sources.map((source) => (
-            <a
-              key={source}
-              data-slot="button"
-              href={getUrl(source)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={buttonVariants({
-                variant: 'outline',
-                size: 'icon-md',
-              })}
-            >
-              <Favicon host={SOURCES_HOSTS[source]} />
-            </a>
-          ))}
-        </ButtonGroup>
-      </motion.div>
-    );
-  }
+/** The same links as icons in the character or person dialog. */
+const ModalSources = ({
+  slug,
+  contentType: modalType,
+}: {
+  slug?: string;
+  contentType?: string;
+}) => {
+  const { enabled } = useSettings().features.aniButtons;
+  const { data } = useHikkaContent(modalType, slug);
+  const contentType = contentTypeOf(data);
 
   return (
-    <motion.div
-      className="flex min-w-0 flex-col gap-3"
-      initial={{ opacity: 0, height: 0, scale: 0.93, marginBottom: 0 }}
-      animate={{ opacity: 1, height: 'auto', scale: 1, marginBottom: '2rem' }}
-      exit={{ opacity: 0, height: 0, scale: 0.93, marginBottom: 0 }}
-      transition={{ duration: 0.2, ease: 'easeOut' }}
-    >
-      <BlockHeader
-        title="Інші джерела"
-        icon={
-          <img
-            alt=""
-            src={isHikkaDarkMode() ? HFLogoSmall : HFLogoSmallDark}
-            style={{ width: '21px', height: '20px' }}
-          />
-        }
-      />
-      <div className="surface border-border relative isolate grid min-w-0 grid-cols-2 gap-2 overflow-clip rounded-lg border p-4">
-        {sources.map((source) => (
-          <a
-            key={source}
-            href={getUrl(source)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:bg-secondary/60 flex items-center gap-2 rounded-sm p-1 text-sm font-medium transition"
-          >
-            <Favicon host={SOURCES_HOSTS[source]} />
-            {SOURCE_TITLES[source]}
-          </a>
-        ))}
-      </div>
-    </motion.div>
+    <AnimatePresence>
+      {enabled && data && (
+        <motion.div {...reveal()}>
+          <ButtonGroup>
+            {(CONTENT_LINKS[contentType] ?? []).map((source) => (
+              <a
+                key={source}
+                data-slot="button"
+                href={buildSourceUrl(source, data, contentType)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={buttonVariants({
+                  variant: 'outline',
+                  size: 'icon-md',
+                })}
+              >
+                <Favicon host={SOURCES[source].host} />
+              </a>
+            ))}
+          </ButtonGroup>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };

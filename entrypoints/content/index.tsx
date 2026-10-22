@@ -1,19 +1,28 @@
-import { QueryClient } from '@tanstack/react-query';
-
 import '../app.css';
-import { FeatureManager } from './core/feature-manager';
+import { hikkaViewerQuery } from '@/utils/hikka-viewer';
+import { sendToBackground } from '@/utils/messaging';
 
-export const queryClient = new QueryClient({
-  defaultOptions: { queries: { refetchOnWindowFocus: false } },
-});
+import { FeatureManager } from './core/feature-manager';
+import { queryClient } from './core/query-client';
+
+/** Tells the background who hikka.io is signed in as; it follows the site. */
+const followHikkaSession = () =>
+  queryClient
+    .fetchQuery({ ...hikkaViewerQuery, staleTime: 0 })
+    .then((viewerId) => sendToBackground('hikka-viewer', { viewerId }))
+    .catch(() => undefined);
 
 export default defineContentScript({
   matches: ['https://hikka.io/*', 'https://dev.hikka.io/*'],
   cssInjectionMode: 'ui',
   async main(ctx) {
-    void browser.runtime
-      .sendMessage({ type: 'hikka-content-loaded' })
-      .catch(() => undefined);
+    void sendToBackground('hikka-content-loaded').catch(() => undefined);
+
+    // Hikka's logout reloads the page; another tab may have switched user.
+    void followHikkaSession();
+    ctx.addEventListener(document, 'visibilitychange', () => {
+      if (document.visibilityState === 'visible') void followHikkaSession();
+    });
 
     usePageStore.getState().setCTX(ctx);
 
@@ -21,9 +30,7 @@ export default defineContentScript({
     manager.init();
 
     ctx.onInvalidated(() => {
-      void browser.runtime
-        .sendMessage({ type: 'hikka-content-unloaded' })
-        .catch(() => undefined);
+      void sendToBackground('hikka-content-unloaded').catch(() => undefined);
       manager.stop();
     });
   },

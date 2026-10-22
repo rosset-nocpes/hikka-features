@@ -1,8 +1,4 @@
-import type { FC } from 'react';
-
 import { ChevronsUpDown } from 'lucide-react';
-
-import type { ProviderTeamIFrame } from '@/utils/provider_classes';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -19,15 +15,11 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 
-import { getAvailablePlayers, usePlayer } from '../context/player-context';
+import { usePlayer } from '../context/player-context';
+import { groupProviders } from '../teams';
 
-interface Props {
-  toggleWatchedState: (state: boolean) => void;
-}
-
-const ProviderSelect: FC<Props> = ({ toggleWatchedState }) => {
+const ProviderSelect = () => {
   const { open } = useSidebar();
-
   const {
     container,
     provider,
@@ -38,48 +30,29 @@ const ProviderSelect: FC<Props> = ({ toggleWatchedState }) => {
 
   if (!data) return;
 
-  const avaliable_players = getAvailablePlayers(data);
-  const grouped_players: Record<ProviderLanguage, string[]> =
-    ALL_LANGUAGES.reduce(
-      (acc, lang) => {
-        const players = avaliable_players
-          .filter((p) => p.lang === lang)
-          .map((p) => p.title);
-
-        if (players.length) {
-          acc[lang] = players;
-        }
-
-        return acc;
-      },
-      {} as Record<ProviderLanguage, string[]>,
-    );
-
-  const handleSelectPlayer = (value: string) => {
-    setProvider(value);
-    toggleWatchedState(false);
-  };
+  const groups = groupProviders(data);
+  const single = groups.length === 1 && groups[0]!.titles.length === 1;
+  const favoriteSource = favoriteTeam && data[favoriteTeam.provider];
+  const favoriteLogo =
+    favoriteSource instanceof ProviderTeamIFrame
+      ? favoriteSource.getTeam(favoriteTeam!.team).logo
+      : undefined;
 
   return (
     <SidebarMenuItem>
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger
           render={
-            <SidebarMenuButton
-              size="lg"
-              disabled={avaliable_players.length === 1}
-            >
+            <SidebarMenuButton size="lg" disabled={single}>
               <Avatar className="size-8 rounded-md text-black">
                 <AvatarFallback className="bg-primary">
-                  {provider?.[0].toUpperCase()}
+                  {provider?.[0]?.toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <span className="truncate text-left text-sm leading-tight font-semibold">
                 {provider?.toUpperCase()}
               </span>
-              {avaliable_players.length > 1 && (
-                <ChevronsUpDown className="ml-auto" />
-              )}
+              {!single && <ChevronsUpDown className="ml-auto" />}
             </SidebarMenuButton>
           }
         />
@@ -91,34 +64,26 @@ const ProviderSelect: FC<Props> = ({ toggleWatchedState }) => {
           container={container}
         >
           <div className="flex flex-col">
-            {(
-              Object.entries(grouped_players) as [ProviderLanguage, string[]][]
-            ).map(([lang, players]) => (
+            {groups.map(({ lang, titles }) => (
               <DropdownMenuGroup key={lang}>
                 <DropdownMenuLabel className="text-muted-foreground text-xs">
                   {LANGUAGE_GROUP_NAMES[lang]}
                 </DropdownMenuLabel>
                 <div className="flex flex-wrap">
-                  {players.map((elem) => (
+                  {titles.map((title) => (
                     <DropdownMenuItem
-                      key={elem}
-                      onClick={() => handleSelectPlayer(elem)}
+                      key={title}
+                      onClick={() => setProvider(title)}
                       className={cn(
                         'flex-[1_0_50%] items-center justify-center overflow-hidden px-1 py-1.5 font-normal',
-                        provider === elem &&
+                        provider === title &&
                           'bg-accent/60 text-accent-foreground',
                       )}
                     >
-                      {favoriteTeam?.provider === elem && (
+                      {favoriteTeam?.provider === title && (
                         <Avatar className="size-5! rounded-sm duration-150">
                           <AvatarImage
-                            src={
-                              (
-                                data[
-                                  favoriteTeam.provider
-                                ] as ProviderTeamIFrame
-                              ).getTeam(favoriteTeam.team).logo
-                            }
+                            src={favoriteLogo}
                             alt={favoriteTeam.team}
                           />
                           <AvatarFallback className="bg-muted-foreground/60">
@@ -127,7 +92,7 @@ const ProviderSelect: FC<Props> = ({ toggleWatchedState }) => {
                         </Avatar>
                       )}
                       <span className="flex h-8 items-center justify-center truncate text-center font-semibold">
-                        {elem.toUpperCase()}
+                        {title.toUpperCase()}
                       </span>
                     </DropdownMenuItem>
                   ))}

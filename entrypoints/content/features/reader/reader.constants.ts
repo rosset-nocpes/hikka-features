@@ -16,22 +16,30 @@ export const SETTINGS_CONFIG: Partial<
   // Manga
   orientation: {
     label: 'Орієнтація',
+    description: 'Напрямок гортання сторінок',
     type: 'tabs',
     options: [
       {
         value: MangaOrientation.Horizontal,
+        label: 'Горизонтально',
         icon: MaterialSymbolsViewColumn2Outline,
       },
       {
         value: MangaOrientation.Vertical,
+        label: 'Вертикально',
         icon: MaterialSymbolsViewAgendaOutline,
       },
     ],
   },
-  scrollMode: { label: 'Режим скролу', type: 'boolean' },
+  scrollMode: {
+    label: 'Режим скролу',
+    description: 'Безперервна стрічка сторінок, як у манхві',
+    type: 'boolean',
+  },
   // Novel
   fontFamily: {
     label: 'Шрифт',
+    description: 'Гарнітура тексту розділу',
     type: 'select',
     options: [
       { value: 'font-sans', label: 'Geist' },
@@ -41,9 +49,15 @@ export const SETTINGS_CONFIG: Partial<
       { value: 'font-ebgaramond', label: 'EB Garamond' },
     ],
   },
-  fontSize: { label: 'Розмір шрифту', type: 'slider', min: 12, max: 24 },
+  fontSize: {
+    label: 'Розмір шрифту',
+    type: 'slider',
+    min: 12,
+    max: 24,
+  },
   theme: {
     label: 'Тема',
+    description: 'Кольори сторінки читалки',
     type: 'select',
     options: [
       { value: NovelTheme.Light, label: 'Світла' },

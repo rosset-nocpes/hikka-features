@@ -1,14 +1,11 @@
-import {
-  createRef,
-  type FC,
-  type PropsWithChildren,
-  RefObject,
-  useEffect,
-} from 'react';
 import { create } from 'zustand';
 
-import { useSidebar } from '@/components/ui/sidebar';
+import { playerControls } from '@/hooks/use-iframe-player';
+import { account } from '@/utils/account';
+import { hikkaTracker } from '@/utils/hikka-tracker';
 import { ProviderIFrame, ProviderTeamIFrame } from '@/utils/provider_classes';
+
+import { pickPriorityTeam, providersOf } from '../teams';
 
 interface PlayerState {
   /* Base */
@@ -16,6 +13,7 @@ interface PlayerState {
   /* Player-related  */
   watchData?: API.WatchData; // todo: remove it from there
   watchDataKey?: string;
+  slug?: string;
   provider?: string;
   team?: API.TeamData;
   favoriteTeam?: FavoriteTeam;
@@ -26,19 +24,27 @@ interface PlayerState {
   miniPlayer: boolean;
   miniPlayerCorner: MiniPlayerCorner;
   videoPiPActive: boolean;
-  overlayRef: RefObject<HTMLDivElement | null>;
+  /** The video's overlay, where gestures land and menus stay inside. */
+  overlay: HTMLDivElement | null;
   /* Temporary */
   sharedParams?: SharedPlayerParams;
   isShared?: boolean;
+  /** Watch together room code from an invite link. */
+  roomInvite?: string;
+  /** The invite was accepted before the page opened, e.g. from a toast. */
+  roomInviteAccepted?: boolean;
 }
 
 interface PlayerActions {
   initialize: (data: API.WatchData) => void;
   setProvider: (provider: string) => void;
-  setTeam: (team: API.TeamData) => void; // todo
-  setFavoriteTeam: (team: string) => void;
-  removeFavoriteTeam: () => void;
+  setTeam: (team: API.TeamData) => void;
+  /** Makes the team this anime's favourite, or stops it being one. */
+  toggleFavoriteTeam: (team: API.TeamData) => void;
   setEpisode: (episode: API.EpisodeData) => void;
+  /** Shows exactly this source and episode; false when it isn't available. */
+  selectSource: (provider: string, team: string, episode: number) => boolean;
+  dismissRoomInvite: () => void;
   toggleFullscreen: () => void;
   toggleTheatreMode: () => void;
   toggleMiniPlayer: () => void;
@@ -47,46 +53,107 @@ interface PlayerActions {
   setVideoPiPActive: (status: boolean) => void;
   setSharedStatus: (status: boolean) => void;
   setContainer: (container: HTMLElement) => void;
-  setOverlayRef: (ref: HTMLDivElement | null) => void;
-  reset: () => void;
+  setOverlay: (overlay: HTMLDivElement | null) => void;
 }
+
+/** The team of providers that don't split playback by team. */
+const NO_TEAM: API.TeamData = { title: '', logo: '' };
+
+/** URL parameters of share and invite links, removed once read. */
+const LINK_PARAMS = [
+  'playerProvider',
+  'playerTeam',
+  'playerEpisode',
+  'time',
+  'room',
+  'join',
+];
+
+const teamOf = (data: API.WatchData, provider: string, team: string) => {
+  const source = data[provider];
+  return source instanceof ProviderTeamIFrame ? source.getTeam(team) : NO_TEAM;
+};
+
+/** A provider's episodes by `team`; providers without teams ignore it. */
+export const episodesOf = (
+  data: API.WatchData,
+  provider: string,
+  team: string,
+) => {
+  const source = data[provider];
+  if (source instanceof ProviderTeamIFrame) return source.teams[team]?.episodes;
+  if (source instanceof ProviderIFrame) return source.episodes;
+  return undefined;
+};
+
+/** The episode after the user's progress on hikka.io, else the first. */
+const nextUnwatched = (episodes: API.EpisodeData[]) =>
+  episodes.find((episode) => episode.episode === hikkaTracker.progress + 1) ??
+  episodes[0];
+
+/** The team the user's priority picks on `provider`, else its first one. */
+const priorityTeam = (data: API.WatchData, provider: string) => {
+  const source = data[provider];
+  if (!(source instanceof ProviderTeamIFrame)) return NO_TEAM;
+  const { teamPriority, teamPriorityTranslation } =
+    useSettings.getState().features.player;
+  return (
+    pickPriorityTeam(
+      data,
+      [provider],
+      teamPriority,
+      teamPriorityTranslation,
+      hikkaTracker.progress + 1,
+    )?.team ?? source.getTeams()[0]!
+  );
+};
+
+export const isFavoriteTeam = (
+  { favoriteTeam, provider }: Pick<PlayerState, 'favoriteTeam' | 'provider'>,
+  team: API.TeamData,
+) => favoriteTeam?.provider === provider && favoriteTeam?.team === team.title;
 
 export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
   const handleFullscreenChange = () => {
-    const wrapper = get().container?.querySelector('#player-frame');
+    if (document.fullscreenElement) return;
+    set({ fullscreen: false });
+    get()
+      .container?.querySelector('#player-frame')
+      ?.classList.remove('fullscreen');
+    document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  };
 
-    if (!document.fullscreenElement) {
-      set({ fullscreen: false });
-      wrapper?.classList.remove('fullscreen');
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-    }
+  const setFavoriteTeam = (slug: string, favorite?: FavoriteTeam) => {
+    const { favoriteTeams } = useSettings.getState().features.player;
+    const { [slug]: _previous, ...others } = favoriteTeams;
+    useSettings.getState().updateFeatureSettings('player', {
+      favoriteTeams: favorite ? { ...others, [slug]: favorite } : others,
+    });
+    set({ favoriteTeam: favorite });
   };
 
   return {
-    container: undefined,
-    watchData: undefined,
-    provider: undefined,
-    team: undefined,
-    favoriteTeam: undefined,
-    episodeData: undefined,
-    currentEpisode: undefined,
     fullscreen: false,
     theatreMode: false,
     miniPlayer: false,
     miniPlayerCorner: 'bottom-right',
     videoPiPActive: false,
-    overlayRef: createRef<HTMLDivElement>(),
+    overlay: null,
 
-    initialize: async (data) => {
+    initialize: (data) => {
       const watchDataKey = getWatchDataKey(data);
       if (get().watchDataKey === watchDataKey) return;
 
-      const { defaultProvider, favoriteTeams } =
-        useSettings.getState().features.player;
+      const {
+        defaultProvider,
+        favoriteTeams,
+        teamPriority,
+        teamPriorityTranslation,
+      } = useSettings.getState().features.player;
 
-      const providers_avaliable = getAvailablePlayers(data).map((e) => e.title);
+      const available = providersOf(data).map(({ title }) => title);
       const { slug } = usePageStore.getState();
-      const favoriteTeam = favoriteTeams[slug!];
+      const storedFavoriteTeam = favoriteTeams[slug!];
 
       const params = new URLSearchParams(window.location.search);
       const sharedParams: SharedPlayerParams = {
@@ -96,166 +163,165 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
         time: params.get('time'),
       };
 
-      const isShared = !!(
-        sharedParams.provider &&
-        sharedParams.team &&
-        sharedParams.episode
-      );
+      // Teamless providers share an empty playerTeam.
+      const isShared =
+        !!sharedParams.provider &&
+        sharedParams.team !== null &&
+        !!sharedParams.episode;
 
-      // cleanup url
+      const roomInvite = params.get('room') ?? undefined;
+      const roomInviteAccepted = params.has('join');
+
       const url = new URL(window.location.href);
-      ['playerProvider', 'playerTeam', 'playerEpisode', 'time'].map((param) =>
-        url.searchParams.delete(param),
-      );
-
+      LINK_PARAMS.forEach((param) => url.searchParams.delete(param));
       history.replaceState(history.state, '', url.href);
 
-      // Determine provider
-      const provider =
-        isShared && providers_avaliable.includes(sharedParams.provider!)
-          ? sharedParams.provider!
-          : favoriteTeam
-            ? favoriteTeam.provider
-            : providers_avaliable.includes(defaultProvider)
-              ? defaultProvider
-              : providers_avaliable[0];
-
-      // Determine team
-      let team: API.TeamData = {
-        title: '',
-        logo: '',
-      };
-      if (data[provider] instanceof ProviderTeamIFrame) {
-        const first_team = data[provider].getTeams()[0];
-
-        if (isShared && data[provider].teams[sharedParams.team!]) {
-          team = data[provider].getTeam(sharedParams.team!);
-        } else if (
-          favoriteTeam &&
-          (data[favoriteTeam.provider] as ProviderTeamIFrame).teams[
-            favoriteTeam.team
+      // A shared link wins, then this anime's favourite team, then the team
+      // priority list, then the default provider's first team.
+      const providerOrder = available.includes(defaultProvider)
+        ? [
+            defaultProvider,
+            ...available.filter((name) => name !== defaultProvider),
           ]
+        : available;
+      const sharedProvider =
+        isShared && available.includes(sharedParams.provider!)
+          ? sharedParams.provider!
+          : undefined;
+      const favoriteSource =
+        storedFavoriteTeam && data[storedFavoriteTeam.provider];
+      const favoriteDisplayTeam =
+        favoriteSource instanceof ProviderTeamIFrame
+          ? favoriteSource
+              .getTeams()
+              .find(
+                (candidate) =>
+                  candidate.title === storedFavoriteTeam!.team ||
+                  candidate.canonicalTitle === storedFavoriteTeam!.team,
+              )
+          : undefined;
+      const priorityPick =
+        sharedProvider || favoriteDisplayTeam
+          ? undefined
+          : pickPriorityTeam(
+              data,
+              providerOrder,
+              teamPriority,
+              teamPriorityTranslation,
+              hikkaTracker.progress + 1,
+            );
+
+      const provider =
+        sharedProvider ??
+        (favoriteDisplayTeam && storedFavoriteTeam!.provider) ??
+        priorityPick?.provider ??
+        providerOrder[0]!;
+
+      let team = NO_TEAM;
+      let favoriteTeam = storedFavoriteTeam;
+      const source = data[provider];
+      if (source instanceof ProviderTeamIFrame) {
+        if (isShared && source.teams[sharedParams.team!]) {
+          team = source.getTeam(sharedParams.team!);
+        } else if (
+          favoriteDisplayTeam &&
+          provider === storedFavoriteTeam!.provider
         ) {
-          team = (data[favoriteTeam.provider] as ProviderTeamIFrame).getTeam(
-            favoriteTeam.team,
-          );
+          team = favoriteDisplayTeam;
+          favoriteTeam = { provider, team: favoriteDisplayTeam.title };
         } else {
-          team = first_team;
+          team = priorityPick?.team ?? source.getTeams()[0]!;
         }
       }
 
-      const episodeData =
-        data[provider] instanceof ProviderTeamIFrame
-          ? data[provider].teams[team.title].episodes
-          : data[provider].episodes;
-
-      const targetEpisode = isShared
-        ? episodeData?.find((ep) => ep.episode === Number(sharedParams.episode))
-        : episodeData?.find((ep) => ep.episode === getWatched() + 1);
+      const episodeData = episodesOf(data, provider, team.title)!;
+      const sharedEpisode = isShared
+        ? episodeData.find((ep) => ep.episode === Number(sharedParams.episode))
+        : undefined;
 
       set({
         watchData: data,
         watchDataKey,
+        slug,
         provider,
         team,
         favoriteTeam,
         episodeData,
-        currentEpisode: targetEpisode ?? episodeData[0],
+        currentEpisode: sharedEpisode ?? nextUnwatched(episodeData),
         sharedParams,
         isShared,
+        roomInvite,
+        roomInviteAccepted,
       });
     },
     setProvider: (provider) => {
       const { watchData } = get();
       if (!watchData) return;
 
-      const newTeamName =
-        watchData[provider] instanceof ProviderTeamIFrame
-          ? {
-              title: Object.keys(watchData[provider].teams)[0],
-              logo: watchData[provider].teams[
-                Object.keys(watchData[provider].teams)[0]
-              ].logo,
-            }
-          : { title: '', logo: '' };
-      const newEpisode =
-        watchData[provider] instanceof ProviderTeamIFrame
-          ? watchData[provider].teams[newTeamName.title].episodes.find(
-              (ep) => ep.episode === getWatched() + 1,
-            ) || watchData[provider].teams[newTeamName.title].episodes[0]
-          : watchData[provider].episodes.find(
-              (ep) => ep.episode === getWatched() + 1,
-            ) || watchData[provider].episodes[0];
-
-      const newEpisodeData =
-        watchData[provider] instanceof ProviderTeamIFrame
-          ? watchData[provider].teams[newTeamName.title].episodes
-          : watchData[provider].episodes;
-
-      useIFramePlayer.setState({
-        speedOptions:
-          provider === 'ashdi'
-            ? [1, 1.25, 1.5, 2]
-            : useIFramePlayer.getInitialState().speedOptions,
-      });
-
+      const team = priorityTeam(watchData, provider);
+      const episodeData = episodesOf(watchData, provider, team.title)!;
+      setSpeedOptions(provider);
       set({
         provider,
-        team: newTeamName,
-        episodeData: newEpisodeData,
-        currentEpisode: newEpisode,
+        team,
+        episodeData,
+        currentEpisode: nextUnwatched(episodeData),
       });
     },
     setTeam: (team) => {
       const { watchData, provider } = get();
-      if (!watchData || !provider) return;
-      if (!(watchData[provider] instanceof ProviderTeamIFrame)) return;
+      if (!watchData || !(watchData[provider!] instanceof ProviderTeamIFrame)) {
+        return;
+      }
 
-      const newEpisodeData = watchData[provider].teams[team.title].episodes;
-
-      const newEpisode =
-        newEpisodeData.find(
-          (episode) => episode.episode === getWatched() + 1,
-        ) || newEpisodeData[0];
-
-      set({ team, episodeData: newEpisodeData, currentEpisode: newEpisode });
+      const episodeData = episodesOf(watchData, provider!, team.title)!;
+      set({ team, episodeData, currentEpisode: nextUnwatched(episodeData) });
     },
-    setFavoriteTeam: (team) => {
+    toggleFavoriteTeam: (team) => {
       const { slug } = usePageStore.getState();
-      const provider = get().provider!;
-      if (!slug) return;
+      const { provider, watchData } = get();
+      if (!slug || !provider) return;
 
-      const newTeam = {
-        provider,
-        team,
-      };
+      if (isFavoriteTeam(get(), team)) {
+        setFavoriteTeam(slug);
+        account.removeFavorite(slug).catch(console.error);
+        return;
+      }
 
-      const { favoriteTeams } = useSettings.getState().features.player;
-      const { updateFeatureSettings } = useSettings.getState();
-
-      const updated = { ...favoriteTeams, [slug]: newTeam };
-      updateFeatureSettings('player', { favoriteTeams: updated });
-
-      set({ favoriteTeam: newTeam });
-    },
-    removeFavoriteTeam: () => {
-      const { favoriteTeams } = useSettings.getState().features.player;
-      const { updateFeatureSettings } = useSettings.getState();
-      const { slug } = usePageStore.getState();
-      if (!slug) return;
-
-      const updated = { ...favoriteTeams };
-      delete updated[slug];
-      updateFeatureSettings('player', { favoriteTeams: updated });
-
-      set({ favoriteTeam: undefined });
+      setFavoriteTeam(slug, { provider, team: team.title });
+      const selected = watchData && teamOf(watchData, provider, team.title);
+      account
+        .saveFavorite({
+          animeSlug: slug,
+          provider,
+          teamId: selected?.id,
+          teamTitle: selected?.canonicalTitle ?? team.title,
+          translationType: selected?.translationType,
+        })
+        .catch(console.error);
     },
     setEpisode: (episode) => set({ currentEpisode: episode }),
+    selectSource: (provider, team, episode) => {
+      const { watchData } = get();
+      const episodeData = watchData && episodesOf(watchData, provider, team);
+      const currentEpisode = episodeData?.find((ep) => ep.episode === episode);
+      if (!currentEpisode) return false;
+
+      if (provider !== get().provider) setSpeedOptions(provider);
+      set({
+        provider,
+        team: teamOf(watchData!, provider, team),
+        episodeData,
+        currentEpisode,
+      });
+      return true;
+    },
+    dismissRoomInvite: () =>
+      set({ roomInvite: undefined, roomInviteAccepted: undefined }),
     toggleFullscreen: () => {
-      const { fullscreen } = get();
       const wrapper = get().container?.querySelector('#player-frame');
 
-      if (fullscreen) {
+      if (get().fullscreen) {
         set({ fullscreen: false });
         wrapper?.classList.remove('fullscreen');
         document.exitFullscreen();
@@ -270,107 +336,55 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
         document.addEventListener('fullscreenchange', handleFullscreenChange);
       }
     },
-    toggleTheatreMode: () => {
-      const { theatreMode } = get();
-      set({ theatreMode: !theatreMode, miniPlayer: false });
-    },
-    toggleMiniPlayer: () => {
-      const { fullscreen, miniPlayer, toggleFullscreen } = get();
-
-      if (fullscreen) toggleFullscreen();
-
-      set({
-        theatreMode: false,
-        miniPlayer: !miniPlayer,
-      });
-    },
+    toggleTheatreMode: () =>
+      set({ theatreMode: !get().theatreMode, miniPlayer: false }),
+    toggleMiniPlayer: () => get().setMiniPlayer(!get().miniPlayer),
     setMiniPlayer: (status) => {
       const { fullscreen, theatreMode, toggleFullscreen } = get();
-
       if (status && fullscreen) toggleFullscreen();
-
-      set({
-        theatreMode: status ? false : theatreMode,
-        miniPlayer: status,
-      });
+      set({ theatreMode: status ? false : theatreMode, miniPlayer: status });
     },
     setMiniPlayerCorner: (corner) => set({ miniPlayerCorner: corner }),
-    setVideoPiPActive: (status) => {
-      if (status) {
-        set({ theatreMode: false, videoPiPActive: true });
-      } else {
-        set({ videoPiPActive: false });
-      }
-    },
+    setVideoPiPActive: (status) =>
+      set(
+        status
+          ? { theatreMode: false, videoPiPActive: true }
+          : { videoPiPActive: false },
+      ),
     setSharedStatus: (status) => set({ isShared: status }),
     setContainer: (container) => set({ container }),
-    setOverlayRef: (el) => {
-      const ref = createRef<HTMLDivElement>();
-      ref.current = el;
-
-      if (el) {
-        let hideTimer: NodeJS.Timeout;
-
-        const resetTimer = () => {
-          useIFramePlayer.setState({ uiShown: true });
-          clearTimeout(hideTimer);
-          hideTimer = setTimeout(() => {
-            if (!useIFramePlayer.getState().isPlaying) return;
-            useIFramePlayer.setState({ uiShown: false });
-          }, 4000);
-        };
-
-        const resetTimerForMouse = (event: PointerEvent) => {
-          if (event.pointerType !== 'mouse') return;
-          resetTimer();
-        };
-
-        const resetTimerForVisibleTouchUi = (event: PointerEvent) => {
-          if (event.pointerType === 'mouse') return;
-          if (!useIFramePlayer.getState().uiShown) return;
-          resetTimer();
-        };
-
-        const handlePointerLeave = (event: PointerEvent) => {
-          if (event.pointerType !== 'mouse') return;
-          clearTimeout(hideTimer);
-          hideTimer = setTimeout(() => {
-            if (!useIFramePlayer.getState().isPlaying) return;
-            useIFramePlayer.setState({ uiShown: false });
-          }, 4000);
-        };
-
-        el.addEventListener('pointerenter', resetTimerForMouse);
-        el.addEventListener('pointermove', resetTimerForMouse);
-        el.addEventListener('pointerdown', resetTimerForVisibleTouchUi);
-        el.addEventListener('pointerleave', handlePointerLeave);
-      }
-
-      set({ overlayRef: ref });
-    },
-
-    reset: () => {
-      set({
-        container: undefined,
-        /* Player-related  */
-        watchData: undefined,
-        watchDataKey: undefined,
-        provider: undefined,
-        team: undefined,
-        episodeData: undefined,
-        currentEpisode: undefined,
-        fullscreen: false,
-        theatreMode: false,
-        miniPlayer: false,
-        miniPlayerCorner: 'bottom-right',
-        videoPiPActive: false,
-        /* Temporary */
-        sharedParams: undefined,
-        isShared: undefined,
+    setOverlay: (el) => {
+      // Mice reveal the controls by moving; a tap only keeps shown ones up.
+      el?.addEventListener('pointerenter', (event) => {
+        if (event.pointerType === 'mouse') playerControls.show();
       });
+      el?.addEventListener('pointermove', (event) => {
+        if (event.pointerType === 'mouse') playerControls.show();
+      });
+      el?.addEventListener('pointerdown', (event) => {
+        if (
+          event.pointerType !== 'mouse' &&
+          useIFramePlayer.getState().uiShown
+        ) {
+          playerControls.show();
+        }
+      });
+      el?.addEventListener('pointerleave', (event) => {
+        if (event.pointerType === 'mouse') playerControls.scheduleHide();
+      });
+
+      set({ overlay: el });
     },
   };
 });
+
+const setSpeedOptions = (provider: string) =>
+  useIFramePlayer.setState({
+    speedOptions:
+      provider === 'ashdi'
+        ? [1, 1.25, 1.5, 2]
+        : useIFramePlayer.getInitialState().speedOptions,
+  });
 
 interface SharedPlayerParams {
   provider: string | null;
@@ -389,14 +403,6 @@ export type MiniPlayerCorner =
   | 'top-right'
   | 'bottom-left'
   | 'bottom-right';
-
-export const getAvailablePlayers = (data: API.WatchData) =>
-  Object.entries(data)
-    .filter(([key]) => key !== 'type')
-    .map(([key, entry]: [string, any]) => ({
-      title: key,
-      lang: entry.lang as ProviderLanguage,
-    }));
 
 const getEpisodeKey = (episode: API.EpisodeData) => [
   episode.episode,
@@ -437,26 +443,3 @@ const getWatchDataKey = (data: API.WatchData) =>
         return [provider, entry];
       }),
   ]);
-
-export const getWatched = (): number => {
-  const selector =
-    '#content-left-side > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) span span';
-  const element = document.querySelector(selector);
-  return element?.firstChild?.nodeValue
-    ? parseInt(element.firstChild.nodeValue, 10)
-    : 0;
-};
-
-interface PlayerProviderProps extends PropsWithChildren {
-  container: HTMLElement;
-}
-
-export const PlayerProvider: FC<PlayerProviderProps> = ({ children }) => {
-  const { fullscreen } = usePlayer();
-  const { setOpen } = useSidebar();
-
-  // oxlint-disable-next-line eslint-plugin-react-hooks/exhaustive-deps
-  useEffect(() => setOpen(!fullscreen), [fullscreen]);
-
-  return <>{children}</>;
-};

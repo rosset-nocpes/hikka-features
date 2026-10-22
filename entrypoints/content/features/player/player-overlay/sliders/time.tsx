@@ -28,12 +28,12 @@ const useSliderTooltip = ({
   isSeeking,
   duration,
   step,
-  overlayRef,
+  overlay,
 }: {
   isSeeking: boolean;
   duration: number;
   step: number;
-  overlayRef: React.RefObject<HTMLElement | null>;
+  overlay: HTMLElement | null;
 }) => {
   const trackRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -91,7 +91,7 @@ const useSliderTooltip = ({
 
     const { width: tw, height: th } =
       tooltipRef.current.getBoundingClientRect();
-    const container = overlayRef.current?.getBoundingClientRect() ?? {
+    const container = overlay?.getBoundingClientRect() ?? {
       left: COLLISION_PADDING,
       top: COLLISION_PADDING,
       right: window.innerWidth - COLLISION_PADDING,
@@ -111,7 +111,7 @@ const useSliderTooltip = ({
     );
 
     setTooltipStyle({ left: x, top: y });
-  }, [hoverX, hoverTime, overlayRef]);
+  }, [hoverX, hoverTime, overlay]);
 
   return {
     trackRef,
@@ -132,7 +132,7 @@ interface TimeProps {
 const Time = ({ className, trackClassName }: TimeProps = {}) => {
   const { currentTime, duration, seek, bufferedTime, checkBuffering } =
     useIFramePlayer();
-  const { overlayRef, miniPlayer, videoPiPActive } = usePlayer();
+  const { overlay, miniPlayer, videoPiPActive } = usePlayer();
 
   const isCompact = miniPlayer || videoPiPActive;
 
@@ -150,7 +150,7 @@ const Time = ({ className, trackClassName }: TimeProps = {}) => {
     tooltipStyle,
     handleMouseMove,
     handleMouseLeave,
-  } = useSliderTooltip({ isSeeking, duration, step, overlayRef });
+  } = useSliderTooltip({ isSeeking, duration, step, overlay });
 
   useEffect(() => {
     checkBuffering();
@@ -214,17 +214,22 @@ const Time = ({ className, trackClassName }: TimeProps = {}) => {
               className="bg-secondary-foreground/30 absolute h-full"
               style={{ width: `${bufferedPercent}%` }}
             />
+            {showTooltip && (
+              <div
+                className="bg-secondary-foreground/30 absolute h-full"
+                style={{ width: `${(hoverTime / duration) * 100}%` }}
+              />
+            )}
             <SliderPrimitive.Indicator className="bg-primary absolute h-full" />
           </SliderPrimitive.Track>
           <SliderPrimitive.Thumb />
-          <div className="pointer-events-none absolute flex flex-col items-center opacity-0 transition-opacity duration-200 will-change-[left] data-visible:opacity-100" />
         </SliderPrimitive.Control>
       </SliderPrimitive.Root>
 
       {showTooltip && (
         <div
           ref={tooltipRef}
-          className="bg-background pointer-events-none fixed z-50 -translate-x-1/2 rounded-md px-2 py-1 text-xs font-medium tabular-nums shadow-md"
+          className="bg-popover text-popover-foreground border-shadow pointer-events-none fixed z-50 -translate-x-1/2 rounded-md px-2 py-1 text-xs font-medium tabular-nums"
           style={tooltipStyle}
         >
           {formatTime(hoverTime)}

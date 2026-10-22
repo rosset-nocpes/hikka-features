@@ -1,33 +1,27 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { type FC, type RefObject, useLayoutEffect, useMemo } from 'react';
 
+import MissingDivider, { countMissing } from '@/components/missing-divider';
 import {
   SidebarGroup,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { hikkaTracker } from '@/utils/hikka-tracker';
 
 import type { Chapter } from '../../../reader.types';
 
+import { sortChapters } from '../../../chapters';
 import useReadData from '../../../hooks/use-read-data';
 import { useReader } from '../../../hooks/use-reader';
 import {
   ReaderContentMode,
   ReaderOrderBy,
   ReaderSortBy,
-  ReaderType,
 } from '../../../reader.enums';
+import ChapterRow from './chapter-row';
 
-const isTranslatorMatch = (chapter: Chapter, translator: string) =>
-  !translator ||
-  chapter.translator
-    .split(',')
-    .map((value) => value.trim())
-    .includes(translator);
-
-const getDateTime = (value: string) =>
-  new Date(value.split('.').reverse().join('-')).getTime();
+type Row = { id: string; chapter: Chapter } | { id: string; missing: number };
 
 interface Props {
   scrollRef: RefObject<HTMLDivElement | null>;
@@ -35,132 +29,82 @@ interface Props {
 
 const ChaptersView: FC<Props> = ({ scrollRef }) => {
   const { data } = useReadData();
-  const {
-    container,
-    settings,
-    carouselApi,
-    currentChapter,
-    setChapter,
-    getRead,
-  } = useReader();
+  const { container, settings, currentChapter } = useReader();
+  const { sortBy, translator } = settings;
+  const chapters =
+    data?.displayMode === ReaderContentMode.Chapters
+      ? data.chapters
+      : undefined;
 
-  const handleSelectChapter = (value: Chapter) => {
-    setChapter(value);
+  // Gaps only mean something when sorted by number. Each one sits between a
+  // chapter and its lower neighbour: above it ascending, below it descending.
+  const rows = useMemo(() => {
+    const sorted = sortChapters(chapters ?? [], sortBy, translator);
+    const descending = sortBy.order !== ReaderOrderBy.Ascending;
 
-    // todo: move to setChapter
-    if (settings.type === ReaderType.Manga) {
-      if (settings.scrollMode) {
-        // scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'instant' });
-      } else {
-        carouselApi?.scrollTo(0, true);
-      }
-    }
-  };
+    return sorted.flatMap((chapter, index): Row[] => {
+      const row = { id: chapter.id, chapter };
+      const below = sorted[descending ? index + 1 : index - 1];
+      const missing =
+        sortBy.field === ReaderSortBy.Chapter
+          ? countMissing(chapter.chapter, below?.chapter)
+          : 0;
+      if (!missing) return [row];
 
-  const sorted = useMemo(() => {
-    if (data?.displayMode !== ReaderContentMode.Chapters) return [];
-    if (!data?.chapters) return [];
-
-    const { field, order } = settings.sortBy;
-    const multiplier = order === ReaderOrderBy.Ascending ? 1 : -1;
-
-    return data.chapters
-      .filter((chapter) => isTranslatorMatch(chapter, settings.translator))
-      .sort((a, b) => {
-        if (field === ReaderSortBy.Chapter) {
-          return (a.chapter - b.chapter) * multiplier;
-        }
-
-        if (field === ReaderSortBy.DateUpload) {
-          const dateA = getDateTime(a.date_upload);
-          const dateB = getDateTime(b.date_upload);
-          return (dateA - dateB) * multiplier;
-        }
-
-        return 0;
-      });
-  }, [data, settings.sortBy, settings.translator]);
+      const divider = { id: `missing-${chapter.id}`, missing };
+      return descending ? [row, divider] : [divider, row];
+    });
+  }, [chapters, sortBy, translator]);
 
   const rowVirtualizer = useVirtualizer({
-    count: sorted.length,
+    count: rows.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: () => 52,
+    estimateSize: (index) => ('missing' in rows[index]! ? 28 : 52),
+    getItemKey: (index) => rows[index]!.id,
     overscan: 5,
   });
 
-  // initial scroll to current chapter
+  // Keeps the open chapter in view.
   useLayoutEffect(() => {
-    if (!currentChapter) return;
-    if (data?.displayMode !== ReaderContentMode.Chapters) return;
-
-    const currentIndex = sorted.findIndex(
-      (chapter) => chapter.id === currentChapter.id,
-    );
-
-    if (currentIndex !== -1) {
-      rowVirtualizer.scrollToIndex(currentIndex, {
+    const index = rows.findIndex((row) => row.id === currentChapter?.id);
+    if (index !== -1) {
+      rowVirtualizer.scrollToIndex(index, {
         align: 'center',
         behavior: 'auto',
       });
     }
-  }, [container, currentChapter, data?.displayMode, rowVirtualizer, sorted]);
+  }, [container, currentChapter, rowVirtualizer, rows]);
 
-  if (data?.displayMode !== ReaderContentMode.Chapters) return;
+  if (!chapters) return;
+  const progress = hikkaTracker.progress;
 
   return (
     <SidebarGroup>
-      <SidebarMenu>
-        <div
-          style={{
-            height: `${rowVirtualizer.getTotalSize()}px`,
-            width: '100%',
-            position: 'relative',
-          }}
-        >
-          {rowVirtualizer.getVirtualItems().map((virtualItem) => (
-            <SidebarMenuItem key={virtualItem.index}>
-              <SidebarMenuButton
-                onClick={() => handleSelectChapter(sorted[virtualItem.index])}
-                isActive={sorted[virtualItem.index].id === currentChapter?.id}
-                size="lg"
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  transform: `translateY(${virtualItem.start}px)`,
-                }}
-              >
-                <div className="flex flex-1 flex-col gap-1 truncate text-left leading-tight">
-                  <span
-                    // todo: change it
-                    className={cn(
-                      sorted[virtualItem.index].chapter <= getRead() &&
-                        'text-muted-foreground',
-                    )}
-                  >
-                    {sorted[virtualItem.index].volume &&
-                      `Том ${sorted[virtualItem.index].volume} `}
-                    Розділ {sorted[virtualItem.index].chapter}
-                  </span>
-                  <div className="flex items-center gap-1">
-                    <span className="text-muted-foreground text-xs">
-                      {sorted[virtualItem.index].date_upload}
-                    </span>
-                    {sorted[virtualItem.index].translator && (
-                      <>
-                        <div className="bg-muted-foreground size-1 shrink-0 rounded-full" />
-                        <span className="text-muted-foreground truncate text-xs">
-                          {sorted[virtualItem.index].translator}
-                        </span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </SidebarMenuButton>
+      <SidebarMenu
+        className="relative"
+        style={{ height: rowVirtualizer.getTotalSize() }}
+      >
+        {rowVirtualizer.getVirtualItems().map((virtualItem) => {
+          const row = rows[virtualItem.index]!;
+
+          return (
+            <SidebarMenuItem
+              key={virtualItem.key}
+              className="absolute inset-x-0 top-0"
+              style={{ transform: `translateY(${virtualItem.start}px)` }}
+            >
+              {'missing' in row ? (
+                <MissingDivider count={row.missing} noun="chapter" />
+              ) : (
+                <ChapterRow
+                  chapter={row.chapter}
+                  read={row.chapter.chapter <= progress}
+                  showVolume
+                />
+              )}
             </SidebarMenuItem>
-          ))}
-        </div>
+          );
+        })}
       </SidebarMenu>
     </SidebarGroup>
   );

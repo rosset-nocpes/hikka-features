@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 
 import { useReader } from '../hooks/use-reader';
-import reader from '../reader';
+import { closeReader } from '../reader';
 import { ReaderType } from '../reader.enums';
 
 interface Props {
@@ -57,7 +57,7 @@ const ReaderNavbar: FC<Props> = ({ showControls = true }) => {
           variant="ghost"
           size="icon-sm"
           className="bg-sidebar"
-          onClick={() => reader().then((x) => x.remove())}
+          onClick={closeReader}
         >
           <MaterialSymbolsCloseRounded />
         </Button>

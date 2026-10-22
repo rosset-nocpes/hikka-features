@@ -1,15 +1,9 @@
-import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useState } from 'react';
-import { createRoot } from 'react-dom/client';
 import MaterialSymbolsPlannerBannerAdPtOutlineRounded from '~icons/material-symbols/planner-banner-ad-pt-outline-rounded';
 import MaterialSymbolsPlannerBannerAdPtRounded from '~icons/material-symbols/planner-banner-ad-pt-rounded';
 
-import { cn } from '@/utils/cn';
-import { syncFeatureTheme } from '@/utils/utils';
-
-import { queryClient } from '..';
-import { BaseFeature } from '../core/base-feature';
+import { BaseFeature, createFeatureUi } from '../core/base-feature';
 import { HikkaPages } from '../core/core.enums';
 
 export default class LocalizedPosterFeature extends BaseFeature {
@@ -17,67 +11,51 @@ export default class LocalizedPosterFeature extends BaseFeature {
   readonly pages = [HikkaPages.AnimeMainPage];
 
   async init() {
-    this.ui = await createShadowRootUi(usePageStore.getState().ctx, {
+    this.ui = await createFeatureUi({
       name: this.id,
       position: 'inline',
       append: 'first',
       anchor: '#content-cover div.relative div.relative',
-      inheritStyles: true,
-      onMount: (container) => {
-        const wrapper = document.createElement('div');
-        container.append(wrapper);
-
-        syncFeatureTheme(container, { themeVariables: true });
-
-        container.style.position = 'absolute';
-        container.style.zIndex = '1';
-        container.style.top = '0';
-        container.style.left = '0';
-        container.style.height = '100%';
-        container.style.width = '100%';
-        wrapper.style.height = '100%';
-        wrapper.style.width = '100%';
-
-        const root = createRoot(wrapper);
-        root.render(
-          <QueryClientProvider client={queryClient}>
-            <LocalizedPoster />
-          </QueryClientProvider>,
-        );
-
-        return root;
+      // Covers the site's poster.
+      onMount: (container, wrapper) => {
+        Object.assign(container.style, {
+          position: 'absolute',
+          zIndex: '1',
+          inset: '0',
+          width: '100%',
+          height: '100%',
+        });
+        Object.assign(wrapper.style, { width: '100%', height: '100%' });
       },
-      onRemove: (root) => {
-        root?.unmount();
-      },
+      render: () => <LocalizedPoster />,
     });
   }
 }
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
+/** Waits for `src` to load, so it never shows half drawn. */
+const useImageLoaded = (src?: string) => {
+  const [loaded, setLoaded] = useState<string>();
+
+  useEffect(() => {
+    if (!src) return;
+    const img = new Image();
+    img.onload = () => setLoaded(src);
+    img.src = src;
+    return () => {
+      img.onload = null;
+    };
+  }, [src]);
+
+  return !!src && loaded === src;
+};
+
 const LocalizedPoster = () => {
   const { data } = useNotionData();
   const { enabled, autoShow } = useSettings().features.localizedPoster;
-
   const [visible, setVisible] = useState(autoShow);
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const canShow = enabled && !!data?.poster;
-
-  const togglePoster = () => setVisible((v) => !v);
-
-  useEffect(() => {
-    if (!data?.poster) return;
-    setImageLoaded(false);
-    const img = new Image();
-    img.onload = () => setImageLoaded(true);
-    img.onerror = () => setImageLoaded(false);
-    img.src = data.poster;
-    return () => {
-      img.onload = null;
-      img.onerror = null;
-    };
-  }, [data?.poster]);
+  const imageLoaded = useImageLoaded(data?.poster);
 
   return (
     <AnimatePresence>
@@ -99,13 +77,13 @@ const LocalizedPoster = () => {
           transition={{ duration: 0.5, ease: EASE }}
         />
       )}
-      {canShow && imageLoaded && (
+      {enabled && imageLoaded && (
         <motion.button
           key="poster-toggle"
           type="button"
           aria-pressed={visible}
           aria-label="Локалізувати постер"
-          onClick={togglePoster}
+          onClick={() => setVisible((shown) => !shown)}
           className={cn(
             'group absolute inset-x-0 bottom-0 z-10 flex cursor-pointer items-end justify-center gap-1.5 pt-8 pb-2.5',
             'bg-linear-to-t from-black/55 via-black/25 to-transparent text-white',

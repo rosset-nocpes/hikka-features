@@ -5,6 +5,8 @@ import {
   type StateStorage,
 } from 'zustand/middleware';
 
+import type { CatalogTeam, PreferredTranslation } from '@/utils/convex-api';
+
 const extensionStorage: StateStorage = {
   getItem: async (name: string): Promise<any | null> => {
     const data = await browser.storage.local.get(name);
@@ -22,10 +24,10 @@ let hasMigratedFromOldStorage = false;
 
 interface AppState {
   // State Values
-  hikkaSecret?: { secret: string; expiration: number };
+  convexSession?: { refreshToken: string };
   userData?: UserDataV2;
-  backendBranch: BackendBranches;
-  richPresence: boolean;
+  /** Account `updatedAt` of the team priority at the last sync; 0 = never. */
+  teamPrioritySyncedAt: number;
 
   features: {
     aniBackground: {
@@ -41,6 +43,10 @@ interface AppState {
       disableBlur: boolean;
       miniModeType: 'custom' | 'video-native';
       favoriteTeams: Record<string, { provider: string; team: string }>;
+      /** Catalog teams, most preferred first (see pickPriorityTeam). */
+      teamPriority: CatalogTeam[];
+      /** Version of those teams' releases to open and be notified about. */
+      teamPriorityTranslation: PreferredTranslation;
     };
     reader: {
       enabled: boolean;
@@ -53,6 +59,21 @@ interface AppState {
     };
     recommendationBlock: {
       enabled: boolean;
+    };
+    /**
+     * Where the "friends are watching" block sits among the homepage's
+     * widgets, which hikka.io keeps in the account and can't hold ours.
+     */
+    friendsActivity: {
+      hidden: boolean;
+      /** Its column, for when neither neighbour is on the page. */
+      side: 'left' | 'center' | 'right';
+      /**
+       * The site widgets right before and after it, by slug; null at either
+       * end of its column, which survives storage as undefined wouldn't.
+       */
+      after: string | null;
+      before: string | null;
     };
     editorCharacters: {
       enabled: boolean;
@@ -89,6 +110,8 @@ export const useSettings = create<AppState>()(
           disableBlur: false,
           miniModeType: 'custom' as 'custom' | 'video-native',
           favoriteTeams: {},
+          teamPriority: [],
+          teamPriorityTranslation: 'dub' as PreferredTranslation,
         },
         reader: {
           enabled: true,
@@ -102,6 +125,12 @@ export const useSettings = create<AppState>()(
         recommendationBlock: {
           enabled: true,
         },
+        friendsActivity: {
+          hidden: false,
+          side: 'left' as 'left' | 'center' | 'right',
+          after: 'tracker' as string | null,
+          before: 'list' as string | null,
+        },
         editorCharacters: {
           enabled: true,
         },
@@ -111,12 +140,9 @@ export const useSettings = create<AppState>()(
           burunyaaMode: false,
         },
       },
-      hikkaSecret: undefined,
+      convexSession: undefined,
       userData: undefined,
-      backendBranch: import.meta.env.WXT_BACKEND_BASE_URL
-        ? 'localhost'
-        : 'stable',
-      richPresence: false,
+      teamPrioritySyncedAt: 0,
 
       // Generic setter
       setSettings: (settings) => set((state) => ({ ...state, ...settings })),
@@ -134,12 +160,31 @@ export const useSettings = create<AppState>()(
       storage: createJSONStorage(() => extensionStorage),
       partialize: (state) => ({
         features: state.features,
-        hikkaSecret: state.hikkaSecret,
+        convexSession: state.convexSession,
         userData: state.userData,
-        backendBranch: state.backendBranch,
-        richPresence: state.richPresence,
+        teamPrioritySyncedAt: state.teamPrioritySyncedAt,
       }),
       version: 0,
+      merge: (persisted, current) => {
+        const stored = persisted as Partial<AppState> | undefined;
+        return {
+          ...current,
+          convexSession: undefined,
+          userData: undefined,
+          ...stored,
+          // Merge each feature over its defaults, so settings added in later
+          // versions start from their default instead of undefined.
+          features: Object.fromEntries(
+            Object.entries(current.features).map(([name, defaults]) => [
+              name,
+              {
+                ...defaults,
+                ...stored?.features?.[name as keyof AppState['features']],
+              },
+            ]),
+          ) as AppState['features'],
+        };
+      },
       onRehydrateStorage: () => () => {
         if (!hasMigratedFromOldStorage) {
           hasMigratedFromOldStorage = true;
@@ -165,13 +210,7 @@ const migrateFromOldStorage = async () => {
 
     state = {
       ...state,
-      hikkaSecret:
-        oldStorage.hikkaSecret !== undefined
-          ? { secret: oldStorage.hikkaSecret, expiration: 0 }
-          : state.hikkaSecret,
       userData: oldStorage.userData || state.userData,
-      backendBranch: oldStorage.backendBranch || state.backendBranch,
-      richPresence: oldStorage.richPresence ?? state.richPresence,
       features: {
         ...state.features,
         aniBackground: {
@@ -195,6 +234,9 @@ const migrateFromOldStorage = async () => {
           favoriteTeams:
             oldStorage.playerAnimeFavoriteTeam ||
             state.features.player.favoriteTeams,
+          teamPriority: state.features.player.teamPriority,
+          teamPriorityTranslation:
+            state.features.player.teamPriorityTranslation,
         },
         reader: {
           enabled:

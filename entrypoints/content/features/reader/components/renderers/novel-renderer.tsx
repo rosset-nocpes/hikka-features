@@ -75,7 +75,7 @@ const NovelRenderer = () => {
 
       <div
         className={cn(
-          'bg-background text-foreground flex w-full flex-1 justify-center overflow-y-auto px-3 **:font-[inherit]',
+          'bg-background text-foreground flex w-full flex-1 justify-center overflow-y-auto px-5 **:font-[inherit] md:px-3',
           settings.type === ReaderType.Novel && settings.fontFamily,
           settings.type === ReaderType.Novel && settings.theme,
         )}
@@ -88,14 +88,14 @@ const NovelRenderer = () => {
           ref={scrollRef}
           className="w-full max-w-4xl [&_[data-slot=scroll-area-scrollbar]]:z-20"
         >
-          <div className="mt-48 mb-10 flex flex-col">
+          <div className="mt-24 mb-10 flex flex-col md:mt-48">
             {currentChapter?.title && (
               <p className="text-muted-foreground text-sm font-bold tracking-widest uppercase">
                 {currentChapter?.volume && `Том ${currentChapter?.volume} `}
                 Розділ {currentChapter?.chapter}
               </p>
             )}
-            <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight text-balance whitespace-nowrap">
+            <h1 className="scroll-m-20 text-3xl font-extrabold tracking-tight text-balance md:text-4xl md:whitespace-nowrap">
               {currentChapter?.title ||
                 `${currentChapter?.volume ? `Том ${currentChapter?.volume} ` : ''}Розділ ${currentChapter?.chapter}`}
             </h1>

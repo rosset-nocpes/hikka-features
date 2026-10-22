@@ -17,6 +17,7 @@ function PopoverContent({
   alignOffset = 0,
   side = 'bottom',
   sideOffset = 4,
+  anchor,
   collisionAvoidance,
   collisionBoundary,
   collisionPadding,
@@ -30,6 +31,7 @@ function PopoverContent({
     | 'alignOffset'
     | 'side'
     | 'sideOffset'
+    | 'anchor'
     | 'collisionAvoidance'
     | 'collisionBoundary'
     | 'collisionPadding'
@@ -44,6 +46,7 @@ function PopoverContent({
         alignOffset={alignOffset}
         side={side}
         sideOffset={sideOffset}
+        anchor={anchor}
         collisionAvoidance={collisionAvoidance}
         collisionBoundary={collisionBoundary}
         collisionPadding={collisionPadding}

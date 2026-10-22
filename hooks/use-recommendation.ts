@@ -3,6 +3,42 @@ import ky from 'ky';
 
 import type { ContentType } from './use-page-store';
 
+import { fetchHikka } from './use-hikka';
+
+/** MAL keeps novels with manga. */
+const malType = (contentType?: ContentType) =>
+  contentType === 'novel' ? 'manga' : contentType;
+
+/** The Hikka entry for a MAL id, which may be filed as the other print type. */
+const findOnHikka = async (contentType: ContentType, malId: number) => {
+  const types =
+    contentType === 'novel'
+      ? ['novel', 'manga']
+      : contentType === 'manga'
+        ? ['manga', 'novel']
+        : [contentType];
+  let lastError: unknown;
+  for (const type of types) {
+    try {
+      return await fetchHikka(`integrations/mal/${type}/${malId}`);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError;
+};
+
+/** Hikka rate-limits bursts; one more try after a pause. */
+const withRetry = async <T>(request: () => Promise<T>) => {
+  try {
+    return await request();
+  } catch {
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    return await request();
+  }
+};
+
+/** MAL's top five recommendations for the page's title, as Hikka entries. */
 const useRecommendation = () => {
   const { contentType, slug } = usePageStore();
   const { data, isLoading } = useHikka();
@@ -10,63 +46,26 @@ const useRecommendation = () => {
   return useQuery({
     queryKey: ['recommendation-data', slug],
     queryFn: async () => {
-      const mal_id = data.mal_id;
-      let maxSingleVotes = 0;
-
-      const url = `https://api.tenrai.org/v1/${contentType === 'novel' ? 'manga' : contentType}/${mal_id}/recommendations`;
-
-      const recommendation_data = await ky.get(url).json<any>();
-      const result = await Promise.all(
-        recommendation_data.data.slice(0, 5).map(async (element: any) => {
-          try {
-            const hikkaData = await fetchDetailedData(contentType!, element);
-            if (element.votes > maxSingleVotes) maxSingleVotes = element.votes;
-            return { ...hikkaData, mal: { ...element } };
-          } catch {
-            await new Promise((resolve) => setTimeout(resolve, 700));
-            const hikkaData = await fetchDetailedData(contentType!, element);
-            if (element.votes > maxSingleVotes) maxSingleVotes = element.votes;
-            return { ...hikkaData, mal: { ...element } };
-          }
-        }),
-      );
-
-      // if (recommendation_data === null) {
-      //   throw new Error('Not found');
-      // }
-
-      return { recommendations: result, maxSingleVotes };
+      const { data: recommendations } = await ky
+        .get(
+          `https://api.tenrai.org/v1/${malType(contentType)}/${data.mal_id}/recommendations`,
+        )
+        .json<{ data: Array<{ entry: { mal_id: number } }> }>();
+      return {
+        recommendations: await Promise.all(
+          recommendations
+            .slice(0, 5)
+            .map(({ entry }) =>
+              withRetry(() => findOnHikka(contentType!, entry.mal_id)),
+            ),
+        ),
+      };
     },
     enabled: !isLoading && !!data,
     retry: false,
     staleTime: 0,
     gcTime: 0,
   });
-};
-
-const fetchDetailedData = async (content_type: ContentType, content: any) => {
-  const malId = content.entry.mal_id;
-
-  const endpoints = [
-    `https://api.hikka.io/integrations/mal/${content_type}/${malId}`,
-    ...(content_type === 'novel'
-      ? [`https://api.hikka.io/integrations/mal/manga/${malId}`]
-      : content_type === 'manga'
-        ? [`https://api.hikka.io/integrations/mal/novel/${malId}`]
-        : []),
-  ];
-
-  let lastError = new Error('Unknown fetch error');
-
-  for (const url of endpoints) {
-    try {
-      return await ky.get(url).json<any>();
-    } catch (err) {
-      lastError = err as Error;
-    }
-  }
-
-  throw lastError;
 };
 
 export default useRecommendation;

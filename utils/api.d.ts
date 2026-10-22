@@ -19,62 +19,29 @@ declare global {
       link: string;
     };
 
-    type ProviderData = {
-      [key: string]: EpisodeData[];
-    };
-
     type EpisodeData = {
       episode: number;
       video_url: string;
+      title?: {
+        ua?: string;
+        en?: string;
+        ja?: string;
+      };
+      releasedAt?: number;
+      episode_type?: 'canon' | 'filler' | 'mixed' | 'recap';
     };
-
-    /* Manga */
-    type ReadData = {
-      chapters: ChapterData[];
-    };
-
-    type ChapterData = {
-      id: string;
-      scanlator: string;
-      date_upload: string;
-      volume: number;
-      chapter: number;
-      title: string;
-      url: string;
-    };
-
-    type ReadChapterData = {
-      images: string[];
-    };
-
-    type ScanlationGroup = {
-      id: string;
-      name: string;
-      website: string;
-      description: string;
-    };
-
-    type ChapterUser = {
-      id: string;
-      username: string;
-    };
-
-    /* New WatchData (need refactor, for now just fast hotfix for smaller bundle size) */
-    type ProviderType = 'team-iframe' | 'team-hls' | 'iframe' | 'hls' | 'id';
 
     type TeamData = {
+      id?: string;
       title: string;
       logo: string;
-    };
-
-    type EpisodeDataIFrame = {
-      episode: number;
-      video_url: string;
+      canonicalTitle?: string;
+      translationType?: 'dub' | 'sub' | 'unknown';
     };
 
     interface EditorContent {
       suggestion: {
-        name_ua: string;
+        name_ua?: string;
         name_en?: string;
         name_ja?: string;
         name_native?: string;

@@ -5,7 +5,11 @@ export type Page =
   | 'player'
   | 'reader'
   | 'localizedPoster'
-  | 'experimental';
+  | 'experimental'
+  | 'teamPriority';
+
+/** Sub-pages; everything else goes back to home. */
+const parents: Partial<Record<Page, Page>> = { teamPriority: 'player' };
 
 interface NavigationState {
   currentPage: Page;
@@ -18,5 +22,9 @@ export const useNavigation = create<NavigationState>((set) => ({
   currentPage: 'home',
   direction: 1,
   navigate: (page) => set({ currentPage: page, direction: 1 }),
-  goBack: () => set({ currentPage: 'home', direction: -1 }),
+  goBack: () =>
+    set(({ currentPage }) => ({
+      currentPage: parents[currentPage] ?? 'home',
+      direction: -1,
+    })),
 }));

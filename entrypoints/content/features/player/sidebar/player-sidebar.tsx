@@ -1,5 +1,3 @@
-import { type FC } from 'react';
-
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Sidebar,
@@ -9,25 +7,18 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from '@/components/ui/sidebar';
-import { cn } from '@/utils/cn';
 
 import EpisodeList from './episode-list';
 import ProviderSelect from './provider-select';
 import TeamSelect from './team-select';
 
-interface Props {
-  toggleWatchedState: (state: boolean) => void;
-  className?: string;
-}
-
-const PlayerSidebar: FC<Props> = ({ toggleWatchedState, className }) => {
+const PlayerSidebar = () => {
   return (
     <Sidebar
       variant="floating"
       side="right"
       blur
-      className={cn('pointer-events-auto flex overflow-hidden', className)}
-      // onMouseLeave={toggleSidebar}
+      className="pointer-events-auto flex overflow-hidden"
     >
       <SidebarHeader>
         <SidebarMenu>
@@ -37,19 +28,16 @@ const PlayerSidebar: FC<Props> = ({ toggleWatchedState, className }) => {
           </SidebarMenuItem>
         </SidebarMenu>
         <SidebarMenu>
-          <ProviderSelect toggleWatchedState={toggleWatchedState} />
-          <TeamSelect toggleWatchedState={toggleWatchedState} />
+          <ProviderSelect />
+          <TeamSelect />
         </SidebarMenu>
       </SidebarHeader>
       <SidebarSeparator className="mx-0" />
       <SidebarContent>
         <ScrollArea className="h-full" scrollFade>
-          <EpisodeList toggleWatchedState={toggleWatchedState} />
+          <EpisodeList />
         </ScrollArea>
       </SidebarContent>
-      {/* <SidebarFooter>
-        <WatchTogetherButton />
-      </SidebarFooter> */}
     </Sidebar>
   );
 };

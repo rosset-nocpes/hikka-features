@@ -15,20 +15,19 @@ import '../app.css';
 import { type Page, useNavigation } from '@/hooks/use-navigation';
 import { version } from '@/package.json';
 
+import FeatureSwitch from './_base/feature-switch';
 import NavigationRow from './_base/navigation-row';
 import SettingsGroup from './_base/settings-group';
-import AniBackgroundSettings from './options/anibackground-settings';
-import AniButtonsSettings from './options/anibuttons-settings';
-import CharacterSuggestionsSettings from './options/character-suggestion-settings';
-import {
-  default as ExperimentalSettingsPage,
+import UpdateBanner from './_base/update-banner';
+import ActivitySettings from './options/activity-settings';
+import ExperimentalSettingsPage, {
   ExperimentalSettingsIcon,
 } from './options/experimental-settings';
-import FandubSettings from './options/fandub-settings';
 import LocalizedPosterSettings from './options/localized-poster-settings';
 import PlayerSettings from './options/player-settings';
 import ReaderSettings from './options/reader-settings';
-import RecommendationBlockSettings from './options/recommendation-block-settings';
+import TeamPrioritySettings from './options/team-priority-settings';
+import UserOptions from './options/user-options';
 
 const EASE_SMOOTH_OUT = [0.22, 1, 0.36, 1] as const;
 
@@ -52,6 +51,7 @@ const staggerContainerVariants = {
 function HomePage() {
   const { navigate } = useNavigation();
   const reduceMotion = useReducedMotion();
+  const signedIn = useSettings((state) => Boolean(state.convexSession));
 
   return (
     <ScrollArea className="h-full" scrollFade>
@@ -61,6 +61,18 @@ function HomePage() {
         variants={staggerContainerVariants}
         className="flex flex-col gap-3 pb-4"
       >
+        <motion.div variants={groupVariants}>
+          <SettingsGroup>
+            {/* Rows are separated by borders, so no empty one when signed out. */}
+            {signedIn
+              ? [
+                  <UserOptions key="user" />,
+                  <ActivitySettings key="activity" />,
+                ]
+              : [<UserOptions key="user" />]}
+          </SettingsGroup>
+        </motion.div>
+
         <motion.div variants={groupVariants}>
           <SettingsGroup
             title="Медіа"
@@ -84,7 +96,11 @@ function HomePage() {
             title="Оформлення"
             icon={<MaterialSymbolsImageRounded className="size-4" />}
           >
-            <AniBackgroundSettings grouped />
+            <FeatureSwitch
+              feature="aniBackground"
+              label="Обкладинки"
+              description="Покращене оформлення на сторінках тайтлів, персонажів та правок"
+            />
             <NavigationRow
               label="Локалізовані постери"
               description="Налаштування локалізованих постерів"
@@ -98,9 +114,21 @@ function HomePage() {
             title="Контент"
             icon={<MaterialSymbolsViewListRounded className="size-4" />}
           >
-            <AniButtonsSettings grouped />
-            <FandubSettings grouped />
-            <RecommendationBlockSettings grouped />
+            <FeatureSwitch
+              feature="aniButtons"
+              label="Інші джерела"
+              description="Додаткові посилання на сторінках тайтлів"
+            />
+            <FeatureSwitch
+              feature="fandubBlock"
+              label="Блок фандаб команд"
+              description="Посилання на фандаб команди, які озвучили аніме тайтл"
+            />
+            <FeatureSwitch
+              feature="recommendationBlock"
+              label="Блок рекомендацій"
+              description="Блок із контентом, який схожий на той, який ви дивитеся"
+            />
           </SettingsGroup>
         </motion.div>
 
@@ -109,7 +137,12 @@ function HomePage() {
             title="Редагування"
             icon={<MaterialSymbolsDrawRounded className="size-4" />}
           >
-            <CharacterSuggestionsSettings grouped />
+            <FeatureSwitch
+              feature="editorCharacters"
+              label="Пропозиції перекладу імен"
+              description="Показує переклад імені українською при редагуванні персонажа"
+              beta
+            />
           </SettingsGroup>
         </motion.div>
       </motion.div>
@@ -123,6 +156,7 @@ const PAGE_TITLES: Record<Page, string> = {
   reader: 'Налаштування читалки',
   localizedPoster: 'Локалізовані постери',
   experimental: 'Експериментальні функції',
+  teamPriority: 'Пріоритет команд',
 };
 
 function App() {
@@ -234,6 +268,7 @@ function App() {
           </motion.span>
         </AnimatePresence>
       </h1>
+      <UpdateBanner />
       <div className="relative flex-1">
         <AnimatePresence initial={false} custom={direction} mode="popLayout">
           <motion.div
@@ -259,6 +294,7 @@ function App() {
             {currentPage === 'reader' && <ReaderSettings />}
             {currentPage === 'localizedPoster' && <LocalizedPosterSettings />}
             {currentPage === 'experimental' && <ExperimentalSettingsPage />}
+            {currentPage === 'teamPriority' && <TeamPrioritySettings />}
           </motion.div>
         </AnimatePresence>
       </div>
