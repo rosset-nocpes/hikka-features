@@ -5,6 +5,7 @@ import MaterialSymbolsPersonalizedRecommendations from '~icons/material-symbols/
 
 import { HFLogo } from '@/components/feature-card';
 import BlockHeader from '@/components/hikka/block-header';
+import MediaTooltip from '@/components/hikka/media-tooltip';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import EmptyState from '@/components/ui/empty-state';
 import { reveal } from '@/utils/motion';
@@ -27,12 +28,12 @@ export default class RecommendationBlockFeature extends BaseFeature {
       append: 'before',
       anchor: '#content-center > div:last-of-type',
       hostCss: 'margin-top: -2rem !important;',
-      render: () => <RecommendationBlock />,
+      render: (container) => <RecommendationBlock container={container} />,
     });
   }
 }
 
-const RecommendationBlock: FC = () => {
+const RecommendationBlock: FC<{ container: HTMLElement }> = ({ container }) => {
   const { enabled } = useSettings().features.recommendationBlock;
 
   const { contentType } = usePageStore();
@@ -75,28 +76,29 @@ const RecommendationBlock: FC = () => {
             {data &&
               data.recommendations.length > 0 &&
               data.recommendations.map((item) => (
-                <a
-                  key={item.slug}
-                  href={`https://hikka.io/${item.data_type}/${item.slug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex flex-col gap-2"
-                >
-                  <AspectRatio
-                    ratio={0.7}
-                    className="bg-muted relative w-full overflow-hidden rounded-md"
+                <MediaTooltip key={item.slug} item={item} container={container}>
+                  <a
+                    href={`https://hikka.io/${item.data_type}/${item.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col gap-2"
                   >
-                    <img
-                      className="bg-secondary/30 absolute inset-0 h-full w-full object-cover"
-                      src={item.image}
-                      alt={hikkaTitle(item)}
-                      loading="lazy"
-                    />
-                  </AspectRatio>
-                  <span className="line-clamp-2 text-sm leading-5 font-medium">
-                    {hikkaTitle(item)}
-                  </span>
-                </a>
+                    <AspectRatio
+                      ratio={0.7}
+                      className="bg-muted relative w-full overflow-hidden rounded-md"
+                    >
+                      <img
+                        className="bg-secondary/30 absolute inset-0 h-full w-full object-cover"
+                        src={item.image}
+                        alt={hikkaTitle(item)}
+                        loading="lazy"
+                      />
+                    </AspectRatio>
+                    <span className="line-clamp-2 text-sm leading-5 font-medium">
+                      {hikkaTitle(item)}
+                    </span>
+                  </a>
+                </MediaTooltip>
               ))}
           </div>
         </motion.div>
