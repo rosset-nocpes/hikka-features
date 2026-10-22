@@ -55,11 +55,8 @@ const getNameSuggestionInput = (target: NameSuggestionTarget) =>
   );
 
 const fillInput = (input: HTMLInputElement, value: string) => {
-  input.focus();
-  input.select();
-
   input.value = value;
-  input.dispatchEvent(new Event('input', { bubbles: true }));
+  input.dispatchEvent(new InputEvent('input', { bubbles: true }));
 };
 
 const NameSuggestionButton = ({ target }: { target: NameSuggestionTarget }) => {
