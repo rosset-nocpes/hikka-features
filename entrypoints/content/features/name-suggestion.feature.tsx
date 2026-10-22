@@ -54,8 +54,10 @@ const getNameSuggestionInput = (target: NameSuggestionTarget) =>
     `input[placeholder*="${target.placeholder}"]`,
   );
 
-/** Types `value` into the site's input the way the user would. */
 const fillInput = (input: HTMLInputElement, value: string) => {
+  input.focus();
+  input.select();
+
   input.value = value;
   input.dispatchEvent(new Event('input', { bubbles: true }));
 };
