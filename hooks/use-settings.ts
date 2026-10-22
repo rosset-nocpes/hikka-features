@@ -128,8 +128,8 @@ export const useSettings = create<AppState>()(
         friendsActivity: {
           hidden: false,
           side: 'left' as 'left' | 'center' | 'right',
-          after: 'profile' as string | null,
-          before: 'tracker' as string | null,
+          after: 'tracker' as string | null,
+          before: 'list' as string | null,
         },
         editorCharacters: {
           enabled: true,
