@@ -74,10 +74,7 @@ const PlayerFrame = () => {
   // A layout effect: the page must settle before the player measures its
   // new size for the mini player transition.
   useLayoutEffect(() => {
-    container?.parentElement?.classList.toggle(
-      'pointer-events-none',
-      isCompactMode,
-    );
+    container?.classList.toggle('pointer-events-none', isCompactMode);
     document.body.classList.toggle('h-full', !isCompactMode);
     document.body.classList.toggle('overflow-hidden', !isCompactMode);
   }, [isCompactMode, container]);

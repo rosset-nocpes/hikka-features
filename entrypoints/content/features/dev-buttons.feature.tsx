@@ -22,7 +22,7 @@ export default class DevButtonsFeature extends BaseFeature {
       name: this.id,
       position: 'inline',
       append: 'last',
-      anchor: '#content-center > div:nth-of-type(1)',
+      anchor: '#content-hero',
       hostCss: 'margin-bottom: -1rem !important;',
       render: () => <DevButtons />,
     });

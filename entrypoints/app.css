@@ -17,6 +17,12 @@
   }
 }
 
+/* Mirrors hikka's card surface; --surface and --shadow-card inherit from the page */
+@utility surface {
+  background-color: var(--surface, hsl(var(--card)));
+  box-shadow: var(--shadow-card, none);
+}
+
 @theme inline {
   --grid-auto-columns-scroll: minmax(
     var(--grid-min, 7rem),

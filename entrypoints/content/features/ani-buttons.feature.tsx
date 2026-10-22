@@ -200,18 +200,13 @@ const contentTypeOf = (data: any): SourceContentType =>
 
 const PageSources = () => {
   const { enabled } = useSettings().features.aniButtons;
-  const isEdit = usePageStore((s) => s.contentType === 'edit');
   const { data } = useHikka();
   const contentType = contentTypeOf(data);
 
   return (
     <AnimatePresence>
       {enabled && data && (
-        <FeatureCard
-          title="Інші джерела"
-          marginBottom="2rem"
-          className={cn(isEdit && 'bg-transparent')}
-        >
+        <FeatureCard title="Інші джерела" marginBottom="2rem">
           <div className="grid grid-cols-2 gap-2">
             {(CONTENT_LINKS[contentType] ?? []).map((source) => (
               <a

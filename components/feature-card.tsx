@@ -2,6 +2,7 @@ import type { FC, PropsWithChildren, ReactNode } from 'react';
 
 import { motion } from 'motion/react';
 
+import BlockHeader from '@/components/hikka/block-header';
 import HFLogoSmallDark from '@/public/hikka-features-small-dark.svg';
 import HFLogoSmall from '@/public/hikka-features-small.svg';
 import { reveal } from '@/utils/motion';
@@ -33,17 +34,16 @@ const FeatureCard: FC<Props> = ({
   children,
 }) => (
   <motion.div
-    className={cn(
-      'border-border bg-secondary/20 overflow-hidden rounded-lg border',
-      className,
-    )}
+    className="flex min-w-0 flex-col gap-3"
     {...reveal('height', marginBottom ? { marginBottom } : undefined)}
   >
-    <div className="flex flex-col gap-6 p-4">
-      <h4 className="flex items-center justify-between">
-        {title}
-        {badge}
-      </h4>
+    <BlockHeader title={title} icon={badge} />
+    <div
+      className={cn(
+        'surface border-border relative isolate flex min-w-0 flex-col gap-4 overflow-clip rounded-lg border p-4',
+        className,
+      )}
+    >
       {children}
     </div>
   </motion.div>

@@ -25,10 +25,8 @@ export default class NameSuggestionFeature extends AnchoredUisFeature {
           anchor: () => getNameSuggestionInput(target)?.parentElement,
           hostCss: 'margin-top: -1rem !important; width: 100% !important;',
           onMount(container) {
-            if (container.parentElement) {
-              container.parentElement.style.right = '0.25rem';
-              container.parentElement.style.bottom = '0.25rem';
-            }
+            container.style.right = '0.25rem';
+            container.style.bottom = '0.25rem';
           },
           render: () => <NameSuggestionButton target={target} />,
         });
