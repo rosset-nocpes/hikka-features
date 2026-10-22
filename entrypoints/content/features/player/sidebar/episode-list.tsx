@@ -24,10 +24,9 @@ const episodeTypeBadges = {
   recap: { label: 'Рекап', className: 'bg-info/15 text-info' },
 } as const;
 
+/** Ukrainian only; the backend translates titles no catalogue has. */
 const getEpisodeTitle = (episode: API.EpisodeData) =>
-  episode.title?.ua?.trim() ||
-  episode.title?.en?.trim() ||
-  episode.title?.ja?.trim();
+  episode.title?.ua?.trim() || undefined;
 
 const formatReleaseDate = (releasedAt?: number) =>
   releasedAt ? dateFormatter.format(new Date(releasedAt * 1000)) : undefined;
