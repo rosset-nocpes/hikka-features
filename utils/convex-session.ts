@@ -151,6 +151,16 @@ class AccountSession {
   }
 
   /**
+   * Signs out once hikka.io has signed out or in as someone else, so the
+   * account is always the site's user.
+   */
+  async followHikka(viewerId: string | null) {
+    await settingsHydrated();
+    const { convexSession, userData } = useSettings.getState();
+    if (convexSession && userData?.hikkaId !== viewerId) await this.logout();
+  }
+
+  /**
    * Lends an access token to a tab's live connection, or null when signed
    * out.
    */

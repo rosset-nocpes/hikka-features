@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { queryOptions, useQuery } from '@tanstack/react-query';
 
 import { useSettings } from '@/hooks/use-settings';
 
@@ -6,7 +6,8 @@ const HIKKA_PROFILE_URL = 'https://api.hikka.io/user/me';
 
 /**
  * The Hikka user signed in to hikka.io in this browser, which need not be
- * the extension's account; account content is only shown to that user.
+ * the extension's account, or null for a guest. Throws when hikka.io
+ * couldn't tell.
  */
 export async function getHikkaViewerId() {
   const response = await fetch(HIKKA_PROFILE_URL, {
@@ -15,11 +16,27 @@ export async function getHikkaViewerId() {
     headers: { accept: 'application/json' },
     signal: AbortSignal.timeout(8_000),
   });
-  if (!response.ok) return undefined;
+  const body = (await response.json().catch(() => undefined)) as
+    | { reference?: unknown; code?: unknown }
+    | undefined;
 
-  const profile = (await response.json()) as { reference?: unknown };
-  return typeof profile.reference === 'string' ? profile.reference : undefined;
+  if (response.ok && typeof body?.reference === 'string') {
+    return body.reference;
+  }
+  // A missing, expired or revoked session; other failures say nothing.
+  if (typeof body?.code === 'string' && body.code.startsWith('auth:')) {
+    return null;
+  }
+  throw new Error(`Hikka profile request failed: ${response.status}`);
 }
+
+/** Shared, so a fresh check reaches everyone who gates content on it. */
+export const hikkaViewerQuery = queryOptions({
+  queryKey: ['hikka-viewer-id'],
+  queryFn: getHikkaViewerId,
+  staleTime: Infinity,
+  retry: false,
+});
 
 /**
  * Who is on hikka.io: `guest`, the extension's `account`, or `other` (also
@@ -29,13 +46,7 @@ export function useHikkaViewer() {
   const hikkaId = useSettings((state) =>
     state.convexSession ? state.userData?.hikkaId : undefined,
   );
-  const { data: viewerId } = useQuery({
-    queryKey: ['hikka-viewer-id'],
-    // Guests have none, and a query can't resolve to undefined.
-    queryFn: async () => (await getHikkaViewerId()) ?? null,
-    staleTime: Infinity,
-    retry: false,
-  });
+  const { data: viewerId } = useQuery(hikkaViewerQuery);
 
   if (viewerId === undefined) return undefined;
   if (viewerId === null) return 'guest';

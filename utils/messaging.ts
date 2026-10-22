@@ -14,6 +14,8 @@ export interface RemoteFetchResponse {
 export interface BackgroundMessages {
   login(): UserDataV2;
   logout(): void;
+  /** Who hikka.io is signed in as (null: nobody), for the account to follow. */
+  'hikka-viewer'(request: { viewerId: string | null }): void;
   /** An account-scoped Convex call, made with the background's session. */
   'convex-auth'(request: {
     kind: 'query' | 'mutation';

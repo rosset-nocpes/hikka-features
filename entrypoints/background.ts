@@ -51,6 +51,9 @@ export default defineBackground(() => {
       return user;
     },
     logout: () => accountSession.logout(),
+    'hikka-viewer': ({ viewerId }, sender) => {
+      if (fromHikkaPage(sender)) return accountSession.followHikka(viewerId);
+    },
     'remote-fetch': (request, sender) => {
       if (!fromHikkaPage(sender))
         throw new Error('Remote fetch is not allowed');
