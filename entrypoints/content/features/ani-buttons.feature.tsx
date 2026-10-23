@@ -11,14 +11,33 @@ import { HikkaPages } from '../core/core.enums';
 
 type SourceContentType = MediaType | InfoType;
 
-const SOURCES: Record<SourcesType, { host: string; title: string }> = {
+const SOURCES: Record<
+  SourcesType,
+  { host: string; title: string; icon?: string }
+> = {
   mal: { host: 'myanimelist.net', title: 'MyAnimeList' },
   anilist: { host: 'anilist.co', title: 'AniList' },
-  anidb: { host: 'anidb.net', title: 'AniDB' },
-  ann: { host: 'animenewsnetwork.com', title: 'ANN' },
-  wiki: { host: 'en.wikipedia.org', title: 'Wikipedia' },
-  mu: { host: 'mangaupdates.com', title: 'MU' },
+  anidb: {
+    host: 'anidb.net',
+    title: 'AniDB',
+    icon: '/icons/platforms/anidb.png',
+  },
+  ann: {
+    host: 'animenewsnetwork.com',
+    title: 'ANN',
+    icon: '/icons/platforms/ann.png',
+  },
+  wiki: {
+    host: 'en.wikipedia.org',
+    title: 'Wikipedia',
+    icon: '/icons/platforms/wikipedia.png',
+  },
+  mu: { host: 'mangaupdates.com', title: 'MangaUpdates' },
 };
+
+const iconOf = (source: SourcesType) =>
+  SOURCES[source].icon ??
+  `https://www.google.com/s2/favicons?domain=${SOURCES[source].host}&sz=64`;
 
 const SOURCE_PATH_OVERRIDES: Partial<
   Record<SourceContentType, Partial<Record<'mal' | 'al' | 'ad', string>>>
@@ -41,7 +60,14 @@ const MEDIA_TYPES: readonly string[] = ['anime', 'manga', 'novel'];
 /** The dialog hikka.io opens for a character or person from a list. */
 const MODAL = '[data-slug][data-content-type]';
 
-const pickTitle = (data: any): string | undefined =>
+interface SourceLink {
+  source: SourcesType;
+  href: string;
+  /** A search by title, for want of the title's own page. */
+  search: boolean;
+}
+
+const pickTitle = (data: any): string =>
   [
     data?.title_ja,
     data?.title_en,
@@ -51,17 +77,21 @@ const pickTitle = (data: any): string | undefined =>
     data?.content?.title_original,
     data?.name_en,
     data?.content?.name_en,
-  ].find(Boolean);
+  ].find(Boolean) ?? '';
 
-const buildSourceUrl = (
+const sourceLink = (
   source: SourcesType,
   data: any,
   contentType: SourceContentType,
-): string | undefined => {
+): SourceLink | undefined => {
   const title = pickTitle(data);
+  const q = encodeURIComponent(title);
   const override = (key: 'mal' | 'al' | 'ad') =>
     SOURCE_PATH_OVERRIDES[contentType]?.[key];
-  const external = () =>
+  const direct = (href?: string) =>
+    href ? { source, href, search: false } : undefined;
+  const search = (href: string) => ({ source, href, search: true });
+  const external = (): string | undefined =>
     MEDIA_TYPES.includes(contentType)
       ? data?.external?.find((link: any) =>
           link.url?.includes(SOURCES[source].host),
@@ -69,46 +99,57 @@ const buildSourceUrl = (
       : undefined;
 
   switch (source) {
-    case 'mal':
-      return `https://myanimelist.net/${override('mal') ?? contentType}${
-        data?.mal_id ? `/${data.mal_id}` : `.php?q=${title}`
-      }`;
+    case 'mal': {
+      const path = override('mal') ?? contentType;
+      return data?.mal_id
+        ? direct(`https://myanimelist.net/${path}/${data.mal_id}`)
+        : search(`https://myanimelist.net/${path}.php?q=${q}`);
+    }
     case 'anilist':
-      return `https://anilist.co/search/${override('al') ?? contentType}?search=${title}&sort=SEARCH_MATCH`;
+      return search(
+        `https://anilist.co/search/${override('al') ?? contentType}?search=${q}&sort=SEARCH_MATCH`,
+      );
     case 'anidb': {
       // AniDB expects "Surname GivenName" for people/characters.
-      const words = title?.split(' ');
+      const words = title.split(' ');
       const swapped =
         (contentType === 'person' || contentType === 'character') &&
-        words?.length === 2
+        words.length === 2
           ? `${words[1]} ${words[0]}`
           : title;
       return (
-        external() ??
-        `https://anidb.net/${override('ad') ?? contentType}/?adb.search=${swapped}&do.search=1`
+        direct(external()) ??
+        search(
+          `https://anidb.net/${override('ad') ?? contentType}/?adb.search=${encodeURIComponent(swapped)}&do.search=1`,
+        )
       );
     }
     case 'ann':
-      return external() ?? `https://www.animenewsnetwork.com/search?q=${title}`;
+      return (
+        direct(external()) ??
+        search(`https://www.animenewsnetwork.com/search?q=${q}`)
+      );
     case 'wiki':
       return contentType === 'character'
         ? undefined
-        : (external() ??
-            `https://en.wikipedia.org/w/index.php?search=${title}`);
+        : (direct(external()) ??
+            search(`https://en.wikipedia.org/w/index.php?search=${q}`));
     case 'mu':
-      return `https://www.mangaupdates.com/series?search=${title}&perpage=25`;
+      return search(
+        `https://www.mangaupdates.com/series?search=${q}&perpage=25`,
+      );
   }
 };
 
-const Favicon = ({ host }: { host: string }) => (
-  <span className="border-secondary/60 size-5 overflow-hidden rounded-sm border p-px">
-    <img
-      alt=""
-      className="size-full"
-      src={`https://www.google.com/s2/favicons?domain=${host}`}
-    />
-  </span>
-);
+const sourceLinks = (data: any): SourceLink[] => {
+  const contentType: SourceContentType = data?.data_type ?? data?.content_type;
+  return (CONTENT_LINKS[contentType] ?? []).flatMap(
+    (source) => sourceLink(source, data, contentType) ?? [],
+  );
+};
+
+const linkTitle = ({ source, search }: SourceLink) =>
+  search ? `${SOURCES[source].title}: пошук за назвою` : SOURCES[source].title;
 
 export default class AniButtonsFeature extends BaseFeature {
   readonly id = 'ani-buttons';
@@ -164,7 +205,12 @@ export default class AniButtonsFeature extends BaseFeature {
   }
 
   override mount() {
-    if (super.shouldMount && this.ui && !this.ui.mounted) this.ui.mount();
+    if (super.shouldMount && this.ui) {
+      // hikka.io re-renders the column, dropping the block, and WXT still
+      // counts it as mounted.
+      if (this.ui.mounted) this.ui.remove();
+      this.ui.mount();
+    }
     this.syncModalUi();
     this.modalObserver?.disconnect();
     this.modalObserver = new MutationObserver(() => this.syncModalUi());
@@ -195,29 +241,35 @@ export default class AniButtonsFeature extends BaseFeature {
   }
 }
 
-const contentTypeOf = (data: any): SourceContentType =>
-  data?.data_type ?? data?.content_type;
-
 const PageSources = () => {
   const { enabled } = useSettings().features.aniButtons;
   const { data } = useHikka();
-  const contentType = contentTypeOf(data);
+  const links = data ? sourceLinks(data) : [];
 
   return (
     <AnimatePresence>
-      {enabled && data && (
+      {enabled && links.length > 0 && (
         <FeatureCard title="Інші джерела" marginBottom="2rem">
-          <div className="grid grid-cols-2 gap-2">
-            {(CONTENT_LINKS[contentType] ?? []).map((source) => (
+          {/* Rows fill up like hikka.io's profile links, each one flush. */}
+          <div className="flex flex-wrap gap-2">
+            {links.map((link) => (
               <a
-                key={source}
-                href={buildSourceUrl(source, data, contentType)}
+                key={link.source}
+                href={link.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:bg-secondary/60 flex items-center gap-2 rounded-sm p-1 text-sm font-medium transition"
+                title={linkTitle(link)}
+                className={cn(
+                  buttonVariants({ variant: 'outline', size: 'md' }),
+                  'focus-visible:ring-ring/50 min-w-0 flex-auto gap-2 focus-visible:ring-[3px]',
+                )}
               >
-                <Favicon host={SOURCES[source].host} />
-                {SOURCES[source].title}
+                <img
+                  alt=""
+                  src={iconOf(link.source)}
+                  className="size-5 rounded-sm object-contain"
+                />
+                <span className="truncate">{SOURCES[link.source].title}</span>
               </a>
             ))}
           </div>
@@ -230,33 +282,39 @@ const PageSources = () => {
 /** The same links as icons in the character or person dialog. */
 const ModalSources = ({
   slug,
-  contentType: modalType,
+  contentType,
 }: {
   slug?: string;
   contentType?: string;
 }) => {
   const { enabled } = useSettings().features.aniButtons;
-  const { data } = useHikkaContent(modalType, slug);
-  const contentType = contentTypeOf(data);
+  const { data } = useHikkaContent(contentType, slug);
+  const links = data ? sourceLinks(data) : [];
 
   return (
     <AnimatePresence>
-      {enabled && data && (
+      {enabled && links.length > 0 && (
         <motion.div {...reveal()}>
           <ButtonGroup>
-            {(CONTENT_LINKS[contentType] ?? []).map((source) => (
+            {links.map((link) => (
               <a
-                key={source}
+                key={link.source}
                 data-slot="button"
-                href={buildSourceUrl(source, data, contentType)}
+                href={link.href}
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label={SOURCES[link.source].title}
+                title={linkTitle(link)}
                 className={buttonVariants({
                   variant: 'outline',
                   size: 'icon-md',
                 })}
               >
-                <Favicon host={SOURCES[source].host} />
+                <img
+                  alt=""
+                  src={iconOf(link.source)}
+                  className="size-5 object-contain"
+                />
               </a>
             ))}
           </ButtonGroup>
