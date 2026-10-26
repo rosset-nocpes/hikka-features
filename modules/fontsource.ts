@@ -5,6 +5,9 @@ import { addAlias, addPublicAssets, defineWxtModule } from 'wxt/modules';
 
 const require = createRequire(import.meta.url);
 
+const FONT_FACE_RE = /\/\*[^*]*\*\/\s*@font-face\s*{[^}]*}/g;
+const USED_SUBSET_RE = /-(?:cyrillic|latin)-wght-normal\.woff2/;
+
 const getFontsourcePackages = (rootDir: string): string[] => {
   const pkgPath = path.join(rootDir, 'package.json');
   if (!fs.existsSync(pkgPath)) return [];
@@ -42,7 +45,9 @@ export default defineWxtModule({
           require.resolve(`${pkgName}/package.json`),
         );
         const cssPath = path.join(pkgPath, 'index.css');
-        let css = fs.readFileSync(cssPath, 'utf-8');
+        let css = (fs.readFileSync(cssPath, 'utf-8').match(FONT_FACE_RE) ?? [])
+          .filter((block) => USED_SUBSET_RE.test(block))
+          .join('\n\n');
 
         const urlRegex = /url\(["']?(\.\/files\/[^"']+)["']?\)/g;
         const safePkgName = pkgName.slice(1).replace('/', '-');

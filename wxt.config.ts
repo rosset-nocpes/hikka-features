@@ -38,6 +38,12 @@ export default defineConfig({
       'https://manga.in.ua/*',
       'https://baka.in.ua/*',
     ],
+    web_accessible_resources: [
+      {
+        matches: ['https://hikka.io/*', 'https://dev.hikka.io/*'],
+        resources: ['hf-x-cpr.svg', 'hf-x-cpr-dark.svg'],
+      },
+    ],
     browser_specific_settings: {
       gecko: {
         id: 'extension@hikka-features.pp.ua',

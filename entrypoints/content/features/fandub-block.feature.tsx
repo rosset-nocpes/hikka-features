@@ -13,8 +13,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import HFxCPRBadgeDark from '@/public/hf-x-cpr-dark.svg';
-import HFxCPRBadge from '@/public/hf-x-cpr.svg';
 
 import { queryClient } from '..';
 import { BaseFeature } from '../core/base-feature';
@@ -76,7 +74,9 @@ const FandubBlock: FC = () => {
               rel="noopener"
             >
               <img
-                src={isHikkaDarkMode() ? HFxCPRBadge : HFxCPRBadgeDark}
+                src={browser.runtime.getURL(
+                  isHikkaDarkMode() ? '/hf-x-cpr.svg' : '/hf-x-cpr-dark.svg',
+                )}
                 style={{ height: '20px' }}
               />
             </a>
