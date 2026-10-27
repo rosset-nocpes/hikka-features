@@ -5,7 +5,7 @@ import { useIFramePlayer } from '@/hooks/use-iframe-player';
 import { hikkaTracker } from '@/utils/hikka-tracker';
 
 import {
-  episodesOf,
+  followingEpisode,
   onAnimePage,
   progressOf,
   usePlayer,
@@ -35,21 +35,14 @@ const loadNext = async () => {
   const before = usePlayer.getState().currentEpisode;
   if (await playNextQueued()) return true;
 
-  const { watchData, provider, team, currentEpisode, setEpisode } =
-    usePlayer.getState();
+  const player = usePlayer.getState();
   // While the queue loaded, the user closed the player or picked another.
-  if (!isPlayerOpen() || currentEpisode !== before) return false;
+  if (!isPlayerOpen() || player.currentEpisode !== before) return false;
 
-  const nextEpisode =
-    watchData &&
-    provider &&
-    currentEpisode &&
-    episodesOf(watchData, provider, team?.title ?? '')?.find(
-      (episode) => episode.episode === currentEpisode.episode + 1,
-    );
-  if (!nextEpisode) return false;
+  const following = followingEpisode(player);
+  if (!following) return false;
 
-  setEpisode(nextEpisode);
+  player.setEpisode(following);
   return true;
 };
 

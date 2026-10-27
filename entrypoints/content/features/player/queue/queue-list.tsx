@@ -10,12 +10,15 @@ import EmptyState from '@/components/ui/empty-state';
 import {
   SidebarGroup,
   SidebarGroupLabel,
+  SidebarMenu,
   SidebarMenuAction,
   SidebarMenuButton,
+  SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useHikkaContent } from '@/hooks/use-hikka';
 
+import { followingEpisode, usePlayer } from '../context/player-context';
 import { useWatchTogether } from '../watch-together/use-watch-together';
 import { useActiveQueue } from './use-active-queue';
 import { type QueueItem, queueKey, useQueue } from './use-queue';
@@ -28,6 +31,43 @@ interface RowProps {
   onDragEnd: () => void;
 }
 
+/** A row's poster, anime and episode. */
+const EpisodeSummary: FC<Pick<QueueItem, 'slug' | 'episode' | 'team'>> = ({
+  slug,
+  episode,
+  team,
+}) => {
+  const { data: anime, isLoading } = useHikkaContent('anime', slug);
+
+  return (
+    <>
+      <div className="bg-muted h-10 w-7 shrink-0 overflow-hidden rounded-sm">
+        {anime?.image && (
+          <img
+            src={anime.image}
+            alt=""
+            loading="lazy"
+            className="size-full object-cover"
+          />
+        )}
+      </div>
+      <div className="grid min-w-0 flex-1 gap-0.5 leading-tight">
+        {isLoading ? (
+          <Skeleton className="h-4 w-3/4" />
+        ) : (
+          <span className="truncate font-medium">
+            {hikkaTitle(anime) ?? slug}
+          </span>
+        )}
+        <span className="text-muted-foreground truncate text-xs">
+          Епізод {episode}
+          {team && ` · ${team}`}
+        </span>
+      </div>
+    </>
+  );
+};
+
 /** A sidebar row, like an episode's, with a drag handle where its number is. */
 const QueueRow: FC<RowProps> = ({
   item,
@@ -36,7 +76,7 @@ const QueueRow: FC<RowProps> = ({
   onMove,
   onDragEnd,
 }) => {
-  const { data: anime, isLoading } = useHikkaContent('anime', item.slug);
+  const { data: anime } = useHikkaContent('anime', item.slug);
   const controls = useDragControls();
   const [dragging, setDragging] = useState(false);
 
@@ -66,27 +106,7 @@ const QueueRow: FC<RowProps> = ({
         className="group-hover/menu-item:bg-sidebar-accent py-1 pl-7"
         onClick={onPlay}
       >
-        <div className="bg-muted h-10 w-7 shrink-0 overflow-hidden rounded-sm">
-          {anime?.image && (
-            <img
-              src={anime.image}
-              alt=""
-              loading="lazy"
-              className="size-full object-cover"
-            />
-          )}
-        </div>
-        <div className="grid min-w-0 flex-1 gap-0.5 leading-tight">
-          {isLoading ? (
-            <Skeleton className="h-4 w-3/4" />
-          ) : (
-            <span className="truncate font-medium">{title}</span>
-          )}
-          <span className="text-muted-foreground truncate text-xs">
-            Епізод {item.episode}
-            {item.team && ` · ${item.team}`}
-          </span>
-        </div>
+        <EpisodeSummary {...item} />
       </SidebarMenuButton>
       <button
         type="button"
@@ -116,8 +136,41 @@ const QueueRow: FC<RowProps> = ({
 };
 
 /**
+ * The anime's next episode, which plays when the queue is empty, as it would
+ * if nothing were queued.
+ */
+const FollowingEpisode = () => {
+  const { slug, team, setEpisode } = usePlayer();
+  const following = usePlayer(followingEpisode);
+
+  if (!slug || !following) return null;
+
+  return (
+    <SidebarGroup>
+      <SidebarGroupLabel>Далі автоматично</SidebarGroupLabel>
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            size="lg"
+            className="py-1"
+            onClick={() => setEpisode(following)}
+          >
+            <EpisodeSummary
+              slug={slug}
+              episode={following.episode}
+              team={team?.title ?? ''}
+            />
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    </SidebarGroup>
+  );
+};
+
+/**
  * The episodes to play next, in order; a click plays one right away. In a
- * watch together room, the room's, for every member.
+ * watch together room, the room's, for every member. Empty, it shows the
+ * anime's next episode, which plays instead.
  */
 const QueueList = () => {
   const queue = useActiveQueue();
@@ -147,7 +200,7 @@ const QueueList = () => {
   };
 
   if (!items.length) {
-    return queue.shared ? (
+    const empty = queue.shared ? (
       <EmptyState
         size="sm"
         icon={<MaterialSymbolsGroupOutlineRounded />}
@@ -186,6 +239,12 @@ const QueueList = () => {
         }
         className="py-8"
       />
+    );
+    return (
+      <>
+        <FollowingEpisode />
+        {empty}
+      </>
     );
   }
 

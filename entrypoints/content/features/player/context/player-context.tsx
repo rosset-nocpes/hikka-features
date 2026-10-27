@@ -232,6 +232,22 @@ const queuedSource = (data: API.WatchData, target: QueueItem) => {
   return undefined;
 };
 
+/**
+ * The episode after the playing one from the same source, which plays once
+ * the queue runs out.
+ */
+export const followingEpisode = ({
+  watchData,
+  provider,
+  team,
+  currentEpisode,
+}: Pick<PlayerState, 'watchData' | 'provider' | 'team' | 'currentEpisode'>) =>
+  watchData && provider && currentEpisode
+    ? episodesOf(watchData, provider, team?.title ?? '')?.find(
+        (episode) => episode.episode === currentEpisode.episode + 1,
+      )
+    : undefined;
+
 export const isFavoriteTeam = (
   { favoriteTeam, provider }: Pick<PlayerState, 'favoriteTeam' | 'provider'>,
   team: API.TeamData,
