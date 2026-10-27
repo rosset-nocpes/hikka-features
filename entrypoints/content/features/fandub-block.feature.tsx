@@ -7,8 +7,6 @@ import ShowMoreList from '@/components/hikka/show-more-list';
 import TeamLogo from '@/components/hikka/team-logo';
 import EmptyState from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
-import HFxCPRBadgeDark from '@/public/hf-x-cpr-dark.svg';
-import HFxCPRBadge from '@/public/hf-x-cpr.svg';
 import { teamPagePath } from '@/utils/hikka-router';
 import { describeReleases } from '@/utils/team-releases';
 
@@ -67,7 +65,9 @@ const FandubBlock = () => {
               rel="noopener"
             >
               <img
-                src={hikkaTheme.isDark ? HFxCPRBadge : HFxCPRBadgeDark}
+                src={browser.runtime.getURL(
+                  hikkaTheme.isDark ? '/hf-x-cpr.svg' : '/hf-x-cpr-dark.svg',
+                )}
                 style={{ height: '20px' }}
               />
             </a>

@@ -52,8 +52,8 @@ export default defineConfig({
     web_accessible_resources: [
       {
         // Injected into hikka.io's own world for its router.
-        resources: ['hikka-router.js'],
         matches: ['https://hikka.io/*', 'https://dev.hikka.io/*'],
+        resources: ['hikka-router.js', 'hf-x-cpr.svg', 'hf-x-cpr-dark.svg'],
       },
     ],
     browser_specific_settings: {
