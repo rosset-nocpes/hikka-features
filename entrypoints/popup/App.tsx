@@ -122,7 +122,7 @@ function HomePage() {
             <FeatureSwitch
               feature="fandubBlock"
               label="Блок фандаб команд"
-              description="Посилання на фандаб команди, які озвучили аніме тайтл"
+              description="Команди, що озвучили чи перекладали тайтл, з їхніми сторінками"
             />
             <FeatureSwitch
               feature="recommendationBlock"

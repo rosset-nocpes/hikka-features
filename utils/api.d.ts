@@ -33,6 +33,8 @@ declare global {
 
     type TeamData = {
       id?: string;
+      /** The team's page, `/teams/<slug>`. */
+      slug?: string;
       title: string;
       logo: string;
       canonicalTitle?: string;

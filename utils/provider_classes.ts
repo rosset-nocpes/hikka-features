@@ -4,6 +4,7 @@ type TeamEntry = Omit<API.TeamData, 'title'> & {
 
 const toTeam = (title: string, team: TeamEntry): API.TeamData => ({
   id: team.id,
+  slug: team.slug,
   title,
   logo: team.logo,
   canonicalTitle: team.canonicalTitle,

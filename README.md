@@ -36,6 +36,28 @@ dialog (`features/friends-activity`). hikka.io stores the layout in the account
 and accepts only its own widgets, so the block's place is kept in the
 extension's settings, as the site widgets right before and after it.
 
+The "Від команд" block on anime pages lists the teams that dubbed or
+subtitled the anime from the extension's own catalog (teams' Telegram
+channels), the CPR Notion catalog and the player, merged by the backend in
+that order of trust (`fandub:forAnime`); player teams the catalog doesn't know
+are added from the watch data. Each team opens its page, `/teams/<slug>`, and
+the block's title, and "Команди" under "Спільнота" in the site's navbar and
+mobile menu (`teams-nav-link.feature.tsx`), open the list of teams, `/teams`
+(`features/team-pages`). Both are laid out like a hikka.io collection: one
+column, its parts listed in a "Зміст" sidebar that follows the scroll (a
+popover from the floating bar on phones), and the bar filters dubs and
+subtitles. The list's parts are how active the catalog says teams are; a
+team's are what it's still releasing, then its anime by year. hikka.io
+answers those paths with a bare 404 page,
+so `entrypoints/hikka-router.ts`, injected into the page's own JavaScript
+world, has the site's TanStack router render its home route under them (route
+masking) and the team pages replace its content, inside the site's navbar and
+footer. Links in the extension's pages navigate through that router, without
+reloads; the `team-pages` content script hides the 404 page until then. As
+the router sees the home page under team pages, going between them changes
+nothing in the DOM, so the feature mounts itself on navigation, and the
+site's links home are sent through the router.
+
 ## Extension/backend compatibility
 
 The package version and backend API protocol are intentionally separate. The

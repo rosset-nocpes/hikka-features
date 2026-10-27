@@ -23,6 +23,15 @@
   box-shadow: var(--shadow-card, none);
 }
 
+/* hikka's floating bars, e.g. under a collection; its edge colours the border */
+@utility surface-glass {
+  background-color: var(--surface-glass, var(--card));
+  box-shadow: var(--shadow-card, none);
+  backdrop-filter: blur(24px) saturate(150%);
+  --border: var(--surface-glass-border, var(--border));
+  --color-border: var(--surface-glass-border, var(--border));
+}
+
 @theme inline {
   --grid-auto-columns-scroll: minmax(
     var(--grid-min, 7rem),

@@ -1,4 +1,5 @@
 import '../app.css';
+import { PAGE_READY_ATTRIBUTE } from '@/utils/hikka-router';
 import { hikkaViewerQuery } from '@/utils/hikka-viewer';
 import { sendToBackground } from '@/utils/messaging';
 
@@ -25,6 +26,11 @@ export default defineContentScript({
     });
 
     usePageStore.getState().setCTX(ctx);
+
+    // The site's router, for the extension's pages and in-place navigation.
+    void injectScript('/hikka-router.js').catch(() => {
+      document.documentElement.setAttribute(PAGE_READY_ATTRIBUTE, '');
+    });
 
     const manager = new FeatureManager();
     manager.init();

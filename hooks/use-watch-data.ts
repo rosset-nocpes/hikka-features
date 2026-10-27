@@ -44,6 +44,7 @@ const toWatchData = (data: ConvexWatchResult): API.WatchData => {
         : team.title;
       value.teams[title] = {
         id: team.id,
+        slug: team.slug,
         logo: team.logo ?? '',
         canonicalTitle: team.title,
         translationType,

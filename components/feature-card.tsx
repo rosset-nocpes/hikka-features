@@ -18,6 +18,8 @@ export const HFLogo = () => (
 
 interface Props extends PropsWithChildren {
   title: string;
+  /** A hikka.io path the title leads to. */
+  to?: string;
   /** Next to the title; the extension's mark by default. */
   badge?: ReactNode;
   /** Space kept below the card while it is shown. */
@@ -28,6 +30,7 @@ interface Props extends PropsWithChildren {
 /** A block the extension adds to a title's page, in the page's card style. */
 const FeatureCard: FC<Props> = ({
   title,
+  to,
   badge = <HFLogo />,
   marginBottom,
   className,
@@ -37,7 +40,7 @@ const FeatureCard: FC<Props> = ({
     className="flex min-w-0 flex-col gap-3"
     {...reveal('height', marginBottom ? { marginBottom } : undefined)}
   >
-    <BlockHeader title={title} icon={badge} />
+    <BlockHeader title={title} to={to} icon={badge} />
     <div
       className={cn(
         'surface border-border relative isolate flex min-w-0 flex-col gap-4 overflow-clip rounded-lg border p-4',

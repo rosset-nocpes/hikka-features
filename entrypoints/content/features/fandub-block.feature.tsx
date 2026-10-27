@@ -4,11 +4,13 @@ import MaterialSymbolsRecordVoiceOverOutlineRounded from '~icons/material-symbol
 import FeatureCard from '@/components/feature-card';
 import LinkRow from '@/components/hikka/link-row';
 import ShowMoreList from '@/components/hikka/show-more-list';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import TeamLogo from '@/components/hikka/team-logo';
 import EmptyState from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import HFxCPRBadgeDark from '@/public/hf-x-cpr-dark.svg';
 import HFxCPRBadge from '@/public/hf-x-cpr.svg';
+import { teamPagePath } from '@/utils/hikka-router';
+import { describeReleases } from '@/utils/team-releases';
 
 import { BaseFeature, createFeatureUi } from '../core/base-feature';
 import { HikkaPages } from '../core/core.enums';
@@ -34,20 +36,30 @@ export default class FandubBlockFeature extends BaseFeature {
 const SkeletonRow = () => (
   <div className="flex items-center gap-3 py-2">
     <Skeleton className="size-10 shrink-0" />
-    <Skeleton className="h-4 w-1/2" />
+    <div className="flex flex-1 flex-col gap-1.5">
+      <Skeleton className="h-4 w-1/2" />
+      <Skeleton className="h-3 w-3/4" />
+    </div>
   </div>
 );
 
+/**
+ * Teams that dubbed or subtitled the anime, from the extension's catalog,
+ * the CPR catalog and the player, each linking to its page.
+ */
 const FandubBlock = () => {
   const { enabled } = useSettings().features.fandubBlock;
-  const { data, isLoading } = useNotionData();
-  const teams = data?.fandub;
+  const { slug } = usePageStore();
+  const { data: anime } = useHikkaContent('anime', slug);
+  const { teams, episodesTotal, isLoading } = useFandubTeams();
+  const total = episodesTotal ?? anime?.episodes_total ?? undefined;
 
   return (
     <AnimatePresence>
       {enabled && (
         <FeatureCard
           title="Від команд"
+          to={teamPagePath()}
           badge={
             <a
               href="https://drbryanman.github.io/CPRcatalog/#/"
@@ -67,21 +79,21 @@ const FandubBlock = () => {
                 <SkeletonRow key={i} />
               ))}
             </div>
-          ) : teams?.length ? (
+          ) : teams.length ? (
             <ShowMoreList shown={SHOWN_TEAMS}>
               {teams.map((team) => (
                 <LinkRow
-                  key={team.link}
-                  href={team.link}
+                  key={team.key}
+                  to={team.slug && teamPagePath(team.slug)}
                   label={team.title}
+                  description={describeReleases(team.releases, total)}
                   icon={
                     // Logos are avatars, so they fill the tile.
-                    <Avatar className="size-full rounded-none after:hidden">
-                      <AvatarImage loading="lazy" src={team.logo} />
-                      <AvatarFallback className="text-muted-foreground bg-transparent font-medium">
-                        {team.title[0]?.toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+                    <TeamLogo
+                      title={team.title}
+                      logo={team.logo}
+                      className="size-full rounded-none after:hidden"
+                    />
                   }
                 />
               ))}

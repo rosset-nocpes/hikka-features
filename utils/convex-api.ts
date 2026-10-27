@@ -15,7 +15,7 @@ export interface ConvexEpisodeInfo {
 
 export interface ConvexWatchSource {
   /** Absent for providers that do not split playback by team. */
-  team?: { id?: string; title: string; logo?: string };
+  team?: { id?: string; slug?: string; title: string; logo?: string };
   translationType: TranslationType;
   episodes: Array<{ number: number; url: string; releasedAt?: number }>;
 }
@@ -152,6 +152,101 @@ export interface FriendActivity {
   room?: { memberCount: number; code?: string };
 }
 
+/**
+ * Where a team release comes from, most trusted first: the extension's own
+ * catalog (teams' Telegram channels), the CPR Notion catalog, the players.
+ */
+export type ReleaseSource = 'catalog' | 'notion' | 'player';
+
+export type ReleaseStatus =
+  | 'announced'
+  | 'ongoing'
+  | 'finished'
+  | 'paused'
+  | 'dropped';
+
+/** What a team released of an anime in one translation. */
+export interface TeamRelease {
+  source: ReleaseSource;
+  /** Every source that has it, most trusted first. */
+  sources: ReleaseSource[];
+  translationType: TranslationType;
+  /** The newest episode out. */
+  episodes?: number;
+  episodesTotal?: number;
+  status?: ReleaseStatus;
+  url?: string;
+  updatedAt: number;
+}
+
+export interface TeamSummary {
+  id: string;
+  /** The team's page, `/teams/<slug>`. */
+  slug?: string;
+  title: string;
+  logo?: string;
+}
+
+export interface TeamStats {
+  anime: number;
+  dub: number;
+  sub: number;
+  lastReleaseAt?: number;
+}
+
+export type TeamLinkKind =
+  | 'telegram'
+  | 'youtube'
+  | 'instagram'
+  | 'tiktok'
+  | 'website'
+  | 'donate'
+  | 'anitube';
+
+export interface AnimeFandub {
+  episodesTotal?: number;
+  /** Most trusted source first, then the most recently active. */
+  teams: Array<{ team: TeamSummary; releases: TeamRelease[] }>;
+}
+
+export interface TeamReleaseAnime {
+  slug: string;
+  title?: string;
+  image?: string;
+  mediaType?: string;
+  status?: string;
+  year?: number;
+  episodesTotal?: number;
+}
+
+export interface TeamPage {
+  team: TeamSummary & {
+    description?: string;
+    links: Array<{ kind: TeamLinkKind; url: string }>;
+    /** "Фандаб", "Фансаб", … */
+    kinds: string[];
+    /** "Активна", "Малоактивна", … */
+    activity?: string;
+    stats?: TeamStats;
+  };
+  /** Newest first. */
+  releases: Array<{
+    anime: TeamReleaseAnime;
+    releases: TeamRelease[];
+    updatedAt: number;
+  }>;
+}
+
+export interface TeamListing extends TeamSummary {
+  slug: string;
+  description?: string;
+  kinds: string[];
+  activity?: string;
+  stats?: TeamStats;
+  /** Posters of its latest releases. */
+  covers: string[];
+}
+
 type NoArgs = Record<string, never>;
 
 export const convexApi = {
@@ -183,6 +278,17 @@ export const convexApi = {
         fandub: Array<{ title: string; logo?: string; link: string }>;
       } | null
     >('catalog:get'),
+  },
+  fandub: {
+    forAnime: makeFunctionReference<'query', { slug: string }, AnimeFandub>(
+      'fandub:forAnime',
+    ),
+    team: makeFunctionReference<'query', { slug: string }, TeamPage | null>(
+      'fandub:team',
+    ),
+    teams: makeFunctionReference<'query', NoArgs, TeamListing[]>(
+      'fandub:teams',
+    ),
   },
   editor: {
     suggest: makeFunctionReference<

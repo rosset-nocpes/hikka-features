@@ -49,6 +49,13 @@ export default defineConfig({
       'https://manga.in.ua/*',
       'https://baka.in.ua/*',
     ],
+    web_accessible_resources: [
+      {
+        // Injected into hikka.io's own world for its router.
+        resources: ['hikka-router.js'],
+        matches: ['https://hikka.io/*', 'https://dev.hikka.io/*'],
+      },
+    ],
     browser_specific_settings: {
       gecko: {
         id: 'extension@hikka-features.pp.ua',
