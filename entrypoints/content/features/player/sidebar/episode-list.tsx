@@ -97,6 +97,8 @@ const EpisodeList = () => {
           const isCurrent = ep.video_url === currentEpisode?.video_url;
           const isQueued =
             !!slug && queued.has(queueKey({ slug, episode: ep.episode }));
+          // The playing episode can't be queued, only taken off the queue.
+          const queueable = !!slug && !!provider && (!isCurrent || isQueued);
 
           return (
             <Fragment key={ep.video_url}>
@@ -112,6 +114,13 @@ const EpisodeList = () => {
                     ep.episode <= watched &&
                       !isCurrent &&
                       'text-muted-foreground',
+                    // The queue button takes room only while it shows: on
+                    // hover or focus, and always when queued or on small
+                    // screens, where it never hides. Hover needs `!`: the
+                    // sidebar's `group-has` padding is as specific and later.
+                    queueable &&
+                      !isQueued &&
+                      'md:group-focus-within/menu-item:pr-8! md:group-hover/menu-item:pr-8! md:group-has-data-[sidebar=menu-action]/menu-item:pr-2',
                   )}
                   onClick={() => setEpisode(ep)}
                   isActive={isCurrent}
@@ -150,23 +159,19 @@ const EpisodeList = () => {
                     </Badge>
                   )}
                 </SidebarMenuButton>
-                {slug && provider && (
+                {queueable && (
                   <SidebarMenuAction
                     showOnHover={!isQueued}
                     aria-label={
                       isQueued ? 'Прибрати з черги' : 'Додати до черги'
                     }
                     title={isQueued ? 'Прибрати з черги' : 'Додати до черги'}
-                    className={cn(
-                      'peer-data-[size=default]/menu-button:top-1/2 peer-data-[size=default]/menu-button:-translate-y-1/2',
-                      // Kept for its padding, so every row's badges line up.
-                      isCurrent && !isQueued && 'invisible',
-                    )}
+                    className="transition-opacity peer-data-[size=default]/menu-button:top-1/2 peer-data-[size=default]/menu-button:-translate-y-1/2"
                     onClick={() =>
                       toggleQueued({
-                        slug,
+                        slug: slug!,
                         episode: ep.episode,
-                        provider,
+                        provider: provider!,
                         team: team?.title ?? '',
                       })
                     }

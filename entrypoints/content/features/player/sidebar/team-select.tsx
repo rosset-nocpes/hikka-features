@@ -24,23 +24,7 @@ import {
   isFavoriteTeam,
   usePlayer,
 } from '../context/player-context';
-import { getTeamName, groupTeams } from '../teams';
-
-/** "1-12, 14" for the episode numbers a team has. */
-const getEpisodeRanges = (episodes: { episode: number }[]) => {
-  const numbers = [...new Set(episodes.map((e) => e.episode))].sort(
-    (a, b) => a - b,
-  );
-  const ranges: [start: number, end: number][] = [];
-  for (const number of numbers) {
-    const last = ranges.at(-1);
-    if (last && number === last[1] + 1) last[1] = number;
-    else ranges.push([number, number]);
-  }
-  return ranges
-    .map(([start, end]) => (start === end ? `${start}` : `${start}-${end}`))
-    .join(', ');
-};
+import { getEpisodeRanges, getTeamName, groupTeams } from '../teams';
 
 const TeamSelect = () => {
   const {

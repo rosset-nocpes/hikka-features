@@ -151,30 +151,36 @@ const favoriteIn = (data: API.WatchData, slug: string) => {
   };
 };
 
+/** The watch data's providers, the user's default one first. */
+export const providerOrder = (data: API.WatchData) => {
+  const { defaultProvider } = useSettings.getState().features.player;
+  const available = providersOf(data).map(({ title }) => title);
+  return available.includes(defaultProvider)
+    ? [defaultProvider, ...available.filter((name) => name !== defaultProvider)]
+    : available;
+};
+
 /**
  * The source the player opens `slug` with: this anime's favourite team, then
  * the team priority list, then the default provider's first team.
  */
 export const preferredSource = (data: API.WatchData, slug: string) => {
-  const { defaultProvider, teamPriority, teamPriorityTranslation } =
+  const { teamPriority, teamPriorityTranslation } =
     useSettings.getState().features.player;
-  const available = providersOf(data).map(({ title }) => title);
-  const providerOrder = available.includes(defaultProvider)
-    ? [defaultProvider, ...available.filter((name) => name !== defaultProvider)]
-    : available;
+  const providers = providerOrder(data);
 
   const pick =
     favoriteIn(data, slug).team ??
     pickPriorityTeam(
       data,
-      providerOrder,
+      providers,
       teamPriority,
       teamPriorityTranslation,
       progressOf(slug) + 1,
     );
   if (pick) return pick;
 
-  const provider = providerOrder[0]!;
+  const provider = providers[0]!;
   const source = data[provider];
   return {
     provider,
