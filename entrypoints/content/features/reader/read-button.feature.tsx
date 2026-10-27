@@ -91,7 +91,9 @@ const ReadButton = () => {
             onClick={openReader}
           >
             <Indicator isLoading={isLoading} />
-            <RotatingText text={statusMessage} />
+            <div className="hidden sm:inline">
+              <RotatingText text={statusMessage} />
+            </div>
           </Button>
           <div className="bg-secondary w-px" />
         </motion.div>
