@@ -13,9 +13,9 @@ import {
   useRef,
 } from 'react';
 
-const transition = { duration: 0.24, ease: [0.22, 1, 0.36, 1] } as const;
+export const transition = { duration: 0.24, ease: [0.22, 1, 0.36, 1] } as const;
 
-const slide = {
+export const slide = {
   enter: (direction: number) => ({ x: direction * 24, opacity: 0 }),
   center: { x: 0, opacity: 1 },
   exit: (direction: number) => ({ x: direction * -24, opacity: 0 }),

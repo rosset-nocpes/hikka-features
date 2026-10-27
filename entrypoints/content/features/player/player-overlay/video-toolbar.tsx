@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 
 import { usePlayer } from '../context/player-context';
+import NextInQueue from '../queue/next-in-queue';
 import Share from './buttons/share';
 import {
   Fullscreen,
@@ -56,6 +57,7 @@ const VideoToolbar = () => {
       <div className="flex w-full items-center justify-between gap-2 md:hidden">
         <div className={cn(GROUP, 'min-w-0')}>
           <Play />
+          <NextInQueue />
           <Mute />
           <Divider />
           <div className="min-w-0">
@@ -69,6 +71,7 @@ const VideoToolbar = () => {
       </div>
       <div className={cn(GROUP, 'hidden md:flex')}>
         <Play />
+        <NextInQueue />
         <VolumeControl />
         <Divider />
         <TimeGroup />

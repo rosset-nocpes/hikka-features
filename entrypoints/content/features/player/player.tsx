@@ -3,8 +3,10 @@ import { useLayoutEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import { useIFramePlayer } from '@/hooks/use-iframe-player';
+import { watchDataQuery } from '@/hooks/use-watch-data';
 
 import { ModalUi } from '../../core/base-feature';
+import { queryClient } from '../../core/query-client';
 import { activityReporter } from './activity-reporter';
 import { usePlayer } from './context/player-context';
 import {
@@ -18,6 +20,7 @@ import PlayerIFrameEffects from './player-iframe-effects';
 import PlayerMiniBar from './player-mini-bar';
 import PlayerNavbar from './player-navbar';
 import PlayerOverlay from './player-overlay/player-overlay';
+import { type QueueItem, queueKey, useQueue } from './queue/use-queue';
 import { useWatchTogether } from './watch-together/use-watch-together';
 import WatchTogetherInvite from './watch-together/watch-together-invite';
 
@@ -50,10 +53,17 @@ const playerUi = new ModalUi({
 
 export const isPlayerOpen = () => playerUi.isOpen;
 
-/** Shows `data` in the player, opening it or bringing it out of mini mode. */
-export const openPlayer = (data: API.WatchData) => {
+/** Counts what the player was asked to show, so a slower load can't win. */
+let request = 0;
+
+/**
+ * Shows `slug`'s `data` in the player, opening it or bringing it out of mini
+ * mode.
+ */
+export const openPlayer = (data: API.WatchData, slug: string) => {
+  request += 1;
   const { initialize, setMiniPlayer, setVideoPiPActive } = usePlayer.getState();
-  initialize(data);
+  initialize(data, slug);
   if (playerUi.isOpen) {
     setMiniPlayer(false);
     setVideoPiPActive(false);
@@ -62,7 +72,45 @@ export const openPlayer = (data: API.WatchData) => {
   }
 };
 
-export const closePlayer = () => playerUi.close();
+/**
+ * Plays a queued episode in the open player, whatever its mode, taking it
+ * off the queue. False when it can't: its anime didn't load, or no source
+ * has the episode any more, which drops it.
+ */
+export const playQueued = async (item: QueueItem) => {
+  const current = request + 1;
+  request = current;
+  const data = await queryClient
+    .fetchQuery(watchDataQuery(item.slug))
+    .catch((error: unknown) => console.error(error));
+  if (!data || request !== current) return false;
+
+  useQueue.getState().remove(item);
+  const { slug, currentEpisode, initialize } = usePlayer.getState();
+  // Already playing.
+  if (slug === item.slug && currentEpisode?.episode === item.episode) {
+    return false;
+  }
+  return initialize(data, item.slug, item);
+};
+
+/** Plays the queue's first episode that is still available. */
+export const playNextQueued = async () => {
+  let item = useQueue.getState().items[0];
+  while (item) {
+    if (await playQueued(item)) return true;
+    const next = useQueue.getState().items[0];
+    // Still first: its anime didn't load, or the player was asked for more.
+    if (next && queueKey(next) === queueKey(item)) return false;
+    item = next;
+  }
+  return false;
+};
+
+export const closePlayer = () => {
+  request += 1;
+  playerUi.close();
+};
 
 const PlayerFrame = () => {
   const { miniPlayer, videoPiPActive, fullscreen, container } = usePlayer();

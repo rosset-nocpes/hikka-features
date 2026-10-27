@@ -7,7 +7,7 @@ import {
 
 import type { CatalogTeam, PreferredTranslation } from '@/utils/convex-api';
 
-const extensionStorage: StateStorage = {
+export const extensionStorage: StateStorage = {
   getItem: async (name: string): Promise<any | null> => {
     const data = await browser.storage.local.get(name);
     return data[name] || null;

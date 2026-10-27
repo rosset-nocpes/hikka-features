@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Sidebar,
@@ -8,11 +10,13 @@ import {
   SidebarSeparator,
 } from '@/components/ui/sidebar';
 
-import EpisodeList from './episode-list';
+import PanelTabs, { PanelContent, type PanelTab } from '../queue/panel-tabs';
 import ProviderSelect from './provider-select';
 import TeamSelect from './team-select';
 
 const PlayerSidebar = () => {
+  const [tab, setTab] = useState<PanelTab>('episodes');
+
   return (
     <Sidebar
       variant="floating"
@@ -22,20 +26,23 @@ const PlayerSidebar = () => {
     >
       <SidebarHeader>
         <SidebarMenu>
-          <SidebarMenuItem className="flex items-center justify-between">
-            <span className="ml-2 cursor-default font-medium">Програвач</span>
-            <div className="h-8 w-8" />
+          <SidebarMenuItem className="flex items-center justify-between gap-2">
+            <PanelTabs value={tab} onChange={setTab} />
+            {/* Room for the sidebar's trigger, which the navbar places. */}
+            <div className="h-8 w-8 shrink-0" />
           </SidebarMenuItem>
         </SidebarMenu>
-        <SidebarMenu>
-          <ProviderSelect />
-          <TeamSelect />
-        </SidebarMenu>
+        {tab === 'episodes' && (
+          <SidebarMenu>
+            <ProviderSelect />
+            <TeamSelect />
+          </SidebarMenu>
+        )}
       </SidebarHeader>
       <SidebarSeparator className="mx-0" />
       <SidebarContent>
         <ScrollArea className="h-full" scrollFade>
-          <EpisodeList />
+          <PanelContent tab={tab} />
         </ScrollArea>
       </SidebarContent>
     </Sidebar>

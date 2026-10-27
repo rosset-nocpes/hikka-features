@@ -6,6 +6,7 @@ import NavbarAction from '@/components/navbar-action';
 import { BaseFeature, createFeatureUi } from '../../core/base-feature';
 import { HikkaPages } from '../../core/core.enums';
 import { openPlayer } from './player';
+import QueueMenu from './queue/queue-menu';
 
 export default class WatchButtonFeature extends BaseFeature {
   readonly id = 'watch-button';
@@ -18,7 +19,7 @@ export default class WatchButtonFeature extends BaseFeature {
       append: 'first',
       anchor: '#navbar-card',
       hostCss: 'margin-right: -0.5rem !important;',
-      render: () => <WatchButton />,
+      render: (container) => <WatchButton container={container} />,
     });
   }
 }
@@ -30,15 +31,16 @@ const opensPlayer = (params: URLSearchParams) =>
     params.has('playerTeam') &&
     params.has('playerEpisode'));
 
-const WatchButton = () => {
+const WatchButton = ({ container }: { container: HTMLElement }) => {
   const { enabled } = useSettings().features.player;
+  const { slug } = usePageStore();
   const { data, isLoading, isError } = useWatchData();
 
   useEffect(() => {
-    if (data && opensPlayer(new URLSearchParams(location.search))) {
-      openPlayer(data);
+    if (data && slug && opensPlayer(new URLSearchParams(location.search))) {
+      openPlayer(data, slug);
     }
-  }, [data]);
+  }, [data, slug]);
 
   return (
     <NavbarAction
@@ -48,7 +50,11 @@ const WatchButton = () => {
       icon={
         <MaterialSymbolsSubscriptionsOutlineRounded className="size-full" />
       }
-      onClick={() => data && openPlayer(data)}
-    />
+      onClick={() => data && slug && openPlayer(data, slug)}
+    >
+      {data && slug && (
+        <QueueMenu data={data} slug={slug} container={container} />
+      )}
+    </NavbarAction>
   );
 };

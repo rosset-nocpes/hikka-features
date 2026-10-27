@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { queryOptions, useQuery } from '@tanstack/react-query';
 
 import { type ConvexWatchResult, convexApi } from '@/utils/convex-api';
 import { convex } from '@/utils/convex-client';
@@ -57,10 +57,9 @@ const toWatchData = (data: ConvexWatchResult): API.WatchData => {
   return out;
 };
 
-const useWatchData = () => {
-  const { slug } = usePageStore();
-
-  return useQuery({
+/** An anime's watch data, for its page's player and for the queue. */
+export const watchDataQuery = (slug?: string) =>
+  queryOptions({
     queryKey: ['watch-data', slug],
     queryFn: async () =>
       toWatchData(
@@ -70,6 +69,11 @@ const useWatchData = () => {
     staleTime: 5 * 60 * 1000,
     enabled: !!slug,
   });
+
+const useWatchData = () => {
+  const { slug } = usePageStore();
+
+  return useQuery(watchDataQuery(slug));
 };
 
 export default useWatchData;

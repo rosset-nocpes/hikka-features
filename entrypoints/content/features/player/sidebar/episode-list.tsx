@@ -1,16 +1,19 @@
 import { Fragment, useEffect, useRef } from 'react';
+import MaterialSymbolsPlaylistAddCheckRounded from '~icons/material-symbols/playlist-add-check-rounded';
+import MaterialSymbolsPlaylistAddRounded from '~icons/material-symbols/playlist-add-rounded';
 
 import MissingDivider, { countMissing } from '@/components/missing-divider';
 import { Badge } from '@/components/ui/badge';
 import {
   SidebarGroup,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { hikkaTracker } from '@/utils/hikka-tracker';
 
-import { usePlayer } from '../context/player-context';
+import { progressOf, usePlayer } from '../context/player-context';
+import { queueKey, useQueue } from '../queue/use-queue';
 
 const dateFormatter = new Intl.DateTimeFormat('uk-UA', {
   day: 'numeric',
@@ -25,14 +28,14 @@ const episodeTypeBadges = {
 } as const;
 
 /** Ukrainian only; the backend translates titles no catalogue has. */
-const getEpisodeTitle = (episode: API.EpisodeData) =>
+export const getEpisodeTitle = (episode: API.EpisodeData) =>
   episode.title?.ua?.trim() || undefined;
 
 const formatReleaseDate = (releasedAt?: number) =>
   releasedAt ? dateFormatter.format(new Date(releasedAt * 1000)) : undefined;
 
 /** Scrolls the list itself, never the page, so the row is visible. */
-const revealRow = (row: HTMLElement, block: 'center' | 'nearest') => {
+export const revealRow = (row: HTMLElement, block: 'center' | 'nearest') => {
   const viewport = row.closest('[data-slot=scroll-area-viewport]');
   if (!viewport) return;
 
@@ -51,7 +54,9 @@ const revealRow = (row: HTMLElement, block: 'center' | 'nearest') => {
 };
 
 const EpisodeList = () => {
-  const { episodeData, currentEpisode, setEpisode } = usePlayer();
+  const { slug, provider, team, episodeData, currentEpisode, setEpisode } =
+    usePlayer();
+  const { items: queue, toggle: toggleQueued } = useQueue();
   const currentRowRef = useRef<HTMLLIElement>(null);
   const revealedRef = useRef(false);
 
@@ -68,7 +73,8 @@ const EpisodeList = () => {
 
   if (!episodeData?.length) return null;
 
-  const watched = hikkaTracker.progress;
+  const watched = progressOf(slug);
+  const queued = new Set(queue.map(queueKey));
   // Decided per list so every row shares the same layout and height.
   const numbered = episodeData.some((episode) => getEpisodeTitle(episode));
   const numberWidth = `${String(Math.max(...episodeData.map((episode) => episode.episode))).length}ch`;
@@ -88,6 +94,8 @@ const EpisodeList = () => {
               ? episodeTypeBadges[ep.episode_type]
               : undefined;
           const isCurrent = ep.video_url === currentEpisode?.video_url;
+          const isQueued =
+            !!slug && queued.has(queueKey({ slug, episode: ep.episode }));
 
           return (
             <Fragment key={ep.video_url}>
@@ -141,6 +149,34 @@ const EpisodeList = () => {
                     </Badge>
                   )}
                 </SidebarMenuButton>
+                {slug && provider && (
+                  <SidebarMenuAction
+                    showOnHover={!isQueued}
+                    aria-label={
+                      isQueued ? 'Прибрати з черги' : 'Додати до черги'
+                    }
+                    title={isQueued ? 'Прибрати з черги' : 'Додати до черги'}
+                    className={cn(
+                      'peer-data-[size=default]/menu-button:top-1/2 peer-data-[size=default]/menu-button:-translate-y-1/2',
+                      // Kept for its padding, so every row's badges line up.
+                      isCurrent && !isQueued && 'invisible',
+                    )}
+                    onClick={() =>
+                      toggleQueued({
+                        slug,
+                        episode: ep.episode,
+                        provider,
+                        team: team?.title ?? '',
+                      })
+                    }
+                  >
+                    {isQueued ? (
+                      <MaterialSymbolsPlaylistAddCheckRounded />
+                    ) : (
+                      <MaterialSymbolsPlaylistAddRounded />
+                    )}
+                  </SidebarMenuAction>
+                )}
               </SidebarMenuItem>
             </Fragment>
           );

@@ -15,15 +15,23 @@ interface Props {
   label: string;
   icon: ReactNode;
   onClick: () => void;
+  /** More actions, after the button once something is found. */
+  children?: ReactNode;
 }
+
+const statusText = (
+  { isLoading, isError, found }: Props['status'],
+  label: string,
+) => (isLoading ? 'Шукаю' : isError ? 'Немає' : found ? label : '');
 
 /** A button the extension adds to a title's navbar, e.g. to open the player. */
 const NavbarAction: FC<Props> = ({
   enabled,
-  status: { isLoading, isError, found },
+  status,
   label,
   icon,
   onClick,
+  children,
 }) => (
   <AnimatePresence>
     {enabled && (
@@ -34,20 +42,23 @@ const NavbarAction: FC<Props> = ({
         <Button
           variant="ghost"
           size="md"
-          className="gap-2"
-          disabled={isLoading || isError}
+          // Phones' navbar only fits the icon; the label still names it.
+          aria-label={statusText(status, label) || undefined}
+          className="gap-2 max-sm:px-2.5"
+          disabled={status.isLoading || status.isError}
           onClick={onClick}
         >
           <SwapIcon
-            active={isLoading}
+            active={status.isLoading}
             on={<Spinner className="size-full" />}
             off={icon}
             className="size-5"
           />
-          <RotatingText
-            text={isLoading ? 'Шукаю' : isError ? 'Немає' : found ? label : ''}
-          />
+          <div className="max-sm:hidden">
+            <RotatingText text={statusText(status, label)} />
+          </div>
         </Button>
+        {status.found && children}
         <div className="bg-secondary w-px" />
       </motion.div>
     )}
