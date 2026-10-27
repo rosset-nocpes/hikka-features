@@ -81,6 +81,15 @@ export type WatchRoomSelection = {
   episode: number;
 };
 
+/** An episode of any anime in a room's queue, from the source it was added from. */
+export type WatchRoomQueueItem = WatchRoomSelection & { animeSlug: string };
+
+/** An anime's episode is queued once, whatever its source. */
+export type WatchRoomQueueEpisode = Pick<
+  WatchRoomQueueItem,
+  'animeSlug' | 'episode'
+>;
+
 export interface WatchRoomProfile {
   id: string;
   username?: string;
@@ -103,6 +112,8 @@ export interface WatchRoom extends WatchRoomSelection {
   ownerId: string;
   /** The owner's friends see the room and join without the code. */
   friendsCanJoin: boolean;
+  /** Episodes to play next, of any anime, in order. */
+  queue: WatchRoomQueueItem[];
   /** In the order they joined. */
   members: WatchRoomMember[];
   /** The user joined from another tab since this one. */
@@ -138,6 +149,20 @@ export type WatchRoomAction =
       to: WatchRoomSelection;
       /** Replaces a room speed the new source's players don't offer. */
       rate?: number;
+    }
+  /** Adds episodes after the queued ones; queued ones keep their place. */
+  | { type: 'enqueue'; items: WatchRoomQueueItem[] }
+  | { type: 'dequeue'; items: WatchRoomQueueEpisode[] }
+  | { type: 'requeue'; item: WatchRoomQueueEpisode; index: number }
+  | {
+      /**
+       * Moves on from `from`, once however many members ask: to `item`, else
+       * the queue's first episode, else `next`, the anime's following one.
+       */
+      type: 'advance';
+      from: WatchRoomQueueItem;
+      item?: WatchRoomQueueEpisode;
+      next?: WatchRoomSelection;
     };
 
 /** What a friend is watching in the extension's player. */
@@ -370,6 +395,8 @@ export const convexApi = {
         tab: string;
         /** Sent with the first beat, which joins the room. */
         join?: { animeSlug: string };
+        /** This build follows the room to another anime. */
+        followsAnime?: boolean;
       },
       { now: number } | null
     >('watchRooms:heartbeat'),

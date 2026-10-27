@@ -15,11 +15,14 @@ import {
   convexApi,
   type WatchRoom,
   type WatchRoomAction,
+  type WatchRoomQueueEpisode,
+  type WatchRoomQueueItem,
   type WatchRoomSelection,
 } from '@/utils/convex-api';
 import { liveConvex } from '@/utils/convex-client';
 
-import { usePlayer } from '../context/player-context';
+import { episodesOf, usePlayer } from '../context/player-context';
+import { followRoom } from '../player';
 import { dispatchPlayerOverlayAction } from '../player-overlay/action-popup';
 
 const HEARTBEAT_MS = 30_000;
@@ -48,6 +51,8 @@ const LEAVE_TIMEOUT_MS = 3_000;
 const REPORT_SETTLE_MS = 1_000;
 /** Seconds before the end where a pause is the player stopping. */
 const REPORT_END_MARGIN = 2;
+/** Episodes a room's queue holds, as on the backend. */
+const MAX_QUEUE = 100;
 
 type PlayerStore = ReturnType<typeof usePlayer.getState>;
 type IFramePlayerStore = ReturnType<typeof useIFramePlayer.getState>;
@@ -62,6 +67,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   UNAUTHENTICATED: 'Потрібен вхід через hikka.io',
   USER_NOT_FOUND: 'Потрібен вхід через hikka.io',
   EXTENSION_UPDATE_REQUIRED: 'Оновіть розширення, щоб дивитися разом',
+  MEMBERS_OUTDATED:
+    'Хтось у кімнаті має стару версію розширення, тож інше аніме не ввімкнеться',
 };
 
 const errorMessage = (error: unknown) => {
@@ -76,13 +83,20 @@ const errorMessage = (error: unknown) => {
   return 'Не вдалося підключитися до кімнати';
 };
 
+/** What the player shows: an anime's episode from a source. */
 const selectionOf = ({
+  slug,
   provider,
   team,
   currentEpisode,
-}: PlayerStore): WatchRoomSelection | undefined =>
-  provider && currentEpisode
-    ? { provider, team: team?.title ?? '', episode: currentEpisode.episode }
+}: PlayerStore): WatchRoomQueueItem | undefined =>
+  slug && provider && currentEpisode
+    ? {
+        animeSlug: slug,
+        provider,
+        team: team?.title ?? '',
+        episode: currentEpisode.episode,
+      }
     : undefined;
 
 /** Only the selection, as a room carries more fields than the API takes. */
@@ -92,13 +106,59 @@ const pickSelection = ({ provider, team, episode }: WatchRoomSelection) => ({
   episode,
 });
 
-const sameSelection = (left: WatchRoomSelection, right: WatchRoomSelection) =>
+const pickPlace = (place: WatchRoomQueueItem) => ({
+  animeSlug: place.animeSlug,
+  ...pickSelection(place),
+});
+
+const sameSelection = (left: WatchRoomQueueItem, right: WatchRoomQueueItem) =>
+  left.animeSlug === right.animeSlug &&
   left.provider === right.provider &&
   left.team === right.team &&
   left.episode === right.episode;
 
-const selectionKey = ({ provider, team, episode }: WatchRoomSelection) =>
-  JSON.stringify([provider, team, episode]);
+const selectionKey = ({
+  animeSlug,
+  provider,
+  team,
+  episode,
+}: WatchRoomQueueItem) => JSON.stringify([animeSlug, provider, team, episode]);
+
+const queueKey = ({ animeSlug, episode }: WatchRoomQueueEpisode) =>
+  `${animeSlug}:${episode}`;
+
+export type RoomQueueEdit = Extract<
+  WatchRoomAction,
+  { type: 'enqueue' | 'dequeue' | 'requeue' }
+>;
+
+/** The queue after an edit, as the backend makes it. */
+const applyQueueEdit = (queue: WatchRoomQueueItem[], edit: RoomQueueEdit) => {
+  const without = (episodes: WatchRoomQueueEpisode[]) => {
+    const keys = new Set(episodes.map(queueKey));
+    return queue.filter((item) => !keys.has(queueKey(item)));
+  };
+  switch (edit.type) {
+    case 'enqueue': {
+      const added = new Map(
+        edit.items.map((item) => [queueKey(item), item] as const),
+      );
+      queue.forEach((item) => added.delete(queueKey(item)));
+      return [...queue, ...added.values()].slice(0, MAX_QUEUE);
+    }
+    case 'dequeue':
+      return without(edit.items);
+    case 'requeue': {
+      const item = queue.find(
+        (queued) => queueKey(queued) === queueKey(edit.item),
+      );
+      if (!item) return queue;
+      const rest = without([edit.item]);
+      rest.splice(Math.max(edit.index, 0), 0, item);
+      return rest;
+    }
+  }
+};
 
 /** Changes when the room's playback does, unlike when members come and go. */
 const playbackKey = (room: WatchRoom) =>
@@ -146,6 +206,10 @@ class RoomSession {
   private seekCooldown = SEEK_COOLDOWN_MS;
   /** A room source this player lacks, so it isn't retried every tick. */
   private unavailable?: string;
+  /** The room's episode of another anime, while the player loads it. */
+  private following?: WatchRoomQueueItem;
+  /** The last action failed, and the room's error says why. */
+  private actionFailed = false;
   private beating = false;
   /** Until then, the player toggling answers a command, not the user. */
   private quietUntil = 0;
@@ -172,9 +236,7 @@ class RoomSession {
     this.assertOpen();
     if (!room) throw new Error('ROOM_NOT_FOUND');
     if (room.joinedElsewhere) throw new Error('OTHER_TAB');
-    if (room.animeSlug !== usePlayer.getState().slug) {
-      throw new Error('OTHER_ANIME');
-    }
+    // A room on another anime than the player's is followed there.
 
     useWatchTogether.setState({ room });
     const { isPlaying, currentTime } = useIFramePlayer.getState();
@@ -267,7 +329,12 @@ class RoomSession {
       const sentAt = Date.now();
       const result = await this.client!.mutation(
         convexApi.watchRooms.heartbeat,
-        { code: this.code, tab: this.tab, ...(join && { join }) },
+        {
+          code: this.code,
+          tab: this.tab,
+          followsAnime: true,
+          ...(join && { join }),
+        },
       );
       if (!result) throw new Error('ROOM_NOT_FOUND');
 
@@ -440,8 +507,18 @@ class RoomSession {
   private handlePlayerChange = (state: PlayerStore, previous: PlayerStore) => {
     const { room } = useWatchTogether.getState();
     if (!room) return;
-    // Opening another anime in the player leaves the room.
-    if (state.slug !== room.animeSlug) return this.onEnd(undefined);
+    if (state.slug !== previous.slug) {
+      // Opening another anime than the room's leaves it.
+      if (
+        state.slug !== room.animeSlug &&
+        state.slug !== this.following?.animeSlug
+      ) {
+        this.onEnd(undefined);
+      }
+      return;
+    }
+    // Still loading the room's anime.
+    if (state.slug !== room.animeSlug) return;
 
     const before = selectionOf(previous);
     const to = selectionOf(state);
@@ -457,14 +534,65 @@ class RoomSession {
     this.send({
       type: 'select',
       // A player that couldn't follow the room moves it from where it is.
-      from: this.unavailable ? pickSelection(room) : before,
-      to,
+      from: pickSelection(this.unavailable ? room : before),
+      to: pickSelection(to),
       ...(speedOptions.length > 0 &&
         !speedOptions.includes(room.rate) && {
           rate: nearest(speedOptions, room.rate),
         }),
     });
   };
+
+  /** Edits the room's queue, showing the edit before the room confirms it. */
+  editQueue(edit: RoomQueueEdit) {
+    if (this.closed || !this.client) return;
+    const args = { code: this.code, tab: this.tab };
+    this.client
+      .mutation(
+        convexApi.watchRooms.control,
+        { ...args, action: edit },
+        {
+          optimisticUpdate: (store) => {
+            const room = store.getQuery(convexApi.watchRooms.get, args);
+            if (!room) return;
+            store.setQuery(convexApi.watchRooms.get, args, {
+              ...room,
+              queue: applyQueueEdit(room.queue, edit),
+            });
+          },
+        },
+      )
+      .catch(console.error);
+  }
+
+  /**
+   * Moves everyone on from the room's episode: to `item`, else the queue's
+   * first episode, else the anime's next one. Members who finish together
+   * move it once.
+   */
+  advance(item?: WatchRoomQueueEpisode) {
+    const { room } = useWatchTogether.getState();
+    if (!room) return;
+
+    const player = usePlayer.getState();
+    const selection = selectionOf(player);
+    const next =
+      !item &&
+      selection &&
+      sameSelection(selection, room) &&
+      player.watchData &&
+      episodesOf(player.watchData, room.provider, room.team)?.find(
+        (episode) => episode.episode === room.episode + 1,
+      );
+    this.send({
+      type: 'advance',
+      from: pickPlace(room),
+      ...(item && {
+        item: { animeSlug: item.animeSlug, episode: item.episode },
+      }),
+      ...(next && { next: { ...pickSelection(room), episode: next.episode } }),
+    });
+  }
 
   private send(action: WatchRoomAction) {
     const last = this.queue.at(-1);
@@ -494,13 +622,51 @@ class RoomSession {
           action,
           tab: this.tab,
         });
+        if (this.actionFailed) {
+          this.actionFailed = false;
+          useWatchTogether.setState({ error: undefined });
+        }
       } catch (error) {
         console.error(error);
+        // E.g. an older extension in the room keeps it on its anime.
+        if (error instanceof ConvexError && !this.closed) {
+          this.actionFailed = true;
+          useWatchTogether.setState({ error: errorMessage(error) });
+        }
       }
     }
     this.sending = false;
     // Convex resolves a mutation once its result reached the subscription.
     this.reconcile();
+  }
+
+  private markUnavailable(key: string) {
+    this.unavailable = key;
+    useWatchTogether.setState({ error: 'Серія з кімнати вам недоступна' });
+  }
+
+  /** Loads the room's episode of another anime into the player. */
+  private follow(room: WatchRoom) {
+    const key = selectionKey(room);
+    if (this.following && selectionKey(this.following) === key) return;
+
+    const target = pickPlace(room);
+    this.following = target;
+    void followRoom({
+      slug: target.animeSlug,
+      episode: target.episode,
+      provider: target.provider,
+      team: target.team,
+    }).then((shown) => {
+      // The room moved on meanwhile.
+      if (this.following !== target || this.closed) return;
+      this.following = undefined;
+      // Unless the user opened the anime meanwhile, which drops this load.
+      if (!shown && usePlayer.getState().slug !== target.animeSlug) {
+        this.markUnavailable(key);
+      }
+      this.reconcile();
+    });
   }
 
   /** Steers the local player towards the room. */
@@ -513,9 +679,9 @@ class RoomSession {
     if (!selection || !sameSelection(selection, room)) {
       const key = selectionKey(room);
       if (this.unavailable === key) return;
+      if (room.animeSlug !== player.slug) return this.follow(room);
       if (!player.selectSource(room.provider, room.team, room.episode)) {
-        this.unavailable = key;
-        useWatchTogether.setState({ error: 'Серія з кімнати вам недоступна' });
+        this.markUnavailable(key);
       }
       // The new episode is steered once its player is ready.
       return;
@@ -590,6 +756,13 @@ interface WatchTogetherActions {
   /** Owner only: lets their friends find the room and join. */
   share: (friendsCanJoin: boolean) => Promise<void>;
   invite: (userId: string) => Promise<void>;
+  /** Edits the queue every member shares. */
+  editQueue: (edit: RoomQueueEdit) => void;
+  /**
+   * Moves the room on: to the queued `item`, else the queue's next episode,
+   * else the anime's next one.
+   */
+  advance: (item?: WatchRoomQueueEpisode) => void;
 }
 
 let session: RoomSession | undefined;
@@ -631,14 +804,12 @@ export const useWatchTogether = create<
 
     create: () =>
       start(async (client, tab) => {
-        const player = usePlayer.getState();
-        const selection = selectionOf(player);
-        if (!player.slug || !selection) throw new Error('NO_EPISODE');
+        const selection = selectionOf(usePlayer.getState());
+        if (!selection) throw new Error('NO_EPISODE');
 
         const { isPlaying, currentTime, currentSpeed } =
           useIFramePlayer.getState();
         const { code } = await client.mutation(convexApi.watchRooms.create, {
-          animeSlug: player.slug,
           ...selection,
           playing: isPlaying,
           position: finite(currentTime),
@@ -666,5 +837,9 @@ export const useWatchTogether = create<
     invite: async (userId) => {
       await session?.invite(userId);
     },
+
+    editQueue: (edit) => session?.editQueue(edit),
+
+    advance: (item) => session?.advance(item),
   };
 });

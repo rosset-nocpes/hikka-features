@@ -24,11 +24,16 @@ const getEpisodeKey = (episode: API.EpisodeData) =>
 let pendingAutoPlay = false;
 
 const loadNext = async () => {
-  const before = usePlayer.getState().currentEpisode;
-  // Another anime would leave the watch together room.
-  if (!useWatchTogether.getState().room && (await playNextQueued())) {
-    return true;
+  const { room, advance } = useWatchTogether.getState();
+  // A watch together room moves everyone on together, to its own queue or
+  // the anime's next episode, and plays it.
+  if (room) {
+    advance();
+    return false;
   }
+
+  const before = usePlayer.getState().currentEpisode;
+  if (await playNextQueued()) return true;
 
   const { watchData, provider, team, currentEpisode, setEpisode } =
     usePlayer.getState();
@@ -110,7 +115,9 @@ const PlayerIFrameEffects = () => {
           !state.isPlaying ||
           previous.isPlaying ||
           !slug ||
-          !currentEpisode
+          !currentEpisode ||
+          // The room takes its own queue's episodes off as they play.
+          useWatchTogether.getState().room
         ) {
           return;
         }

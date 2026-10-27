@@ -22,7 +22,8 @@ import {
 } from '../context/player-context';
 import { getEpisodeTitle, revealRow } from '../sidebar/episode-list';
 import { getTeamName } from '../teams';
-import { queueKey, useQueue } from './use-queue';
+import { useActiveQueue } from './use-active-queue';
+import { queueKey } from './use-queue';
 
 interface Props {
   data: API.WatchData;
@@ -35,7 +36,7 @@ interface Props {
  * the player would pick, so whatever plays keeps playing.
  */
 const QueueMenu: FC<Props> = ({ data, slug, container }) => {
-  const { items, toggle, add } = useQueue();
+  const { items, toggle, add } = useActiveQueue();
   const [open, setOpen] = useState(false);
   const nextRowRef = useRef<HTMLDivElement>(null);
 

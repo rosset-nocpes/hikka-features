@@ -5,17 +5,17 @@ import { useHikkaContent } from '@/hooks/use-hikka';
 
 import { playNext } from '../player-iframe-effects';
 import ToolbarTooltip from '../player-overlay/toolbar-tooltip';
-import { useWatchTogether } from '../watch-together/use-watch-together';
-import { useQueue } from './use-queue';
+import { useActiveQueue } from './use-active-queue';
 
-/** Skips to the queue's next episode; hidden while the queue is empty. */
+/**
+ * Skips to the queue's next episode, in a watch together room for everyone;
+ * hidden while the queue is empty.
+ */
 const NextInQueue = () => {
-  const next = useQueue((state) => state.items[0]);
-  const inRoom = useWatchTogether((state) => !!state.room);
+  const next = useActiveQueue().items[0];
   const { data: anime } = useHikkaContent('anime', next?.slug);
 
-  // A watch together room plays the anime's own next episode instead.
-  if (!next || inRoom) return null;
+  if (!next) return null;
 
   const title = hikkaTitle(anime) ?? next.slug;
 

@@ -72,18 +72,33 @@ export const openPlayer = (data: API.WatchData, slug: string) => {
   }
 };
 
+/** `slug`'s watch data, unless the player was asked for more meanwhile. */
+const loadAnime = async (slug: string) => {
+  const current = request + 1;
+  request = current;
+  const data = await queryClient
+    .fetchQuery(watchDataQuery(slug))
+    .catch((error: unknown) => console.error(error));
+  return data && request === current ? data : undefined;
+};
+
+/**
+ * Shows the watch together room's episode, of another anime than the
+ * player's. False when its anime didn't load or no source has the episode.
+ */
+export const followRoom = async (item: QueueItem) => {
+  const data = await loadAnime(item.slug);
+  return !!data && usePlayer.getState().initialize(data, item.slug, item);
+};
+
 /**
  * Plays a queued episode in the open player, whatever its mode, taking it
  * off the queue. False when it can't: its anime didn't load, or no source
  * has the episode any more, which drops it.
  */
 export const playQueued = async (item: QueueItem) => {
-  const current = request + 1;
-  request = current;
-  const data = await queryClient
-    .fetchQuery(watchDataQuery(item.slug))
-    .catch((error: unknown) => console.error(error));
-  if (!data || request !== current) return false;
+  const data = await loadAnime(item.slug);
+  if (!data) return false;
 
   useQueue.getState().remove(item);
   const { slug, currentEpisode, initialize } = usePlayer.getState();

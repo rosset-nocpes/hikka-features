@@ -13,7 +13,8 @@ import {
 } from '@/components/ui/sidebar';
 
 import { progressOf, usePlayer } from '../context/player-context';
-import { queueKey, useQueue } from '../queue/use-queue';
+import { useActiveQueue } from '../queue/use-active-queue';
+import { queueKey } from '../queue/use-queue';
 
 const dateFormatter = new Intl.DateTimeFormat('uk-UA', {
   day: 'numeric',
@@ -56,7 +57,7 @@ export const revealRow = (row: HTMLElement, block: 'center' | 'nearest') => {
 const EpisodeList = () => {
   const { slug, provider, team, episodeData, currentEpisode, setEpisode } =
     usePlayer();
-  const { items: queue, toggle: toggleQueued } = useQueue();
+  const { items: queue, toggle: toggleQueued } = useActiveQueue();
   const currentRowRef = useRef<HTMLLIElement>(null);
   const revealedRef = useRef(false);
 

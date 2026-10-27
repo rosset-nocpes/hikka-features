@@ -2,6 +2,7 @@ import { Reorder, useDragControls } from 'motion/react';
 import { type FC, useRef, useState } from 'react';
 import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
 import MaterialSymbolsDragIndicator from '~icons/material-symbols/drag-indicator';
+import MaterialSymbolsGroupOutlineRounded from '~icons/material-symbols/group-outline-rounded';
 import MaterialSymbolsPlaylistAddRounded from '~icons/material-symbols/playlist-add-rounded';
 
 import { Button } from '@/components/ui/button';
@@ -15,19 +16,27 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { useHikkaContent } from '@/hooks/use-hikka';
 
-import { playQueued } from '../player';
+import { useWatchTogether } from '../watch-together/use-watch-together';
+import { useActiveQueue } from './use-active-queue';
 import { type QueueItem, queueKey, useQueue } from './use-queue';
 
 interface RowProps {
   item: QueueItem;
+  onPlay: () => void;
+  onRemove: () => void;
   onMove: (offset: -1 | 1) => void;
   onDragEnd: () => void;
 }
 
 /** A sidebar row, like an episode's, with a drag handle where its number is. */
-const QueueRow: FC<RowProps> = ({ item, onMove, onDragEnd }) => {
+const QueueRow: FC<RowProps> = ({
+  item,
+  onPlay,
+  onRemove,
+  onMove,
+  onDragEnd,
+}) => {
   const { data: anime, isLoading } = useHikkaContent('anime', item.slug);
-  const remove = useQueue((state) => state.remove);
   const controls = useDragControls();
   const [dragging, setDragging] = useState(false);
 
@@ -55,7 +64,7 @@ const QueueRow: FC<RowProps> = ({ item, onMove, onDragEnd }) => {
         title={`${title}, епізод ${item.episode}`}
         // The handle covers the left padding, and hovering it is the row's.
         className="group-hover/menu-item:bg-sidebar-accent py-1 pl-7"
-        onClick={() => void playQueued(item)}
+        onClick={onPlay}
       >
         <div className="bg-muted h-10 w-7 shrink-0 overflow-hidden rounded-sm">
           {anime?.image && (
@@ -98,7 +107,7 @@ const QueueRow: FC<RowProps> = ({ item, onMove, onDragEnd }) => {
         aria-label={`Прибрати з черги «${title}», епізод ${item.episode}`}
         title="Прибрати з черги"
         className="peer-data-[size=lg]/menu-button:top-3.5"
-        onClick={() => remove(item)}
+        onClick={onRemove}
       >
         <MaterialSymbolsCloseRounded />
       </SidebarMenuAction>
@@ -106,35 +115,63 @@ const QueueRow: FC<RowProps> = ({ item, onMove, onDragEnd }) => {
   );
 };
 
-/** The episodes to play next, in order; a click plays one right away. */
+/**
+ * The episodes to play next, in order; a click plays one right away. In a
+ * watch together room, the room's, for every member.
+ */
 const QueueList = () => {
-  const { items: saved, setItems, clear } = useQueue();
+  const queue = useActiveQueue();
+  const own = useQueue((state) => state.items);
+  const error = useWatchTogether((state) => state.room && state.error);
 
   // While dragging, the order lives here and is saved once on drop: saving
   // every swap would let the storage listener reload an older order mid-drag.
   const [draft, setDraft] = useState<QueueItem[]>();
   const draftRef = useRef<QueueItem[]>(undefined);
   const listRef = useRef<HTMLUListElement>(null);
-  const items = draft ?? saved;
+  const items = draft ?? queue.items;
+  const indexOf = (item: QueueItem, list = items) =>
+    list.findIndex((queued) => queueKey(queued) === queueKey(item));
 
-  const move = (index: number, offset: -1 | 1) => {
-    const target = index + offset;
+  const move = (item: QueueItem, offset: -1 | 1) => {
+    const target = indexOf(item) + offset;
     if (target < 0 || target >= items.length) return;
 
-    const next = [...items];
-    const [item] = next.splice(index, 1);
-    next.splice(target, 0, item!);
-    setItems(next);
+    queue.move(item, target);
     // Moving the row in the DOM drops focus; put it back on its handle.
     requestAnimationFrame(() =>
       listRef.current
-        ?.querySelector<HTMLElement>(`[data-handle="${queueKey(item!)}"]`)
+        ?.querySelector<HTMLElement>(`[data-handle="${queueKey(item)}"]`)
         ?.focus(),
     );
   };
 
   if (!items.length) {
-    return (
+    return queue.shared ? (
+      <EmptyState
+        size="sm"
+        icon={<MaterialSymbolsGroupOutlineRounded />}
+        title="Спільна черга порожня"
+        description="Епізоди, які тут додасть будь-хто з кімнати, гратимуть для всіх після поточного."
+        action={
+          own.length > 0 && (
+            <Button
+              variant="secondary"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => queue.add(own)}
+            >
+              <MaterialSymbolsPlaylistAddRounded className="size-4" />
+              Додати мою чергу
+              <span className="text-muted-foreground tabular-nums">
+                {own.length}
+              </span>
+            </Button>
+          )
+        }
+        className="py-8"
+      />
+    ) : (
       <EmptyState
         size="sm"
         icon={<MaterialSymbolsPlaylistAddRounded />}
@@ -155,16 +192,28 @@ const QueueList = () => {
   return (
     <SidebarGroup>
       <div className="flex items-center justify-between">
-        <SidebarGroupLabel>Далі</SidebarGroupLabel>
+        {queue.shared ? (
+          <SidebarGroupLabel className="gap-1.5">
+            <MaterialSymbolsGroupOutlineRounded />
+            Спільна черга
+          </SidebarGroupLabel>
+        ) : (
+          <SidebarGroupLabel>Далі</SidebarGroupLabel>
+        )}
         <Button
           variant="ghost"
           size="sm"
           className="text-sidebar-foreground/70 hover:bg-sidebar-accent h-7 text-xs"
-          onClick={clear}
+          onClick={queue.clear}
         >
           Очистити
         </Button>
       </div>
+      {error && (
+        <p role="alert" className="text-destructive px-2 pb-1 text-xs">
+          {error}
+        </p>
+      )}
       <Reorder.Group
         ref={listRef}
         axis="y"
@@ -176,13 +225,20 @@ const QueueList = () => {
         data-sidebar="menu"
         className="flex w-full min-w-0 flex-col gap-1"
       >
-        {items.map((item, index) => (
+        {items.map((item) => (
           <QueueRow
             key={queueKey(item)}
             item={item}
-            onMove={(offset) => move(index, offset)}
+            onPlay={() => queue.play(item)}
+            onRemove={() => queue.remove(item)}
+            onMove={(offset) => move(item, offset)}
             onDragEnd={() => {
-              if (draftRef.current) setItems(draftRef.current);
+              const index = draftRef.current
+                ? indexOf(item, draftRef.current)
+                : -1;
+              if (index !== -1 && index !== indexOf(item, queue.items)) {
+                queue.move(item, index);
+              }
               draftRef.current = undefined;
               setDraft(undefined);
             }}

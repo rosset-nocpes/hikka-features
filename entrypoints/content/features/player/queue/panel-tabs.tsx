@@ -8,7 +8,7 @@ import MaterialSymbolsViewListRounded from '~icons/material-symbols/view-list-ro
 import { slide, transition } from '../player-overlay/menu-pages';
 import EpisodeList from '../sidebar/episode-list';
 import QueueList from './queue-list';
-import { useQueue } from './use-queue';
+import { useActiveQueue } from './use-active-queue';
 
 export type PanelTab = 'episodes' | 'queue';
 
@@ -26,7 +26,7 @@ interface Props {
  * like the sidebar's own rows: ghost buttons, the chosen one highlighted.
  */
 const PanelTabs: FC<Props> = ({ value, onChange, className }) => {
-  const count = useQueue((state) => state.items.length);
+  const count = useActiveQueue().items.length;
 
   return (
     <Tabs.Root value={value} onValueChange={onChange} className={className}>

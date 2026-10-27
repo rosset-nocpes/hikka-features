@@ -13,7 +13,7 @@ export interface QueueItem {
   team: string;
 }
 
-type QueueEpisode = Pick<QueueItem, 'slug' | 'episode'>;
+export type QueueEpisode = Pick<QueueItem, 'slug' | 'episode'>;
 
 /** An anime's episode is queued once, whatever its source. */
 export const queueKey = ({ slug, episode }: QueueEpisode) =>
@@ -25,7 +25,8 @@ interface QueueState {
   remove: (episode: QueueEpisode) => void;
   /** Adds the episode, or takes it off when it is queued already. */
   toggle: (item: QueueItem) => void;
-  setItems: (items: QueueItem[]) => void;
+  /** Puts a queued episode at `index`. */
+  move: (episode: QueueEpisode, index: number) => void;
   clear: () => void;
 }
 
@@ -56,7 +57,14 @@ export const useQueue = create<QueueState>()(
           items: items.length === get().items.length ? [...items, item] : items,
         });
       },
-      setItems: (items) => set({ items }),
+      move: (episode, index) => {
+        const items = without(get().items, episode);
+        const item = get().items.find(
+          (queued) => queueKey(queued) === queueKey(episode),
+        );
+        if (item) items.splice(index, 0, item);
+        set({ items });
+      },
       clear: () => set({ items: [] }),
     }),
     {
