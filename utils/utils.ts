@@ -1,94 +1,65 @@
-export const getLocalMALId = () =>
-  parseInt(
-    (document.head.querySelector('[name=mal-id][content]') as HTMLMetaElement)
-      ?.content,
-  );
+/** A Hikka title's name to show: Ukrainian first. */
+export const hikkaTitle = (content: any): string | undefined =>
+  content?.title_ua ||
+  content?.title_en ||
+  content?.title_ja ||
+  content?.title_original;
 
-export const getThemeVariables = (): string => {
-  const userStyles = document.getElementById('user-styles') as HTMLStyleElement;
-  if (!userStyles?.sheet) return '';
+/** A name without case and spaces, for matching and searching names. */
+export const looseKey = (value: string) =>
+  value.toLocaleLowerCase('uk').replace(/\s+/g, '');
 
-  const isDark = document.documentElement.classList.contains('dark');
-  const variables = new Map<string, string>();
-
-  const unwrapHsl = (value: string): string => {
-    const match = value.match(/hsl\((.*)\)/i);
-    return match ? match[1].trim() : value;
-  };
-
-  try {
-    const rules = Array.from(userStyles.sheet.cssRules);
-
-    const extractVariables = (selector: string): void => {
-      const rule = rules.find(
-        (rule): rule is CSSStyleRule =>
-          rule instanceof CSSStyleRule && rule.selectorText === selector,
-      );
-
-      if (rule) {
-        Array.from(rule.style)
-          .filter((prop) => prop.startsWith('--'))
-          .map((prop) =>
-            variables.set(
-              prop,
-              unwrapHsl(rule.style.getPropertyValue(prop).trim()),
-            ),
-          );
-      }
-    };
-
-    extractVariables(':root');
-    extractVariables(':root:root');
-    extractVariables('.dark');
-    if (isDark) extractVariables('.dark.dark');
-
-    return Array.from(variables.entries())
-      .map(([key, value]) => `${key}: ${value};`)
-      .join(' ');
-  } catch (error) {
-    console.warn(
-      '[hikka Features] Failed to read CSS rules from #user-styles:',
-      error,
-    );
-    return '';
-  }
+/** Ukrainian letters by their usual Latin spelling. */
+const LATIN: Record<string, string> = {
+  а: 'a',
+  б: 'b',
+  в: 'v',
+  г: 'h',
+  ґ: 'g',
+  д: 'd',
+  е: 'e',
+  є: 'ie',
+  ж: 'zh',
+  з: 'z',
+  и: 'y',
+  і: 'i',
+  ї: 'i',
+  й: 'i',
+  к: 'k',
+  л: 'l',
+  м: 'm',
+  н: 'n',
+  о: 'o',
+  п: 'p',
+  р: 'r',
+  с: 's',
+  т: 't',
+  у: 'u',
+  ф: 'f',
+  х: 'kh',
+  ц: 'ts',
+  ч: 'ch',
+  ш: 'sh',
+  щ: 'shch',
+  ь: '',
+  ю: 'iu',
+  я: 'ia',
 };
 
-export const isHikkaDarkMode = (): boolean =>
-  document.documentElement.classList.contains('dark') ||
-  getComputedStyle(document.documentElement).colorScheme === 'dark';
-
-export const syncFeatureTheme = (
-  container: HTMLElement,
-  options: { themeVariables?: boolean } = {},
-): void => {
-  const applyThemeVariables = () => {
-    for (const declaration of getThemeVariables().split(';')) {
-      const separatorIndex = declaration.indexOf(':');
-      if (separatorIndex === -1) continue;
-
-      container.style.setProperty(
-        declaration.slice(0, separatorIndex).trim(),
-        declaration.slice(separatorIndex + 1).trim(),
-      );
-    }
-  };
-
-  const applyTheme = () => {
-    if (!container.isConnected) return observer.disconnect();
-
-    if (options.themeVariables) {
-      applyThemeVariables();
-    }
-
-    container.classList.toggle('dark', isHikkaDarkMode());
-  };
-
-  const observer = new MutationObserver(applyTheme);
-  observer.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ['class', 'style'],
-  });
-
-  applyTheme();
-};
+/**
+ * A name in Latin letters with the spellings transliteration varies in
+ * folded together, so "Гласс Мун" finds "Glass Moon". Mirrors the
+ * backend's `latinKey`; only for comparing names.
+ */
+export const latinKey = (value: string) =>
+  [...value.toLocaleLowerCase('uk')]
+    .map((char) => LATIN[char] ?? char)
+    .join('')
+    .replace(/kh/g, 'h')
+    .replace(/g/g, 'h')
+    .replace(/q/g, 'k')
+    .replace(/c/g, 'k')
+    .replace(/w/g, 'v')
+    .replace(/x/g, 'ks')
+    .replace(/[yj]/g, 'i')
+    .replace(/[^a-z0-9]/g, '');

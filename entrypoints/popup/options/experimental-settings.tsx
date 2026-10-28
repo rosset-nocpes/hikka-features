@@ -1,79 +1,29 @@
 import { AnimatePresence, motion } from 'motion/react';
 import MaterialSymbolsExperiment from '~icons/material-symbols/experiment';
 
-import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useNavigation } from '@/hooks/use-navigation';
 
+import FeatureSwitch from '../_base/feature-switch';
 import SettingsGroup from '../_base/settings-group';
-import SwitchOption from '../_base/switch-option';
+import SettingsPage from '../_base/settings-page';
 
-const ExperimentalSettingsPage = () => {
-  const { backendBranch, features, updateFeatureSettings, setSettings } =
-    useSettings();
-  const { burunyaaMode, devTools } = features.devOptions;
-
-  return (
-    <ScrollArea className="flex-1" scrollFade>
-      <div className="flex flex-col gap-3 pb-4">
-        <SettingsGroup>
-          <SwitchOption
-            grouped
-            label="Burunyaa режим"
-            checked={burunyaaMode}
-            onClick={() => {
-              updateFeatureSettings('devOptions', {
-                burunyaaMode: !burunyaaMode,
-              });
-            }}
-          />
-          <SwitchOption
-            grouped
-            label="Режим розробника"
-            description="Додає функції, які полегшують роботу з розширенням"
-            checked={devTools}
-            onClick={() => {
-              updateFeatureSettings('devOptions', {
-                devTools: !devTools,
-              });
-            }}
-          />
-          <div className="flex items-center justify-between px-4 py-3">
-            <label className="text-sm font-medium">Гілка бекенду</label>
-            <Select
-              value={backendBranch}
-              onValueChange={(value) => {
-                if (!value) return;
-                const target = value as BackendBranches;
-                setSettings({ backendBranch: target });
-              }}
-            >
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="Оберіть гілку бекенду" />
-              </SelectTrigger>
-              <SelectContent alignItemWithTrigger={false}>
-                <SelectGroup>
-                  {Object.keys(BACKEND_BRANCHES).map((elem) => (
-                    <SelectItem key={elem} value={elem}>
-                      {elem}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-        </SettingsGroup>
-      </div>
-    </ScrollArea>
-  );
-};
+const ExperimentalSettingsPage = () => (
+  <SettingsPage>
+    <SettingsGroup>
+      <FeatureSwitch
+        feature="devOptions"
+        option="burunyaaMode"
+        label="Burunyaa режим"
+      />
+      <FeatureSwitch
+        feature="devOptions"
+        option="devTools"
+        label="Режим розробника"
+        description="Додає функції, які полегшують роботу з розширенням"
+      />
+    </SettingsGroup>
+  </SettingsPage>
+);
 
 export function ExperimentalSettingsIcon() {
   const { enabled } = useSettings().features.devOptions;

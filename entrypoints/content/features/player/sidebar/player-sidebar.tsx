@@ -1,4 +1,4 @@
-import { type FC } from 'react';
+import { useState } from 'react';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -9,47 +9,45 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from '@/components/ui/sidebar';
-import { cn } from '@/utils/cn';
 
-import EpisodeList from './episode-list';
+import PanelTabs, { PanelContent, type PanelTab } from '../queue/panel-tabs';
 import ProviderSelect from './provider-select';
 import TeamSelect from './team-select';
 
-interface Props {
-  toggleWatchedState: (state: boolean) => void;
-  className?: string;
-}
+const PlayerSidebar = () => {
+  const [tab, setTab] = useState<PanelTab>('episodes');
 
-const PlayerSidebar: FC<Props> = ({ toggleWatchedState, className }) => {
   return (
     <Sidebar
       variant="floating"
       side="right"
       blur
-      className={cn('pointer-events-auto flex overflow-hidden', className)}
-      // onMouseLeave={toggleSidebar}
+      className="pointer-events-auto flex overflow-hidden"
     >
       <SidebarHeader>
         <SidebarMenu>
-          <SidebarMenuItem className="flex items-center justify-between">
-            <span className="ml-2 cursor-default font-medium">Програвач</span>
-            <div className="h-8 w-8" />
+          <SidebarMenuItem className="flex items-center justify-between gap-2">
+            <PanelTabs value={tab} onChange={setTab} />
+            {/* Room for the sidebar's trigger, which the navbar places. */}
+            <div className="h-8 w-8 shrink-0" />
           </SidebarMenuItem>
         </SidebarMenu>
-        <SidebarMenu>
-          <ProviderSelect toggleWatchedState={toggleWatchedState} />
-          <TeamSelect toggleWatchedState={toggleWatchedState} />
-        </SidebarMenu>
+        {tab === 'episodes' && (
+          <SidebarMenu>
+            <ProviderSelect />
+            <TeamSelect />
+          </SidebarMenu>
+        )}
       </SidebarHeader>
       <SidebarSeparator className="mx-0" />
       <SidebarContent>
-        <ScrollArea className="h-full" scrollFade>
-          <EpisodeList toggleWatchedState={toggleWatchedState} />
+        <ScrollArea
+          className="h-full *:data-[slot=scroll-area-viewport]:overscroll-contain"
+          scrollFade
+        >
+          <PanelContent tab={tab} />
         </ScrollArea>
       </SidebarContent>
-      {/* <SidebarFooter>
-        <WatchTogetherButton />
-      </SidebarFooter> */}
     </Sidebar>
   );
 };

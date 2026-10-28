@@ -12,7 +12,6 @@ export type ContentType =
 
 interface PageState {
   ctx: ContentScriptContext;
-  saved_mal_id?: number;
   path?: string[];
   contentType?: ContentType;
   slug?: string;
@@ -21,27 +20,20 @@ interface PageState {
 interface PageActions {
   updateFromUrl: (url: URL) => void;
   setCTX: (ctx: ContentScriptContext) => void;
-  setMALId: (mal_id: number) => void;
-  clearMALId: () => void;
 }
 
-export const usePageStore = create<PageState & PageActions>((set) => ({
+export const usePageStore = create<PageState & PageActions>((set, get) => ({
   ctx: {} as ContentScriptContext,
-  saved_mal_id: undefined,
-  contentType: undefined,
-  slug: undefined,
   updateFromUrl: (url: URL) => {
-    const pathSegments = url.pathname.split('/').filter(Boolean);
-    const newContentType = pathSegments[0] as ContentType;
-    const newSlug = pathSegments[1];
+    const path = url.pathname.split('/').filter(Boolean);
+    // Called on every DOM change; only a new route may notify subscribers.
+    if (path.join('/') === get().path?.join('/')) return;
 
     set({
-      path: pathSegments,
-      contentType: newContentType,
-      slug: newSlug,
+      path,
+      contentType: path[0] as ContentType,
+      slug: path[1],
     });
   },
   setCTX: (ctx) => set({ ctx }),
-  setMALId: (mal_id) => set({ saved_mal_id: mal_id }),
-  clearMALId: () => set({ saved_mal_id: undefined }),
 }));

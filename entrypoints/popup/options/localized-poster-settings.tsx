@@ -1,39 +1,22 @@
-import { ScrollArea } from '@/components/ui/scroll-area';
-
+import FeatureSwitch from '../_base/feature-switch';
 import SettingsGroup from '../_base/settings-group';
-import SwitchOption from '../_base/switch-option';
+import SettingsPage from '../_base/settings-page';
 
-const LocalizedPosterSettings = () => {
-  const { features, updateFeatureSettings } = useSettings();
-  const { enabled, autoShow } = features.localizedPoster;
-
-  return (
-    <ScrollArea className="flex-1" scrollFade>
-      <div className="flex flex-col gap-3 pb-4">
-        <SettingsGroup>
-          <SwitchOption
-            grouped
-            checked={enabled}
-            label="Кнопка локалізації постера"
-            onClick={() => {
-              updateFeatureSettings('localizedPoster', { enabled: !enabled });
-            }}
-          />
-          <SwitchOption
-            grouped
-            checked={autoShow}
-            label="Автолокалізація постера"
-            description="Автоматично замінює постер локалізованою версією"
-            onClick={() => {
-              updateFeatureSettings('localizedPoster', {
-                autoShow: !autoShow,
-              });
-            }}
-          />
-        </SettingsGroup>
-      </div>
-    </ScrollArea>
-  );
-};
+const LocalizedPosterSettings = () => (
+  <SettingsPage>
+    <SettingsGroup>
+      <FeatureSwitch
+        feature="localizedPoster"
+        label="Кнопка локалізації постера"
+      />
+      <FeatureSwitch
+        feature="localizedPoster"
+        option="autoShow"
+        label="Автолокалізація постера"
+        description="Автоматично замінює постер локалізованою версією"
+      />
+    </SettingsGroup>
+  </SettingsPage>
+);
 
 export default LocalizedPosterSettings;

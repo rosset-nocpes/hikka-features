@@ -1,5 +1,6 @@
 export enum HikkaPages {
   All = 'all',
+  Home = 'home',
   AllContent = 'all-content',
   // Anime
   AnimeSearch = 'anime-search',
@@ -13,6 +14,8 @@ export enum HikkaPages {
   NovelSearch = 'novel-search',
   NovelContent = 'novel-content',
   NovelMainPage = 'novel-main-page',
+  // The extension's own pages
+  TeamPages = 'team-pages',
   // Edit
   EditContent = 'edit-content',
   EditCreate = 'edit-create',

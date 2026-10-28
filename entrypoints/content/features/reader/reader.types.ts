@@ -72,6 +72,7 @@ export type UISettingType =
 
 export interface UISettingMetadata {
   label: string;
+  description?: string;
   type: UISettingType;
   min?: number;
   max?: number;

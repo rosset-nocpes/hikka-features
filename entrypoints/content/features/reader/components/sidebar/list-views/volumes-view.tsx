@@ -1,6 +1,7 @@
 import { ChevronRight } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 
+import MissingDivider, { countMissing } from '@/components/missing-divider';
 import {
   Collapsible,
   CollapsibleContent,
@@ -14,9 +15,9 @@ import {
   SidebarMenuSub,
   SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
+import { hikkaTracker } from '@/utils/hikka-tracker';
 
-import type { Chapter } from '../../../reader.types';
-
+import { allChapters, sortVolumes } from '../../../chapters';
 import useReadData from '../../../hooks/use-read-data';
 import { useReader } from '../../../hooks/use-reader';
 import {
@@ -24,92 +25,52 @@ import {
   ReaderOrderBy,
   ReaderSortBy,
 } from '../../../reader.enums';
-
-const isTranslatorMatch = (chapter: Chapter, translator: string) =>
-  !translator ||
-  chapter.translator
-    .split(',')
-    .map((value) => value.trim())
-    .includes(translator);
-
-const getDateTime = (value: string) =>
-  new Date(value.split('.').reverse().join('-')).getTime();
+import ChapterRow from './chapter-row';
 
 const VolumesView = () => {
-  const { currentChapter, settings, setChapter, getRead } = useReader();
+  const { currentChapter, settings } = useReader();
+  const { sortBy, translator } = settings;
   const { data } = useReadData();
+  const volumes =
+    data?.displayMode === ReaderContentMode.Volumes ? data.volumes : undefined;
 
-  const currentChapterRef = useRef<HTMLButtonElement>(null);
-  const [openVolumes, setOpenVolumes] = useState<Record<number, boolean>>(
-    () => {
-      const initial: Record<number, boolean> = {};
-      if (data?.displayMode === ReaderContentMode.Volumes && data.volumes) {
-        data.volumes.forEach((v) => {
-          initial[v.number] = v.number === currentChapter?.volume;
-        });
-      }
-      return initial;
-    },
+  // The open chapter's volume opens with it; others stay as the user left them.
+  const [openVolumes, setOpenVolumes] = useState<Record<number, boolean>>({});
+  const currentVolume = currentChapter?.volume ?? 0;
+  useEffect(() => {
+    setOpenVolumes((open) => ({ ...open, [currentVolume]: true }));
+  }, [currentVolume]);
+
+  const sortedVolumes = useMemo(
+    () => sortVolumes(volumes ?? [], sortBy, translator),
+    [volumes, sortBy, translator],
   );
 
-  useEffect(() => {
-    setOpenVolumes((prev) => ({
-      ...prev,
-      [currentChapter?.volume ?? 0]: true,
-    }));
-  }, [currentChapter?.volume]);
+  const descending = sortBy.order !== ReaderOrderBy.Ascending;
 
-  const handleOpenChange = (volumeNumber: number, isOpen: boolean) => {
-    setOpenVolumes((prev) => ({ ...prev, [volumeNumber]: isOpen }));
-  };
+  // Counted across volume boundaries, since some sources restart chapter
+  // numbers per volume and others don't.
+  const missingById = useMemo(() => {
+    if (sortBy.field !== ReaderSortBy.Chapter) return new Map<string, number>();
 
-  const handleSelectChapter = (value: Chapter) => {
-    setChapter(value);
-  };
+    const chapters = sortedVolumes.flatMap((volume) => volume.chapters);
+    return new Map(
+      chapters.map((chapter, index) => {
+        const below = chapters[descending ? index + 1 : index - 1];
+        return [chapter.id, countMissing(chapter.chapter, below?.chapter)];
+      }),
+    );
+  }, [sortedVolumes, sortBy.field, descending]);
 
-  const sortedVolumes = useMemo(() => {
-    if (data?.displayMode !== ReaderContentMode.Volumes) return [];
+  // Progress counts chapters in reading order, whatever the list shows.
+  const readingOrder = useMemo(
+    () =>
+      new Map(allChapters(data).map((chapter, index) => [chapter.id, index])),
+    [data],
+  );
 
-    const { field, order } = settings.sortBy;
-    const multiplier = order === ReaderOrderBy.Ascending ? 1 : -1;
-
-    return data.volumes
-      .map((volume) => ({
-        ...volume,
-        chapters: volume.chapters
-          .filter((chapter) => isTranslatorMatch(chapter, settings.translator))
-          .sort((a, b) => {
-            if (field === ReaderSortBy.Chapter) {
-              return (a.chapter - b.chapter) * multiplier;
-            }
-
-            if (field === ReaderSortBy.DateUpload) {
-              return (
-                (getDateTime(a.date_upload) - getDateTime(b.date_upload)) *
-                multiplier
-              );
-            }
-
-            return 0;
-          }),
-      }))
-      .filter((volume) => volume.chapters.length > 0)
-      .sort((a, b) => {
-        if (field === ReaderSortBy.Chapter) {
-          return (a.number - b.number) * multiplier;
-        }
-
-        if (field === ReaderSortBy.DateUpload) {
-          const dateA = getDateTime(a.chapters[0].date_upload);
-          const dateB = getDateTime(b.chapters[0].date_upload);
-          return (dateA - dateB) * multiplier;
-        }
-
-        return 0;
-      });
-  }, [data, settings.sortBy, settings.translator]);
-
-  if (data?.displayMode !== ReaderContentMode.Volumes) return;
+  if (!volumes) return;
+  const progress = hikkaTracker.progress;
 
   return (
     <SidebarGroup>
@@ -117,9 +78,14 @@ const VolumesView = () => {
         {sortedVolumes.map((volume) => (
           <Collapsible
             key={volume.number}
-            open={openVolumes[volume.number]}
+            open={openVolumes[volume.number] ?? false}
             render={<SidebarMenuItem />}
-            onOpenChange={(isOpen) => handleOpenChange(volume.number, isOpen)}
+            onOpenChange={(open) =>
+              setOpenVolumes((volumes) => ({
+                ...volumes,
+                [volume.number]: open,
+              }))
+            }
             className="group/collapsible"
           >
             <CollapsibleTrigger
@@ -135,55 +101,27 @@ const VolumesView = () => {
             />
             <CollapsibleContent className="h-(--collapsible-panel-height) overflow-hidden transition-[height] duration-150 ease-out data-ending-style:h-0 data-starting-style:h-0">
               <SidebarMenuSub>
-                {volume.chapters.map((chapter) => (
-                  <SidebarMenuSubItem key={chapter.id}>
-                    <SidebarMenuButton
-                      onClick={() => handleSelectChapter(chapter)}
-                      isActive={chapter.id === currentChapter?.id}
-                      size="lg"
-                      ref={
-                        chapter.id === currentChapter?.id
-                          ? currentChapterRef
-                          : null
-                      }
-                    >
-                      <div className="flex flex-1 flex-col gap-1 truncate text-left leading-tight">
-                        <span
-                          className={cn(
-                            (() => {
-                              const allChapters = sortedVolumes.flatMap(
-                                (vol) => vol.chapters,
-                              );
-                              const chapterIndex = allChapters.findIndex(
-                                (chap) => chap.id === chapter.id,
-                              );
-                              return (
-                                chapterIndex !== -1 &&
-                                chapterIndex < getRead() &&
-                                'text-muted-foreground'
-                              );
-                            })(),
-                          )}
-                        >
-                          Розділ {chapter.chapter}
-                        </span>
-                        <div className="flex items-center gap-1">
-                          <span className="text-muted-foreground text-xs">
-                            {chapter.date_upload}
-                          </span>
-                          {chapter.translator && (
-                            <>
-                              <div className="bg-muted-foreground size-1 shrink-0 rounded-full" />
-                              <span className="text-muted-foreground truncate text-xs">
-                                {chapter.translator}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </SidebarMenuButton>
-                  </SidebarMenuSubItem>
-                ))}
+                {volume.chapters.map((chapter) => {
+                  const missing = missingById.get(chapter.id) ?? 0;
+                  const divider = missing > 0 && (
+                    <SidebarMenuSubItem>
+                      <MissingDivider count={missing} noun="chapter" />
+                    </SidebarMenuSubItem>
+                  );
+
+                  return (
+                    <Fragment key={chapter.id}>
+                      {!descending && divider}
+                      <SidebarMenuSubItem>
+                        <ChapterRow
+                          chapter={chapter}
+                          read={(readingOrder.get(chapter.id) ?? 0) < progress}
+                        />
+                      </SidebarMenuSubItem>
+                      {descending && divider}
+                    </Fragment>
+                  );
+                })}
               </SidebarMenuSub>
             </CollapsibleContent>
           </Collapsible>

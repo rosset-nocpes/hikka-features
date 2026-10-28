@@ -1,18 +1,16 @@
 import type { FC } from 'react';
 
-import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { createRoot } from 'react-dom/client';
 import MaterialSymbolsPersonalizedRecommendations from '~icons/material-symbols/personalized-recommendations';
 
+import { HFLogo } from '@/components/feature-card';
 import BlockHeader from '@/components/hikka/block-header';
+import MediaTooltip from '@/components/hikka/media-tooltip';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import EmptyState from '@/components/ui/empty-state';
-import HFLogoSmallDark from '@/public/hikka-features-small-dark.svg';
-import HFLogoSmall from '@/public/hikka-features-small.svg';
+import { reveal } from '@/utils/motion';
 
-import { queryClient } from '..';
-import { BaseFeature } from '../core/base-feature';
+import { BaseFeature, createFeatureUi } from '../core/base-feature';
 import { HikkaPages } from '../core/core.enums';
 
 export default class RecommendationBlockFeature extends BaseFeature {
@@ -24,36 +22,18 @@ export default class RecommendationBlockFeature extends BaseFeature {
   ];
 
   async init() {
-    this.ui = await createShadowRootUi(usePageStore.getState().ctx, {
+    this.ui = await createFeatureUi({
       name: this.id,
       position: 'inline',
       append: 'before',
       anchor: '#content-center > div:last-of-type',
-      css: `:host(${this.id}) { margin-top: -2rem !important; }`,
-      inheritStyles: true,
-      onMount(container) {
-        const wrapper = document.createElement('div');
-        container.append(wrapper);
-
-        syncFeatureTheme(container, { themeVariables: true });
-
-        const root = createRoot(wrapper);
-        root.render(
-          <QueryClientProvider client={queryClient}>
-            <RecommendationBlock />
-          </QueryClientProvider>,
-        );
-
-        return root;
-      },
-      onRemove: (root) => {
-        root?.unmount();
-      },
+      hostCss: 'margin-top: -2rem !important;',
+      render: (container) => <RecommendationBlock container={container} />,
     });
   }
 }
 
-const RecommendationBlock: FC = () => {
+const RecommendationBlock: FC<{ container: HTMLElement }> = ({ container }) => {
   const { enabled } = useSettings().features.recommendationBlock;
 
   const { contentType } = usePageStore();
@@ -64,27 +44,14 @@ const RecommendationBlock: FC = () => {
     <AnimatePresence>
       {enabled && content_data && (
         <motion.div
-          initial={{ opacity: 0, height: 0, scale: 0.93, marginTop: 0 }}
-          animate={{
-            opacity: 1,
-            height: 'auto',
-            scale: 1,
-            marginTop: '2rem',
-          }}
-          exit={{ opacity: 0, height: 0, scale: 0.93, marginTop: 0 }}
-          transition={{ duration: 0.2, ease: 'easeOut' }}
+          {...reveal('height', { marginTop: '2rem' })}
           className="flex min-w-0 flex-col gap-5"
         >
           <BlockHeader
             title="Схожий контент"
             href={`https://myanimelist.net/${contentType === 'novel' ? 'manga' : contentType}/${content_data.mal_id}`}
             disabled={isLoading || data?.recommendations.length === 0}
-            icon={
-              <img
-                src={isHikkaDarkMode() ? HFLogoSmall : HFLogoSmallDark}
-                style={{ width: '21px', height: '20px' }}
-              />
-            }
+            icon={<HFLogo />}
           />
           <div className="no-scrollbar md:gradient-mask-none auto-cols-scroll grid-cols-scroll grid-min-6 relative -mx-4 -my-4 grid grid-flow-col gap-4 overflow-x-scroll p-4 sm:grid-cols-4 md:grid-cols-5 lg:gap-6">
             {isLoading &&
@@ -109,36 +76,29 @@ const RecommendationBlock: FC = () => {
             {data &&
               data.recommendations.length > 0 &&
               data.recommendations.map((item) => (
-                <a
-                  key={item.slug}
-                  href={`https://hikka.io/${item.data_type}/${item.slug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex flex-col gap-2"
-                >
-                  <AspectRatio
-                    ratio={0.7}
-                    className="bg-muted relative w-full overflow-hidden rounded-md"
+                <MediaTooltip key={item.slug} item={item} container={container}>
+                  <a
+                    href={`https://hikka.io/${item.data_type}/${item.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col gap-2"
                   >
-                    <img
-                      className="bg-secondary/30 absolute inset-0 h-full w-full object-cover"
-                      src={item.image}
-                      alt={
-                        item.title_ua ||
-                        item.title_en ||
-                        item.title_ja ||
-                        item.title_original
-                      }
-                      loading="lazy"
-                    />
-                  </AspectRatio>
-                  <span className="line-clamp-2 text-sm leading-5 font-medium">
-                    {item?.title_ua ||
-                      item?.title_en ||
-                      item?.title_ja ||
-                      item?.title_original}
-                  </span>
-                </a>
+                    <AspectRatio
+                      ratio={0.7}
+                      className="bg-muted relative w-full overflow-hidden rounded-md"
+                    >
+                      <img
+                        className="bg-secondary/30 absolute inset-0 h-full w-full object-cover"
+                        src={item.image}
+                        alt={hikkaTitle(item)}
+                        loading="lazy"
+                      />
+                    </AspectRatio>
+                    <span className="line-clamp-2 text-sm leading-5 font-medium">
+                      {hikkaTitle(item)}
+                    </span>
+                  </a>
+                </MediaTooltip>
               ))}
           </div>
         </motion.div>

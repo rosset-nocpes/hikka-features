@@ -1,3 +1,5 @@
+import { sendToBackground } from '@/utils/messaging';
+
 export const IFRAME_PLAYER_COMMAND_TYPE = 'iframe-player-command' as const;
 
 const SIMPLE_COMMAND_ACTIONS = [
@@ -46,11 +48,9 @@ export interface IFramePlayerEvent {
   answer?: unknown;
 }
 
+/** Sends `command` to the episode's player through the background. */
 export const sendIFramePlayerCommand = (command: IFramePlayerCommandPayload) =>
-  browser.runtime.sendMessage({
-    type: IFRAME_PLAYER_COMMAND_TYPE,
-    ...command,
-  } satisfies IFramePlayerCommand);
+  sendToBackground(IFRAME_PLAYER_COMMAND_TYPE, command);
 
 export const isIFramePlayerCommand = (
   message: unknown,

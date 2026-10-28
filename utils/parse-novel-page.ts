@@ -14,6 +14,14 @@ const SUPER_TO_NUM: Record<string, string> = {
   '⁰': '0',
 };
 
+const escapeHtml = (value: string, attribute = false) => {
+  const escaped = value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');
+  return attribute ? escaped.replaceAll('"', '&quot;') : escaped;
+};
+
 const parseSuperscriptToIndex = (superscripts: string): number => {
   return parseInt(
     superscripts
@@ -58,8 +66,8 @@ export const parseNovelPage = (html: string) => {
       let index = currentAutoIndex;
 
       if (numberMatch) {
-        index = parseInt(numberMatch[1], 10);
-        definitionText = numberMatch[2];
+        index = parseInt(numberMatch[1]!, 10);
+        definitionText = numberMatch[2]!;
         currentAutoIndex = index + 1;
       } else {
         currentAutoIndex++;
@@ -87,36 +95,26 @@ export const parseNovelPage = (html: string) => {
   $('p, li, span, td')
     .contents()
     .each(function () {
-      if (this.type === 'text') {
-        const originalText = $(this).text();
+      if (this.type !== 'text') return;
+      // Text nodes hold decoded text; it goes back into the page as HTML.
+      const text = escapeHtml($(this).text());
+      superscriptRegex.lastIndex = 0;
+      if (!superscriptRegex.test(text)) return;
 
-        if (superscriptRegex.test(originalText)) {
-          superscriptRegex.lastIndex = 0; // Reset state
-
-          const newHtml = originalText.replace(
-            superscriptRegex,
-            (match, term, punctuation, superscripts) => {
-              const index = parseSuperscriptToIndex(superscripts);
-              const definition = definitionsMap
-                .get(index)
-                ?.replaceAll(/"/g, '&quot;');
-
-              if (definition) {
-                const fullTermWithPunctuation = term + punctuation;
-                const escapedTerm = fullTermWithPunctuation.replace(
-                  /"/g,
-                  '&quot;',
-                );
-
-                return `<span class="hover-card-trigger" data-definition="${definition}" data-term="${escapedTerm}">${fullTermWithPunctuation}${superscripts}</span>`;
-              }
-              return match;
-            },
+      superscriptRegex.lastIndex = 0;
+      const html = text.replace(
+        superscriptRegex,
+        (match, term: string, punctuation: string, superscripts: string) => {
+          const definition = definitionsMap.get(
+            parseSuperscriptToIndex(superscripts),
           );
+          if (!definition) return match;
 
-          $(this).replaceWith(newHtml);
-        }
-      }
+          const termWithPunctuation = term + punctuation;
+          return `<span class="hover-card-trigger" data-definition="${escapeHtml(definition, true)}" data-term="${termWithPunctuation.replaceAll('"', '&quot;')}">${termWithPunctuation}${superscripts}</span>`;
+        },
+      );
+      $(this).replaceWith(html);
     });
 
   return $('body').html() || '';

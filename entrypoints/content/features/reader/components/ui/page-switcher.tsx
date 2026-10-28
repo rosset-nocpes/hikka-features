@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import MaterialSymbolsArrowDownwardRounded from '~icons/material-symbols/arrow-downward-rounded';
 import MaterialSymbolsArrowUpwardRounded from '~icons/material-symbols/arrow-upward-rounded';
 
@@ -18,22 +17,17 @@ const PageSwitcher = () => {
     (isManga && settings.orientation === MangaOrientation.Horizontal) ||
     isNovel;
 
-  const handleScroll = useCallback(
-    (direction: 'next' | 'prev') => {
-      if (isManga) {
-        if (!carouselApi) return;
-
-        direction === 'next'
-          ? carouselApi.scrollNext()
-          : carouselApi.scrollPrev();
-      }
-
-      if (isNovel) {
-        direction === 'next' ? nextChapter() : prevChapter();
-      }
-    },
-    [carouselApi, isManga, isNovel],
-  );
+  /** Pages through manga; a novel's chapter is one page. */
+  const handleScroll = (direction: 'next' | 'prev') => {
+    if (isManga) {
+      if (direction === 'next') carouselApi?.scrollNext();
+      else carouselApi?.scrollPrev();
+    } else if (direction === 'next') {
+      nextChapter();
+    } else {
+      prevChapter();
+    }
+  };
 
   const positionClasses = cn(
     isVertical && 'bottom-1/2 left-2 translate-y-1/2',

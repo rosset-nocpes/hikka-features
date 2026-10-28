@@ -5,14 +5,16 @@ import type { Chapter, ReaderContent } from '../reader.types';
 import { ReaderContentMode } from '../reader.enums';
 import BaseScraper from './_scraper';
 
+const ENDPOINTS = {
+  search: 'index.php?do=search',
+  loadChapters: 'engine/ajax/controller.php?mod=load_chapters',
+  loadImages: 'engine/ajax/controller.php?mod=load_chapters_image',
+};
+
 class MIUScraper extends BaseScraper {
-  name = 'MIUScraper';
-  baseUrl = 'https://manga.in.ua';
-  endpoints = {
-    search: `${this.baseUrl}/index.php?do=search`,
-    loadChapters: 'engine/ajax/controller.php?mod=load_chapters',
-    loadImages: 'engine/ajax/controller.php?mod=load_chapters_image',
-  };
+  constructor() {
+    super('MIUScraper', 'https://manga.in.ua');
+  }
 
   /**
    * Internal parser: Extracts site_login_hash
@@ -61,21 +63,13 @@ class MIUScraper extends BaseScraper {
         search_start: '1',
       });
 
-      let searchHtml = await this.request(
-        this.endpoints.search,
-        'POST',
-        searchData,
-      );
+      let searchHtml = await this.request(ENDPOINTS.search, 'POST', searchData);
 
       let $search = cheerio.load(searchHtml);
 
       if ($search('.berrors').length) {
         searchData.set('story', title);
-        searchHtml = await this.request(
-          this.endpoints.search,
-          'POST',
-          searchData,
-        );
+        searchHtml = await this.request(ENDPOINTS.search, 'POST', searchData);
         $search = cheerio.load(searchHtml);
       }
 
@@ -101,15 +95,11 @@ class MIUScraper extends BaseScraper {
       news_id: container.attr('data-news_id') || '',
       news_category: container.attr('data-news_category') || '',
       this_link: container.attr('data-this_link') || '',
-      [this.extractQueryKey(pageHtml, this.endpoints.loadChapters)]:
+      [this.extractQueryKey(pageHtml, ENDPOINTS.loadChapters)]:
         this.extractUserHash(pageHtml),
     });
 
-    const listHtml = await this.request(
-      this.endpoints.loadChapters,
-      'POST',
-      params,
-    );
+    const listHtml = await this.request(ENDPOINTS.loadChapters, 'POST', params);
     const $list = cheerio.load(listHtml);
     const chapters: Chapter[] = [];
 
@@ -130,7 +120,7 @@ class MIUScraper extends BaseScraper {
         date_upload: $el.children().first().text().trim(),
         volume: Number($el.attr('manga-tom') || 0),
         chapter: Number($el.attr('manga-chappter') || 0),
-        title: text.includes('-') ? text.split('-')[1].trim() : '',
+        title: text.split('-')[1]?.trim() ?? '',
         url: href,
       });
     });
@@ -148,12 +138,12 @@ class MIUScraper extends BaseScraper {
     const params = new URLSearchParams({
       news_id: $('div#comics').attr('data-news_id') || '',
       action: 'show',
-      [this.extractQueryKey(html, this.endpoints.loadImages)]:
+      [this.extractQueryKey(html, ENDPOINTS.loadImages)]:
         this.extractUserHash(html),
     });
 
     const imgListHtml = await this.request(
-      `${this.endpoints.loadImages}&${params.toString()}`,
+      `${ENDPOINTS.loadImages}&${params.toString()}`,
     );
     const $imgs = cheerio.load(imgListHtml);
 
@@ -167,6 +157,4 @@ class MIUScraper extends BaseScraper {
   }
 }
 
-const miuScraper = new MIUScraper();
-
-export default miuScraper;
+export const miuScraper = new MIUScraper();

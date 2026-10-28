@@ -1,3 +1,5 @@
+import { isTeamPagePath } from '@/utils/hikka-router';
+
 import { HikkaPages } from './core.enums';
 
 export const HIKKA_PAGE_CHECKERS: Record<
@@ -5,6 +7,7 @@ export const HIKKA_PAGE_CHECKERS: Record<
   (path: string) => boolean
 > = {
   [HikkaPages.All]: () => true,
+  [HikkaPages.Home]: (p) => p === '/',
   [HikkaPages.AllContent]: (p) => /^\/(anime|manga|novel)\//.test(p),
   [HikkaPages.AnimeSearch]: (p) => p.endsWith('/anime'),
   [HikkaPages.AnimeContent]: (p) => p.startsWith('/anime/'),
@@ -15,6 +18,7 @@ export const HIKKA_PAGE_CHECKERS: Record<
   [HikkaPages.NovelSearch]: (p) => p.endsWith('/novel'),
   [HikkaPages.NovelContent]: (p) => p.startsWith('/novel/'),
   [HikkaPages.NovelMainPage]: (p) => /^\/novel\/[\w-]+$/.test(p),
+  [HikkaPages.TeamPages]: isTeamPagePath,
   [HikkaPages.EditContent]: (p) => p.startsWith('/edit/'),
   [HikkaPages.EditCreate]: (p) => p.startsWith('/edit/new'),
   [HikkaPages.EditCreateCharacter]: (p) =>

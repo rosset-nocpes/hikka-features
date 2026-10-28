@@ -1,52 +1,65 @@
 import { useEffect, useRef } from 'react';
-// import { toast } from 'sonner';
 
 import { useSidebar } from '@/components/ui/sidebar';
 import { useIFramePlayer } from '@/hooks/use-iframe-player';
-import { ProviderIFrame, ProviderTeamIFrame } from '@/utils/provider_classes';
+import { hikkaTracker } from '@/utils/hikka-tracker';
 
-import { getWatched, usePlayer } from './context/player-context';
+import {
+  followingEpisode,
+  onAnimePage,
+  progressOf,
+  usePlayer,
+} from './context/player-context';
+import { isPlayerOpen, playNextQueued } from './player';
+import { useQueue } from './queue/use-queue';
+import { useWatchTogether } from './watch-together/use-watch-together';
 
-interface Props {
-  toggleWatchedState: (state: boolean) => void;
-  watched: boolean;
-}
-
-const getNextEpisode = (
-  data: API.WatchData,
-  provider: string,
-  team: API.TeamData | undefined,
-  currentEpisode: API.EpisodeData,
-) => {
-  const providerData = data[provider];
-
-  if (providerData instanceof ProviderTeamIFrame && team) {
-    return providerData.teams[team.title].episodes.find(
-      (episode: API.EpisodeData) =>
-        episode.episode === currentEpisode.episode + 1,
-    );
-  }
-
-  if (providerData instanceof ProviderIFrame) {
-    return providerData.episodes.find(
-      (episode: API.EpisodeData) =>
-        episode.episode === currentEpisode.episode + 1,
-    );
-  }
-};
-
-const markCurrentEpisodeWatched = () => {
-  (
-    document.body.querySelector(
-      '#content-left-side > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) button:nth-of-type(2)',
-    ) as HTMLButtonElement | null
-  )?.click();
-};
+/** Share of an episode after which it counts as watched on hikka.io. */
+const WATCHED_SHARE = 0.88;
 
 const getEpisodeKey = (episode: API.EpisodeData) =>
   `${episode.episode}:${episode.video_url}`;
 
-const PlayerIFrameEffects = ({ toggleWatchedState, watched }: Props) => {
+/** Set while what follows an episode loads, so it plays once ready. */
+let pendingAutoPlay = false;
+
+const loadNext = async () => {
+  const { room, advance } = useWatchTogether.getState();
+  // A watch together room moves everyone on together, to its own queue or
+  // the anime's next episode, and plays it.
+  if (room) {
+    advance();
+    return false;
+  }
+
+  const before = usePlayer.getState().currentEpisode;
+  if (await playNextQueued()) return true;
+
+  const player = usePlayer.getState();
+  // While the queue loaded, the user closed the player or picked another.
+  if (!isPlayerOpen() || player.currentEpisode !== before) return false;
+
+  const following = followingEpisode(player);
+  if (!following) return false;
+
+  player.setEpisode(following);
+  return true;
+};
+
+/** Plays what follows the episode: the queue, else the anime's next one. */
+export const playNext = async () => {
+  pendingAutoPlay = true;
+  const played = await loadNext();
+  if (!played) pendingAutoPlay = false;
+  return played;
+};
+
+/**
+ * Follows the episode's player: starts shared links where they point, marks
+ * the episode watched on hikka.io near its end, takes it off the queue once
+ * it plays and plays what follows.
+ */
+const PlayerIFrameEffects = () => {
   const {
     isReady,
     currentTime,
@@ -56,79 +69,96 @@ const PlayerIFrameEffects = ({ toggleWatchedState, watched }: Props) => {
     seek,
     reset: resetIFramePlayer,
   } = useIFramePlayer();
-  const pendingAutoPlayRef = useRef(false);
   const handledEndCountRef = useRef(0);
+  const watchedRef = useRef(false);
   const skipWatchedCheckEpisodeKeyRef = useRef<string | undefined>(undefined);
-  const {
-    watchData,
-    sharedParams,
-    isShared,
-    setSharedStatus,
-    provider,
-    team,
-    currentEpisode,
-    setEpisode,
-  } = usePlayer();
+  const { slug, sharedParams, isShared, setSharedStatus, currentEpisode } =
+    usePlayer();
   const { setOpen } = useSidebar();
 
   useEffect(() => {
-    if (!isShared) return;
-
-    setOpen(false);
+    if (isShared) setOpen(false);
   }, [isShared, setOpen]);
 
   useEffect(() => {
     if (!currentEpisode) return;
 
     skipWatchedCheckEpisodeKeyRef.current = getEpisodeKey(currentEpisode);
-    toggleWatchedState(false);
+    watchedRef.current = false;
     resetIFramePlayer();
-  }, [currentEpisode, resetIFramePlayer, toggleWatchedState]);
+  }, [currentEpisode, resetIFramePlayer]);
 
   useEffect(() => {
     if (!isReady || !isShared) return;
 
     const time = Number(sharedParams?.time);
-    if (Number.isFinite(time) && time > 0) {
-      seek(time);
-    }
+    if (Number.isFinite(time) && time > 0) seek(time);
 
     play();
     setSharedStatus(false);
   }, [isReady, isShared, play, seek, setSharedStatus, sharedParams]);
 
-  useEffect(() => {
-    if (!isReady || !pendingAutoPlayRef.current) return;
+  // Once it plays, an episode is no longer up next. Subscribed, since right
+  // after a switch the render's `isPlaying` is still the previous episode's.
+  useEffect(
+    () =>
+      useIFramePlayer.subscribe((state, previous) => {
+        const { slug, currentEpisode } = usePlayer.getState();
+        if (
+          !state.isPlaying ||
+          previous.isPlaying ||
+          !slug ||
+          !currentEpisode ||
+          // The room takes its own queue's episodes off as they play.
+          useWatchTogether.getState().room
+        ) {
+          return;
+        }
+        useQueue.getState().remove({ slug, episode: currentEpisode.episode });
+      }),
+    [],
+  );
 
-    pendingAutoPlayRef.current = false;
+  useEffect(() => {
+    if (!isReady || !pendingAutoPlay) return;
+
+    pendingAutoPlay = false;
     play();
   }, [isReady, play]);
+
+  useEffect(
+    () => () => {
+      pendingAutoPlay = false;
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!currentEpisode) return;
 
-    const episodeKey = getEpisodeKey(currentEpisode);
-    if (skipWatchedCheckEpisodeKeyRef.current === episodeKey) {
+    // Right after a switch, the time is still the previous episode's.
+    if (
+      skipWatchedCheckEpisodeKeyRef.current === getEpisodeKey(currentEpisode)
+    ) {
       skipWatchedCheckEpisodeKeyRef.current = undefined;
       return;
     }
 
-    if (!isReady || !duration || watched || currentTime / duration <= 0.88) {
+    if (
+      !isReady ||
+      !duration ||
+      watchedRef.current ||
+      currentTime / duration <= WATCHED_SHARE ||
+      // The page's tracker is another anime's.
+      !onAnimePage(slug) ||
+      progressOf(slug) + 1 !== currentEpisode.episode
+    ) {
       return;
     }
 
-    if (getWatched() + 1 !== currentEpisode.episode) return;
-
-    markCurrentEpisodeWatched();
-    toggleWatchedState(true);
-  }, [
-    currentEpisode,
-    currentTime,
-    duration,
-    isReady,
-    toggleWatchedState,
-    watched,
-  ]);
+    hikkaTracker.advance();
+    watchedRef.current = true;
+  }, [currentEpisode, currentTime, duration, isReady, slug]);
 
   useEffect(() => {
     if (endedCount === 0) {
@@ -136,33 +166,11 @@ const PlayerIFrameEffects = ({ toggleWatchedState, watched }: Props) => {
       return;
     }
 
-    if (
-      handledEndCountRef.current === endedCount ||
-      !watchData ||
-      !provider ||
-      !currentEpisode
-    ) {
-      return;
-    }
-
+    if (handledEndCountRef.current === endedCount) return;
     handledEndCountRef.current = endedCount;
 
-    const nextEpisode = getNextEpisode(
-      watchData,
-      provider,
-      team,
-      currentEpisode,
-    );
-
-    if (!nextEpisode) return;
-
-    pendingAutoPlayRef.current = true;
-    setEpisode(nextEpisode);
-
-    // toast(
-    //   `Зараз ви переглядаєте ${nextEpisode.episode} епізод в озвучці ${team?.title}`,
-    // );
-  }, [currentEpisode, endedCount, provider, setEpisode, team, watchData]);
+    void playNext();
+  }, [endedCount]);
 
   return null;
 };

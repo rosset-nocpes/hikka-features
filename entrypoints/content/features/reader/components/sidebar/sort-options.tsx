@@ -18,37 +18,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+import { translatorsOf } from '../../chapters';
 import useReadData from '../../hooks/use-read-data';
 import { useReader } from '../../hooks/use-reader';
-import {
-  ReaderContentMode,
-  ReaderOrderBy,
-  ReaderSortBy,
-} from '../../reader.enums';
+import { ReaderOrderBy, ReaderSortBy } from '../../reader.enums';
 
 const SortOptions = () => {
   const { data } = useReadData();
   const { container, settings, setSettings } = useReader();
 
-  const translators = useMemo(() => {
-    const chapters =
-      data?.displayMode === ReaderContentMode.Chapters
-        ? data.chapters
-        : data?.displayMode === ReaderContentMode.Volumes
-          ? data.volumes.flatMap((volume) => volume.chapters)
-          : [];
-
-    return [
-      ...new Set(
-        chapters.flatMap((chapter) =>
-          chapter.translator
-            .split(',')
-            .map((translator) => translator.trim())
-            .filter(Boolean),
-        ),
-      ),
-    ].sort((a, b) => a.localeCompare(b));
-  }, [data]);
+  const translators = useMemo(() => translatorsOf(data), [data]);
 
   const handleOrderChange = () => {
     setSettings({
@@ -73,10 +52,12 @@ const SortOptions = () => {
         <MaterialSymbolsArrowDownwardRounded
           className={cn(
             'duration-150',
-            settings.sortBy.order === 'asc' && 'scale-y-[-1]',
+            settings.sortBy.order === ReaderOrderBy.Ascending && 'scale-y-[-1]',
           )}
         />
-        {settings.sortBy.field === 'chapter' ? 'За частиною' : 'За датою'}
+        {settings.sortBy.field === ReaderSortBy.Chapter
+          ? 'За частиною'
+          : 'За датою'}
       </Button>
       <ButtonGroupSeparator />
       <DropdownMenu modal={false}>
