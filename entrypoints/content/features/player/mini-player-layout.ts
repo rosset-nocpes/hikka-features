@@ -234,7 +234,15 @@ export const useLayoutTransition = (
     const card = cardRef.current;
     const first = from.current;
     from.current = undefined;
-    if (!card || !first || first.layout === layout || reducedMotion()) return;
+    if (!card || !first || first.layout === layout) return;
+    // No movement: the new layout fades in where it lands.
+    if (reducedMotion()) {
+      card.animate([{ opacity: 0 }, { opacity: 1 }], {
+        duration: 150,
+        easing: 'ease-out',
+      });
+      return;
+    }
 
     // Measured after every layout effect of this commit (the frame's scroll
     // lock can still move the page), but before the browser paints.

@@ -3,6 +3,7 @@ import MaterialSymbolsCheckRounded from '~icons/material-symbols/check-rounded';
 import MaterialSymbolsContentCopyOutlineRounded from '~icons/material-symbols/content-copy-outline-rounded';
 import MaterialSymbolsShareOutlineRounded from '~icons/material-symbols/share-outline-rounded';
 
+import SwapIcon from '@/components/swap-icon';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -85,7 +86,7 @@ const Share: FC<Props> = ({ anchor }) => {
         />
       </ToolbarTooltip>
       <PopoverContent
-        className="bg-popover/60 w-56 gap-0 p-1 backdrop-blur-xl"
+        className="bg-popover/60 w-56 gap-0 rounded-lg p-1 backdrop-blur-xl"
         {...position}
       >
         <div className="text-muted-foreground truncate px-2 py-1.5 text-xs font-medium">
@@ -125,11 +126,11 @@ const Share: FC<Props> = ({ anchor }) => {
           onClick={copyLink}
           className="hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none [&_svg]:size-4 [&_svg]:shrink-0"
         >
-          {copied ? (
-            <MaterialSymbolsCheckRounded className="text-success" />
-          ) : (
-            <MaterialSymbolsContentCopyOutlineRounded />
-          )}
+          <SwapIcon
+            active={!!copied}
+            on={<MaterialSymbolsCheckRounded className="text-success" />}
+            off={<MaterialSymbolsContentCopyOutlineRounded />}
+          />
           {copied ? 'Скопійовано' : 'Копіювати посилання'}
         </button>
       </PopoverContent>

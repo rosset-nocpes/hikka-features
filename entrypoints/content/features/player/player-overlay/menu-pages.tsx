@@ -4,6 +4,7 @@ import {
   motion,
   useIsPresent,
   useMotionValue,
+  useReducedMotion,
 } from 'motion/react';
 import {
   type FC,
@@ -13,9 +14,9 @@ import {
   useRef,
 } from 'react';
 
-export const transition = { duration: 0.24, ease: [0.22, 1, 0.36, 1] } as const;
+const transition = { duration: 0.24, ease: [0.22, 1, 0.36, 1] } as const;
 
-export const slide = {
+const slide = {
   enter: (direction: number) => ({ x: direction * 24, opacity: 0 }),
   center: { x: 0, opacity: 1 },
   exit: (direction: number) => ({ x: direction * -24, opacity: 0 }),
@@ -72,13 +73,15 @@ interface Props extends PropsWithChildren {
 /** Menu pages that slide sideways while the menu resizes to fit them. */
 const MenuPages: FC<Props> = ({ page, direction, side = 'top', children }) => {
   const height = useMotionValue<number | 'auto'>('auto');
+  // `animate` runs outside MotionConfig, so it checks the preference itself.
+  const reduceMotion = useReducedMotion();
 
   const resize = useCallback(
     (next: number) => {
-      if (height.get() === 'auto') height.set(next);
+      if (height.get() === 'auto' || reduceMotion) height.set(next);
       else animate(height, next, transition);
     },
-    [height],
+    [height, reduceMotion],
   );
 
   return (

@@ -15,8 +15,9 @@ import Settings from './settings';
 import Volume from './sliders/volume';
 import TimeGroup from './time-group';
 
+// Concentric: the buttons' radius plus the padding and the border.
 const GROUP =
-  'border-shadow bg-background/60 flex items-center gap-1 rounded-lg p-1 backdrop-blur-xl';
+  'border-shadow bg-background/60 flex items-center gap-1 rounded-[calc(var(--radius-md)+4px)] border p-[3px] backdrop-blur-xl';
 
 const Divider = () => <div className="bg-border/70 mx-0.5 h-5 w-px shrink-0" />;
 
@@ -24,7 +25,7 @@ const Divider = () => <div className="bg-border/70 mx-0.5 h-5 w-px shrink-0" />;
 const VolumeControl = () => (
   <div className="group/volume flex items-center">
     <Mute />
-    <div className="w-0 overflow-hidden opacity-0 transition-[width,opacity] duration-200 ease-out group-hover/volume:w-24 group-hover/volume:opacity-100 group-has-focus-visible/volume:w-24 group-has-focus-visible/volume:opacity-100 has-data-dragging:w-24 has-data-dragging:opacity-100">
+    <div className="w-0 overflow-hidden opacity-0 transition-[width,opacity] duration-200 ease-out group-hover/volume:w-24 group-hover/volume:opacity-100 group-has-focus-visible/volume:w-24 group-has-focus-visible/volume:opacity-100 has-data-dragging:w-24 has-data-dragging:opacity-100 motion-reduce:transition-opacity">
       <div className="w-24 px-2">
         <Volume />
       </div>

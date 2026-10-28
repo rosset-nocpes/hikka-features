@@ -169,7 +169,7 @@ const Settings: FC<Props> = ({ anchor }) => {
               <MaterialSymbolsSettingsOutlineRounded
                 className={cn(
                   'size-5 transition-transform duration-200',
-                  open && 'rotate-45',
+                  open && 'motion-safe:rotate-45',
                 )}
               />
             </Button>
@@ -177,7 +177,7 @@ const Settings: FC<Props> = ({ anchor }) => {
         />
       </ToolbarTooltip>
       <DropdownMenuContent
-        className="bg-popover/60 w-56 backdrop-blur-xl"
+        className="bg-popover/60 w-56 rounded-lg backdrop-blur-xl"
         {...position}
       >
         <SettingsPages />

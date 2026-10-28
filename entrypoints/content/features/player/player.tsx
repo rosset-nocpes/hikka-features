@@ -1,3 +1,4 @@
+import { MotionConfig } from 'motion/react';
 import { useLayoutEffect, useRef } from 'react';
 
 import { Card, CardContent } from '@/components/ui/card';
@@ -29,13 +30,20 @@ const playerUi = new ModalUi({
   onMount(container, wrapper) {
     usePlayer.getState().setContainer(container);
     wrapper.className = 'size-full';
-    container.classList.add('h-full');
+    // The controls draw their own pressed state; also covers popups portalled here.
+    container.classList.add(
+      'h-full',
+      '[-webkit-tap-highlight-color:transparent]',
+    );
     activityReporter.start();
   },
   render: () => (
-    <SidebarProvider className="h-full w-full">
-      <PlayerFrame />
-    </SidebarProvider>
+    // Under reduced motion, Motion keeps only the fades.
+    <MotionConfig reducedMotion="user">
+      <SidebarProvider className="h-full w-full">
+        <PlayerFrame />
+      </SidebarProvider>
+    </MotionConfig>
   ),
   onRemove: () => {
     useWatchTogether.getState().leave();
@@ -195,11 +203,12 @@ const Player = () => {
       className={cn(
         // Position and size changes animate in mini-player-layout.ts; only
         // theatre mode's size and the corners use CSS transitions.
-        'border-overlay relative z-10 box-content flex size-full overflow-hidden rounded-none border-none transition-[max-width,max-height,border-radius] duration-300 md:max-h-[720px] md:max-w-[1280px] md:rounded-[calc(var(--radius)+8px)] md:border',
+        'border-overlay relative z-10 box-content flex size-full overflow-hidden rounded-none border-none transition-[max-width,max-height,border-radius] duration-300 motion-reduce:transition-none md:max-h-[720px] md:max-w-[1280px] md:rounded-[calc(var(--radius)+8px)] md:border',
         theatreMode && 'md:max-h-full md:max-w-full',
         fullscreen && 'max-h-full! max-w-full! rounded-none! border-none!',
+        // Concentric with the controls inside: their radius, 8px inset and the border.
         layout !== 'full' &&
-          'pointer-events-auto fixed top-0 left-0 z-30 cursor-default rounded-xl border shadow-2xl data-dragging:cursor-grabbing data-dragging:select-none md:rounded-xl [&[data-dragging]_iframe]:pointer-events-none',
+          'pointer-events-auto fixed top-0 left-0 z-30 cursor-default rounded-[calc(var(--radius-md)+9px)] border shadow-2xl data-dragging:cursor-grabbing data-dragging:select-none md:rounded-[calc(var(--radius-md)+9px)] [&[data-dragging]_iframe]:pointer-events-none',
         layout === 'mini' &&
           'aspect-video h-auto w-[min(calc(100vw-1rem),420px)]',
         layout === 'bar' &&
@@ -217,7 +226,7 @@ const Player = () => {
       )}
       <CardContent
         className={cn(
-          'flex min-h-0 min-w-0 flex-1 flex-col p-0 duration-300',
+          'flex min-h-0 min-w-0 flex-1 flex-col p-0',
           stacked && 'aspect-video w-full flex-none bg-black',
           layout === 'bar' &&
             'pointer-events-none invisible absolute inset-0 z-0',

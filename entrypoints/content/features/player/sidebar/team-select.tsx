@@ -1,8 +1,8 @@
-import { ChevronsUpDown } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useMemo } from 'react';
 import MaterialSymbolsStarRateOutlineRounded from '~icons/material-symbols/star-rate-outline-rounded';
 import MaterialSymbolsStarRounded from '~icons/material-symbols/star-rounded';
+import MaterialSymbolsUnfoldMoreRounded from '~icons/material-symbols/unfold-more-rounded';
 
 import SwapIcon from '@/components/swap-icon';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -70,7 +70,7 @@ const TeamSelect = () => {
                     {episodeData && getEpisodeRanges(episodeData)}
                   </span>
                 </div>
-                <ChevronsUpDown className="ml-auto" />
+                <MaterialSymbolsUnfoldMoreRounded className="ml-auto" />
               </SidebarMenuButton>
             }
           />
@@ -81,7 +81,10 @@ const TeamSelect = () => {
             sideOffset={4}
             container={container}
           >
-            <ScrollArea className="max-h-96" scrollFade>
+            <ScrollArea
+              className="max-h-96 *:data-[slot=scroll-area-viewport]:overscroll-contain"
+              scrollFade
+            >
               {teamGroups.map((group) => (
                 <DropdownMenuGroup key={group.type}>
                   <DropdownMenuLabel className="text-muted-foreground text-xs">
@@ -143,10 +146,10 @@ const TeamSelect = () => {
                                 team,
                               )}
                               on={
-                                <MaterialSymbolsStarRounded className="size-5! text-yellow-400 transition-transform duration-300 group-hover:scale-125" />
+                                <MaterialSymbolsStarRounded className="size-5! text-yellow-400 transition-transform duration-150 ease-out motion-safe:group-hover:scale-125" />
                               }
                               off={
-                                <MaterialSymbolsStarRateOutlineRounded className="text-muted-foreground group-hover:text-foreground size-5! transition-transform duration-300 group-hover:scale-125" />
+                                <MaterialSymbolsStarRateOutlineRounded className="text-muted-foreground group-hover:text-foreground size-5! transition-[color,scale] duration-150 ease-out motion-safe:group-hover:scale-125" />
                               }
                             />
                           </Button>

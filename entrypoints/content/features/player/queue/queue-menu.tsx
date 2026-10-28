@@ -154,7 +154,10 @@ const QueueMenu: FC<Props> = ({ data, slug, container }) => {
                   <TeamSummary team={team} />
                 </DropdownMenuSubTrigger>
                 <DropdownMenuSubContent container={container} className="w-64">
-                  <ScrollArea className="max-h-80" scrollFade>
+                  <ScrollArea
+                    className="max-h-80 *:data-[slot=scroll-area-viewport]:overscroll-contain"
+                    scrollFade
+                  >
                     <DropdownMenuRadioGroup
                       value={team.key}
                       onValueChange={(key: string) => {
@@ -194,7 +197,10 @@ const QueueMenu: FC<Props> = ({ data, slug, container }) => {
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
-            <ScrollArea className="max-h-80" scrollFade>
+            <ScrollArea
+              className="max-h-80 *:data-[slot=scroll-area-viewport]:overscroll-contain"
+              scrollFade
+            >
               {/* Re-measures when another team's list replaces this one. */}
               <ScrollAreaPrimitive.Content style={{ minWidth: 0 }}>
                 {team.episodes.map((episode) => {

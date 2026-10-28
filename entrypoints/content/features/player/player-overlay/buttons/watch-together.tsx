@@ -16,6 +16,7 @@ import type {
   WatchRoomListing,
 } from '@/utils/convex-api';
 
+import SwapIcon from '@/components/swap-icon';
 import {
   Avatar,
   AvatarFallback,
@@ -214,7 +215,7 @@ const StartMenu = () => {
         <>
           <MenuSeparator />
           <MenuLabel>Друзі дивляться</MenuLabel>
-          <div className="flex max-h-48 flex-col overflow-y-auto">
+          <div className="flex max-h-48 flex-col overflow-y-auto overscroll-contain">
             {inbox?.invites.map((invite) => (
               <ListingItem key={invite.code} listing={invite} invited />
             ))}
@@ -294,7 +295,7 @@ const FriendsPage = ({
 
   return (
     <>
-      <div className="flex max-h-60 flex-col overflow-y-auto">
+      <div className="flex max-h-60 flex-col overflow-y-auto overscroll-contain">
         {friends === undefined ? (
           <div className="text-muted-foreground flex items-center gap-2 px-2 py-1.5 text-sm">
             <Spinner />
@@ -348,7 +349,7 @@ const RoomMenu = ({
         <span className="truncate">Спільний перегляд</span>
         <span className="ml-auto tracking-wide tabular-nums">{room.code}</span>
       </MenuLabel>
-      <ul className="flex max-h-48 flex-col overflow-y-auto">
+      <ul className="flex max-h-48 flex-col overflow-y-auto overscroll-contain">
         {room.members.map((member) => (
           <li
             key={member.id}
@@ -395,11 +396,11 @@ const RoomMenu = ({
         <MaterialSymbolsChevronRightRounded className="text-muted-foreground ml-auto" />
       </MenuItem>
       <MenuItem onClick={() => void copy(inviteLink(room))}>
-        {copied ? (
-          <MaterialSymbolsCheckRounded className="text-success" />
-        ) : (
-          <MaterialSymbolsLinkRounded />
-        )}
+        <SwapIcon
+          active={!!copied}
+          on={<MaterialSymbolsCheckRounded className="text-success" />}
+          off={<MaterialSymbolsLinkRounded />}
+        />
         {copied ? 'Скопійовано' : 'Копіювати посилання'}
       </MenuItem>
       <MenuItem
@@ -472,7 +473,7 @@ const WatchTogether: FC<Props> = ({
         />
       </ToolbarTooltip>
       <PopoverContent
-        className="bg-popover/60 w-56 gap-0 p-1 backdrop-blur-xl"
+        className="bg-popover/60 w-56 gap-0 rounded-lg p-1 backdrop-blur-xl"
         {...position}
       >
         <MenuPages

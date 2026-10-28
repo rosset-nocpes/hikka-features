@@ -5,7 +5,6 @@ import { type FC, useLayoutEffect, useRef, useState } from 'react';
 import MaterialSymbolsPlaylistPlayRounded from '~icons/material-symbols/playlist-play-rounded';
 import MaterialSymbolsViewListRounded from '~icons/material-symbols/view-list-rounded';
 
-import { slide, transition } from '../player-overlay/menu-pages';
 import EpisodeList from '../sidebar/episode-list';
 import QueueList from './queue-list';
 import { useActiveQueue } from './use-active-queue';
@@ -44,19 +43,25 @@ const PanelTabs: FC<Props> = ({ value, onChange, className }) => {
             </span>
           )}
         </Tabs.Tab>
-        <Tabs.Indicator className="bg-sidebar-accent absolute top-(--active-tab-top) left-(--active-tab-left) h-(--active-tab-height) w-(--active-tab-width) rounded-md transition-[left,width] duration-200 ease-out" />
+        <Tabs.Indicator className="bg-sidebar-accent absolute top-(--active-tab-top) left-(--active-tab-left) h-(--active-tab-height) w-(--active-tab-width) rounded-md transition-[left,width] duration-150 ease-out motion-reduce:transition-none" />
       </Tabs.List>
     </Tabs.Root>
   );
 };
 
+/** A tab switch is frequent, so its list only fades in. */
+const fade = {
+  enter: { opacity: 0 },
+  center: { opacity: 1 },
+};
+
 /**
- * The tab's list, slid in from its tab's side like the player's menu pages.
- * Goes inside a scroll area, which it tells when the list's height changes.
+ * The tab's list. Goes inside a scroll area, which it tells when the list's
+ * height changes.
  */
 export const PanelContent: FC<{ tab: PanelTab }> = ({ tab }) => {
   const ref = useRef<HTMLDivElement>(null);
-  // The list the panel opens with appears in place; later ones slide in.
+  // The list the panel opens with appears in place; later ones fade in.
   const [shown, setShown] = useState(tab);
   const [switched, setSwitched] = useState(false);
   if (tab !== shown) {
@@ -79,11 +84,10 @@ export const PanelContent: FC<{ tab: PanelTab }> = ({ tab }) => {
     >
       <motion.div
         key={tab}
-        custom={tab === 'queue' ? 1 : -1}
-        variants={slide}
+        variants={fade}
         initial={switched ? 'enter' : false}
         animate="center"
-        transition={transition}
+        transition={{ duration: 0.15, ease: 'easeOut' }}
       >
         {tab === 'episodes' ? <EpisodeList /> : <QueueList />}
       </motion.div>

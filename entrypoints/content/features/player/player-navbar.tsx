@@ -15,7 +15,8 @@ import { useStackedLayout } from './mobile/use-stacked-layout';
 import { closePlayer } from './player';
 import WatchTogether from './player-overlay/buttons/watch-together';
 
-const GLASS = 'bg-background/60 backdrop-blur-xl';
+// The toolbar's glass, ring included.
+const GLASS = 'border-shadow bg-background/60 border backdrop-blur-xl';
 
 interface Props {
   /** In mini mode the episode chip doubles as the drag handle. */
@@ -44,7 +45,7 @@ const PlayerNavbar: FC<Props> = ({ onDragStart }) => {
     <>
       <div
         className={cn(
-          'absolute top-2 left-2 z-20 flex gap-2 duration-300',
+          'absolute top-2 left-2 z-20 flex gap-2 transition-opacity duration-300',
           uiShown ? 'opacity-100' : 'opacity-0',
         )}
       >
@@ -80,7 +81,7 @@ const PlayerNavbar: FC<Props> = ({ onDragStart }) => {
       <div
         ref={actionsRef}
         className={cn(
-          'absolute z-20 flex gap-2 duration-300',
+          'absolute z-20 flex gap-2 transition-[top,right,opacity] duration-300 motion-reduce:transition-opacity',
           // Clears the open floating sidebar, which phones don't have.
           open ? 'top-2 right-2 md:top-4 md:right-4' : 'top-2 right-2',
           !uiShown && (open ? 'max-md:opacity-0' : 'opacity-0'),

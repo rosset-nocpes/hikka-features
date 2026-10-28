@@ -41,7 +41,10 @@ const PlayerSidebar = () => {
       </SidebarHeader>
       <SidebarSeparator className="mx-0" />
       <SidebarContent>
-        <ScrollArea className="h-full" scrollFade>
+        <ScrollArea
+          className="h-full *:data-[slot=scroll-area-viewport]:overscroll-contain"
+          scrollFade
+        >
           <PanelContent tab={tab} />
         </ScrollArea>
       </SidebarContent>

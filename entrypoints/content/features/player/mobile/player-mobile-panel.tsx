@@ -50,7 +50,11 @@ const PlayerMobilePanel: FC<Props> = ({ className }) => {
         )}
       </div>
       <SidebarSeparator className="mx-0" />
-      <ScrollArea className="min-h-0 flex-1" scrollFade>
+      <ScrollArea
+        // Contained, so pulling past the top never refreshes the page.
+        className="min-h-0 flex-1 *:data-[slot=scroll-area-viewport]:overscroll-contain"
+        scrollFade
+      >
         <div className="pb-[env(safe-area-inset-bottom)]">
           <PanelContent tab={tab} />
         </div>

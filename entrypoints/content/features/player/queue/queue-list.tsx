@@ -41,7 +41,7 @@ const EpisodeSummary: FC<Pick<QueueItem, 'slug' | 'episode' | 'team'>> = ({
 
   return (
     <>
-      <div className="bg-muted h-10 w-7 shrink-0 overflow-hidden rounded-sm">
+      <div className="bg-muted border-overlay h-10 w-7 shrink-0 overflow-hidden rounded-sm">
         {anime?.image && (
           <img
             src={anime.image}

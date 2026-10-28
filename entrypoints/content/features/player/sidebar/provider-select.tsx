@@ -1,4 +1,4 @@
-import { ChevronsUpDown } from 'lucide-react';
+import MaterialSymbolsUnfoldMoreRounded from '~icons/material-symbols/unfold-more-rounded';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -52,7 +52,9 @@ const ProviderSelect = () => {
               <span className="truncate text-left text-sm leading-tight font-semibold">
                 {provider?.toUpperCase()}
               </span>
-              {!single && <ChevronsUpDown className="ml-auto" />}
+              {!single && (
+                <MaterialSymbolsUnfoldMoreRounded className="ml-auto" />
+              )}
             </SidebarMenuButton>
           }
         />
@@ -81,7 +83,7 @@ const ProviderSelect = () => {
                       )}
                     >
                       {favoriteTeam?.provider === title && (
-                        <Avatar className="size-5! rounded-sm duration-150">
+                        <Avatar className="size-5! rounded-sm">
                           <AvatarImage
                             src={favoriteLogo}
                             alt={favoriteTeam.team}

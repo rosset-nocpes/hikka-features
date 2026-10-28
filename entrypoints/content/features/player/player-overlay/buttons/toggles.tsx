@@ -11,6 +11,7 @@ import MaterialSymbolsVolumeOffOutlineRounded from '~icons/material-symbols/volu
 import MaterialSymbolsVolumeUpOutlineRounded from '~icons/material-symbols/volume-up-outline-rounded';
 import MaterialSymbolsWidthFullOutline from '~icons/material-symbols/width-full-outline';
 
+import SwapIcon from '@/components/swap-icon';
 import { Button } from '@/components/ui/button';
 import { sendIFramePlayerCommand } from '@/integrations/iframe-player/protocol';
 
@@ -40,11 +41,11 @@ export const Play = () => {
       label={isPlaying ? 'Призупинити' : 'Відтворити'}
       onClick={isPlaying ? pause : play}
     >
-      {isPlaying ? (
-        <MaterialSymbolsPauseOutlineRounded className="size-5" />
-      ) : (
-        <MaterialSymbolsPlayArrowOutlineRounded className="size-5" />
-      )}
+      <SwapIcon
+        active={isPlaying}
+        on={<MaterialSymbolsPauseOutlineRounded className="size-5" />}
+        off={<MaterialSymbolsPlayArrowOutlineRounded className="size-5" />}
+      />
     </ToolbarButton>
   );
 };
@@ -58,13 +59,18 @@ export const Mute = () => {
       label={silent ? 'Увімкнути звук' : 'Вимкнути звук'}
       onClick={toggleMute}
     >
-      {silent ? (
-        <MaterialSymbolsVolumeOffOutlineRounded className="size-5" />
-      ) : volume < 0.5 ? (
-        <MaterialSymbolsVolumeDownOutlineRounded className="size-5" />
-      ) : (
-        <MaterialSymbolsVolumeUpOutlineRounded className="size-5" />
-      )}
+      {/* Only muting crossfades; the level icons swap as the slider moves. */}
+      <SwapIcon
+        active={silent}
+        on={<MaterialSymbolsVolumeOffOutlineRounded className="size-5" />}
+        off={
+          volume < 0.5 ? (
+            <MaterialSymbolsVolumeDownOutlineRounded className="size-5" />
+          ) : (
+            <MaterialSymbolsVolumeUpOutlineRounded className="size-5" />
+          )
+        }
+      />
     </ToolbarButton>
   );
 };
@@ -79,11 +85,11 @@ export const Fullscreen = () => {
       }
       onClick={toggleFullscreen}
     >
-      {fullscreen ? (
-        <MaterialSymbolsFullscreenExitRounded />
-      ) : (
-        <MaterialSymbolsFullscreenRounded />
-      )}
+      <SwapIcon
+        active={fullscreen}
+        on={<MaterialSymbolsFullscreenExitRounded />}
+        off={<MaterialSymbolsFullscreenRounded />}
+      />
     </ToolbarButton>
   );
 };
@@ -96,11 +102,11 @@ export const TheatreMode = () => {
       label={theatreMode ? 'Вийти з режиму театру' : 'Режим театру'}
       onClick={toggleTheatreMode}
     >
-      {theatreMode ? (
-        <MaterialSymbolsFitScreenOutlineRounded />
-      ) : (
-        <MaterialSymbolsWidthFullOutline />
-      )}
+      <SwapIcon
+        active={theatreMode}
+        on={<MaterialSymbolsFitScreenOutlineRounded />}
+        off={<MaterialSymbolsWidthFullOutline />}
+      />
     </ToolbarButton>
   );
 };
@@ -121,11 +127,11 @@ export const MiniPlayer = () => {
           : toggleMiniPlayer()
       }
     >
-      {isActive ? (
-        <MaterialSymbolsFitScreenOutlineRounded />
-      ) : (
-        <MaterialSymbolsPictureInPictureAltRounded />
-      )}
+      <SwapIcon
+        active={isActive}
+        on={<MaterialSymbolsFitScreenOutlineRounded />}
+        off={<MaterialSymbolsPictureInPictureAltRounded />}
+      />
     </ToolbarButton>
   );
 };

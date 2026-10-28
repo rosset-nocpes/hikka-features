@@ -206,7 +206,7 @@ const Time = ({ className, trackClassName }: TimeProps = {}) => {
         >
           <SliderPrimitive.Track
             className={cn(
-              'border-shadow bg-secondary relative w-full grow overflow-hidden rounded-full duration-100 group-hover:scale-y-150',
+              'border-shadow bg-secondary relative w-full grow overflow-hidden rounded-full transition-transform duration-100 motion-safe:group-hover:scale-y-150',
               isCompact ? 'h-0.5' : 'h-1',
             )}
           >
@@ -229,7 +229,7 @@ const Time = ({ className, trackClassName }: TimeProps = {}) => {
       {showTooltip && (
         <div
           ref={tooltipRef}
-          className="bg-popover text-popover-foreground border-shadow pointer-events-none fixed z-50 -translate-x-1/2 rounded-md px-2 py-1 text-xs font-medium tabular-nums"
+          className="bg-popover text-popover-foreground border-shadow pointer-events-none fixed z-50 -translate-x-1/2 rounded-md border px-2 py-1 text-xs font-medium tabular-nums"
           style={tooltipStyle}
         >
           {formatTime(hoverTime)}

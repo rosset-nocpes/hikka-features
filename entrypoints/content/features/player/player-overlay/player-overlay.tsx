@@ -52,7 +52,7 @@ const PlayerOverlay = () => {
       <div
         ref={setOverlay}
         className={cn(
-          'relative flex flex-1 flex-col justify-end duration-300',
+          'relative flex flex-1 flex-col justify-end transition-opacity duration-300',
           adInProgress && 'opacity-0',
           !uiShown && 'cursor-none',
         )}
