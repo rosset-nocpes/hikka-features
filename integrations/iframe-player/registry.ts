@@ -11,6 +11,7 @@ const bridgeClasses = [
 export const IFRAME_PLAYER_MATCHES = [
   'https://ashdi.vip/vod/*',
   'https://moonanime.art/iframe/*',
+  'https://moonanime.net/iframe/*',
   'https://tortuga.tw/vod/*',
 ];
 
