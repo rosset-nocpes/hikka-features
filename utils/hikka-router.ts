@@ -15,13 +15,36 @@ export const isTeamPagePath = (path: string) => TEAM_PAGE_PATH.test(path);
 export const teamPagePath = (slug?: string) =>
   slug ? `/teams/${encodeURIComponent(slug)}` : '/teams';
 
+/** `/<type>/<slug>/recommendations`, the titles MAL users liked with one. */
+export const RECOMMENDATIONS_PAGE_PATH =
+  /^\/(anime|manga|novel)\/([^/]+)\/recommendations\/?$/;
+
+export const isRecommendationsPagePath = (path: string) =>
+  RECOMMENDATIONS_PAGE_PATH.test(path);
+
+export const recommendationsPagePath = (contentType: string, slug: string) =>
+  `/${contentType}/${slug}/recommendations`;
+
+/**
+ * The route of hikka.io's that one of the extension's pages is shown over,
+ * or nothing for the site's own paths: the home page under team pages, and
+ * a title's authors, a tab every title has, under its recommendations.
+ */
+export function ownPageRoute(path: string) {
+  if (isTeamPagePath(path)) return '/';
+  const recommendations = path.match(RECOMMENDATIONS_PAGE_PATH);
+  return recommendations
+    ? `/${recommendations[1]}/${recommendations[2]}/staff`
+    : undefined;
+}
+
 /** Asks the router to open a path; `detail` is `{ href, replace }` as JSON. */
 export const NAVIGATE_EVENT = 'hikka-features:navigate';
 /** The router finished opening a path, the site's own links included. */
 export const NAVIGATED_EVENT = 'hikka-features:navigated';
 /** Set on `<html>` once the router answers navigation requests. */
 export const ROUTER_READY_ATTRIBUTE = 'data-hikka-features-router';
-/** Set on `<html>` once a team page loaded directly is in the site's layout. */
+/** Set on `<html>` once a page of the extension's loaded directly is in the site's layout. */
 export const PAGE_READY_ATTRIBUTE = 'data-hikka-features-ready';
 
 /** Opens a hikka.io path in place, or loads it when the router can't. */

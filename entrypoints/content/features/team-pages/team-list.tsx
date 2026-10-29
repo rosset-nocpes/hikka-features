@@ -5,6 +5,7 @@ import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
 import MaterialSymbolsGroupsOutlineRounded from '~icons/material-symbols/groups-outline-rounded';
 import MaterialSymbolsSearchRounded from '~icons/material-symbols/search-rounded';
 
+import { Poster } from '@/components/hikka/poster';
 import TeamLogo from '@/components/hikka/team-logo';
 import { Button } from '@/components/ui/button';
 import EmptyState from '@/components/ui/empty-state';
@@ -21,11 +22,9 @@ import {
 } from './contents';
 import {
   LoadMoreButton,
-  Poster,
   SortSelect,
   type TypeFilter,
   TypeFilterButtons,
-  useDocumentTitle,
 } from './parts';
 
 /** Teams a part shows at first and adds by each "show more". */

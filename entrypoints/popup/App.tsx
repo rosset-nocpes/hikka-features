@@ -127,7 +127,7 @@ function HomePage() {
             <FeatureSwitch
               feature="recommendationBlock"
               label="Блок рекомендацій"
-              description="Блок із контентом, який схожий на той, який ви дивитеся"
+              description="Блок і вкладка тайтлу з контентом, схожим на той, який ви дивитеся"
             />
           </SettingsGroup>
         </motion.div>

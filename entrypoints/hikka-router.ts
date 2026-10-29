@@ -1,7 +1,7 @@
 import {
-  isTeamPagePath,
   NAVIGATE_EVENT,
   NAVIGATED_EVENT,
+  ownPageRoute,
   PAGE_READY_ATTRIBUTE,
   ROUTER_READY_ATTRIBUTE,
 } from '@/utils/hikka-router';
@@ -26,10 +26,10 @@ const findRouter = async () => {
 
 /**
  * Runs in hikka.io's own JavaScript world, injected by the content script.
- * hikka.io answers paths it doesn't know, like the extension's team pages,
- * with a bare 404 page. Its router can show another route under any URL
- * (route masking), so team pages show the home route, with the site's
- * navbar and footer, which the content script then fills in.
+ * hikka.io answers paths it doesn't know, like the extension's pages, with a
+ * bare 404 page. Its router can show another route under any URL (route
+ * masking), so each of them shows one of the site's (`ownPageRoute`), with
+ * the site's navbar and footer, which the content script then fills in.
  */
 export default defineUnlistedScript(async () => {
   const root = document.documentElement;
@@ -42,12 +42,14 @@ export default defineUnlistedScript(async () => {
   const navigate = (href: string, replace: boolean) => {
     const url = new URL(href, location.origin);
     const path = url.pathname + url.search;
-    return isTeamPagePath(url.pathname)
+    const route = ownPageRoute(url.pathname);
+    return route
       ? router.navigate({
-          to: '/',
+          to: route,
           replace,
-          // Every team page is the same route underneath; the router skips
-          // a navigation that changes only the mask, so the state differs.
+          // Every team page is the same route underneath, and a title's
+          // recommendations are its authors' route; the router skips a
+          // navigation that changes only the mask, so the state differs.
           state: { hikkaFeaturesPage: path },
           // Reloads ask the server for the masked path, which this answers again.
           mask: { to: path, unmaskOnReload: false },
@@ -69,8 +71,8 @@ export default defineUnlistedScript(async () => {
   );
   root.setAttribute(ROUTER_READY_ATTRIBUTE, '');
 
-  // A team page opened directly: the server sent its 404 page.
-  if (isTeamPagePath(location.pathname) && !document.querySelector('main')) {
+  // A page of the extension's opened directly: the server sent its 404 page.
+  if (ownPageRoute(location.pathname) && !document.querySelector('main')) {
     await navigate(location.pathname + location.search, true).catch(
       () => undefined,
     );

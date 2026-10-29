@@ -5,13 +5,18 @@ import MaterialSymbolsPersonalizedRecommendations from '~icons/material-symbols/
 
 import { HFLogo } from '@/components/feature-card';
 import BlockHeader from '@/components/hikka/block-header';
-import MediaTooltip from '@/components/hikka/media-tooltip';
-import { AspectRatio } from '@/components/ui/aspect-ratio';
+import ContentCard, {
+  ContentCardSkeleton,
+} from '@/components/hikka/content-card';
 import EmptyState from '@/components/ui/empty-state';
+import { recommendationsPagePath } from '@/utils/hikka-router';
 import { reveal } from '@/utils/motion';
 
 import { BaseFeature, createFeatureUi } from '../core/base-feature';
 import { HikkaPages } from '../core/core.enums';
+
+/** Titles the block shows; its title opens the page with all of them. */
+const SHOWN = 5;
 
 export default class RecommendationBlockFeature extends BaseFeature {
   readonly id = 'recommendation-block';
@@ -36,7 +41,7 @@ export default class RecommendationBlockFeature extends BaseFeature {
 const RecommendationBlock: FC<{ container: HTMLElement }> = ({ container }) => {
   const { enabled } = useSettings().features.recommendationBlock;
 
-  const { contentType } = usePageStore();
+  const { contentType, slug } = usePageStore();
   const { data: content_data } = useHikka();
   const { data, isLoading } = useRecommendation();
 
@@ -49,22 +54,20 @@ const RecommendationBlock: FC<{ container: HTMLElement }> = ({ container }) => {
         >
           <BlockHeader
             title="Схожий контент"
-            href={`https://myanimelist.net/${contentType === 'novel' ? 'manga' : contentType}/${content_data.mal_id}`}
-            disabled={isLoading || data?.recommendations.length === 0}
+            to={
+              contentType && slug
+                ? recommendationsPagePath(contentType, slug)
+                : undefined
+            }
+            disabled={isLoading || !data?.length}
             icon={<HFLogo />}
           />
           <div className="no-scrollbar md:gradient-mask-none auto-cols-scroll grid-cols-scroll grid-min-6 relative -mx-4 -my-4 grid grid-flow-col gap-4 overflow-x-scroll p-4 sm:grid-cols-4 md:grid-cols-5 lg:gap-6">
             {isLoading &&
-              Array.from({ length: 5 }).map((_, index) => (
-                <div key={index} className="flex flex-col gap-2">
-                  <AspectRatio
-                    ratio={0.7}
-                    className="skeleton bg-secondary/60 animate-pulse rounded-md"
-                  />
-                  <div className="skeleton bg-secondary/60 h-5 animate-pulse rounded-full" />
-                </div>
+              Array.from({ length: SHOWN }).map((_, index) => (
+                <ContentCardSkeleton key={index} />
               ))}
-            {!data?.recommendations.length && (
+            {!isLoading && !data?.length && (
               <EmptyState
                 bordered
                 icon={<MaterialSymbolsPersonalizedRecommendations />}
@@ -73,33 +76,14 @@ const RecommendationBlock: FC<{ container: HTMLElement }> = ({ container }) => {
                 className="col-span-5"
               />
             )}
-            {data &&
-              data.recommendations.length > 0 &&
-              data.recommendations.map((item) => (
-                <MediaTooltip key={item.slug} item={item} container={container}>
-                  <a
-                    href={`https://hikka.io/${item.data_type}/${item.slug}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex flex-col gap-2"
-                  >
-                    <AspectRatio
-                      ratio={0.7}
-                      className="bg-muted relative w-full overflow-hidden rounded-md"
-                    >
-                      <img
-                        className="bg-secondary/30 absolute inset-0 h-full w-full object-cover"
-                        src={item.image}
-                        alt={hikkaTitle(item)}
-                        loading="lazy"
-                      />
-                    </AspectRatio>
-                    <span className="line-clamp-2 text-sm leading-5 font-medium">
-                      {hikkaTitle(item)}
-                    </span>
-                  </a>
-                </MediaTooltip>
-              ))}
+            {data?.slice(0, SHOWN).map((item) => (
+              <ContentCard
+                key={item.slug}
+                item={item}
+                container={container}
+                newTab
+              />
+            ))}
           </div>
         </motion.div>
       )}

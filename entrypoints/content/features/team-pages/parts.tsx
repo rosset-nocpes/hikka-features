@@ -3,18 +3,15 @@ import {
   type FC,
   type ReactNode,
   use,
-  useEffect,
   useLayoutEffect,
   useRef,
   useState,
 } from 'react';
 import MaterialSymbolsArrowDownwardRounded from '~icons/material-symbols/arrow-downward-rounded';
 import MaterialSymbolsGridViewRounded from '~icons/material-symbols/grid-view-rounded';
-import MaterialSymbolsImageNotSupportedOutlineRounded from '~icons/material-symbols/image-not-supported-outline-rounded';
 import MaterialSymbolsMicOutlineRounded from '~icons/material-symbols/mic-outline-rounded';
 import MaterialSymbolsSubtitlesOutlineRounded from '~icons/material-symbols/subtitles-outline-rounded';
 
-import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -24,7 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { isTeamPagePath } from '@/utils/hikka-router';
 
 /** The feature UI's container, where popups have to render to be styled. */
 export const ContainerContext = createContext<HTMLElement | undefined>(
@@ -191,79 +187,3 @@ export const TextExpand: FC<{ children: ReactNode; className?: string }> = ({
     </div>
   );
 };
-
-/** A poster in hikka.io's card ratio, with a placeholder when missing. */
-export const Poster: FC<{
-  image?: string;
-  className?: string;
-  children?: ReactNode;
-}> = ({ image, className, children }) => (
-  <AspectRatio
-    ratio={0.7}
-    className={cn(
-      'bg-muted relative w-full overflow-hidden rounded-md',
-      className,
-    )}
-  >
-    <div className="bg-secondary/20 absolute inset-0 flex items-center justify-center">
-      {image ? (
-        <img
-          src={image}
-          alt=""
-          loading="lazy"
-          decoding="async"
-          className="size-full object-cover"
-        />
-      ) : (
-        <MaterialSymbolsImageNotSupportedOutlineRounded className="text-muted-foreground text-4xl" />
-      )}
-    </div>
-    {children}
-  </AspectRatio>
-);
-
-/** hikka.io's subtitles under a card's title: "TV Серіал • 2026". */
-export const CardMeta: FC<{ items: (string | undefined)[] }> = ({ items }) => {
-  const shown = items.filter(Boolean);
-  if (shown.length === 0) return null;
-  return (
-    <div className="flex items-center gap-2">
-      {shown.map((item, index) => (
-        <span key={item} className="contents">
-          {index > 0 && (
-            <span className="bg-muted-foreground size-1 shrink-0 rounded-full" />
-          )}
-          <span className="text-muted-foreground text-xs leading-tight font-medium">
-            {item}
-          </span>
-        </span>
-      ))}
-    </div>
-  );
-};
-
-/** hikka.io's poster grid: two columns on phones, five beside the contents. */
-export const POSTER_GRID =
-  'grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-4 lg:gap-6 xl:grid-cols-5';
-
-/** Names the tab while the page is shown, as hikka.io names its pages. */
-export function useDocumentTitle(title: string | undefined) {
-  useEffect(() => {
-    if (!title) return;
-    const wanted = `${title} / Hikka`;
-    const apply = () => {
-      // Leaving the page, the site names the next one before this unmounts.
-      if (!isTeamPagePath(location.pathname)) return;
-      if (document.title !== wanted) document.title = wanted;
-    };
-    apply();
-    // The site names the tab after the route it shows underneath, later.
-    const observer = new MutationObserver(apply);
-    observer.observe(document.head, {
-      childList: true,
-      characterData: true,
-      subtree: true,
-    });
-    return () => observer.disconnect();
-  }, [title]);
-}

@@ -53,10 +53,22 @@ so `entrypoints/hikka-router.ts`, injected into the page's own JavaScript
 world, has the site's TanStack router render its home route under them (route
 masking) and the team pages replace its content, inside the site's navbar and
 footer. Links in the extension's pages navigate through that router, without
-reloads; the `team-pages` content script hides the 404 page until then. As
-the router sees the home page under team pages, going between them changes
+reloads; the `extension-pages` content script hides the 404 page until then.
+As the router sees the home page under team pages, going between them changes
 nothing in the DOM, so the feature mounts itself on navigation, and the
 site's links home are sent through the router.
+
+The "Схожий контент" block on anime, manga and novel pages shows five of the
+titles MAL users recommend with it (tenrai's MAL mirror, looked up on Hikka in
+one `POST /integrations/mal/<type>`). Its title opens all of them at
+`/<type>/<slug>/recommendations` (`recommendation-page.feature.tsx`), a tab
+of the title's like its authors': that is the route the router masks under
+it, so the site's header and tabs stay. The page hides the authors' list,
+renames the tab where the header and the mobile top bar name it, and keeps
+"Автори" from looking current. "Схожі" joins the title's tabs before
+"Обговорення" and the mobile drawer of sections
+(`recommendation-nav-link.feature.tsx`); a longer name would push
+"Обговорення" out of the tabs on anime pages.
 
 ## Extension/backend compatibility
 

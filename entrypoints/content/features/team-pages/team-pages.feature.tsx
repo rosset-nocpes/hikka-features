@@ -1,8 +1,4 @@
-import {
-  navigateOnHikka,
-  onHikkaNavigation,
-  TEAM_PAGE_PATH,
-} from '@/utils/hikka-router';
+import { navigateOnHikka, TEAM_PAGE_PATH } from '@/utils/hikka-router';
 
 import { BaseFeature, createFeatureUi } from '../../core/base-feature';
 import { HikkaPages } from '../../core/core.enums';
@@ -62,14 +58,8 @@ export default class TeamPagesFeature extends BaseFeature {
     style.textContent = PAGE_STYLE;
     document.head.append(style);
     ctx.onInvalidated(() => style.remove());
-    // Home is the route under team pages: going between them changes
-    // nothing the feature manager watches.
-    const stop = onHikkaNavigation(() => {
-      if (this.shouldMount === this.isMounted) return;
-      if (this.shouldMount) this.mount();
-      else this.unmount();
-    });
-    ctx.onInvalidated(stop);
+    // Home is the route under team pages.
+    this.followNavigation();
 
     this.ui = await createFeatureUi({
       name: this.id,

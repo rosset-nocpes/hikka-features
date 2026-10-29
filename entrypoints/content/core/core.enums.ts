@@ -16,6 +16,7 @@ export enum HikkaPages {
   NovelMainPage = 'novel-main-page',
   // The extension's own pages
   TeamPages = 'team-pages',
+  RecommendationsPage = 'recommendations-page',
   // Edit
   EditContent = 'edit-content',
   EditCreate = 'edit-create',

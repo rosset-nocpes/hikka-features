@@ -27,7 +27,8 @@ export interface MediaTooltipItem {
   volumes?: number | null;
 }
 
-const MEDIA_TYPES: Record<string, string> = {
+/** hikka.io's names for its media types, of anime and of print alike. */
+export const MEDIA_TYPES: Record<string, string> = {
   special: 'Спешл',
   movie: 'Фільм',
   ova: 'OVA',

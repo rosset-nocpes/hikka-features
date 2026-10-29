@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { createRoot, type Root } from 'react-dom/client';
 
+import { onHikkaNavigation } from '@/utils/hikka-router';
 import { hikkaTheme } from '@/utils/hikka-theme';
 
 import { HIKKA_PAGE_CHECKERS } from './core.constant';
@@ -127,6 +128,24 @@ export abstract class BaseFeature {
 
   unmount() {
     if (this.isMounted) this.ui?.remove();
+  }
+
+  /**
+   * Mounts or unmounts on each of the site's navigations as well. The
+   * extension's pages need it: going between one and the route it is shown
+   * over changes nothing in the DOM, which is all the manager watches.
+   */
+  protected followNavigation() {
+    const stop = onHikkaNavigation(() => {
+      if (this.shouldMount === this.isMounted) return;
+      try {
+        if (this.shouldMount) this.mount();
+        else this.unmount();
+      } catch {
+        // Its anchor isn't on the page yet; the manager mounts it once it is.
+      }
+    });
+    usePageStore.getState().ctx.onInvalidated(stop);
   }
 }
 

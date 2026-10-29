@@ -10,6 +10,7 @@ import MdiInstagram from '~icons/mdi/instagram';
 import MdiTelegram from '~icons/mdi/telegram';
 import MdiYoutube from '~icons/mdi/youtube';
 
+import { CardMeta, POSTER_GRID, Poster } from '@/components/hikka/poster';
 import TeamLogo from '@/components/hikka/team-logo';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -34,15 +35,7 @@ import {
   ContentsLayout,
   ContentsSection,
 } from './contents';
-import {
-  CardMeta,
-  POSTER_GRID,
-  Poster,
-  TextExpand,
-  type TypeFilter,
-  TypeFilterButtons,
-  useDocumentTitle,
-} from './parts';
+import { TextExpand, type TypeFilter, TypeFilterButtons } from './parts';
 
 type Team = TeamPageData['team'];
 type AnimeReleases = TeamPageData['releases'][number];

@@ -1,7 +1,8 @@
-import type { MouseEvent, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 import MaterialSymbolsGroupsRounded from '~icons/material-symbols/groups-rounded';
 
+import { DRAWER_ROW, onDrawerLinkClick } from '@/components/hikka/nav-styles';
 import {
   isTeamPagePath,
   onHikkaLinkClick,
@@ -18,10 +19,6 @@ const DROPDOWN_IDLE =
   'border-transparent hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 text-muted-foreground';
 const DROPDOWN_ACTIVE =
   'border-primary-foreground/40 bg-primary-foreground/15 text-primary-foreground hover:bg-primary-foreground/20 hover:text-primary-foreground dark:hover:bg-primary-foreground/20';
-
-/** hikka.io's rows in the mobile "Ще" drawer (`nav-styles.ts`). */
-const DRAWER_ROW =
-  'flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors text-muted-foreground hover:bg-accent hover:text-foreground data-[active=true]:bg-primary-foreground/15 data-[active=true]:font-medium data-[active=true]:text-primary-foreground data-[active=true]:hover:bg-primary-foreground/20 data-[active=true]:hover:text-primary-foreground [&_svg:not([class*=size-])]:size-4 [&_svg]:shrink-0';
 
 const LABEL = 'Команди';
 const COMMUNITY_LINK = 'a[href^="/collections"], a[href^="/articles"]';
@@ -63,20 +60,12 @@ const DropdownItem = () => {
   );
 };
 
-/** The drawer closes on Escape, as hikka.io's own rows close it. */
-const closeDrawer = (event: MouseEvent<HTMLAnchorElement>) => {
-  onHikkaLinkClick(event);
-  event.currentTarget.dispatchEvent(
-    new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
-  );
-};
-
 const DrawerRow = () => {
   const active = isTeamPagePath(useLocationPath());
   return (
     <a
       href={teamPagePath()}
-      onClick={closeDrawer}
+      onClick={onDrawerLinkClick}
       data-active={active}
       aria-current={active ? 'page' : undefined}
       className={DRAWER_ROW}
