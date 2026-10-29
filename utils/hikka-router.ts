@@ -87,3 +87,40 @@ export function onHikkaNavigation(listener: () => void) {
     window.removeEventListener('popstate', listener);
   };
 }
+
+/** On the site's content while one of the extension's pages covers it. */
+const COVERED_ATTRIBUTE = 'data-hikka-features-covered';
+
+/** Hides what `coverSiteContent` marks. */
+export const COVERED_STYLE = `[${COVERED_ATTRIBUTE}] { display: none !important; }`;
+
+/**
+ * Hides the site's content beside `ui`, one of the extension's pages, in
+ * their container: what is there, and what the site adds while `isPage`
+ * holds for the URL. The route opened next renders after the URL changes,
+ * so it is never hidden, not even for the moment before the page goes: some
+ * of its parts measure themselves once, and measured hidden, they stay
+ * broken (base-ui's sliders lose their thumbs). Returns what shows it again.
+ */
+export function coverSiteContent(
+  ui: Element,
+  isPage: (path: string) => boolean,
+) {
+  const container = ui.parentElement;
+  if (!container) return () => {};
+  const cover = () => {
+    if (!isPage(location.pathname)) return;
+    for (const child of container.children) {
+      if (child !== ui) child.setAttribute(COVERED_ATTRIBUTE, '');
+    }
+  };
+  cover();
+  const observer = new MutationObserver(cover);
+  observer.observe(container, { childList: true });
+  return () => {
+    observer.disconnect();
+    for (const child of container.children) {
+      child.removeAttribute(COVERED_ATTRIBUTE);
+    }
+  };
+}

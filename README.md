@@ -65,7 +65,10 @@ one `POST /integrations/mal/<type>`). Its title opens all of them at
 of the title's like its authors': that is the route the router masks under
 it, so the site's header and tabs stay. The page hides the authors' list,
 renames the tab where the header and the mobile top bar name it, and keeps
-"Автори" from looking current. "Схожі" joins the title's tabs before
+"Автори" from looking current. Both kinds of page hide only the site's
+content that is there while the URL is theirs (`coverSiteContent`): the next
+route renders before they're taken off, and some of its parts measure
+themselves once, staying broken if hidden then (the catalog's sliders). "Схожі" joins the title's tabs before
 "Обговорення" and the mobile drawer of sections
 (`recommendation-nav-link.feature.tsx`); a longer name would push
 "Обговорення" out of the tabs on anime pages.

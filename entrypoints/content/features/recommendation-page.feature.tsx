@@ -6,7 +6,11 @@ import ContentCard, {
 } from '@/components/hikka/content-card';
 import EmptyState from '@/components/ui/empty-state';
 import { malType, RECOMMENDATIONS_TAB } from '@/hooks/use-recommendation';
-import { isRecommendationsPagePath } from '@/utils/hikka-router';
+import {
+  COVERED_STYLE,
+  coverSiteContent,
+  isRecommendationsPagePath,
+} from '@/utils/hikka-router';
 
 import { BaseFeature, createFeatureUi } from '../core/base-feature';
 import { HikkaPages } from '../core/core.enums';
@@ -20,14 +24,13 @@ const AUTHORS_ROW = `${PAGE} [data-slot="drawer-content"] a[data-active="true"][
 
 /**
  * hikka.io shows a title's authors under its recommendations (see
- * `ownPageRoute`): their list is hidden, and "Автори", which the site marks
- * as the current tab under the header and in the mobile drawer of sections,
- * looks like the other tabs (hikka.io's idle tab and row).
+ * `ownPageRoute`): their list is hidden (`coverSiteContent`), and "Автори",
+ * which the site marks as the current tab under the header and in the
+ * mobile drawer of sections, looks like the other tabs (hikka.io's idle tab
+ * and row).
  */
 const PAGE_STYLE = `
-  ${PAGE} main > div > div.isolate > :not(recommendation-page) {
-    display: none !important;
-  }
+  ${COVERED_STYLE}
   ${AUTHORS_TAB} {
     border-color: transparent;
     background-color: color-mix(in oklab, var(--secondary) 40%, transparent);
@@ -106,14 +109,22 @@ export default class RecommendationPageFeature extends BaseFeature {
     // The authors' route is under the page.
     this.followNavigation();
 
+    let uncover = () => {};
     this.ui = await createFeatureUi({
       name: this.id,
       position: 'inline',
       append: 'first',
-      // The tab's content, under the header and tabs (`content-subpage.tsx`).
-      anchor: 'main > div > div.isolate',
-      onMount: () => document.documentElement.setAttribute(PAGE_ATTRIBUTE, ''),
-      onRemove: () => document.documentElement.removeAttribute(PAGE_ATTRIBUTE),
+      // The tab's content, after the header and tabs (`content-subpage.tsx`);
+      // the floating bar at the bottom has an `isolate` box as well.
+      anchor: 'main > div > section[data-slot="block-surface"] ~ div.isolate',
+      onMount: (_container, _wrapper, host) => {
+        document.documentElement.setAttribute(PAGE_ATTRIBUTE, '');
+        uncover = coverSiteContent(host, isRecommendationsPagePath);
+      },
+      onRemove: () => {
+        document.documentElement.removeAttribute(PAGE_ATTRIBUTE);
+        uncover();
+      },
       render: (container) => <RecommendationPage container={container} />,
     });
   }

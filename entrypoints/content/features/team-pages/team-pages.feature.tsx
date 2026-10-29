@@ -1,4 +1,10 @@
-import { navigateOnHikka, TEAM_PAGE_PATH } from '@/utils/hikka-router';
+import {
+  COVERED_STYLE,
+  coverSiteContent,
+  isTeamPagePath,
+  navigateOnHikka,
+  TEAM_PAGE_PATH,
+} from '@/utils/hikka-router';
 
 import { BaseFeature, createFeatureUi } from '../../core/base-feature';
 import { HikkaPages } from '../../core/core.enums';
@@ -11,11 +17,11 @@ const PAGE_ATTRIBUTE = 'data-hikka-features-page';
 
 /**
  * The page hikka.io's router shows under team pages (its home page, see
- * `entrypoints/hikka-router.ts`) stays mounted but hidden, and the mobile
- * tab bar doesn't light "Головна" for it.
+ * `entrypoints/hikka-router.ts`) stays mounted but hidden
+ * (`coverSiteContent`), and the mobile tab bar doesn't light "Головна" for it.
  */
 const PAGE_STYLE = `
-  html[${PAGE_ATTRIBUTE}] main > :not(team-pages) { display: none !important; }
+  ${COVERED_STYLE}
   html[${PAGE_ATTRIBUTE}] nav.fixed a[href="/"][data-active="true"] > span {
     background-color: transparent !important;
     color: inherit !important;
@@ -61,18 +67,21 @@ export default class TeamPagesFeature extends BaseFeature {
     // Home is the route under team pages.
     this.followNavigation();
 
+    let uncover = () => {};
     this.ui = await createFeatureUi({
       name: this.id,
       position: 'inline',
       append: 'first',
       anchor: 'main',
-      onMount: () => {
+      onMount: (_container, _wrapper, host) => {
         document.documentElement.setAttribute(PAGE_ATTRIBUTE, '');
         document.addEventListener('click', goHome, true);
+        uncover = coverSiteContent(host, isTeamPagePath);
       },
       onRemove: () => {
         document.documentElement.removeAttribute(PAGE_ATTRIBUTE);
         document.removeEventListener('click', goHome, true);
+        uncover();
       },
       render: (container) => (
         <ContainerContext value={container}>
