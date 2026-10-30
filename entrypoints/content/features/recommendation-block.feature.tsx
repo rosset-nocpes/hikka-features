@@ -59,7 +59,7 @@ const RecommendationBlock: FC<{ container: HTMLElement }> = ({ container }) => {
                 ? recommendationsPagePath(contentType, slug)
                 : undefined
             }
-            disabled={isLoading || !data?.length}
+            disabled={isLoading || !data?.list.length}
             icon={<HFLogo />}
           />
           <div className="no-scrollbar md:gradient-mask-none auto-cols-scroll grid-cols-scroll grid-min-6 relative -mx-4 -my-4 grid grid-flow-col gap-4 overflow-x-scroll p-4 sm:grid-cols-4 md:grid-cols-5 lg:gap-6">
@@ -67,7 +67,7 @@ const RecommendationBlock: FC<{ container: HTMLElement }> = ({ container }) => {
               Array.from({ length: SHOWN }).map((_, index) => (
                 <ContentCardSkeleton key={index} />
               ))}
-            {!isLoading && !data?.length && (
+            {!isLoading && !data?.list.length && (
               <EmptyState
                 bordered
                 icon={<MaterialSymbolsPersonalizedRecommendations />}
@@ -76,7 +76,7 @@ const RecommendationBlock: FC<{ container: HTMLElement }> = ({ container }) => {
                 className="col-span-5"
               />
             )}
-            {data?.slice(0, SHOWN).map((item) => (
+            {data?.list.slice(0, SHOWN).map((item) => (
               <ContentCard
                 key={item.slug}
                 item={item}

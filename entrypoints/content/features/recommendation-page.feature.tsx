@@ -1,11 +1,11 @@
-import { type FC, useEffect } from 'react';
+import { type FC, Fragment, useEffect } from 'react';
 import MaterialSymbolsPersonalizedRecommendations from '~icons/material-symbols/personalized-recommendations';
 
 import ContentCard, {
   ContentCardSkeleton,
 } from '@/components/hikka/content-card';
 import EmptyState from '@/components/ui/empty-state';
-import { malType, RECOMMENDATIONS_TAB } from '@/hooks/use-recommendation';
+import { RECOMMENDATIONS_TAB } from '@/hooks/use-recommendation';
 import {
   COVERED_STYLE,
   coverSiteContent,
@@ -92,8 +92,8 @@ function useTabName(name: string) {
 }
 
 /**
- * Every title MAL users recommend with an anime, manga or novel that Hikka
- * has, at `/<type>/<slug>/recommendations`: the page that the block's title
+ * Every title MAL and AniList users recommend with an anime, manga or novel
+ * that Hikka has, at `/<type>/<slug>/recommendations`: the page that the block's title
  * and a tab of the title's open, laid out like its authors' tab.
  */
 export default class RecommendationPageFeature extends BaseFeature {
@@ -135,8 +135,7 @@ const GRID =
   'grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-4 lg:gap-6 xl:grid-cols-5';
 
 const RecommendationPage: FC<{ container: HTMLElement }> = ({ container }) => {
-  const { contentType } = usePageStore();
-  const { data: content, isLoading: contentLoading } = useHikka();
+  const { isLoading: contentLoading } = useHikka();
   const { data, isLoading } = useRecommendation();
   useDocumentTitle(RECOMMENDATIONS_TAB);
   useTabName(RECOMMENDATIONS_TAB);
@@ -151,7 +150,7 @@ const RecommendationPage: FC<{ container: HTMLElement }> = ({ container }) => {
     );
   }
 
-  if (!data?.length) {
+  if (!data?.list.length) {
     return (
       <EmptyState
         bordered
@@ -165,20 +164,25 @@ const RecommendationPage: FC<{ container: HTMLElement }> = ({ container }) => {
   return (
     <div className="flex flex-col gap-8">
       <div className={GRID}>
-        {data.map((item) => (
+        {data.list.map((item) => (
           <ContentCard key={item.slug} item={item} container={container} meta />
         ))}
       </div>
       <p className="text-muted-foreground text-sm">
         За рекомендаціями користувачів{' '}
-        <a
-          href={`https://myanimelist.net/${malType(contentType)}/${content.mal_id}/_/userrecs`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hover:text-foreground underline underline-offset-4"
-        >
-          MyAnimeList
-        </a>
+        {data.sources.map(({ name, url }, index) => (
+          <Fragment key={name}>
+            {index > 0 && ' і '}
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-foreground underline underline-offset-4"
+            >
+              {name}
+            </a>
+          </Fragment>
+        ))}
       </p>
     </div>
   );

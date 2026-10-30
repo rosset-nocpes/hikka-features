@@ -59,19 +59,24 @@ nothing in the DOM, so the feature mounts itself on navigation, and the
 site's links home are sent through the router.
 
 The "Схожий контент" block on anime, manga and novel pages shows five of the
-titles MAL users recommend with it (tenrai's MAL mirror, looked up on Hikka in
-one `POST /integrations/mal/<type>`). Its title opens all of them at
-`/<type>/<slug>/recommendations` (`recommendation-page.feature.tsx`), a tab
-of the title's like its authors': that is the route the router masks under
-it, so the site's header and tabs stay. The page hides the authors' list,
-renames the tab where the header and the mobile top bar name it, and keeps
-"Автори" from looking current. Both kinds of page hide only the site's
+titles MAL and AniList users recommend with it (MAL's through tenrai's
+mirror), looked up on Hikka in one `POST /integrations/mal/<type>`
+(`hooks/use-recommendation.ts`). AniList's upvotes far outnumber MAL's
+written recommendations, so titles rank by each site's share of votes for
+them, a site with few votes in all counting for less. Seasons and versions
+of a story, which AniList relates in the same request, count together and
+show as their most recommended one; the title's own franchise, which AniList
+users recommend with sequels, is left out. The block's title opens all of
+them at `/<type>/<slug>/recommendations` (`recommendation-page.feature.tsx`),
+a tab of the title's like its authors': that is the route the router masks
+under it, so the site's header and tabs stay. The page hides the authors'
+list, renames the tab where the header and the mobile top bar name it, and
+keeps "Автори" from looking current. Both kinds of page hide only the site's
 content that is there while the URL is theirs (`coverSiteContent`): the next
 route renders before they're taken off, and some of its parts measure
-themselves once, staying broken if hidden then (the catalog's sliders). "Схожі" joins the title's tabs before
-"Обговорення" and the mobile drawer of sections
-(`recommendation-nav-link.feature.tsx`); a longer name would push
-"Обговорення" out of the tabs on anime pages.
+themselves once, staying broken if hidden then (the catalog's sliders). "Схожі" joins the title's tabs before "Обговорення"
+and the mobile drawer of sections (`recommendation-nav-link.feature.tsx`); a
+longer name would push "Обговорення" out of the tabs on anime pages.
 
 ## Extension/backend compatibility
 
