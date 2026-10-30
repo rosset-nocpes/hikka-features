@@ -12,7 +12,8 @@ export interface RemoteFetchResponse {
  * the reply. The background owns the session and the cross-origin fetches.
  */
 export interface BackgroundMessages {
-  login(): UserDataV2;
+  /** Opens the hikka.io login tab; `awaitLogin` waits for it to end. */
+  login(): void;
   logout(): void;
   /** Who hikka.io is signed in as (null: nobody), for the account to follow. */
   'hikka-viewer'(request: { viewerId: string | null }): void;

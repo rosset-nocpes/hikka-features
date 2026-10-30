@@ -8,18 +8,19 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { account } from '@/utils/account';
 
+/** By the error code the login ended with. */
+const AUTH_ERRORS: Record<string, string> = {
+  cancelled: 'Вхід скасовано.',
+  login_expired: 'Час на вхід минув. Спробуйте ще раз.',
+  hikka_exchange_failed: 'hikka.io не підтвердила вхід. Спробуйте згодом.',
+};
+
 const authErrorMessage = (error: unknown) => {
   const message = error instanceof Error ? error.message : '';
   if (message.includes('WXT_CONVEX_SITE_URL')) {
     return 'Сервер входу не налаштований у цій збірці.';
   }
-  if (message.includes('cancel') || message.includes('closed')) {
-    return 'Вхід скасовано.';
-  }
-  if (message.includes('invalid_redirect_uri')) {
-    return 'Цю версію розширення ще не дозволено на сервері.';
-  }
-  return message || 'Не вдалося увійти. Спробуйте ще раз.';
+  return AUTH_ERRORS[message] ?? 'Не вдалося увійти. Спробуйте ще раз.';
 };
 
 const UserOptions = () => {
@@ -93,7 +94,7 @@ const UserOptions = () => {
         <span className="text-sm font-medium">Увійти через hikka.io</span>
         {description(
           pending === 'login'
-            ? 'Завершіть вхід у вікні hikka.io'
+            ? 'Завершіть вхід у вкладці hikka.io'
             : 'Синхронізація обраних команд',
         )}
       </span>

@@ -15,8 +15,14 @@ import type { BackgroundMessage } from './messaging';
 
 import { convexApi } from './convex-api';
 import { CONVEX_SITE_URL, convex } from './convex-client';
+import { LOGIN_STATE_KEY, type LoginState } from './login-state';
 import { syncTeamPriority } from './team-priority-sync';
 import { looseKey } from './utils';
+
+/** As long as the backend's login cookie lives. */
+const LOGIN_TTL_MS = 15 * 60 * 1_000;
+/** Where the backend ends the login tab, with `?error=` when it failed. */
+const LOGIN_DONE_URL = `${CONVEX_SITE_URL}/auth/hikka/done`;
 
 interface AuthResponse {
   accessToken: string;
@@ -83,6 +89,46 @@ async function authRequest(path: string, body?: unknown) {
   return response;
 }
 
+const base64Url = (bytes: Uint8Array) =>
+  btoa(String.fromCharCode(...bytes))
+    .replaceAll('+', '-')
+    .replaceAll('/', '_')
+    .replaceAll('=', '');
+
+/** A random verifier and its SHA-256, which the login tab carries instead. */
+async function loginChallenge() {
+  const verifier = base64Url(crypto.getRandomValues(new Uint8Array(32)));
+  const digest = await crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(verifier),
+  );
+  return { verifier, challenge: base64Url(new Uint8Array(digest)) };
+}
+
+async function readLogin() {
+  const stored = await browser.storage.local.get(LOGIN_STATE_KEY);
+  return stored[LOGIN_STATE_KEY] as LoginState | undefined;
+}
+
+const writeLogin = (state: LoginState) =>
+  browser.storage.local.set({ [LOGIN_STATE_KEY]: state });
+
+/** Brings a tab, and its window where there are windows, to the front. */
+async function focusTab(tabId: number) {
+  const tab = await browser.tabs.update(tabId, { active: true });
+  // Firefox for Android has no windows.
+  if (tab?.windowId !== undefined) {
+    await browser.windows?.update(tab.windowId, { focused: true });
+  }
+  return tab;
+}
+
+/**
+ * What the login tab did: reached a URL, finished loading a page whose URL
+ * is hidden from this extension, or was closed.
+ */
+type LoginTabEvent = { url: string } | 'loaded' | 'closed';
+
 /** Waits for persisted settings so a cold service worker sees the session. */
 function settingsHydrated() {
   return new Promise<void>((resolve) => {
@@ -105,38 +151,99 @@ class AccountSession {
   private accessToken?: { value: string; expiresAt: number };
   private refreshing?: Promise<string>;
 
-  async login() {
-    const redirectUri = browser.identity.getRedirectURL();
-    const start = await authRequest(
-      `/auth/hikka/start?redirect_uri=${encodeURIComponent(redirectUri)}`,
-    );
-    const { authorizationUrl } = (await start.json()) as {
-      authorizationUrl?: string;
-    };
-    if (!authorizationUrl) {
-      throw new Error(
-        'Authentication server did not return an authorization URL',
-      );
+  private loginQueue = Promise.resolve();
+
+  /**
+   * Opens hikka.io's consent page in a tab and returns: the session arrives
+   * when that tab reaches the backend's done page (`onLoginTab`). Callers
+   * wait with `awaitLogin`, as Chrome may restart this worker meanwhile.
+   */
+  async login(openerTabId?: number) {
+    if (!CONVEX_SITE_URL) {
+      throw new Error('WXT_CONVEX_SITE_URL is not configured');
+    }
+    const current = await readLogin();
+    if (current?.status === 'pending' && current.expiresAt > Date.now()) {
+      // Another click returns to the login tab instead of starting over.
+      if (await focusTab(current.tabId).catch(() => undefined)) return;
     }
 
-    const responseUrl = await browser.identity.launchWebAuthFlow({
-      interactive: true,
-      url: authorizationUrl,
+    openerTabId ??= await browser.tabs
+      .query({ active: true, lastFocusedWindow: true })
+      .then(([tab]) => tab?.id)
+      .catch(() => undefined);
+    const { verifier, challenge } = await loginChallenge();
+    const tab = await browser.tabs.create({
+      url: `${CONVEX_SITE_URL}/auth/hikka/start?challenge=${challenge}`,
     });
-    if (!responseUrl) throw new Error('Hikka login was cancelled');
+    if (tab.id === undefined) throw new Error('login_tab_failed');
+    await writeLogin({
+      status: 'pending',
+      verifier,
+      tabId: tab.id,
+      openerTabId,
+      expiresAt: Date.now() + LOGIN_TTL_MS,
+    });
+  }
 
-    const params = new URL(responseUrl).searchParams;
-    const code = params.get('code');
-    if (!code) {
-      throw new Error(
-        params.get('error') ?? 'Hikka login did not return a code',
-      );
+  /**
+   * Follows the login tab. Reaching the done page finishes the login; so
+   * does loading a page whose URL this extension may not see, once the
+   * session is ready. Closing the tab ends it, still claiming a ready one.
+   */
+  onLoginTab(tabId: number, event: LoginTabEvent) {
+    if (typeof event === 'object' && !event.url.startsWith(LOGIN_DONE_URL)) {
+      return;
+    }
+    // Queued, so closing the tab while its done page is handled is a no-op.
+    this.loginQueue = this.loginQueue
+      .then(() => this.finishLogin(tabId, event))
+      .catch(console.error);
+  }
+
+  private async finishLogin(tabId: number, event: LoginTabEvent) {
+    const login = await readLogin();
+    if (login?.status !== 'pending' || login.tabId !== tabId) return;
+
+    const error =
+      typeof event === 'object' && new URL(event.url).searchParams.get('error');
+    // The done page explains it, so its tab stays open.
+    if (error) return await writeLogin({ status: 'failed', error });
+
+    try {
+      const response = await authRequest('/auth/session/exchange', {
+        verifier: login.verifier,
+      });
+      await settingsHydrated();
+      this.store((await response.json()) as AuthResponse);
+    } catch (cause) {
+      const rejected = cause instanceof AuthError;
+      // Not the done page yet, or offline and closing the tab tries again.
+      if (
+        (event === 'loaded' && rejected) ||
+        (event !== 'closed' && !rejected)
+      ) {
+        return;
+      }
+      return await writeLogin({
+        status: 'failed',
+        // Closed before Hikka sent it back, nothing waits to be claimed.
+        error:
+          rejected && event === 'closed'
+            ? 'cancelled'
+            : cause instanceof Error
+              ? cause.message
+              : 'login_failed',
+      });
     }
 
-    const response = await authRequest('/auth/session/exchange', { code });
-    const auth = (await response.json()) as AuthResponse;
-    this.store(auth);
-    return auth.user;
+    await browser.storage.local.remove(LOGIN_STATE_KEY);
+    void this.sync();
+    if (event === 'closed') return;
+    await browser.tabs.remove(tabId).catch(() => undefined);
+    if (login.openerTabId !== undefined) {
+      await focusTab(login.openerTabId).catch(() => undefined);
+    }
   }
 
   async logout() {

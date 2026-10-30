@@ -45,11 +45,7 @@ export default defineBackground(() => {
     // Only the player on hikka.io keeps a live connection.
     'convex-token': ({ forceRefresh }, sender) =>
       fromHikkaPage(sender) ? accountSession.lendToken(forceRefresh) : null,
-    login: async () => {
-      const user = await accountSession.login();
-      syncAccount();
-      return user;
-    },
+    login: (_, sender) => accountSession.login(sender.tab?.id),
     logout: () => accountSession.logout(),
     'hikka-viewer': ({ viewerId }, sender) => {
       if (fromHikkaPage(sender)) return accountSession.followHikka(viewerId);
@@ -96,9 +92,16 @@ export default defineBackground(() => {
   });
   browser.tabs.onRemoved.addListener((tabId) => {
     hikkaContentTabs.delete(tabId);
+    accountSession.onLoginTab(tabId, 'closed');
   });
-  browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
+  browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.status === 'loading') hikkaContentTabs.delete(tabId);
+    if (changeInfo.url) {
+      accountSession.onLoginTab(tabId, { url: changeInfo.url });
+    } else if (changeInfo.status === 'complete' && tab.url === undefined) {
+      // Without host access the done page's URL is hidden too.
+      accountSession.onLoginTab(tabId, 'loaded');
+    }
   });
 });
 

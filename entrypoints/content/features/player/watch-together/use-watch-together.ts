@@ -69,6 +69,9 @@ const ERROR_MESSAGES: Record<string, string> = {
   EXTENSION_UPDATE_REQUIRED: 'Оновіть розширення, щоб дивитися разом',
   MEMBERS_OUTDATED:
     'Хтось у кімнаті має стару версію розширення, тож інше аніме не ввімкнеться',
+  cancelled: 'Вхід скасовано',
+  login_expired: 'Час на вхід минув',
+  hikka_exchange_failed: 'hikka.io не підтвердила вхід',
 };
 
 const errorMessage = (error: unknown) => {
@@ -79,7 +82,6 @@ const errorMessage = (error: unknown) => {
         ? error.message
         : undefined;
   if (code && ERROR_MESSAGES[code]) return ERROR_MESSAGES[code];
-  if (code && /cancel|closed|approve/i.test(code)) return 'Вхід скасовано';
   return 'Не вдалося підключитися до кімнати';
 };
 

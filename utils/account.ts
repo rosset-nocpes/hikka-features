@@ -2,6 +2,7 @@ import { useSettings } from '@/hooks/use-settings';
 
 import { convexApi, type TranslationType } from './convex-api';
 import { convex, liveConvex } from './convex-client';
+import { awaitLogin } from './login-state';
 import { sendToBackground } from './messaging';
 import { syncTeamPriority } from './team-priority-sync';
 
@@ -16,11 +17,10 @@ class Account {
     return !!useSettings.getState().convexSession;
   }
 
+  /** Logs in on hikka.io in a new tab; settles once that login ends. */
   async login() {
-    const user = await sendToBackground('login');
-    if (!user) throw new Error('Не вдалося завершити вхід через hikka.io');
+    await awaitLogin(() => sendToBackground('login'));
     await useSettings.persist.rehydrate();
-    return user;
   }
 
   async logout() {
