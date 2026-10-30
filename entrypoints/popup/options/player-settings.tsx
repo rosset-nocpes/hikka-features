@@ -40,6 +40,12 @@ const PlayerSettings = () => {
           label="Вимкнути блюр"
           description="Прибирає розмиття фону в програвачі"
         />
+        <FeatureSwitch
+          feature="player"
+          option="autoplayNext"
+          label="Автопрогравання"
+          description="Наступний епізод із черги вмикається сам, коли поточний закінчиться"
+        />
         <SelectOption
           label="Тип мінірежиму"
           value={miniModeType}

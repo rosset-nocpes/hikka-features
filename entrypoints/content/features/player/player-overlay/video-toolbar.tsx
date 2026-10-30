@@ -44,6 +44,7 @@ const VideoToolbar = () => {
     return (
       <div className={cn(GROUP, 'min-w-0')}>
         <Play />
+        <NextInQueue />
         <Mute />
         <Divider />
         <div className="min-w-0">

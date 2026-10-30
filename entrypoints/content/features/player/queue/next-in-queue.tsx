@@ -3,10 +3,9 @@ import MaterialSymbolsSkipNextRounded from '~icons/material-symbols/skip-next-ro
 import { Button } from '@/components/ui/button';
 import { useHikkaContent } from '@/hooks/use-hikka';
 
-import { followingEpisode, usePlayer } from '../context/player-context';
 import { playNext } from '../player-iframe-effects';
 import ToolbarTooltip from '../player-overlay/toolbar-tooltip';
-import { useActiveQueue } from './use-active-queue';
+import { upNext, useNextEpisode } from './up-next';
 
 /**
  * Skips to what plays next, in a watch together room for everyone: the
@@ -14,19 +13,28 @@ import { useActiveQueue } from './use-active-queue';
  * neither exists.
  */
 const NextInQueue = () => {
-  const queued = useActiveQueue().items[0];
-  const following = usePlayer(followingEpisode);
-  const { data: anime } = useHikkaContent('anime', queued?.slug);
+  const next = useNextEpisode();
+  const { data: anime } = useHikkaContent(
+    'anime',
+    next?.queued ? next.slug : undefined,
+  );
 
-  if (!queued && !following) return null;
+  if (!next) return null;
 
-  const label = queued
-    ? `Далі: ${hikkaTitle(anime) ?? queued.slug}, епізод ${queued.episode}`
-    : `Наступний епізод: ${following!.episode}`;
+  const label = next.queued
+    ? `Далі: ${hikkaTitle(anime) ?? next.slug}, епізод ${next.episode}`
+    : `Наступний епізод: ${next.episode}`;
 
   return (
-    <ToolbarTooltip label={label}>
-      <Button variant="ghost" size="icon-sm" onClick={() => void playNext()}>
+    <ToolbarTooltip label={label} shortcut="Shift+N">
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        onClick={() => {
+          upNext.cancel();
+          void playNext();
+        }}
+      >
         <MaterialSymbolsSkipNextRounded className="size-5" />
       </Button>
     </ToolbarTooltip>

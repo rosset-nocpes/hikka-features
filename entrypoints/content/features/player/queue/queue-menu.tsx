@@ -188,7 +188,11 @@ const QueueMenu: FC<Props> = ({ data, slug, container }) => {
               </div>
             )}
             {unwatched.length > 0 && (
-              <DropdownMenuItem onClick={() => add(unwatched.map(itemOf))}>
+              // Stays open, so the episodes below show as queued.
+              <DropdownMenuItem
+                closeOnClick={false}
+                onClick={() => add(unwatched.map(itemOf))}
+              >
                 <MaterialSymbolsPlaylistAddRounded className="size-5" />
                 Усі непереглянуті
                 <span className="text-muted-foreground ml-auto text-xs tabular-nums">

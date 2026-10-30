@@ -6,6 +6,7 @@ import { useIFramePlayer } from '@/hooks/use-iframe-player';
 
 import { usePlayer } from '../context/player-context';
 import { useStackedLayout } from '../mobile/use-stacked-layout';
+import UpNext from '../queue/up-next';
 import PlayerSidebar from '../sidebar/player-sidebar';
 import ActionPopup from './action-popup';
 import BufferingIndicator from './buffering-indicator';
@@ -60,6 +61,7 @@ const PlayerOverlay = () => {
         <Gestures />
         <ActionPopup />
         <BufferingIndicator />
+        <UpNext corner={!isCompactMode && !stacked} />
         <div
           data-player-controls
           onPointerDownCapture={handlePointerDownCapture}

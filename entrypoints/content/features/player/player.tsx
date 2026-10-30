@@ -21,6 +21,7 @@ import PlayerIFrameEffects from './player-iframe-effects';
 import PlayerMiniBar from './player-mini-bar';
 import PlayerNavbar from './player-navbar';
 import PlayerOverlay from './player-overlay/player-overlay';
+import { notifyQueue } from './queue/queue-notice';
 import { type QueueItem, queueKey, useQueue } from './queue/use-queue';
 import { useWatchTogether } from './watch-together/use-watch-together';
 import WatchTogetherInvite from './watch-together/watch-together-invite';
@@ -105,7 +106,13 @@ export const followRoom = async (item: QueueItem) => {
  * has the episode any more, which drops it.
  */
 export const playQueued = async (item: QueueItem) => {
-  const data = await loadAnime(item.slug);
+  const key = queueKey(item);
+  useQueue.setState({ loading: key });
+  const data = await loadAnime(item.slug).finally(() => {
+    if (useQueue.getState().loading === key) {
+      useQueue.setState({ loading: undefined });
+    }
+  });
   if (!data) return false;
 
   useQueue.getState().remove(item);
@@ -114,7 +121,13 @@ export const playQueued = async (item: QueueItem) => {
   if (slug === item.slug && currentEpisode?.episode === item.episode) {
     return false;
   }
-  return initialize(data, item.slug, item);
+  if (initialize(data, item.slug, item)) return true;
+
+  const anime = queryClient.getQueryData(['hikka', 'anime', item.slug]);
+  notifyQueue(
+    `«${hikkaTitle(anime) ?? item.slug}», епізод ${item.episode} більше ніде не доступний, тож його прибрано з черги`,
+  );
+  return false;
 };
 
 /** Plays the queue's first episode that is still available. */

@@ -20,13 +20,15 @@ import ToolbarTooltip from '../toolbar-tooltip';
 
 interface Props {
   label: string;
+  /** Its keyboard shortcut, shown in the tooltip. */
+  shortcut?: string;
   onClick: () => void;
   children: ReactNode;
 }
 
 /** An icon button of the player's toolbar, named by its tooltip. */
-const ToolbarButton: FC<Props> = ({ label, onClick, children }) => (
-  <ToolbarTooltip label={label}>
+const ToolbarButton: FC<Props> = ({ label, shortcut, onClick, children }) => (
+  <ToolbarTooltip label={label} shortcut={shortcut}>
     <Button variant="ghost" size="icon-sm" onClick={onClick}>
       {children}
     </Button>
@@ -39,6 +41,7 @@ export const Play = () => {
   return (
     <ToolbarButton
       label={isPlaying ? 'Призупинити' : 'Відтворити'}
+      shortcut="K"
       onClick={isPlaying ? pause : play}
     >
       <SwapIcon
@@ -57,6 +60,7 @@ export const Mute = () => {
   return (
     <ToolbarButton
       label={silent ? 'Увімкнути звук' : 'Вимкнути звук'}
+      shortcut="M"
       onClick={toggleMute}
     >
       {/* Only muting crossfades; the level icons swap as the slider moves. */}
@@ -83,6 +87,7 @@ export const Fullscreen = () => {
       label={
         fullscreen ? 'Вийти з повноекранного режиму' : 'Повноекранний режим'
       }
+      shortcut="F"
       onClick={toggleFullscreen}
     >
       <SwapIcon
@@ -100,6 +105,7 @@ export const TheatreMode = () => {
   return (
     <ToolbarButton
       label={theatreMode ? 'Вийти з режиму театру' : 'Режим театру'}
+      shortcut="T"
       onClick={toggleTheatreMode}
     >
       <SwapIcon

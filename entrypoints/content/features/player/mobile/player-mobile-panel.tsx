@@ -6,6 +6,7 @@ import { useHikkaContent } from '@/hooks/use-hikka';
 
 import { usePlayer } from '../context/player-context';
 import PanelTabs, { PanelContent, type PanelTab } from '../queue/panel-tabs';
+import { AutoplaySwitch } from '../queue/queue-list';
 import ProviderSelect from '../sidebar/provider-select';
 import TeamSelect from '../sidebar/team-select';
 import { getTeamName } from '../teams';
@@ -42,10 +43,14 @@ const PlayerMobilePanel: FC<Props> = ({ className }) => {
           </span>
         </div>
         <PanelTabs value={tab} onChange={setTab} />
-        {tab === 'episodes' && (
+        {tab === 'episodes' ? (
           <SidebarMenu className="flex-row gap-1 *:min-w-0 *:flex-1">
             <ProviderSelect />
             <TeamSelect />
+          </SidebarMenu>
+        ) : (
+          <SidebarMenu>
+            <AutoplaySwitch />
           </SidebarMenu>
         )}
       </div>

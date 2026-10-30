@@ -1,9 +1,11 @@
 import { useEffect, useRef } from 'react';
 
 import { useSidebar } from '@/components/ui/sidebar';
-import { useIFramePlayer } from '@/hooks/use-iframe-player';
+import { onNextTrack, useIFramePlayer } from '@/hooks/use-iframe-player';
+import { watchDataQuery } from '@/hooks/use-watch-data';
 import { hikkaTracker } from '@/utils/hikka-tracker';
 
+import { queryClient } from '../../core/query-client';
 import {
   followingEpisode,
   onAnimePage,
@@ -11,11 +13,17 @@ import {
   usePlayer,
 } from './context/player-context';
 import { isPlayerOpen, playNextQueued } from './player';
+import { nextEpisode, upNext } from './queue/up-next';
 import { useQueue } from './queue/use-queue';
 import { useWatchTogether } from './watch-together/use-watch-together';
 
 /** Share of an episode after which it counts as watched on hikka.io. */
 const WATCHED_SHARE = 0.88;
+/**
+ * Share of an episode after which the next one's anime loads, so it starts
+ * at once even when it is another anime's.
+ */
+const PRELOAD_SHARE = 0.8;
 
 const getEpisodeKey = (episode: API.EpisodeData) =>
   `${episode.episode}:${episode.video_url}`;
@@ -57,7 +65,7 @@ export const playNext = async () => {
 /**
  * Follows the episode's player: starts shared links where they point, marks
  * the episode watched on hikka.io near its end, takes it off the queue once
- * it plays and plays what follows.
+ * it plays and offers what follows once it ends.
  */
 const PlayerIFrameEffects = () => {
   const {
@@ -71,6 +79,7 @@ const PlayerIFrameEffects = () => {
   } = useIFramePlayer();
   const handledEndCountRef = useRef(0);
   const watchedRef = useRef(false);
+  const preloadedRef = useRef(false);
   const skipWatchedCheckEpisodeKeyRef = useRef<string | undefined>(undefined);
   const { slug, sharedParams, isShared, setSharedStatus, currentEpisode } =
     usePlayer();
@@ -85,6 +94,8 @@ const PlayerIFrameEffects = () => {
 
     skipWatchedCheckEpisodeKeyRef.current = getEpisodeKey(currentEpisode);
     watchedRef.current = false;
+    preloadedRef.current = false;
+    upNext.cancel();
     resetIFramePlayer();
   }, [currentEpisode, resetIFramePlayer]);
 
@@ -98,15 +109,16 @@ const PlayerIFrameEffects = () => {
     setSharedStatus(false);
   }, [isReady, isShared, play, seek, setSharedStatus, sharedParams]);
 
-  // Once it plays, an episode is no longer up next. Subscribed, since right
-  // after a switch the render's `isPlaying` is still the previous episode's.
+  // Once it plays, an episode is no longer up next, and played again from
+  // its end, what follows it isn't either. Subscribed, since right after a
+  // switch the render's `isPlaying` is still the previous episode's.
   useEffect(
     () =>
       useIFramePlayer.subscribe((state, previous) => {
+        if (!state.isPlaying || previous.isPlaying) return;
+        upNext.cancel();
         const { slug, currentEpisode } = usePlayer.getState();
         if (
-          !state.isPlaying ||
-          previous.isPlaying ||
           !slug ||
           !currentEpisode ||
           // The room takes its own queue's episodes off as they play.
@@ -126,12 +138,36 @@ const PlayerIFrameEffects = () => {
     play();
   }, [isReady, play]);
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    onNextTrack(() => {
+      upNext.cancel();
+      void playNext();
+    });
+    return () => {
+      onNextTrack(undefined);
+      upNext.cancel();
       pendingAutoPlay = false;
-    },
-    [],
-  );
+    };
+  }, []);
+
+  // Near the end, loads the anime of what follows, so it starts at once.
+  // Read from the store: right after a switch, the render's time is still
+  // the previous episode's.
+  useEffect(() => {
+    const { currentTime, duration } = useIFramePlayer.getState();
+    if (
+      preloadedRef.current ||
+      !duration ||
+      currentTime / duration < PRELOAD_SHARE
+    ) {
+      return;
+    }
+    preloadedRef.current = true;
+    const next = nextEpisode();
+    if (next && next.slug !== slug) {
+      void queryClient.prefetchQuery(watchDataQuery(next.slug));
+    }
+  }, [currentTime, duration, slug]);
 
   useEffect(() => {
     if (!currentEpisode) return;
@@ -169,7 +205,10 @@ const PlayerIFrameEffects = () => {
     if (handledEndCountRef.current === endedCount) return;
     handledEndCountRef.current = endedCount;
 
-    void playNext();
+    // A watch together room moves everyone on at once; alone, the user gets
+    // a moment to stay.
+    if (useWatchTogether.getState().room) void playNext();
+    else upNext.offer();
   }, [endedCount]);
 
   return null;

@@ -11,6 +11,8 @@ import { usePlayer } from './context/player-context';
 import { closePlayer } from './player';
 import { MiniPlayer, Mute, Play } from './player-overlay/buttons/toggles';
 import Time from './player-overlay/sliders/time';
+import NextInQueue from './queue/next-in-queue';
+import UpNext from './queue/up-next';
 import { getTeamName } from './teams';
 
 interface Props {
@@ -30,6 +32,7 @@ const PlayerMiniBar = ({ onDragStart }: Props) => {
 
   return (
     <div className="relative flex w-full flex-col">
+      <UpNext inline />
       <div className="flex w-full items-center gap-2 p-2">
         <div className="flex shrink-0 gap-1">
           <Button
@@ -65,6 +68,7 @@ const PlayerMiniBar = ({ onDragStart }: Props) => {
           </span>
         </div>
         <div className="flex shrink-0 gap-1">
+          <NextInQueue />
           <Mute />
           <MiniPlayer />
           <Button

@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/sidebar';
 
 import PanelTabs, { PanelContent, type PanelTab } from '../queue/panel-tabs';
+import { AutoplaySwitch } from '../queue/queue-list';
 import ProviderSelect from './provider-select';
 import TeamSelect from './team-select';
 
@@ -32,12 +33,16 @@ const PlayerSidebar = () => {
             <div className="h-8 w-8 shrink-0" />
           </SidebarMenuItem>
         </SidebarMenu>
-        {tab === 'episodes' && (
-          <SidebarMenu>
-            <ProviderSelect />
-            <TeamSelect />
-          </SidebarMenu>
-        )}
+        <SidebarMenu>
+          {tab === 'episodes' ? (
+            <>
+              <ProviderSelect />
+              <TeamSelect />
+            </>
+          ) : (
+            <AutoplaySwitch />
+          )}
+        </SidebarMenu>
       </SidebarHeader>
       <SidebarSeparator className="mx-0" />
       <SidebarContent>
@@ -45,7 +50,7 @@ const PlayerSidebar = () => {
           className="h-full *:data-[slot=scroll-area-viewport]:overscroll-contain"
           scrollFade
         >
-          <PanelContent tab={tab} />
+          <PanelContent tab={tab} nowPlaying />
         </ScrollArea>
       </SidebarContent>
     </Sidebar>

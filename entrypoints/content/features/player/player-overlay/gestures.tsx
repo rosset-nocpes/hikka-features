@@ -5,6 +5,8 @@ import { playerControls, useIFramePlayer } from '@/hooks/use-iframe-player';
 
 import { usePlayer } from '../context/player-context';
 import { closePlayer } from '../player';
+import { playNext } from '../player-iframe-effects';
+import { upNext, useUpNext } from '../queue/up-next';
 import { dispatchPlayerOverlayAction } from './action-popup';
 
 /** Clicks, taps, holds and keyboard shortcuts on the video. */
@@ -198,9 +200,17 @@ const Gestures = () => {
           e.preventDefault();
           handleVolumeStep(-0.1);
           break;
+        case 'n':
+          if (!e.shiftKey) break;
+          e.preventDefault();
+          upNext.cancel();
+          void playNext();
+          break;
         case 'escape':
           e.preventDefault();
-          closePlayer();
+          // The countdown to the next episode stops first.
+          if (useUpNext.getState().status !== 'idle') upNext.cancel();
+          else closePlayer();
           break;
       }
     };

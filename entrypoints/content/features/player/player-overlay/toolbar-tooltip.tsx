@@ -1,5 +1,6 @@
 import type { FC, ReactElement } from 'react';
 
+import { Kbd } from '@/components/ui/kbd';
 import {
   Tooltip,
   TooltipContent,
@@ -10,11 +11,13 @@ import { usePlayer } from '../context/player-context';
 
 interface Props {
   label: string;
+  /** The key that does the same, as `aria-keyshortcuts` names it. */
+  shortcut?: string;
   children: ReactElement;
   disabled?: boolean;
 }
 
-const ToolbarTooltip: FC<Props> = ({ label, children, disabled }) => {
+const ToolbarTooltip: FC<Props> = ({ label, shortcut, children, disabled }) => {
   const { container, overlay } = usePlayer();
   const uiShown = useIFramePlayer((state) => state.uiShown);
 
@@ -25,7 +28,11 @@ const ToolbarTooltip: FC<Props> = ({ label, children, disabled }) => {
         if (open && details.reason === 'trigger-focus') details.cancel();
       }}
     >
-      <TooltipTrigger aria-label={label} render={children} />
+      <TooltipTrigger
+        aria-label={label}
+        aria-keyshortcuts={shortcut}
+        render={children}
+      />
       <TooltipContent
         side="top"
         sideOffset={32}
@@ -34,6 +41,13 @@ const ToolbarTooltip: FC<Props> = ({ label, children, disabled }) => {
         container={container}
       >
         {label}
+        {shortcut && (
+          // The kbd's own tooltip colours are for dark tooltips; these are
+          // popover coloured.
+          <Kbd className="in-data-[slot=tooltip-content]:bg-muted in-data-[slot=tooltip-content]:text-muted-foreground dark:in-data-[slot=tooltip-content]:bg-muted shrink-0 whitespace-nowrap">
+            {shortcut.replace('+', ' + ')}
+          </Kbd>
+        )}
       </TooltipContent>
     </Tooltip>
   );

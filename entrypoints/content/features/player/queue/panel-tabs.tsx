@@ -26,6 +26,13 @@ interface Props {
  */
 const PanelTabs: FC<Props> = ({ value, onChange, className }) => {
   const count = useActiveQueue().items.length;
+  // The count bumps as episodes are added, wherever from.
+  const [seen, setSeen] = useState(count);
+  const [grew, setGrew] = useState(false);
+  if (count !== seen) {
+    setSeen(count);
+    setGrew(count > seen);
+  }
 
   return (
     <Tabs.Root value={value} onValueChange={onChange} className={className}>
@@ -38,9 +45,15 @@ const PanelTabs: FC<Props> = ({ value, onChange, className }) => {
           <MaterialSymbolsPlaylistPlayRounded />
           Черга
           {count > 0 && (
-            <span className="text-muted-foreground text-xs tabular-nums">
+            <motion.span
+              key={count}
+              initial={grew ? { scale: 1.4 } : false}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', duration: 0.3, bounce: 0.4 }}
+              className="text-muted-foreground text-xs tabular-nums"
+            >
               {count}
-            </span>
+            </motion.span>
           )}
         </Tabs.Tab>
         <Tabs.Indicator className="bg-sidebar-accent absolute top-(--active-tab-top) left-(--active-tab-left) h-(--active-tab-height) w-(--active-tab-width) rounded-md transition-[left,width] duration-150 ease-out motion-reduce:transition-none" />
@@ -57,9 +70,13 @@ const fade = {
 
 /**
  * The tab's list. Goes inside a scroll area, which it tells when the list's
- * height changes.
+ * height changes. `nowPlaying` heads the queue with the playing episode, for
+ * panels that don't name it already.
  */
-export const PanelContent: FC<{ tab: PanelTab }> = ({ tab }) => {
+export const PanelContent: FC<{ tab: PanelTab; nowPlaying?: boolean }> = ({
+  tab,
+  nowPlaying,
+}) => {
   const ref = useRef<HTMLDivElement>(null);
   // The list the panel opens with appears in place; later ones fade in.
   const [shown, setShown] = useState(tab);
@@ -89,7 +106,11 @@ export const PanelContent: FC<{ tab: PanelTab }> = ({ tab }) => {
         animate="center"
         transition={{ duration: 0.15, ease: 'easeOut' }}
       >
-        {tab === 'episodes' ? <EpisodeList /> : <QueueList />}
+        {tab === 'episodes' ? (
+          <EpisodeList />
+        ) : (
+          <QueueList nowPlaying={nowPlaying} />
+        )}
       </motion.div>
     </ScrollArea.Content>
   );

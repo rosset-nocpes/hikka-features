@@ -6,6 +6,7 @@ import {
   type QueueEpisode,
   type QueueItem,
   queueKey,
+  restoredOrder,
   useQueue,
 } from './use-queue';
 
@@ -14,12 +15,15 @@ export interface ActiveQueue {
   /** The watch together room's, which every member edits and plays. */
   shared: boolean;
   items: QueueItem[];
-  add: (items: QueueItem[]) => void;
+  /** Adds episodes at the end, or with `next` first, moving queued ones up. */
+  add: (items: QueueItem[], next?: boolean) => void;
   remove: (episode: QueueEpisode) => void;
   /** Adds the episode, or takes it off when it is queued already. */
   toggle: (item: QueueItem) => void;
   /** Puts a queued episode at `index`. */
   move: (episode: QueueEpisode, index: number) => void;
+  /** Puts `removed` back where they were in `before`. */
+  restore: (before: QueueItem[], removed: QueueItem[]) => void;
   clear: () => void;
   /** Plays a queued episode now; in a room, for everyone. */
   play: (item: QueueItem) => void;
@@ -31,7 +35,7 @@ const roomEpisode = ({ slug, episode }: QueueEpisode) => ({
 });
 
 const ownQueue = (items: QueueItem[]): ActiveQueue => {
-  const { add, remove, toggle, move, clear } = useQueue.getState();
+  const { add, remove, toggle, move, restore, clear } = useQueue.getState();
   return {
     shared: false,
     items,
@@ -39,6 +43,7 @@ const ownQueue = (items: QueueItem[]): ActiveQueue => {
     remove,
     toggle,
     move,
+    restore,
     clear,
     play: (item) => void playQueued(item),
   };
@@ -52,7 +57,7 @@ const roomQueue = (room: WatchRoom): ActiveQueue => {
     team,
     episode,
   }));
-  const add = (added: QueueItem[]) =>
+  const enqueue = (added: QueueItem[]) =>
     editQueue({
       type: 'enqueue',
       items: added.map(({ slug, provider, team, episode }) => ({
@@ -62,20 +67,37 @@ const roomQueue = (room: WatchRoom): ActiveQueue => {
         episode,
       })),
     });
+  const move = (episode: QueueEpisode, index: number) =>
+    editQueue({ type: 'requeue', item: roomEpisode(episode), index });
   const remove = (episode: QueueEpisode) =>
     editQueue({ type: 'dequeue', items: [roomEpisode(episode)] });
+  // The room appends what it is sent; the moves, in order, then place it.
+  // Each lands where it belongs since all before it are placed already.
+  const place = (placed: { item: QueueItem; index: number }[]) =>
+    placed
+      .toSorted((a, b) => a.index - b.index)
+      .forEach(({ item, index }) => move(item, index));
 
   return {
     shared: true,
     items,
-    add,
+    add: (added, next) => {
+      enqueue(added);
+      if (next) place(added.map((item, index) => ({ item, index })));
+    },
     remove,
     toggle: (item) =>
       items.some((queued) => queueKey(queued) === queueKey(item))
         ? remove(item)
-        : add([item]),
-    move: (episode, index) =>
-      editQueue({ type: 'requeue', item: roomEpisode(episode), index }),
+        : enqueue([item]),
+    move,
+    restore: (before, removed) => {
+      const order = restoredOrder(before, items, removed).map(queueKey);
+      enqueue(removed);
+      place(
+        removed.map((item) => ({ item, index: order.indexOf(queueKey(item)) })),
+      );
+    },
     // Only what the user sees; an episode someone adds meanwhile stays.
     clear: () => editQueue({ type: 'dequeue', items: items.map(roomEpisode) }),
     play: (item) => advance(roomEpisode(item)),

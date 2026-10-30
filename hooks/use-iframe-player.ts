@@ -57,6 +57,16 @@ export const onPlaybackIntent = (
   playbackIntentListener = listener;
 };
 
+let nextTrackListener: (() => void) | undefined;
+
+/**
+ * Lets the player skip to what follows when the episode's player asks: from
+ * media keys, or the picture-in-picture window's next button.
+ */
+export const onNextTrack = (listener: (() => void) | undefined) => {
+  nextTrackListener = listener;
+};
+
 const UI_HIDE_MS = 4000;
 
 /** The overlay's controls: shown on activity, hidden again during playback. */
@@ -211,6 +221,7 @@ const PLAYER_EVENTS: Record<string, (event: IFramePlayerEvent) => void> = {
   pause: () => set({ isPlaying: false }),
   end: () =>
     set((state) => ({ endedCount: state.endedCount + 1, isPlaying: false })),
+  nexttrack: () => nextTrackListener?.(),
   duration: ({ data }) => set({ duration: Number(data) }),
   time: ({ data }) => set({ currentTime: Number(data) }),
   mute: () => set({ isMuted: true }),

@@ -8,6 +8,7 @@ import { useIsMobile } from '@/components/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
+import { useHikkaContent } from '@/hooks/use-hikka';
 
 import { usePlayer } from './context/player-context';
 import PlayerMobilePanel from './mobile/player-mobile-panel';
@@ -26,11 +27,18 @@ interface Props {
 const PlayerNavbar: FC<Props> = ({ onDragStart }) => {
   const {
     container,
+    slug,
     currentEpisode,
     miniPlayer,
     videoPiPActive,
     toggleMiniPlayer,
   } = usePlayer();
+  const page = usePageStore();
+  // Once the queue moves on to another anime, the chip names it.
+  const otherAnime =
+    !!slug && (page.contentType !== 'anime' || page.slug !== slug);
+  const { data: anime } = useHikkaContent('anime', otherAnime ? slug : null);
+  const animeTitle = otherAnime ? hikkaTitle(anime) : undefined;
   const { uiShown } = useIFramePlayer();
   const { open } = useSidebar();
   const actionsRef = useRef<HTMLDivElement>(null);
@@ -73,9 +81,15 @@ const PlayerNavbar: FC<Props> = ({ onDragStart }) => {
           onPointerDown={isCompactMode ? onDragStart : undefined}
         >
           {isCompactMode && (
-            <MaterialSymbolsDragIndicator className="text-muted-foreground size-5" />
+            <MaterialSymbolsDragIndicator className="text-muted-foreground size-5 shrink-0" />
           )}
-          Епізод {currentEpisode?.episode}
+          {animeTitle && !isCompactMode && (
+            <span className="max-w-[min(40vw,20rem)] truncate">
+              {animeTitle}
+              <span className="text-muted-foreground px-1.5">·</span>
+            </span>
+          )}
+          <span className="shrink-0">Епізод {currentEpisode?.episode}</span>
         </span>
       </div>
       <div

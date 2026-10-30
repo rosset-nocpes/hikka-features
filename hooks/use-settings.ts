@@ -47,6 +47,8 @@ interface AppState {
       teamPriority: CatalogTeam[];
       /** Version of those teams' releases to open and be notified about. */
       teamPriorityTranslation: PreferredTranslation;
+      /** What follows an episode starts by itself after a short countdown. */
+      autoplayNext: boolean;
     };
     reader: {
       enabled: boolean;
@@ -112,6 +114,7 @@ export const useSettings = create<AppState>()(
           favoriteTeams: {},
           teamPriority: [],
           teamPriorityTranslation: 'dub' as PreferredTranslation,
+          autoplayNext: true,
         },
         reader: {
           enabled: true,
@@ -237,6 +240,7 @@ const migrateFromOldStorage = async () => {
           teamPriority: state.features.player.teamPriority,
           teamPriorityTranslation:
             state.features.player.teamPriorityTranslation,
+          autoplayNext: state.features.player.autoplayNext,
         },
         reader: {
           enabled:
