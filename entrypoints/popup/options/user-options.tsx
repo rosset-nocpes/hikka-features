@@ -13,6 +13,8 @@ const AUTH_ERRORS: Record<string, string> = {
   cancelled: 'Вхід скасовано.',
   login_expired: 'Час на вхід минув. Спробуйте ще раз.',
   hikka_exchange_failed: 'hikka.io не підтвердила вхід. Спробуйте згодом.',
+  account_mismatch: 'Вхід був не за акаунтом, відкритим на hikka.io.',
+  hikka_unavailable: 'Не вдалося перевірити акаунт hikka.io. Спробуйте згодом.',
 };
 
 const authErrorMessage = (error: unknown) => {

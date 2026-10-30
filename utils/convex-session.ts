@@ -15,6 +15,7 @@ import type { BackgroundMessage } from './messaging';
 
 import { convexApi } from './convex-api';
 import { CONVEX_SITE_URL, convex } from './convex-client';
+import { getHikkaViewerId } from './hikka-viewer';
 import { LOGIN_STATE_KEY, type LoginState } from './login-state';
 import { syncTeamPriority } from './team-priority-sync';
 import { looseKey } from './utils';
@@ -210,12 +211,12 @@ class AccountSession {
     // The done page explains it, so its tab stays open.
     if (error) return await writeLogin({ status: 'failed', error });
 
+    let auth: AuthResponse;
     try {
       const response = await authRequest('/auth/session/exchange', {
         verifier: login.verifier,
       });
-      await settingsHydrated();
-      this.store((await response.json()) as AuthResponse);
+      auth = (await response.json()) as AuthResponse;
     } catch (cause) {
       const rejected = cause instanceof AuthError;
       // Not the done page yet, or offline and closing the tab tries again.
@@ -237,8 +238,25 @@ class AccountSession {
       });
     }
 
-    await browser.storage.local.remove(LOGIN_STATE_KEY);
-    void this.sync();
+    // Hikka's callback carries no state, so a page could make this browser
+    // finish someone else's login; only hikka.io's own user is kept.
+    const viewerId = await getHikkaViewerId().catch(() => undefined);
+    if (viewerId === auth.user.hikkaId) {
+      await settingsHydrated();
+      this.store(auth);
+      await browser.storage.local.remove(LOGIN_STATE_KEY);
+      void this.sync();
+    } else {
+      await authRequest('/auth/session/revoke', {
+        refreshToken: auth.refreshToken,
+      }).catch(() => undefined);
+      await writeLogin({
+        status: 'failed',
+        error:
+          viewerId === undefined ? 'hikka_unavailable' : 'account_mismatch',
+      });
+    }
+
     if (event === 'closed') return;
     await browser.tabs.remove(tabId).catch(() => undefined);
     if (login.openerTabId !== undefined) {
