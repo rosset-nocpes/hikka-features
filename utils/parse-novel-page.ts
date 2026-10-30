@@ -117,5 +117,5 @@ export const parseNovelPage = (html: string) => {
       $(this).replaceWith(html);
     });
 
-  return $('body').html() || '';
+  return $('body').contents().toArray();
 };

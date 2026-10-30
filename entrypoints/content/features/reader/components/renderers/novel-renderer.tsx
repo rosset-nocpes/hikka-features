@@ -1,7 +1,6 @@
-import parse, {
-  domToReact,
-  type HTMLReactParserOptions,
-} from 'html-react-parser';
+import type { DOMNode, HTMLReactParserOptions } from 'html-react-parser';
+
+import domToReact from 'html-react-parser/lib/dom-to-react';
 import {
   AnimatePresence,
   type HTMLMotionProps,
@@ -47,11 +46,11 @@ const NovelRenderer = () => {
     scrollRef.current?.dispatchEvent(new Event('scroll'));
   }, [animationComplete, chapterPage]);
 
-  const htmlContent = useMemo(
+  const contentNodes = useMemo(
     () =>
       chapterPage && !Array.isArray(chapterPage)
         ? parseNovelPage(chapterPage)
-        : '',
+        : [],
     [chapterPage],
   );
 
@@ -104,7 +103,7 @@ const NovelRenderer = () => {
           <AnimatePresence mode="wait">
             {chapterPage && !isLoading && (
               <PageParser
-                htmlContent={htmlContent}
+                contentNodes={contentNodes}
                 onAnimationStart={handleAnimationStart}
                 onAnimationComplete={handleAnimationComplete}
               />
@@ -124,12 +123,12 @@ const NovelRenderer = () => {
 };
 
 interface PageParserProps extends HTMLMotionProps<'div'> {
-  htmlContent: string;
+  contentNodes: ReturnType<typeof parseNovelPage>;
 }
 
 const PageParser = memo(
   forwardRef<HTMLDivElement, PageParserProps>(
-    ({ htmlContent, ...props }, ref) => {
+    ({ contentNodes, ...props }, ref) => {
       const { container } = useReader();
 
       const options: HTMLReactParserOptions = useMemo(
@@ -178,8 +177,8 @@ const PageParser = memo(
       );
 
       const parsed = useMemo(
-        () => parse(htmlContent, options),
-        [htmlContent, options],
+        () => domToReact(contentNodes as DOMNode[], options),
+        [contentNodes, options],
       );
 
       return (
