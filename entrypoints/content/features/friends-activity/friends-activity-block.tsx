@@ -1,10 +1,6 @@
 import { useEffect, useId, useState } from 'react';
 import MaterialSymbolsGroupOutlineRounded from '~icons/material-symbols/group-outline-rounded';
 import MaterialSymbolsLoginRounded from '~icons/material-symbols/login-rounded';
-import MaterialSymbolsMenuBookOutlineRounded from '~icons/material-symbols/menu-book-outline-rounded';
-import MaterialSymbolsPauseRounded from '~icons/material-symbols/pause-rounded';
-import MaterialSymbolsPlayArrowRounded from '~icons/material-symbols/play-arrow-rounded';
-import MaterialSymbolsVisibilityOffOutlineRounded from '~icons/material-symbols/visibility-off-outline-rounded';
 import MaterialSymbolsVisibilityOutlineRounded from '~icons/material-symbols/visibility-outline-rounded';
 
 import type { FriendActivity } from '@/utils/convex-api';
@@ -29,6 +25,7 @@ import { useHikkaViewer } from '@/utils/hikka-viewer';
 
 import { memberName } from '../player/watch-together/menu';
 import { openRoom } from '../player/watch-together/open-room';
+import { formatTimestamp } from '../release-notifications/feed-layout';
 import { useBlockView } from './home-placement';
 import { BLOCK_TITLE } from './site-layout';
 
@@ -47,179 +44,171 @@ function useMode(): Mode {
 
 const Dot = () => <span aria-hidden>·</span>;
 
-type Watching = Extract<FriendActivity, { contentType: 'anime' }>;
-type Reading = Exclude<FriendActivity, Watching>;
+const plural = new Intl.PluralRules('uk');
 
-/** The episode, and the watch together room. */
-const WatchingFacts = ({ activity }: { activity: Watching }) => {
-  const { slug, episode, playing, room } = activity;
-  return (
-    <>
-      <span className="shrink-0">Епізод {episode}</span>
-      {room && (
-        <>
-          <Dot />
-          <span
-            className="flex shrink-0 items-center gap-0.5"
-            title="Дивляться разом"
-          >
-            <MaterialSymbolsGroupOutlineRounded className="size-3.5" />
-            {room.memberCount}
-          </span>
-        </>
-      )}
-      {room?.code ? (
-        <>
-          <Dot />
-          <Button
-            variant="link"
-            className="h-auto min-w-0 p-0 text-xs"
-            onClick={() => openRoom(slug, room.code!)}
-          >
-            <span className="truncate">Приєднатися</span>
-          </Button>
-        </>
-      ) : (
-        !playing && (
-          <>
-            <Dot />
-            <span className="truncate">на паузі</span>
-          </>
-        )
-      )}
-    </>
-  );
+/** "12 епізодів", as hikka.io words a total; "?" when it isn't known. */
+const UNITS = {
+  episode: { one: 'епізод', few: 'епізоди', many: 'епізодів' },
+  chapter: { one: 'розділ', few: 'розділи', many: 'розділів' },
 };
+function unitOf(unit: keyof typeof UNITS, total?: number | null) {
+  const form = total ? plural.select(total) : 'many';
+  return UNITS[unit][form === 'one' || form === 'few' ? form : 'many'];
+}
 
-/** The chapter open in the reader, and its volume. */
-const ReadingFacts = ({ activity }: { activity: Reading }) => (
-  <>
-    {activity.volume ? (
-      <>
-        <span className="shrink-0">Том {activity.volume}</span>
-        <Dot />
-      </>
-    ) : null}
-    <span className="truncate">Розділ {activity.chapter}</span>
-  </>
+/** Re-renders now and then, so "5 хв тому" keeps up. */
+function useNow() {
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(timer);
+  }, []);
+  return now;
+}
+
+/** "5/12 епізодів", the episode or chapter out of the title's total. */
+const Progress = ({
+  current,
+  total,
+  unit,
+}: {
+  current: number;
+  total?: number | null;
+  unit: keyof typeof UNITS;
+}) => (
+  <span className="shrink-0">
+    <span className="text-foreground font-bold">{current}</span>/{total || '?'}{' '}
+    {unitOf(unit, total)}
+  </span>
 );
 
-/** What the friend is doing, as a badge on their avatar. */
-const STATE = {
-  playing: {
-    Icon: MaterialSymbolsPlayArrowRounded,
-    label: 'Дивиться зараз',
-    tone: 'bg-success text-success-foreground',
-  },
-  paused: {
-    Icon: MaterialSymbolsPauseRounded,
-    label: 'На паузі',
-    tone: 'bg-secondary text-muted-foreground',
-  },
-  reading: {
-    Icon: MaterialSymbolsMenuBookOutlineRounded,
-    label: 'Читає',
-    tone: 'bg-secondary text-muted-foreground',
-  },
-};
-
-/** The friend's avatar, as hikka.io's activity widget shows its users. */
-const FriendNode = ({ activity }: { activity: FriendActivity }) => {
-  const { friend } = activity;
-  const name = memberName(friend);
-  const { Icon, label, tone } =
-    STATE[
-      activity.contentType !== 'anime'
-        ? 'reading'
-        : activity.playing
-          ? 'playing'
-          : 'paused'
-    ];
-
-  return (
-    <a
-      href={friend.username ? `/u/${friend.username}` : undefined}
-      aria-label={`${name}: ${label.toLowerCase()}`}
-      title={name}
-      className="relative size-8 shrink-0"
-    >
-      <Avatar className="size-8 rounded-md after:rounded-md">
-        {friend.avatar && (
-          <AvatarImage className="rounded-md" src={friend.avatar} alt="" />
-        )}
-        <AvatarFallback className="rounded-md text-xs">
-          {name[0]?.toUpperCase()}
-        </AvatarFallback>
-      </Avatar>
-      <span
-        title={label}
-        className={cn(
-          'absolute -right-1 -bottom-1 flex size-4 items-center justify-center rounded-sm',
-          tone,
-        )}
-      >
-        <Icon className="size-2.5" />
-      </span>
-    </a>
-  );
-};
-
-/** Avatar and poster side by side, the title and progress beside them. */
-const Row = ({ activity }: { activity: FriendActivity }) => {
-  const { contentType, slug } = activity;
-  const { data: content } = useHikkaContent(contentType, slug);
+/**
+ * One friend and what they have open: who, doing what and since when on top,
+ * then the title and how far in, beside its poster.
+ * The whole row opens the title; a room they share can be joined from it.
+ */
+const Row = ({ activity, now }: { activity: FriendActivity; now: number }) => {
+  const { friend, contentType, slug } = activity;
+  const { data: content, isLoading } = useHikkaContent(contentType, slug);
   const title: string = hikkaTitle(content) || slug;
+  const name = memberName(friend);
   const href = `/${contentType}/${slug}`;
+  const watching = activity.contentType === 'anime' ? activity : undefined;
+  const live = isPlaying(activity);
+  const time = formatTimestamp(activity.updatedAt, now);
+  const room = watching?.room;
 
   return (
-    <div className="flex items-start gap-4">
-      <div className="flex shrink-0 items-center gap-3">
-        <FriendNode activity={activity} />
-        <a href={href} tabIndex={-1} aria-hidden className="w-12 shrink-0">
-          <AspectRatio
-            ratio={0.7}
-            className="bg-muted overflow-hidden rounded-md"
-          >
-            {content?.image && (
-              <img
-                src={content.image}
-                alt=""
-                loading="lazy"
-                className="size-full object-cover"
-              />
-            )}
-          </AspectRatio>
-        </a>
+    <div className="hover:bg-accent relative flex items-center gap-4 px-4 py-2 transition-colors">
+      <div className="w-12 shrink-0">
+        <AspectRatio
+          ratio={0.7}
+          className="bg-muted overflow-hidden rounded-md"
+        >
+          {content?.image && (
+            <img
+              src={content.image}
+              alt=""
+              loading="lazy"
+              className="size-full object-cover"
+            />
+          )}
+        </AspectRatio>
       </div>
-      <div className="flex min-w-0 flex-1 flex-col justify-center gap-2 self-stretch">
+
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <p className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-xs">
+          <a
+            href={friend.username ? `/u/${friend.username}` : undefined}
+            className="text-foreground relative z-10 flex min-w-0 items-center gap-1.5 font-medium hover:underline"
+          >
+            <Avatar className="size-4">
+              {friend.avatar && <AvatarImage src={friend.avatar} alt="" />}
+              <AvatarFallback className="text-[9px]">
+                {name[0]?.toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <span className="truncate">{name}</span>
+          </a>
+          <span className="shrink-0">
+            {!watching ? 'читає' : live ? 'дивиться' : 'на паузі'}
+          </span>
+          <time
+            dateTime={time.iso}
+            title={time.full}
+            className="ml-auto shrink-0 pl-2 tabular-nums opacity-60"
+          >
+            {live ? 'зараз' : time.label}
+          </time>
+        </p>
         <a
           href={href}
           title={title}
-          className="line-clamp-2 text-sm leading-tight font-medium underline-offset-4 hover:underline"
+          className="line-clamp-1 text-sm leading-snug font-medium after:absolute after:inset-0"
         >
-          {title}
+          {isLoading ? <Skeleton className="my-0.5 h-3.5 w-3/4" /> : title}
         </a>
-        <div className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-xs whitespace-nowrap">
+        <p className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-xs whitespace-nowrap">
           {activity.contentType === 'anime' ? (
-            <WatchingFacts activity={activity} />
+            <Progress
+              current={activity.episode}
+              total={content?.episodes_total}
+              unit="episode"
+            />
           ) : (
-            <ReadingFacts activity={activity} />
+            <>
+              {activity.volume ? (
+                <>
+                  <span className="shrink-0">Том {activity.volume}</span>
+                  <Dot />
+                </>
+              ) : null}
+              <Progress
+                current={activity.chapter}
+                total={content?.chapters}
+                unit="chapter"
+              />
+            </>
           )}
-        </div>
+          {room && (
+            <>
+              <Dot />
+              <span
+                className="flex shrink-0 items-center gap-0.5"
+                title="Дивляться разом"
+              >
+                <MaterialSymbolsGroupOutlineRounded className="size-3.5" />
+                {room.memberCount}
+              </span>
+            </>
+          )}
+        </p>
       </div>
+
+      {room?.code && (
+        <Button
+          size="sm"
+          variant="secondary"
+          className="relative z-10 shrink-0"
+          onClick={() => openRoom(slug, room.code!)}
+        >
+          Приєднатися
+        </Button>
+      )}
     </div>
   );
 };
 
 const SkeletonRow = () => (
-  <div className="flex items-start gap-4">
-    <div className="flex shrink-0 items-center gap-3">
-      <Skeleton className="size-8 shrink-0 rounded-md" />
-      <Skeleton className="aspect-[0.7] w-12 shrink-0" />
-    </div>
-    <div className="flex flex-1 flex-col justify-center gap-2 self-stretch">
+  <div className="flex items-center gap-4 px-4 py-2">
+    <Skeleton className="aspect-[0.7] w-12 shrink-0" />
+    <div className="flex flex-1 flex-col gap-2">
+      <div className="flex items-center gap-1.5">
+        <Skeleton className="size-4 rounded-full" />
+        <Skeleton className="h-3 w-1/3" />
+      </div>
       <Skeleton className="h-3.5 w-3/4" />
-      <Skeleton className="h-3 w-1/2" />
+      <Skeleton className="h-3 w-1/4" />
     </div>
   </div>
 );
@@ -241,18 +230,10 @@ const SharingFooter = () => {
       .finally(() => setPending(undefined));
   };
 
-  const Icon = shown
-    ? MaterialSymbolsVisibilityOutlineRounded
-    : MaterialSymbolsVisibilityOffOutlineRounded;
-
   return (
     <div className="text-muted-foreground -mx-4 -mb-4 flex items-center gap-2 rounded-b-lg border-t px-4 py-3">
-      <Icon className="size-4 shrink-0" />
-      <Label
-        htmlFor={id}
-        className="flex-1"
-        title="Друзі бачать, що ви дивитеся й читаєте в розширенні"
-      >
+      <MaterialSymbolsVisibilityOutlineRounded className="size-4 shrink-0" />
+      <Label htmlFor={id} className="flex-1">
         Ділитися моєю активністю
       </Label>
       <Switch
@@ -265,8 +246,16 @@ const SharingFooter = () => {
   );
 };
 
+/** Who is watching right now first, then whoever was here last. */
+const byRecency = (a: FriendActivity, b: FriendActivity) =>
+  Number(isPlaying(b)) - Number(isPlaying(a)) || b.updatedAt - a.updatedAt;
+
+const isPlaying = (activity: FriendActivity) =>
+  activity.contentType === 'anime' && activity.playing;
+
 const FriendsList = () => {
   const activities = useLiveQuery(convexApi.activity.friends, {})?.data;
+  const now = useNow();
 
   // Friends are the mutual follows among extension users; read them again
   // now and then (the server limits how often).
@@ -285,7 +274,7 @@ const FriendsList = () => {
     );
   }
   return (
-    <div className="flex flex-col gap-6">
+    <div className="-mx-4 flex flex-col gap-1">
       {activities === undefined ? (
         <>
           <SkeletonRow />
@@ -293,12 +282,15 @@ const FriendsList = () => {
         </>
       ) : (
         // A friend watching and reading at once has a row for each.
-        activities.map((activity) => (
-          <Row
-            key={`${activity.friend.id}:${activity.contentType}`}
-            activity={activity}
-          />
-        ))
+        activities
+          .toSorted(byRecency)
+          .map((activity) => (
+            <Row
+              key={`${activity.friend.id}:${activity.contentType}`}
+              activity={activity}
+              now={now}
+            />
+          ))
       )}
     </div>
   );
