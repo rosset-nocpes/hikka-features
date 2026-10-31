@@ -59,6 +59,8 @@ export interface ReleaseNotification {
   id: string;
   animeSlug: string;
   animeTitle?: string;
+  /** The poster; missing from backends deployed before it was added. */
+  animeImage?: string;
   teamTitle: string;
   /** Missing from backends deployed before it was added. */
   translationType?: TranslationType;
