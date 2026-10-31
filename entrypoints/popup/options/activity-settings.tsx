@@ -26,7 +26,7 @@ const ActivitySettings = () => {
     <SwitchOption
       checked={data?.shareActivity ?? false}
       label="Ділитися активністю"
-      description="Друзі, з якими ви взаємно підписані, бачать, що ви дивитеся у програвачі"
+      description="Друзі, з якими ви взаємно підписані, бачать, що ви дивитеся й читаєте в розширенні"
       onClick={() => {
         if (data) mutate(!data.shareActivity);
       }}

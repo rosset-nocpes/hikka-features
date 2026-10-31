@@ -59,8 +59,9 @@ class Layout {
 }
 
 /**
- * "Friends are watching": a homepage widget among hikka.io's own, which the
- * user moves, hides and brings back in the site's layout dialog.
+ * "Friends' activity", what they watch and read: a homepage widget among
+ * hikka.io's own, which the user moves, hides and brings back in the site's
+ * layout dialog.
  */
 export default class FriendsActivityFeature extends BaseFeature {
   readonly id = 'friends-activity';

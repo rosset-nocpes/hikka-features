@@ -167,17 +167,33 @@ export type WatchRoomAction =
       next?: WatchRoomSelection;
     };
 
-/** What a friend is watching in the extension's player. */
-export interface FriendActivity {
+/** What the extension's reader opens. */
+export type ReadableType = 'manga' | 'novel';
+
+/**
+ * What a friend is watching in the extension's player or reading in its
+ * reader; a friend doing both is listed twice.
+ */
+export type FriendActivity = {
   friend: WatchRoomProfile;
-  animeSlug: string;
-  episode: number;
-  playing: boolean;
+  slug: string;
   /** Server time of the last report. */
   updatedAt: number;
-  /** Their watch together room; `code` when the user may join it. */
-  room?: { memberCount: number; code?: string };
-}
+} & (
+  | {
+      contentType: 'anime';
+      episode: number;
+      playing: boolean;
+      /** Their watch together room; `code` when the user may join it. */
+      room?: { memberCount: number; code?: string };
+    }
+  | {
+      contentType: ReadableType;
+      /** May be fractional, like 10.5. */
+      chapter: number;
+      volume?: number;
+    }
+);
 
 /**
  * Where a team release comes from, most trusted first: the extension's own
@@ -449,6 +465,19 @@ export const convexApi = {
       { shared: boolean }
     >('activity:report'),
     clear: makeFunctionReference<'mutation', NoArgs, null>('activity:clear'),
+    reportReading: makeFunctionReference<
+      'mutation',
+      {
+        contentType: ReadableType;
+        slug: string;
+        chapter: number;
+        volume?: number;
+      },
+      { shared: boolean }
+    >('activity:reportReading'),
+    clearReading: makeFunctionReference<'mutation', NoArgs, null>(
+      'activity:clearReading',
+    ),
     settings: makeFunctionReference<
       'query',
       NoArgs,

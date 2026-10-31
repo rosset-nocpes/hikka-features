@@ -1,5 +1,5 @@
 /** What the block is called on the page, in the layout dialog and as a tab. */
-export const BLOCK_TITLE = 'Друзі дивляться';
+export const BLOCK_TITLE = 'Активність друзів';
 
 export type Side = 'left' | 'center' | 'right';
 

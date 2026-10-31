@@ -1,6 +1,7 @@
 import { useEffect, useId, useState } from 'react';
 import MaterialSymbolsGroupOutlineRounded from '~icons/material-symbols/group-outline-rounded';
 import MaterialSymbolsLoginRounded from '~icons/material-symbols/login-rounded';
+import MaterialSymbolsMenuBookOutlineRounded from '~icons/material-symbols/menu-book-outline-rounded';
 import MaterialSymbolsPauseRounded from '~icons/material-symbols/pause-rounded';
 import MaterialSymbolsVisibilityOffOutlineRounded from '~icons/material-symbols/visibility-off-outline-rounded';
 import MaterialSymbolsVisibilityOutlineRounded from '~icons/material-symbols/visibility-outline-rounded';
@@ -44,12 +45,84 @@ function useMode(): Mode {
 
 const Dot = () => <span aria-hidden>·</span>;
 
+type Watching = Extract<FriendActivity, { contentType: 'anime' }>;
+type Reading = Exclude<FriendActivity, Watching>;
+
+/** Playing or paused, the episode, and the watch together room. */
+const WatchingStatus = ({ activity }: { activity: Watching }) => {
+  const { slug, episode, playing, room } = activity;
+  return (
+    <>
+      {playing ? (
+        <span className="relative flex size-2 shrink-0" title="Дивиться зараз">
+          <span className="bg-success absolute inline-flex size-full animate-ping rounded-full opacity-60" />
+          <span className="bg-success relative inline-flex size-2 rounded-full" />
+        </span>
+      ) : (
+        <MaterialSymbolsPauseRounded
+          className="size-3.5 shrink-0"
+          aria-label="На паузі"
+        />
+      )}
+      <span className="shrink-0">Епізод {episode}</span>
+      {room && (
+        <>
+          <Dot />
+          <span
+            className="flex shrink-0 items-center gap-0.5"
+            title="Дивляться разом"
+          >
+            <MaterialSymbolsGroupOutlineRounded className="size-3.5" />
+            {room.memberCount}
+          </span>
+        </>
+      )}
+      {room?.code ? (
+        <>
+          <Dot />
+          <Button
+            variant="link"
+            className="h-auto min-w-0 p-0 text-xs"
+            onClick={() => openRoom(slug, room.code!)}
+          >
+            <span className="truncate">Приєднатися</span>
+          </Button>
+        </>
+      ) : (
+        !playing && (
+          <>
+            <Dot />
+            <span className="truncate">на паузі</span>
+          </>
+        )
+      )}
+    </>
+  );
+};
+
+/** The chapter open in the reader, and its volume. */
+const ReadingStatus = ({ activity }: { activity: Reading }) => (
+  <>
+    <MaterialSymbolsMenuBookOutlineRounded
+      className="size-3.5 shrink-0"
+      aria-label="Читає"
+    />
+    {activity.volume ? (
+      <>
+        <span className="shrink-0">Том {activity.volume}</span>
+        <Dot />
+      </>
+    ) : null}
+    <span className="truncate">Розділ {activity.chapter}</span>
+  </>
+);
+
 const Row = ({ activity }: { activity: FriendActivity }) => {
-  const { friend, animeSlug, episode, playing, room } = activity;
-  const { data: anime } = useHikkaContent('anime', animeSlug);
-  const title: string = hikkaTitle(anime) || animeSlug;
+  const { friend, contentType, slug } = activity;
+  const { data: content } = useHikkaContent(contentType, slug);
+  const title: string = hikkaTitle(content) || slug;
   const name = memberName(friend);
-  const href = `/anime/${animeSlug}`;
+  const href = `/${contentType}/${slug}`;
 
   return (
     <div className="hover:bg-accent/50 flex items-center gap-3 px-4 py-2 transition-colors">
@@ -58,9 +131,9 @@ const Row = ({ activity }: { activity: FriendActivity }) => {
           ratio={0.7}
           className="bg-muted overflow-hidden rounded-md"
         >
-          {anime?.image && (
+          {content?.image && (
             <img
-              src={anime.image}
+              src={content.image}
               alt=""
               loading="lazy"
               className="size-full object-cover"
@@ -89,51 +162,10 @@ const Row = ({ activity }: { activity: FriendActivity }) => {
           {title}
         </a>
         <div className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-xs whitespace-nowrap">
-          {playing ? (
-            <span
-              className="relative flex size-2 shrink-0"
-              title="Дивиться зараз"
-            >
-              <span className="bg-success absolute inline-flex size-full animate-ping rounded-full opacity-60" />
-              <span className="bg-success relative inline-flex size-2 rounded-full" />
-            </span>
+          {activity.contentType === 'anime' ? (
+            <WatchingStatus activity={activity} />
           ) : (
-            <MaterialSymbolsPauseRounded
-              className="size-3.5 shrink-0"
-              aria-label="На паузі"
-            />
-          )}
-          <span className="shrink-0">Епізод {episode}</span>
-          {room && (
-            <>
-              <Dot />
-              <span
-                className="flex shrink-0 items-center gap-0.5"
-                title="Дивляться разом"
-              >
-                <MaterialSymbolsGroupOutlineRounded className="size-3.5" />
-                {room.memberCount}
-              </span>
-            </>
-          )}
-          {room?.code ? (
-            <>
-              <Dot />
-              <Button
-                variant="link"
-                className="h-auto min-w-0 p-0 text-xs"
-                onClick={() => openRoom(animeSlug, room.code!)}
-              >
-                <span className="truncate">Приєднатися</span>
-              </Button>
-            </>
-          ) : (
-            !playing && (
-              <>
-                <Dot />
-                <span className="truncate">на паузі</span>
-              </>
-            )
+            <ReadingStatus activity={activity} />
           )}
         </div>
       </div>
@@ -173,7 +205,7 @@ const SharingSettings = () => {
       <div className="flex flex-1 flex-col gap-1.5">
         <Label htmlFor={id}>Ділитися активністю</Label>
         <p className="text-muted-foreground text-xs text-pretty">
-          Друзі бачать, що ви дивитеся у програвачі розширення
+          Друзі бачать, що ви дивитеся й читаєте в розширенні
         </p>
       </div>
       <Switch
@@ -214,8 +246,8 @@ const FriendsList = () => {
       <EmptyState
         size="sm"
         icon={<MaterialSymbolsGroupOutlineRounded />}
-        title="Зараз ніхто не дивиться"
-        description="Тут з’являться друзі з розширенням, з якими ви взаємно підписані, коли вмикатимуть аніме"
+        title="Зараз ніхто не дивиться й не читає"
+        description="Тут з’являться друзі з розширенням, з якими ви взаємно підписані, коли вмикатимуть аніме чи відкриватимуть читалку"
       />
     );
   }
@@ -227,8 +259,12 @@ const FriendsList = () => {
           <SkeletonRow />
         </>
       ) : (
+        // A friend watching and reading at once has a row for each.
         activities.map((activity) => (
-          <Row key={activity.friend.id} activity={activity} />
+          <Row
+            key={`${activity.friend.id}:${activity.contentType}`}
+            activity={activity}
+          />
         ))
       )}
     </div>
@@ -242,7 +278,7 @@ const SignIn = () => {
       size="sm"
       icon={<MaterialSymbolsGroupOutlineRounded />}
       title="Увійдіть у розширення"
-      description="Щоб бачити, що зараз дивляться друзі, з якими ви взаємно підписані"
+      description="Щоб бачити, що зараз дивляться й читають друзі, з якими ви взаємно підписані"
       action={
         <Button
           size="sm"
@@ -265,7 +301,7 @@ const SignIn = () => {
   );
 };
 
-/** What the user's friends are watching in the extension's player. */
+/** What the user's friends are watching and reading in the extension. */
 const FriendsActivityBlock = () => {
   const mode = useMode();
   const [settingsOpen, setSettingsOpen] = useState(false);

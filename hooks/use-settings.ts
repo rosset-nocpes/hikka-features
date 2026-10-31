@@ -63,7 +63,7 @@ interface AppState {
       enabled: boolean;
     };
     /**
-     * Where the "friends are watching" block sits among the homepage's
+     * Where the "friends' activity" block sits among the homepage's
      * widgets, which hikka.io keeps in the account and can't hold ours.
      */
     friendsActivity: {

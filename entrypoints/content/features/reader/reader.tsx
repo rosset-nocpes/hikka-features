@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { SidebarProvider } from '@/components/ui/sidebar';
 
 import { ModalUi } from '../../core/base-feature';
+import { readingReporter } from './activity-reporter';
 import ReaderNavbar from './components/reader-navbar';
 import MangaRenderer from './components/renderers/manga-renderer';
 import NovelRenderer from './components/renderers/novel-renderer';
@@ -21,6 +22,7 @@ const readerUi = new ModalUi({
       'size-full md:backdrop-blur-xs bg-black/60 flex items-center justify-center md:p-8 duration-300';
     container.classList.add('h-full');
     Fonts.injectAllFonts();
+    readingReporter.start();
   },
   render: (container) => (
     <SidebarProvider className="h-full w-full">
@@ -31,6 +33,7 @@ const readerUi = new ModalUi({
     </SidebarProvider>
   ),
   onRemove: () => {
+    readingReporter.stop();
     const { settings, toggleFullscreen } = useReader.getState();
     if (settings.fullscreen) toggleFullscreen();
     document.body.classList.remove('h-full', 'overflow-hidden');

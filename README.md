@@ -27,14 +27,15 @@ refresh on their own: they call `accountQuery`/`accountMutation`, which forward
 the request to the background. Public functions (`watch:resolve`,
 `catalog:get`, `editor:suggest`) are called directly. Watch together keeps a
 live WebSocket connection per tab (`acquireLiveClient`), shared by the room,
-the invite toasts, the friend list and the homepage's "Друзі дивляться" block
+the invite toasts, the friend list and the homepage's "Активність друзів" block
 until the last of them releases it; the background only lends it short-lived
 access tokens and still does every refresh.
 
-The "Друзі дивляться" block joins hikka.io's homepage widgets and its layout
-dialog (`features/friends-activity`). hikka.io stores the layout in the account
-and accepts only its own widgets, so the block's place is kept in the
-extension's settings, as the site widgets right before and after it.
+The "Активність друзів" block, what friends watch in the player and read in
+the reader, joins hikka.io's homepage widgets and its layout dialog
+(`features/friends-activity`). hikka.io stores the layout in the account and
+accepts only its own widgets, so the block's place is kept in the extension's
+settings, as the site widgets right before and after it.
 
 The "Від команд" block on anime pages lists the teams that dubbed or
 subtitled the anime from the extension's own catalog (teams' Telegram
