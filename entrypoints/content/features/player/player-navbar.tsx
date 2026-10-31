@@ -16,8 +16,11 @@ import { useStackedLayout } from './mobile/use-stacked-layout';
 import { closePlayer } from './player';
 import WatchTogether from './player-overlay/buttons/watch-together';
 
-// The toolbar's glass, ring included.
-const GLASS = 'border-shadow bg-background/60 border backdrop-blur-xl';
+// The toolbar's glass.
+const GLASS = 'player-glass border';
+// A ghost button's dark hover would leave the glass half transparent; the
+// full fill is the glass, lit.
+const GLASS_BUTTON = `${GLASS} dark:hover:bg-muted`;
 
 interface Props {
   /** In mini mode the episode chip doubles as the drag handle. */
@@ -61,7 +64,7 @@ const PlayerNavbar: FC<Props> = ({ onDragStart }) => {
           <Button
             variant="ghost"
             size="icon-sm"
-            className={GLASS}
+            className={GLASS_BUTTON}
             aria-label="Закрити програвач"
             onClick={closePlayer}
           >
@@ -106,7 +109,7 @@ const PlayerNavbar: FC<Props> = ({ onDragStart }) => {
             <Button
               variant="ghost"
               size="icon-sm"
-              className={GLASS}
+              className={GLASS_BUTTON}
               aria-label="Вийти з мінірежиму"
               onClick={toggleMiniPlayer}
             >
@@ -115,7 +118,7 @@ const PlayerNavbar: FC<Props> = ({ onDragStart }) => {
             <Button
               variant="ghost"
               size="icon-sm"
-              className={GLASS}
+              className={GLASS_BUTTON}
               aria-label="Закрити програвач"
               onClick={closePlayer}
             >
@@ -129,7 +132,7 @@ const PlayerNavbar: FC<Props> = ({ onDragStart }) => {
               anchor={actionsRef}
               side="bottom"
               compact
-              className={cn(GLASS, 'md:hidden')}
+              className={cn(GLASS_BUTTON, 'md:hidden')}
             />
             {panelInDrawer && (
               <Drawer swipeDirection="right">
@@ -138,7 +141,7 @@ const PlayerNavbar: FC<Props> = ({ onDragStart }) => {
                     <Button
                       variant="ghost"
                       size="icon-sm"
-                      className={GLASS}
+                      className={GLASS_BUTTON}
                       aria-label="Епізоди та джерело"
                     />
                   }
@@ -155,7 +158,7 @@ const PlayerNavbar: FC<Props> = ({ onDragStart }) => {
               size="icon-sm"
               className={cn(
                 'hidden duration-300 md:inline-flex',
-                !open && GLASS,
+                !open && GLASS_BUTTON,
               )}
             />
           </>

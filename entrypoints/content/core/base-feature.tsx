@@ -30,7 +30,10 @@ export type FeatureUiOptions = DistributiveOmit<
   render: (container: HTMLElement) => ReactNode;
   /** Declarations for the host, e.g. margins that undo the page's gaps. */
   hostCss?: string;
-  /** Takes hikka.io's theme colours, not only dark mode. On by default. */
+  /**
+   * Takes all of hikka.io's theme colours, not only dark mode, the corners
+   * and the accent. On by default.
+   */
   themeVariables?: boolean;
   /** Runs before the first render, e.g. to size the container. */
   onMount?: (

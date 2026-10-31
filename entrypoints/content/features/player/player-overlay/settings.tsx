@@ -177,7 +177,7 @@ const Settings: FC<Props> = ({ anchor }) => {
         />
       </ToolbarTooltip>
       <DropdownMenuContent
-        className="bg-popover/60 w-56 rounded-lg backdrop-blur-xl"
+        className="ring-border w-56 rounded-lg"
         {...position}
       >
         <SettingsPages />

@@ -15,6 +15,7 @@ import { useCopy } from '@/hooks/use-copy';
 
 import { usePlayer } from '../../context/player-context';
 import { getTeamName } from '../../teams';
+import { MenuItem, MenuSeparator } from '../../watch-together/menu';
 import { formatTime } from '../time-group';
 import ToolbarTooltip from '../toolbar-tooltip';
 import { useToolbarMenuPosition, useUiLock } from '../use-ui-lock';
@@ -86,7 +87,7 @@ const Share: FC<Props> = ({ anchor }) => {
         />
       </ToolbarTooltip>
       <PopoverContent
-        className="bg-popover/60 w-56 gap-0 rounded-lg p-1 backdrop-blur-xl"
+        className="ring-border w-56 gap-0 rounded-lg p-1"
         {...position}
       >
         <div className="text-muted-foreground truncate px-2 py-1.5 text-xs font-medium">
@@ -120,19 +121,15 @@ const Share: FC<Props> = ({ anchor }) => {
             )}
           />
         </div>
-        <div className="bg-border -mx-1 my-1 h-px" />
-        <button
-          type="button"
-          onClick={copyLink}
-          className="hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none [&_svg]:size-4 [&_svg]:shrink-0"
-        >
+        <MenuSeparator />
+        <MenuItem onClick={copyLink}>
           <SwapIcon
             active={!!copied}
             on={<MaterialSymbolsCheckRounded className="text-success" />}
             off={<MaterialSymbolsContentCopyOutlineRounded />}
           />
           {copied ? 'Скопійовано' : 'Копіювати посилання'}
-        </button>
+        </MenuItem>
       </PopoverContent>
     </Popover>
   );

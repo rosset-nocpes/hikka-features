@@ -42,9 +42,7 @@ const ToolbarTooltip: FC<Props> = ({ label, shortcut, children, disabled }) => {
       >
         {label}
         {shortcut && (
-          // The kbd's own tooltip colours are for dark tooltips; these are
-          // popover coloured.
-          <Kbd className="in-data-[slot=tooltip-content]:bg-muted in-data-[slot=tooltip-content]:text-muted-foreground dark:in-data-[slot=tooltip-content]:bg-muted shrink-0 whitespace-nowrap">
+          <Kbd className="shrink-0 whitespace-nowrap">
             {shortcut.replace('+', ' + ')}
           </Kbd>
         )}

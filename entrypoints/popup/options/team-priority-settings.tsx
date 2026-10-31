@@ -34,7 +34,7 @@ const translationOptions: { value: PreferredTranslation; label: string }[] = [
 ];
 
 const TeamAvatar = ({ team }: { team: CatalogTeam }) => (
-  <Avatar className="size-8 rounded-md after:rounded-md">
+  <Avatar className="size-8 rounded-md">
     {team.logo && <AvatarImage src={team.logo} alt="" />}
     <AvatarFallback className="rounded-md text-xs">
       {team.title[0]}

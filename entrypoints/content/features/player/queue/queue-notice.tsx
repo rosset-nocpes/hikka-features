@@ -128,7 +128,7 @@ const QueueNotice = ({ shared }: { shared: boolean }) => {
             onPointerLeave={hideLater}
             onFocus={() => clearTimeout(timer)}
             onBlur={hideLater}
-            className="bg-popover text-popover-foreground ring-foreground/10 pointer-events-auto flex items-center gap-1 rounded-lg p-1 pl-3 text-sm shadow-md ring-1"
+            className="bg-popover text-popover-foreground ring-border pointer-events-auto flex items-center gap-1 rounded-lg p-1 pl-3 text-sm shadow-md ring-1"
           >
             <span className="min-w-0 flex-1 py-1 leading-tight text-pretty">
               {shown.text}

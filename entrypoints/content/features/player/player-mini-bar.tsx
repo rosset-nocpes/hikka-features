@@ -46,7 +46,7 @@ const PlayerMiniBar = ({ onDragStart }: Props) => {
           </Button>
           <Play />
         </div>
-        <Avatar className="size-8 shrink-0 rounded-md after:rounded-md">
+        <Avatar className="size-8 shrink-0 rounded-md">
           {team?.logo && <AvatarImage src={team.logo} alt="" />}
           <AvatarFallback className="rounded-md text-xs font-medium">
             {teamName?.[0] ?? '?'}

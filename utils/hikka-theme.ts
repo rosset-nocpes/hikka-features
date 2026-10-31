@@ -4,21 +4,28 @@ const asColor = (value: string): string =>
     ? `hsl(${value})`
     : value;
 
+/**
+ * What every follower takes from the user's theme, even one that keeps the
+ * extension's colours: its corners, which the user may square off, and its
+ * accent.
+ */
+const SHARED = new Set(['--radius', '--primary']);
+
 interface Follower {
-  /** Takes the user's colours, not only dark mode. */
+  /** Takes all the user's colours, not only dark mode and the shared ones. */
   themeVariables: boolean;
-  /** The colours set on it, so ones the user resets can be removed. */
+  /** The variables set on it, so ones the user resets can be removed. */
   applied: Set<string>;
 }
 
 /**
- * hikka.io's theme, followed into every feature's container: dark mode and,
- * where wanted, the colours of the user's theme. One observer serves all.
+ * hikka.io's theme, followed into every feature's container: dark mode, the
+ * corners and accent and, where wanted, the other colours of the user's
+ * theme. One observer serves all.
  */
 class HikkaTheme {
   private readonly followers = new Map<HTMLElement, Follower>();
   private observer?: MutationObserver;
-  private observingStyles = false;
 
   get isDark(): boolean {
     return (
@@ -29,33 +36,26 @@ class HikkaTheme {
 
   /** Themes `container` like the page until it leaves the document. */
   follow(container: HTMLElement, { themeVariables = false } = {}) {
-    this.followers.set(container, { themeVariables, applied: new Set() });
-    this.observe(themeVariables);
-    this.apply(
-      container,
-      this.followers.get(container)!,
-      themeVariables ? this.variables() : undefined,
-    );
+    const follower = { themeVariables, applied: new Set<string>() };
+    this.followers.set(container, follower);
+    this.observe();
+    this.apply(container, follower, this.variables());
   }
 
-  private observe(themeVariables: boolean) {
-    if (!this.observer) {
-      this.observer = new MutationObserver(this.update);
-      this.observer.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ['class', 'style'],
-      });
-    }
-    if (themeVariables && !this.observingStyles) {
-      // hikka.io rewrites #user-styles when the user's theme loads or they
-      // edit it.
-      this.observer.observe(document.head, {
-        childList: true,
-        characterData: true,
-        subtree: true,
-      });
-      this.observingStyles = true;
-    }
+  private observe() {
+    if (this.observer) return;
+    this.observer = new MutationObserver(this.update);
+    this.observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class', 'style'],
+    });
+    // hikka.io rewrites #user-styles when the user's theme loads or they
+    // edit it.
+    this.observer.observe(document.head, {
+      childList: true,
+      characterData: true,
+      subtree: true,
+    });
   }
 
   private update = () => {
@@ -65,36 +65,36 @@ class HikkaTheme {
         this.followers.delete(container);
         continue;
       }
-      if (follower.themeVariables) variables ??= this.variables();
+      variables ??= this.variables();
       this.apply(container, follower, variables);
     }
 
     if (this.followers.size === 0) {
       this.observer?.disconnect();
       this.observer = undefined;
-      this.observingStyles = false;
     }
   };
 
   private apply(
     container: HTMLElement,
     follower: Follower,
-    variables: Map<string, string> | undefined,
+    variables: Map<string, string>,
   ) {
-    if (variables) {
-      // A colour the user reset falls back to the extension's own.
-      for (const name of follower.applied) {
-        if (!variables.has(name)) container.style.removeProperty(name);
-      }
-      for (const [name, value] of variables) {
-        container.style.setProperty(name, value);
-      }
-      follower.applied = new Set(variables.keys());
+    const taken = follower.themeVariables
+      ? variables
+      : new Map([...variables].filter(([name]) => SHARED.has(name)));
+    // A variable the user reset falls back to the extension's own.
+    for (const name of follower.applied) {
+      if (!taken.has(name)) container.style.removeProperty(name);
     }
+    for (const [name, value] of taken) {
+      container.style.setProperty(name, value);
+    }
+    follower.applied = new Set(taken.keys());
     container.classList.toggle('dark', this.isDark);
   }
 
-  /** The colours of the user's hikka.io theme, by custom property. */
+  /** The user's hikka.io theme, by custom property. */
   private variables() {
     const variables = new Map<string, string>();
     const userStyles = document.getElementById(

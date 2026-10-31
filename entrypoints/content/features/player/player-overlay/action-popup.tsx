@@ -118,7 +118,7 @@ const TopPopup = ({ action }: { action: PopupAction }) => (
         transition: { duration: 0.15, ease: 'easeOut' },
       }}
       transition={{ duration: 0.2, ease: 'easeOut' }}
-      className="bg-background/60 border-shadow flex h-8 items-center gap-2 rounded-md border px-2 text-sm font-medium tabular-nums backdrop-blur-xl [&_svg]:size-5"
+      className="player-glass flex h-8 items-center gap-2 rounded-md border px-2 text-sm font-medium tabular-nums [&_svg]:size-5"
     >
       {action.type === 'speedup' ? (
         <>

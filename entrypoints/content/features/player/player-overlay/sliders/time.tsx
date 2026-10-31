@@ -229,7 +229,7 @@ const Time = ({ className, trackClassName }: TimeProps = {}) => {
       {showTooltip && (
         <div
           ref={tooltipRef}
-          className="bg-popover text-popover-foreground border-shadow pointer-events-none fixed z-50 -translate-x-1/2 rounded-md border px-2 py-1 text-xs font-medium tabular-nums"
+          className="bg-tooltip text-tooltip-foreground pointer-events-none fixed z-50 -translate-x-1/2 rounded-md px-3 py-1.5 text-xs font-medium tabular-nums shadow-md"
           style={tooltipStyle}
         >
           {formatTime(hoverTime)}

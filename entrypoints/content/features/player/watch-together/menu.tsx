@@ -4,7 +4,7 @@ import type { WatchRoomProfile } from '@/utils/convex-api';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-/** Rows of the player's popovers, styled like the share menu. */
+/** Rows of the player's popovers, styled like its dropdown menus. */
 export const MenuLabel = ({ className, ...props }: ComponentProps<'div'>) => (
   <div
     className={cn(

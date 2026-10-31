@@ -48,7 +48,7 @@ const WatchTogetherInvite = () => {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.15, ease: 'easeOut' }}
-        className="bg-popover/60 text-popover-foreground ring-foreground/10 pointer-events-auto flex w-64 flex-col rounded-lg p-1 text-sm shadow-md ring-1 backdrop-blur-xl"
+        className="bg-popover text-popover-foreground ring-border pointer-events-auto flex w-64 flex-col rounded-lg p-1 text-sm shadow-md ring-1"
       >
         <MenuLabel>Запрошення до спільного перегляду</MenuLabel>
         <div className="flex items-center gap-2 px-2 py-1.5">

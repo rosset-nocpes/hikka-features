@@ -174,7 +174,8 @@ const PlayerFrame = () => {
       id="player-frame"
       className={cn(
         'relative flex size-full items-center justify-center md:p-8',
-        disableBlur && '**:[[class*=backdrop-blur]]:backdrop-blur-none',
+        disableBlur &&
+          '**:[.player-glass]:backdrop-filter-none **:[[class*=backdrop-blur]]:backdrop-blur-none',
         isCompactMode && 'pointer-events-none',
       )}
     >
@@ -215,17 +216,20 @@ const Player = () => {
       ref={cardRef}
       className={cn(
         // Position and size changes animate in mini-player-layout.ts; only
-        // theatre mode's size and the corners use CSS transitions.
-        'border-overlay relative z-10 box-content flex size-full overflow-hidden rounded-none border-none transition-[max-width,max-height,border-radius] duration-300 motion-reduce:transition-none md:max-h-[720px] md:max-w-[1280px] md:rounded-[calc(var(--radius)+8px)] md:border',
+        // theatre mode's size and the corners use CSS transitions. Corners
+        // grown past the radius take the `min` with it, so they're square,
+        // like the rest, when the user's hikka theme squares the corners.
+        'border-overlay relative z-10 box-content flex size-full overflow-hidden rounded-none border-none transition-[max-width,max-height,border-radius] duration-300 motion-reduce:transition-none md:max-h-[720px] md:max-w-[1280px] md:rounded-[min(calc(var(--radius)+8px),var(--radius)*100)] md:border',
         theatreMode && 'md:max-h-full md:max-w-full',
         fullscreen && 'max-h-full! max-w-full! rounded-none! border-none!',
         // Concentric with the controls inside: their radius, 8px inset and the border.
         layout !== 'full' &&
-          'pointer-events-auto fixed top-0 left-0 z-30 cursor-default rounded-[calc(var(--radius-md)+9px)] border shadow-2xl data-dragging:cursor-grabbing data-dragging:select-none md:rounded-[calc(var(--radius-md)+9px)] [&[data-dragging]_iframe]:pointer-events-none',
+          'pointer-events-auto fixed top-0 left-0 z-30 cursor-default rounded-[min(calc(var(--radius-md)+9px),var(--radius)*100)] border shadow-2xl data-dragging:cursor-grabbing data-dragging:select-none md:rounded-[min(calc(var(--radius-md)+9px),var(--radius)*100)] [&[data-dragging]_iframe]:pointer-events-none',
         layout === 'mini' &&
           'aspect-video h-auto w-[min(calc(100vw-1rem),420px)]',
+        // The glass's colour as a `bg-` class too, so it replaces the card's.
         layout === 'bar' &&
-          'bg-background/60 h-auto w-[min(calc(100vw-1rem),480px)] backdrop-blur-xl',
+          'player-glass h-auto w-[min(calc(100vw-1rem),480px)] bg-(--surface-glass)',
         // Phones held upright: the video on top, its episode panel below.
         stacked && 'bg-background flex-col',
       )}

@@ -15,11 +15,13 @@ import Settings from './settings';
 import Volume from './sliders/volume';
 import TimeGroup from './time-group';
 
-// Concentric: the buttons' radius plus the padding and the border.
+// Concentric: the buttons' radius plus the padding and the border. Square,
+// like the buttons, when the user's hikka theme squares the corners (`min`
+// with the radius, which is then 0).
 const GROUP =
-  'border-shadow bg-background/60 flex items-center gap-1 rounded-[calc(var(--radius-md)+4px)] border p-[3px] backdrop-blur-xl';
+  'player-glass flex items-center gap-1 rounded-[min(calc(var(--radius-md)+4px),var(--radius)*100)] border p-[3px]';
 
-const Divider = () => <div className="bg-border/70 mx-0.5 h-5 w-px shrink-0" />;
+const Divider = () => <div className="bg-border mx-0.5 h-5 w-px shrink-0" />;
 
 /** Mute button with a volume slider that slides out on hover or focus. */
 const VolumeControl = () => (

@@ -250,7 +250,7 @@ const UpNext: FC<Props> = ({ inline, corner }) => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="bg-popover/60 text-popover-foreground ring-foreground/10 pointer-events-auto flex w-72 max-w-full flex-col gap-1 rounded-lg p-1 text-sm shadow-md ring-1 backdrop-blur-xl"
+            className="player-glass pointer-events-auto flex w-72 max-w-full flex-col gap-1 rounded-lg border p-1 text-sm shadow-lg"
           >
             {/* Smaller in the middle of small players, clear of their controls. */}
             <div
