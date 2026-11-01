@@ -1,16 +1,56 @@
-import * as cheerio from 'cheerio';
+import type { Cheerio, CheerioAPI } from 'cheerio';
 
-import type { Chapter, ReaderContent, Volume } from '../reader.types';
+import type {
+  Chapter,
+  ReaderContent,
+  TitleInfo,
+  Volume,
+} from '../reader.types';
 
 import { ReaderContentMode } from '../reader.enums';
 import BaseScraper from './_scraper';
+
+const normalizeTitle = (title: string) =>
+  title
+    .normalize('NFKC')
+    .toLocaleLowerCase('uk-UA')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
+
+/**
+ * How well a search result's titles match the title's: the best share of
+ * words two titles have in common, also trying the parts of "A — B" titles.
+ */
+const titleScore = (candidates: string[], titles: string[]) => {
+  const candidateVariants = candidates.flatMap((candidate) => [
+    candidate,
+    ...candidate.split(/\s+(?:[-–—―:|/])\s+/),
+  ]);
+  let bestScore = 0;
+
+  for (const candidate of candidateVariants) {
+    const candidateWords = new Set(normalizeTitle(candidate).split(' '));
+
+    for (const title of titles) {
+      const titleWords = new Set(normalizeTitle(title).split(' '));
+      const sharedWords = [...candidateWords].filter((word) =>
+        titleWords.has(word),
+      ).length;
+      const totalWords = new Set([...candidateWords, ...titleWords]).size;
+
+      bestScore = Math.max(bestScore, sharedWords / totalWords);
+    }
+  }
+
+  return bestScore;
+};
 
 class BIUScraper extends BaseScraper {
   constructor() {
     super('BIUScraper', 'https://baka.in.ua');
   }
 
-  async search(data: any) {
+  async search(data: TitleInfo) {
     const titles = [
       ...new Set(
         [data.title_ua, data.title_en, data.title_original]
@@ -22,10 +62,9 @@ class BIUScraper extends BaseScraper {
 
     for (const title of titles) {
       try {
-        const r = await this.request(
+        const $page = await this.load(
           `search?filter=fiction&search[]=${encodeURIComponent(title)}`,
         );
-        const $page = cheerio.load(r);
 
         for (const link of $page(
           '#fictions-section .group a.block',
@@ -38,7 +77,7 @@ class BIUScraper extends BaseScraper {
             .map((_index, element) => $page(element).text().trim())
             .toArray()
             .filter(Boolean);
-          const score = this.getTitleScore(candidateTitles, titles);
+          const score = titleScore(candidateTitles, titles);
 
           if (href && score > (bestMatch?.score ?? 0)) {
             bestMatch = { href, score };
@@ -61,8 +100,7 @@ class BIUScraper extends BaseScraper {
   }
 
   async getChapterList(url: string): Promise<ReaderContent> {
-    const r = await this.request(url);
-    const $ = cheerio.load(r);
+    const $ = await this.load(url);
     const $accordions = $('.accordion');
 
     const hasVolumes = $accordions
@@ -116,54 +154,14 @@ class BIUScraper extends BaseScraper {
   }
 
   async getChapter(url: string) {
-    const r = await this.request(url);
-    const $ = cheerio.load(r);
-
+    const $ = await this.load(url);
     return $('#user-content').html();
   }
 
-  private getTitleScore(candidates: string[], titles: string[]): number {
-    const candidateVariants = candidates.flatMap((candidate) => [
-      candidate,
-      ...candidate.split(/\s+(?:[-–—―:|/])\s+/),
-    ]);
-    let bestScore = 0;
-
-    for (const candidate of candidateVariants) {
-      const candidateWords = new Set(this.normalizeTitle(candidate).split(' '));
-
-      for (const title of titles) {
-        const titleWords = new Set(this.normalizeTitle(title).split(' '));
-        const sharedWords = [...candidateWords].filter((word) =>
-          titleWords.has(word),
-        ).length;
-        const totalWords = new Set([...candidateWords, ...titleWords]).size;
-
-        bestScore = Math.max(bestScore, sharedWords / totalWords);
-      }
-    }
-
-    return bestScore;
-  }
-
-  private normalizeTitle(title: string): string {
-    return title
-      .normalize('NFKC')
-      .toLocaleLowerCase('uk-UA')
-      .replace(/[^\p{L}\p{N}]+/gu, ' ')
-      .trim();
-  }
-
-  private resolveUrl(href: string): string {
-    return href.startsWith('http')
-      ? href
-      : `${this.baseUrl}/${href.replace(/^\//, '')}`;
-  }
-
   private parseChaptersFromElements(
-    $: cheerio.CheerioAPI,
-    $root: cheerio.Cheerio<any>,
-    volumeNumber: number = 0,
+    $: CheerioAPI,
+    $root: Cheerio<any>,
+    volumeNumber: number,
   ): Chapter[] {
     return $root
       .find('li.group')
@@ -211,13 +209,12 @@ class BIUScraper extends BaseScraper {
 
   private async fetchSectionChapters(
     sectionPath: string,
-    volumeNumber: number = 0,
+    volumeNumber: number,
   ): Promise<Chapter[]> {
     const sectionUrl = new URL(sectionPath, this.baseUrl);
     sectionUrl.searchParams.set('limit', 'all');
 
-    const chaptersPage = await this.request(sectionUrl.toString());
-    const $chapters = cheerio.load(chaptersPage);
+    const $chapters = await this.load(sectionUrl.toString());
     return this.parseChaptersFromElements(
       $chapters,
       $chapters('body'),

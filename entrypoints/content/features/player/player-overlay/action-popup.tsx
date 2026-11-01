@@ -10,7 +10,7 @@ import MaterialSymbolsVolumeUpOutlineRounded from '~icons/material-symbols/volum
 
 import { usePlayer } from '../context/player-context';
 
-export const PLAYER_OVERLAY_ACTION_EVENT = 'playeroverlayaction';
+const PLAYER_OVERLAY_ACTION_EVENT = 'playeroverlayaction';
 
 type PlaybackAction = 'play' | 'pause' | 'mute' | 'unmute';
 
@@ -190,11 +190,10 @@ const ActionPopup = () => {
   const [flash, setFlash] = useState<PopupAction | null>(null);
   const [held, setHeld] = useState<PopupAction | null>(null);
   const actionIdRef = useRef(0);
-  const hideTimerRef = useRef<NodeJS.Timeout>(null);
 
   useEffect(() => {
-    const ref = overlay;
-    if (!ref) return;
+    if (!overlay) return;
+    let hideTimer: ReturnType<typeof setTimeout> | undefined;
 
     const handleAction = (event: Event) => {
       const detail = (event as CustomEvent<PlayerOverlayAction>).detail;
@@ -208,23 +207,15 @@ const ActionPopup = () => {
         return;
       }
 
-      if (hideTimerRef.current) {
-        clearTimeout(hideTimerRef.current);
-      }
-
+      clearTimeout(hideTimer);
       setFlash(action);
-      hideTimerRef.current = setTimeout(() => {
-        setFlash(null);
-      }, HIDE_DELAY);
+      hideTimer = setTimeout(() => setFlash(null), HIDE_DELAY);
     };
 
-    ref.addEventListener(PLAYER_OVERLAY_ACTION_EVENT, handleAction);
-
+    overlay.addEventListener(PLAYER_OVERLAY_ACTION_EVENT, handleAction);
     return () => {
-      ref.removeEventListener(PLAYER_OVERLAY_ACTION_EVENT, handleAction);
-      if (hideTimerRef.current) {
-        clearTimeout(hideTimerRef.current);
-      }
+      overlay.removeEventListener(PLAYER_OVERLAY_ACTION_EVENT, handleAction);
+      clearTimeout(hideTimer);
     };
   }, [overlay]);
 

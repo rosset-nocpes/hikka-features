@@ -50,7 +50,7 @@ const EpisodeSummary: FC<
   return (
     <>
       <div className="relative shrink-0">
-        <Poster src={anime?.image} className="h-10 w-7" />
+        <Poster src={anime?.image ?? undefined} className="h-10 w-7" />
         {loading && (
           <div className="absolute inset-0 grid place-items-center rounded-sm bg-black/50 text-white">
             <Spinner aria-hidden className="size-4" />

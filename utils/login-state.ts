@@ -1,11 +1,6 @@
-/**
- * The hikka.io login in progress, or why the last one failed; gone once it
- * succeeded. It lives in `storage.local` so it outlasts Chrome restarting
- * the background's worker, and so every context can wait for the login.
- */
-export const LOGIN_STATE_KEY = 'account-login';
+import { StoredValue } from './stored-value';
 
-export type LoginState =
+type LoginState =
   | {
       status: 'pending';
       /** Proves to the backend that this install started the login. */
@@ -18,6 +13,13 @@ export type LoginState =
   | { status: 'failed'; error: string };
 
 /**
+ * The hikka.io login in progress, or why the last one failed; gone once it
+ * succeeded. It lives in `storage.local` so it outlasts Chrome restarting
+ * the background's worker, and so every context can wait for the login.
+ */
+export const loginState = new StoredValue<LoginState>('account-login');
+
+/**
  * Runs `start`, which asks the background to log in, and settles once that
  * login ends. Fails with the backend's or the background's error code.
  */
@@ -26,20 +28,13 @@ export function awaitLogin(start: () => Promise<unknown>) {
     let timer: ReturnType<typeof setTimeout> | undefined;
 
     const settle = (error?: unknown) => {
-      browser.storage.onChanged.removeListener(onChanged);
+      unwatch();
       clearTimeout(timer);
       if (error === undefined) resolve();
       else reject(error instanceof Error ? error : new Error(String(error)));
     };
 
-    const onChanged = (
-      changes: Record<string, Browser.storage.StorageChange>,
-      area: string,
-    ) => {
-      if (area !== 'local' || !(LOGIN_STATE_KEY in changes)) return;
-      const state = changes[LOGIN_STATE_KEY]!.newValue as
-        | LoginState
-        | undefined;
+    const unwatch = loginState.watch((state) => {
       if (state?.status === 'pending') {
         // A tab left open past the backend's limit can't log in anymore.
         clearTimeout(timer);
@@ -50,9 +45,8 @@ export function awaitLogin(start: () => Promise<unknown>) {
         return;
       }
       settle(state?.error);
-    };
+    });
 
-    browser.storage.onChanged.addListener(onChanged);
     start().catch(settle);
   });
 }

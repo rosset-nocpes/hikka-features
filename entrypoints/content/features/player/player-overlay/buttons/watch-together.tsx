@@ -48,7 +48,7 @@ import {
   memberName,
   RoomSubtitle,
 } from '../../watch-together/menu';
-import { openRoom } from '../../watch-together/open-room';
+import { openRoom, roomInviteUrl } from '../../watch-together/open-room';
 import { useWatchTogether } from '../../watch-together/use-watch-together';
 import MenuPages from '../menu-pages';
 import ToolbarTooltip from '../toolbar-tooltip';
@@ -69,12 +69,6 @@ const pop = {
   initial: { scale: 0.4, opacity: 0 },
   animate: { scale: 1, opacity: 1 },
   exit: { scale: 0.4, opacity: 0 },
-};
-
-const inviteLink = ({ animeSlug, code }: WatchRoom) => {
-  const url = new URL(`/anime/${animeSlug}`, window.location.origin);
-  url.searchParams.set('room', code);
-  return url.href;
 };
 
 /**
@@ -160,10 +154,7 @@ const ListingItem = ({
 
   return (
     <MenuItem onClick={() => openRoom(listing.animeSlug, listing.code)}>
-      <MemberAvatar
-        member={listing.friend}
-        className="-mx-0.5 data-[size=sm]:size-5"
-      />
+      <MemberAvatar member={listing.friend} />
       <span className="grid min-w-0 flex-1 leading-tight">
         <span className="flex min-w-0 items-baseline gap-1">
           <span className="truncate">{memberName(listing.friend)}</span>
@@ -245,7 +236,7 @@ const FriendRow = ({ friend }: { friend: WatchRoomFriend }) => {
 
   const content = (
     <>
-      <MemberAvatar member={friend} className="-mx-0.5 data-[size=sm]:size-5" />
+      <MemberAvatar member={friend} />
       <span className="flex-1 truncate">{memberName(friend)}</span>
       {status ? (
         <span className="text-muted-foreground flex items-center gap-1 text-xs [&_svg]:size-3.5!">
@@ -355,11 +346,7 @@ const RoomMenu = ({
             key={member.id}
             className="flex items-center gap-2 px-2 py-1.5 text-sm"
           >
-            {/* Centred on the 16px icon column, so names line up with labels. */}
-            <MemberAvatar
-              member={member}
-              className="-mx-0.5 data-[size=sm]:size-5"
-            />
+            <MemberAvatar member={member} />
             <span className="truncate">{memberName(member)}</span>
             {member.id === room.ownerId && (
               <MaterialSymbolsCrownOutlineRounded
@@ -395,7 +382,9 @@ const RoomMenu = ({
         Запросити друзів
         <MaterialSymbolsChevronRightRounded className="text-muted-foreground ml-auto" />
       </MenuItem>
-      <MenuItem onClick={() => void copy(inviteLink(room))}>
+      <MenuItem
+        onClick={() => void copy(roomInviteUrl(room.animeSlug, room.code).href)}
+      >
         <SwapIcon
           active={!!copied}
           on={<MaterialSymbolsCheckRounded className="text-success" />}

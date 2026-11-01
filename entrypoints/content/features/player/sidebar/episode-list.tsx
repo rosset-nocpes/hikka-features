@@ -25,7 +25,8 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 
-import { progressOf, usePlayer } from '../context/player-context';
+import { usePlayer } from '../context/player-context';
+import { progressOf } from '../context/sources';
 import { useActiveQueue } from '../queue/use-active-queue';
 import { type QueueItem, queueKey } from '../queue/use-queue';
 

@@ -1,6 +1,8 @@
 import { MotionConfig } from 'motion/react';
 import { useLayoutEffect, useRef } from 'react';
 
+import type { HikkaContent } from '@/hooks/use-hikka';
+
 import { Card, CardContent } from '@/components/ui/card';
 import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import { useIFramePlayer } from '@/hooks/use-iframe-player';
@@ -9,9 +11,9 @@ import { watchDataQuery } from '@/hooks/use-watch-data';
 import { ModalUi } from '../../core/base-feature';
 import { queryClient } from '../../core/query-client';
 import { activityReporter } from './activity-reporter';
-import { usePlayer } from './context/player-context';
+import { compactMode, usePlayer } from './context/player-context';
 import {
-  type PlayerLayout,
+  layoutOf,
   useLayoutTransition,
   useMiniPlayerDrag,
 } from './mini-player-layout';
@@ -123,7 +125,11 @@ export const playQueued = async (item: QueueItem) => {
   }
   if (initialize(data, item.slug, item)) return true;
 
-  const anime = queryClient.getQueryData(['hikka', 'anime', item.slug]);
+  const anime = queryClient.getQueryData<HikkaContent>([
+    'hikka',
+    'anime',
+    item.slug,
+  ]);
   notifyQueue(
     `«${hikkaTitle(anime) ?? item.slug}», епізод ${item.episode} більше ніде не доступний, тож його прибрано з черги`,
   );
@@ -149,11 +155,10 @@ export const closePlayer = () => {
 };
 
 const PlayerFrame = () => {
-  const { miniPlayer, videoPiPActive, fullscreen, container } = usePlayer();
+  const { fullscreen, container } = usePlayer();
+  const isCompactMode = usePlayer(compactMode);
   const { disableBlur } = useSettings().features.player;
   const { setOpen } = useSidebar();
-
-  const isCompactMode = miniPlayer || videoPiPActive;
 
   // A layout effect: the page must settle before the player measures its
   // new size for the mini player transition.
@@ -193,21 +198,11 @@ const PlayerFrame = () => {
 };
 
 const Player = () => {
-  const {
-    currentEpisode,
-    fullscreen,
-    theatreMode,
-    miniPlayer,
-    videoPiPActive,
-  } = usePlayer();
+  const { currentEpisode, fullscreen, theatreMode } = usePlayer();
+  const layout = usePlayer(layoutOf);
   const cardRef = useRef<HTMLDivElement>(null);
   const stacked = useStackedLayout();
 
-  const layout: PlayerLayout = miniPlayer
-    ? 'mini'
-    : videoPiPActive
-      ? 'bar'
-      : 'full';
   const startDrag = useMiniPlayerDrag(cardRef, layout);
   useLayoutTransition(cardRef, layout);
 

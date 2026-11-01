@@ -1,7 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import ky from 'ky';
 
-import useHikka, { fetchHikka, useHikkaContent } from '@/hooks/use-hikka';
+import useHikka, {
+  fetchHikka,
+  type HikkaContent,
+  useHikkaContent,
+} from '@/hooks/use-hikka';
 import { usePageStore } from '@/hooks/use-page-store';
 
 type CoverMedia = { malId: number; type: 'anime' | 'manga' };
@@ -10,7 +14,7 @@ const ANILIST_URL = 'https://graphql.anilist.co';
 
 /** A character's first anime, else their first manga. */
 const findCharacterMedia = async (
-  character: any,
+  character: HikkaContent,
 ): Promise<CoverMedia | null> => {
   for (const type of ['anime', 'manga'] as const) {
     if (!character[`${type}_count`]) continue;
@@ -39,12 +43,16 @@ const fetchBannerImage = async ({ malId, type }: CoverMedia) => {
   });
   if (!response.ok) return null;
 
-  const json = await response.json<any>();
-  return (json.data?.Media?.bannerImage as string | undefined) ?? null;
+  const json = await response.json<{
+    data?: { Media?: { bannerImage?: string | null } };
+  }>();
+  return json.data?.Media?.bannerImage ?? null;
 };
 
 /** The title whose banner covers the page, if it has one. */
-const coverMedia = async (content: any): Promise<CoverMedia | null> => {
+const coverMedia = async (
+  content: HikkaContent,
+): Promise<CoverMedia | null> => {
   switch (content.data_type) {
     case 'anime':
       return content.mal_id ? { malId: content.mal_id, type: 'anime' } : null;
@@ -82,7 +90,7 @@ const useMediaCover = () => {
   return useQuery({
     queryKey: ['media-cover', data?.data_type, data?.slug],
     queryFn: async () => {
-      const media = await coverMedia(data);
+      const media = await coverMedia(data!);
       return media && (await fetchBannerImage(media));
     },
     retry: false,

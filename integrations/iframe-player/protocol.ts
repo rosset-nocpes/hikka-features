@@ -1,6 +1,6 @@
 import { sendToBackground } from '@/utils/messaging';
 
-export const IFRAME_PLAYER_COMMAND_TYPE = 'iframe-player-command' as const;
+const IFRAME_PLAYER_COMMAND_TYPE = 'iframe-player-command';
 
 const SIMPLE_COMMAND_ACTIONS = [
   'play',
@@ -29,18 +29,15 @@ export type IFramePlayerCommandPayload =
   | { action: 'set-quality'; value: string; index: number }
   | { action: 'set-subtitle'; value: string; index: number };
 
-export type IFramePlayerCommand = IFramePlayerCommandPayload & {
+type IFramePlayerCommand = IFramePlayerCommandPayload & {
   type: typeof IFRAME_PLAYER_COMMAND_TYPE;
 };
 
-type IFramePlayerBridgeCommandPayload = Exclude<
+/** The commands a bridge forwards to its player; the base handles the rest. */
+export type IFramePlayerBridgeCommand = Exclude<
   IFramePlayerCommandPayload,
   { action: 'toggle-picture-in-picture' }
 >;
-
-export type IFramePlayerBridgeCommand = IFramePlayerBridgeCommandPayload & {
-  type: typeof IFRAME_PLAYER_COMMAND_TYPE;
-};
 
 export interface IFramePlayerEvent {
   event: string;

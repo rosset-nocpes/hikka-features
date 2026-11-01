@@ -27,7 +27,7 @@ export const ContainerContext = createContext<HTMLElement | undefined>(
   undefined,
 );
 
-export interface Option<T extends string> {
+interface Option<T extends string> {
   value: T;
   label: string;
 }

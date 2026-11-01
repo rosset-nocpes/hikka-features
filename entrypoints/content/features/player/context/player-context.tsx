@@ -2,17 +2,26 @@ import { create } from 'zustand';
 
 import { playerControls } from '@/hooks/use-iframe-player';
 import { account } from '@/utils/account';
-import { hikkaTracker } from '@/utils/hikka-tracker';
-import { ProviderIFrame, ProviderTeamIFrame } from '@/utils/provider_classes';
+import { ProviderTeamIFrame } from '@/utils/providers';
 
 import type { QueueItem } from '../queue/use-queue';
+import type { SharedPlayerParams } from './link-params';
 
-import { pickPriorityTeam, providersOf } from '../teams';
+import { takeLinkParams } from './link-params';
+import {
+  episodesOf,
+  favoriteIn,
+  nextUnwatched,
+  preferredSource,
+  priorityTeam,
+  queuedSource,
+  sharedSource,
+  teamOf,
+  watchDataKey,
+} from './sources';
 
 interface PlayerState {
-  /* Base */
   container?: HTMLElement;
-  /* Player-related  */
   watchData?: API.WatchData; // todo: remove it from there
   watchDataKey?: string;
   slug?: string;
@@ -28,7 +37,7 @@ interface PlayerState {
   videoPiPActive: boolean;
   /** The video's overlay, where gestures land and menus stay inside. */
   overlay: HTMLDivElement | null;
-  /* Temporary */
+  /** The share link's, until it has started playing. */
   sharedParams?: SharedPlayerParams;
   isShared?: boolean;
   /** Watch together room code from an invite link. */
@@ -67,171 +76,6 @@ interface PlayerActions {
   setOverlay: (overlay: HTMLDivElement | null) => void;
 }
 
-/** The team of providers that don't split playback by team. */
-const NO_TEAM: API.TeamData = { title: '', logo: '' };
-
-/** URL parameters of share and invite links, removed once read. */
-const LINK_PARAMS = [
-  'playerProvider',
-  'playerTeam',
-  'playerEpisode',
-  'time',
-  'room',
-  'join',
-];
-
-const teamOf = (data: API.WatchData, provider: string, team: string) => {
-  const source = data[provider];
-  return source instanceof ProviderTeamIFrame ? source.getTeam(team) : NO_TEAM;
-};
-
-/** A provider's episodes by `team`; providers without teams ignore it. */
-export const episodesOf = (
-  data: API.WatchData,
-  provider: string,
-  team: string,
-) => {
-  const source = data[provider];
-  if (source instanceof ProviderTeamIFrame) return source.teams[team]?.episodes;
-  if (source instanceof ProviderIFrame) return source.episodes;
-  return undefined;
-};
-
-/** Whether the page is `slug`'s, whose tracker the player may read and use. */
-export const onAnimePage = (slug?: string) => {
-  const page = usePageStore.getState();
-  return !!slug && page.contentType === 'anime' && page.slug === slug;
-};
-
-/** Episodes of `slug` the user watched, known on its own page only. */
-export const progressOf = (slug?: string) =>
-  onAnimePage(slug) ? hikkaTracker.progress : 0;
-
-/** The episode after the user's progress on hikka.io, else the first. */
-const nextUnwatched = (episodes: API.EpisodeData[], slug?: string) =>
-  episodes.find((episode) => episode.episode === progressOf(slug) + 1) ??
-  episodes[0];
-
-/** The team the user's priority picks on `provider`, else its first one. */
-const priorityTeam = (data: API.WatchData, provider: string, slug?: string) => {
-  const source = data[provider];
-  if (!(source instanceof ProviderTeamIFrame)) return NO_TEAM;
-  const { teamPriority, teamPriorityTranslation } =
-    useSettings.getState().features.player;
-  return (
-    pickPriorityTeam(
-      data,
-      [provider],
-      teamPriority,
-      teamPriorityTranslation,
-      progressOf(slug) + 1,
-    )?.team ?? source.getTeams()[0]!
-  );
-};
-
-/** `slug`'s favourite team, if its provider still lists it. */
-const favoriteIn = (data: API.WatchData, slug: string) => {
-  const stored = useSettings.getState().features.player.favoriteTeams[slug];
-  const source = stored && data[stored.provider];
-  const team =
-    source instanceof ProviderTeamIFrame
-      ? source
-          .getTeams()
-          .find(
-            (candidate) =>
-              candidate.title === stored!.team ||
-              candidate.canonicalTitle === stored!.team,
-          )
-      : undefined;
-  return {
-    team: team && { provider: stored!.provider, team },
-    favoriteTeam: team
-      ? { provider: stored!.provider, team: team.title }
-      : stored,
-  };
-};
-
-/** The watch data's providers, the user's default one first. */
-export const providerOrder = (data: API.WatchData) => {
-  const { defaultProvider } = useSettings.getState().features.player;
-  const available = providersOf(data).map(({ title }) => title);
-  return available.includes(defaultProvider)
-    ? [defaultProvider, ...available.filter((name) => name !== defaultProvider)]
-    : available;
-};
-
-/**
- * The source the player opens `slug` with: this anime's favourite team, then
- * the team priority list, then the default provider's first team.
- */
-export const preferredSource = (data: API.WatchData, slug: string) => {
-  const { teamPriority, teamPriorityTranslation } =
-    useSettings.getState().features.player;
-  const providers = providerOrder(data);
-
-  const pick =
-    favoriteIn(data, slug).team ??
-    pickPriorityTeam(
-      data,
-      providers,
-      teamPriority,
-      teamPriorityTranslation,
-      progressOf(slug) + 1,
-    );
-  if (pick) return pick;
-
-  const provider = providers[0]!;
-  const source = data[provider];
-  return {
-    provider,
-    team:
-      source instanceof ProviderTeamIFrame ? source.getTeams()[0]! : NO_TEAM,
-  };
-};
-
-/**
- * Where a queued episode plays: the source it was queued from, else the team
- * priority's pick, else any source that has it.
- */
-const queuedSource = (data: API.WatchData, target: QueueItem) => {
-  const { teamPriority, teamPriorityTranslation } =
-    useSettings.getState().features.player;
-  const providers = providersOf(data).map(({ title }) => title);
-  const pick = pickPriorityTeam(
-    data,
-    providers,
-    teamPriority,
-    teamPriorityTranslation,
-    target.episode,
-  );
-  const candidates = [
-    target,
-    ...(pick ? [{ provider: pick.provider, team: pick.team.title }] : []),
-    ...providers.flatMap((provider) => {
-      const source = data[provider];
-      return source instanceof ProviderTeamIFrame
-        ? Object.keys(source.teams).map((team) => ({ provider, team }))
-        : [{ provider, team: '' }];
-    }),
-  ];
-
-  for (const { provider, team } of candidates) {
-    const episodeData = episodesOf(data, provider, team);
-    const currentEpisode = episodeData?.find(
-      (episode) => episode.episode === target.episode,
-    );
-    if (currentEpisode) {
-      return {
-        provider,
-        team: teamOf(data, provider, team),
-        episodeData: episodeData!,
-        currentEpisode,
-      };
-    }
-  }
-  return undefined;
-};
-
 /**
  * The episode after the playing one from the same source, which plays once
  * the queue runs out.
@@ -247,6 +91,13 @@ export const followingEpisode = ({
         (episode) => episode.episode === currentEpisode.episode + 1,
       )
     : undefined;
+
+/** The mini player or the bar shown during picture-in-picture. */
+export const compactMode = ({
+  miniPlayer,
+  videoPiPActive,
+}: Pick<PlayerState, 'miniPlayer' | 'videoPiPActive'>) =>
+  miniPlayer || videoPiPActive;
 
 export const isFavoriteTeam = (
   { favoriteTeam, provider }: Pick<PlayerState, 'favoriteTeam' | 'provider'>,
@@ -281,7 +132,7 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
     overlay: null,
 
     initialize: (data, slug, target) => {
-      const watchDataKey = getWatchDataKey(data);
+      const key = watchDataKey(data);
       const { favoriteTeam } = favoriteIn(data, slug);
 
       if (target) {
@@ -292,7 +143,7 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
         }
         set({
           watchData: data,
-          watchDataKey,
+          watchDataKey: key,
           slug,
           favoriteTeam,
           ...selection,
@@ -301,50 +152,16 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
         return true;
       }
 
-      if (get().slug === slug && get().watchDataKey === watchDataKey) {
+      if (get().slug === slug && get().watchDataKey === key) {
         return true;
       }
 
-      const params = new URLSearchParams(window.location.search);
-      const sharedParams: SharedPlayerParams = {
-        provider: params.get('playerProvider'),
-        team: params.get('playerTeam'),
-        episode: params.get('playerEpisode'),
-        time: params.get('time'),
-      };
-
-      // Teamless providers share an empty playerTeam.
-      const isShared =
-        !!sharedParams.provider &&
-        sharedParams.team !== null &&
-        !!sharedParams.episode;
-
-      const roomInvite = params.get('room') ?? undefined;
-      const roomInviteAccepted = params.has('join');
-
-      const url = new URL(window.location.href);
-      LINK_PARAMS.forEach((param) => url.searchParams.delete(param));
-      history.replaceState(history.state, '', url.href);
-
+      const { sharedParams, isShared, roomInvite, roomInviteAccepted } =
+        takeLinkParams();
       // A shared link wins over the user's preferences.
-      const preferred = preferredSource(data, slug);
-      const sharedSource =
-        isShared &&
-        providersOf(data).some(({ title }) => title === sharedParams.provider)
-          ? data[sharedParams.provider!]
-          : undefined;
-
-      let { provider, team } = preferred;
-      if (sharedSource) {
-        provider = sharedParams.provider!;
-        team = !(sharedSource instanceof ProviderTeamIFrame)
-          ? NO_TEAM
-          : sharedSource.teams[sharedParams.team!]
-            ? sharedSource.getTeam(sharedParams.team!)
-            : preferred.provider === provider
-              ? preferred.team
-              : sharedSource.getTeams()[0]!;
-      }
+      const { provider, team } = isShared
+        ? sharedSource(data, slug, sharedParams.provider!, sharedParams.team!)
+        : preferredSource(data, slug);
 
       const episodeData = episodesOf(data, provider, team.title)!;
       const sharedEpisode = isShared
@@ -354,7 +171,7 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
       setSpeedOptions(provider);
       set({
         watchData: data,
-        watchDataKey,
+        watchDataKey: key,
         slug,
         provider,
         team,
@@ -504,13 +321,6 @@ const setSpeedOptions = (provider: string) =>
         : useIFramePlayer.getInitialState().speedOptions,
   });
 
-interface SharedPlayerParams {
-  provider: string | null;
-  team: string | null;
-  episode: string | null;
-  time: string | null;
-}
-
 interface FavoriteTeam {
   provider: string;
   team: string;
@@ -521,43 +331,3 @@ export type MiniPlayerCorner =
   | 'top-right'
   | 'bottom-left'
   | 'bottom-right';
-
-const getEpisodeKey = (episode: API.EpisodeData) => [
-  episode.episode,
-  episode.video_url,
-];
-
-const getWatchDataKey = (data: API.WatchData) =>
-  JSON.stringify([
-    data.type,
-    ...Object.entries(data)
-      .filter(([key]) => key !== 'type')
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([provider, entry]) => {
-        if (entry instanceof ProviderTeamIFrame) {
-          return [
-            provider,
-            entry.type,
-            entry.lang,
-            Object.entries(entry.teams)
-              .sort(([a], [b]) => a.localeCompare(b))
-              .map(([team, teamData]) => [
-                team,
-                teamData.logo,
-                teamData.episodes.map(getEpisodeKey),
-              ]),
-          ];
-        }
-
-        if (entry instanceof ProviderIFrame) {
-          return [
-            provider,
-            entry.type,
-            entry.lang,
-            entry.episodes.map(getEpisodeKey),
-          ];
-        }
-
-        return [provider, entry];
-      }),
-  ]);

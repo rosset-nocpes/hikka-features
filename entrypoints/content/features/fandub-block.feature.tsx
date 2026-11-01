@@ -47,8 +47,7 @@ const SkeletonRow = () => (
  */
 const FandubBlock = () => {
   const { enabled } = useSettings().features.fandubBlock;
-  const { slug } = usePageStore();
-  const { data: anime } = useHikkaContent('anime', slug);
+  const { data: anime } = useHikka();
   const { teams, episodesTotal, isLoading } = useFandubTeams();
   const total = episodesTotal ?? anime?.episodes_total ?? undefined;
 

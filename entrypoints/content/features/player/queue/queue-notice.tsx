@@ -29,7 +29,7 @@ interface Removal {
   removed: QueueItem[];
 }
 
-export const useQueueNotice = create<{ notice?: Notice }>(() => ({}));
+const useQueueNotice = create<{ notice?: Notice }>(() => ({}));
 
 let removal: Removal | undefined;
 let timer: ReturnType<typeof setTimeout> | undefined;
@@ -38,7 +38,7 @@ let lastId = 0;
 const pluralRules = new Intl.PluralRules('uk');
 const EPISODES = { one: 'епізод', few: 'епізоди', many: 'епізодів' } as const;
 
-export const episodeCount = (count: number) =>
+const episodeCount = (count: number) =>
   `${count} ${EPISODES[pluralRules.select(count) as keyof typeof EPISODES] ?? 'епізоду'}`;
 
 const hideLater = () => {
@@ -52,7 +52,7 @@ const show = (notice: Omit<Notice, 'id'>) => {
   hideLater();
 };
 
-export const dismissQueueNotice = () => {
+const dismissQueueNotice = () => {
   clearTimeout(timer);
   removal = undefined;
   useQueueNotice.setState({ notice: undefined });

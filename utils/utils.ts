@@ -1,5 +1,12 @@
 /** A Hikka title's name to show: Ukrainian first. */
-export const hikkaTitle = (content: any): string | undefined =>
+export const hikkaTitle = (
+  content?: Partial<
+    Record<
+      'title_ua' | 'title_en' | 'title_ja' | 'title_original',
+      string | null
+    >
+  >,
+) =>
   content?.title_ua ||
   content?.title_en ||
   content?.title_ja ||

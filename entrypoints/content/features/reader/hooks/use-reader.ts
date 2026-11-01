@@ -24,13 +24,12 @@ import {
 } from '../reader.enums';
 import useReadData from './use-read-data';
 
-export interface ReaderState {
-  /* Base */
+interface ReaderState {
+  /** What the reader is mounted in, where its popups portal to. */
   container?: HTMLElement;
-  /* Reader-related */
   currentChapter?: Chapter;
   settings: ReaderSettings;
-  /* Manga-related (idk where to put it for now) */
+  /** The manga carousel, while one is shown. */
   carouselApi?: CarouselApi;
   /** Phones hide the reader's bars on a tap at the page. */
   barsHidden: boolean;

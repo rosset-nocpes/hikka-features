@@ -1,11 +1,11 @@
 import { create } from 'zustand';
 
-import { useSettings } from '@/hooks/use-settings';
-
+import { putAfter, putBetween, putFirst, putLast } from '../../core/placement';
 import {
   BLOCK_TITLE,
   icon,
   isShown,
+  placement,
   SITE_WIDGETS,
   type Side,
 } from './site-layout';
@@ -23,17 +23,14 @@ const ACTIVE_CHIP_CLASS = `${CHIP_CLASS} border-primary-foreground/40 bg-primary
 
 const TAB_ID = 'widget-tab-friends-activity';
 
-const placement = () => useSettings.getState().features.friendsActivity;
+const shown = (selector: string) =>
+  Array.from(document.querySelectorAll(selector)).find(isShown);
 
 /** The shown copy of a widget: the page renders sidebars twice for widths. */
 const shownWidget = (slug: string | null) => {
-  const id = slug ? SITE_WIDGETS[slug]?.id : undefined;
-  if (!id) return undefined;
-  return Array.from(document.querySelectorAll(`[id="${id}"]`)).find(isShown);
+  const id = slug && SITE_WIDGETS[slug]?.id;
+  return id ? shown(`[id="${id}"]`) : undefined;
 };
-
-const shown = (selector: string) =>
-  Array.from(document.querySelectorAll(selector)).find(isShown);
 
 /** A column of `side`, or the nearest one, for a block without neighbours. */
 function columnFor(side: Side) {
@@ -109,17 +106,9 @@ export class HomePlacement {
     after: string | null,
     before: string | null,
   ) {
-    const previous = shownWidget(after);
-    const next = shownWidget(before);
-    if (previous) {
-      if (previous.nextElementSibling !== this.host) previous.after(this.host);
-    } else if (next) {
-      if (next.previousElementSibling !== this.host) next.before(this.host);
-    } else {
+    if (!putBetween(this.host, shownWidget(after), shownWidget(before))) {
       const column = columnFor(side);
-      if (column && column.lastElementChild !== this.host) {
-        column.append(this.host);
-      }
+      if (column) putLast(column, this.host);
     }
   }
 
@@ -141,16 +130,11 @@ export class HomePlacement {
     ).filter((tab) => tab !== chip);
     this.learnChipClasses(siteTabs);
 
-    const previous = after && tabs.querySelector(`#widget-tab-${after}`);
-    const next = before && tabs.querySelector(`#widget-tab-${before}`);
-    if (previous) {
-      if (previous.nextElementSibling !== chip) previous.after(chip);
-    } else if (next) {
-      if (next.previousElementSibling !== chip) next.before(chip);
-    } else if (side === 'left') {
-      if (tabs.firstElementChild !== chip) tabs.prepend(chip);
-    } else if (tabs.lastElementChild !== chip) {
-      tabs.append(chip);
+    const tab = (slug: string | null) =>
+      slug ? tabs.querySelector(`#widget-tab-${slug}`) : null;
+    if (!putBetween(chip, tab(after), tab(before))) {
+      if (side === 'left') putFirst(tabs, chip);
+      else putLast(tabs, chip);
     }
 
     // The panel sits below the tab row; ours goes right after it.
@@ -159,8 +143,7 @@ export class HomePlacement {
     const panel = container.querySelector<HTMLElement>(
       ':scope > [role="tabpanel"]',
     );
-    const anchor = panel ?? rail;
-    if (anchor.nextElementSibling !== this.host) anchor.after(this.host);
+    putAfter(panel ?? rail, this.host);
 
     if (this.tabActive && panel && this.covered?.panel !== panel) {
       this.cover(siteTabs, panel);

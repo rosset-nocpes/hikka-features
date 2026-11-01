@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-import { extensionStorage } from '@/hooks/use-settings';
+import { extensionStorage, followStoredChanges } from '@/hooks/use-settings';
 
 /** An episode to play after the current one, of any anime. */
 export interface QueueItem {
@@ -30,7 +30,7 @@ const distinct = (items: QueueItem[]) => [
 ];
 
 /** `items` put first, moving those queued already up. */
-export const queuedFirst = (queue: QueueItem[], items: QueueItem[]) => [
+const queuedFirst = (queue: QueueItem[], items: QueueItem[]) => [
   ...distinct(items),
   ...without(queue, items),
 ];
@@ -123,8 +123,4 @@ export const useQueue = create<QueueState>()(
   ),
 );
 
-browser.storage.onChanged.addListener((changes, area) => {
-  if (area === 'local' && changes['player-queue']) {
-    void useQueue.persist.rehydrate();
-  }
-});
+followStoredChanges(useQueue, 'player-queue');

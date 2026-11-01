@@ -1,5 +1,11 @@
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { useRef } from 'react';
+import {
+  AnimatePresence,
+  motion,
+  type Transition,
+  useReducedMotion,
+  type Variants,
+} from 'motion/react';
+import { type FC, useRef } from 'react';
 import MaterialSymbolsChevronLeftRounded from '~icons/material-symbols/chevron-left-rounded';
 import MaterialSymbolsDrawRounded from '~icons/material-symbols/draw-rounded';
 import MaterialSymbolsImageRounded from '~icons/material-symbols/image-rounded';
@@ -156,51 +162,72 @@ function HomePage() {
   );
 }
 
-const PAGE_TITLES: Record<Page, string> = {
-  home: 'Налаштування',
-  player: 'Налаштування програвача',
-  reader: 'Налаштування читалки',
-  localizedPoster: 'Локалізовані постери',
-  experimental: 'Експериментальні функції',
-  teamPriority: 'Пріоритет команд',
+const PAGES: Record<Page, { title: string; Content: FC }> = {
+  home: { title: 'Налаштування', Content: HomePage },
+  player: { title: 'Налаштування програвача', Content: PlayerSettings },
+  reader: { title: 'Налаштування читалки', Content: ReaderSettings },
+  localizedPoster: {
+    title: 'Локалізовані постери',
+    Content: LocalizedPosterSettings,
+  },
+  experimental: {
+    title: 'Експериментальні функції',
+    Content: ExperimentalSettingsPage,
+  },
+  teamPriority: { title: 'Пріоритет команд', Content: TeamPrioritySettings },
 };
 
+const FADE: Variants = {
+  enter: { opacity: 0 },
+  center: { opacity: 1 },
+  exit: { opacity: 0 },
+};
+
+/**
+ * Slides in from the side the navigation goes to (`custom` is its
+ * direction) and out the other side.
+ */
+const slide = (
+  offset: (direction: number) => string | number,
+  blur: string,
+  exit: Transition,
+): Variants => ({
+  enter: (direction: number) => ({
+    x: offset(direction),
+    filter: `blur(${blur})`,
+    opacity: 0,
+  }),
+  center: { x: 0, filter: 'blur(0px)', opacity: 1 },
+  exit: (direction: number) => ({
+    x: offset(-direction),
+    filter: `blur(${blur})`,
+    opacity: 0,
+    transition: exit,
+  }),
+});
+
+const TITLE_SLIDE = slide((direction) => (direction > 0 ? 20 : -20), '2px', {
+  duration: 0.12,
+});
+const PAGE_SLIDE = slide(
+  (direction) => (direction > 0 ? '100%' : '-100%'),
+  '3px',
+  {
+    x: { duration: 0.15, ease: EASE_SMOOTH_OUT },
+    filter: { duration: 0.1 },
+    opacity: { duration: 0.1 },
+  },
+);
+
 function App() {
-  const { enabled, burunyaaMode } = useSettings().features.devOptions;
-  const { updateFeatureSettings } = useSettings();
+  const { enabled, burunyaaMode } = useSettings(
+    (state) => state.features.devOptions,
+  );
   const { currentPage, direction, goBack } = useNavigation();
   const reduceMotion = useReducedMotion();
+  const { title, Content } = PAGES[currentPage];
 
   const devClicks = useRef(0);
-
-  const pageVariants = reduceMotion
-    ? {
-        enter: () => ({ opacity: 0 }),
-        center: { opacity: 1 },
-        exit: () => ({ opacity: 0 }),
-      }
-    : {
-        enter: (dir: number) => ({
-          x: dir > 0 ? '100%' : '-100%',
-          filter: 'blur(3px)',
-          opacity: 0,
-        }),
-        center: {
-          x: 0,
-          filter: 'blur(0px)',
-          opacity: 1,
-        },
-        exit: (dir: number) => ({
-          x: dir > 0 ? '-100%' : '100%',
-          filter: 'blur(3px)',
-          opacity: 0,
-          transition: {
-            x: { duration: 0.15, ease: EASE_SMOOTH_OUT },
-            filter: { duration: 0.1 },
-            opacity: { duration: 0.1 },
-          },
-        }),
-      };
 
   return (
     <div
@@ -228,33 +255,12 @@ function App() {
                     opacity: { duration: 0.15 },
                   }
             }
-            variants={
-              reduceMotion
-                ? {
-                    enter: { opacity: 0 },
-                    center: { opacity: 1 },
-                    exit: { opacity: 0 },
-                  }
-                : {
-                    enter: (dir: number) => ({
-                      x: dir > 0 ? 20 : -20,
-                      opacity: 0,
-                      filter: 'blur(2px)',
-                    }),
-                    center: { x: 0, opacity: 1, filter: 'blur(0px)' },
-                    exit: (dir: number) => ({
-                      x: dir > 0 ? -20 : 20,
-                      opacity: 0,
-                      filter: 'blur(2px)',
-                      transition: { duration: 0.12 },
-                    }),
-                  }
-            }
+            variants={reduceMotion ? FADE : TITLE_SLIDE}
             className="flex w-full items-center justify-between gap-1 text-lg font-bold tracking-normal"
           >
             {currentPage === 'home' ? (
               <span className="flex w-full items-center justify-center gap-1">
-                <span>{PAGE_TITLES.home}</span>
+                <span>{title}</span>
                 <ExperimentalSettingsIcon />
               </span>
             ) : (
@@ -267,7 +273,7 @@ function App() {
                 >
                   <MaterialSymbolsChevronLeftRounded className="size-6" />
                 </Button>
-                {PAGE_TITLES[currentPage]}
+                {title}
                 <div className="size-10" />
               </>
             )}
@@ -280,7 +286,7 @@ function App() {
           <motion.div
             key={currentPage}
             custom={direction}
-            variants={pageVariants}
+            variants={reduceMotion ? FADE : PAGE_SLIDE}
             initial="enter"
             animate="center"
             exit="exit"
@@ -295,12 +301,7 @@ function App() {
             }
             className="absolute inset-0"
           >
-            {currentPage === 'home' && <HomePage />}
-            {currentPage === 'player' && <PlayerSettings />}
-            {currentPage === 'reader' && <ReaderSettings />}
-            {currentPage === 'localizedPoster' && <LocalizedPosterSettings />}
-            {currentPage === 'experimental' && <ExperimentalSettingsPage />}
-            {currentPage === 'teamPriority' && <TeamPrioritySettings />}
+            <Content />
           </motion.div>
         </AnimatePresence>
       </div>
@@ -325,7 +326,9 @@ function App() {
               devClicks.current += 1;
               if (devClicks.current === 5) {
                 devClicks.current = 0;
-                updateFeatureSettings('devOptions', { enabled: !enabled });
+                useSettings
+                  .getState()
+                  .updateFeatureSettings('devOptions', { enabled: !enabled });
               }
             }}
           >

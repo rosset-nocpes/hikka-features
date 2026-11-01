@@ -1,6 +1,6 @@
 import type { PreferredTranslation } from '@/utils/convex-api';
 
-import { ProviderIFrame, ProviderTeamIFrame } from '@/utils/provider_classes';
+import { ProviderIFrame, ProviderTeamIFrame } from '@/utils/providers';
 
 /** The providers in the watch data, with the language each plays in. */
 export const providersOf = (data: API.WatchData) =>

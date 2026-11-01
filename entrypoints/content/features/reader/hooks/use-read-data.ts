@@ -15,7 +15,7 @@ const useReadData = () => {
     queryKey: ['read-data', type, slug],
     queryFn: async () => {
       const scraper = scraperFor(type);
-      const content = await scraper.getChapterList(await scraper.search(data));
+      const content = await scraper.getChapterList(await scraper.search(data!));
       if (!allChapters(content).length) throw new Error('No chapters found');
       return content;
     },

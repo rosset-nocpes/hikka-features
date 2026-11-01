@@ -1,34 +1,19 @@
-import type { ProviderIFrame, ProviderTeamIFrame } from './provider_classes';
+import type { ConvexEpisodeInfo, TranslationType } from './convex-api';
+import type { ProviderIFrame, ProviderTeamIFrame } from './providers';
 
 declare global {
   namespace API {
-    /* Anime */
     type WatchData = {
       type: 'tv' | 'movie' | 'ona';
       [key: string]: ProviderTeamIFrame | ProviderIFrame;
     };
 
-    type NotionData = {
-      poster?: string;
-      fandub?: FandubTeam[];
-    };
-
-    type FandubTeam = {
-      title: string;
-      logo: string;
-      link: string;
-    };
-
     type EpisodeData = {
       episode: number;
       video_url: string;
-      title?: {
-        ua?: string;
-        en?: string;
-        ja?: string;
-      };
+      title?: ConvexEpisodeInfo['title'];
       releasedAt?: number;
-      episode_type?: 'canon' | 'filler' | 'mixed' | 'recap';
+      episode_type?: ConvexEpisodeInfo['type'];
     };
 
     type TeamData = {
@@ -38,7 +23,7 @@ declare global {
       title: string;
       logo: string;
       canonicalTitle?: string;
-      translationType?: 'dub' | 'sub' | 'unknown';
+      translationType?: TranslationType;
     };
 
     interface EditorContent {

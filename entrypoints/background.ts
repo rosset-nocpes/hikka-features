@@ -1,10 +1,10 @@
 import ky from 'ky';
 
 import {
-  COMPATIBILITY_STORAGE_KEY,
   EXTENSION_API_PROTOCOL,
   type ExtensionCompatibilityState,
-  USAGE_REPORT_STORAGE_KEY,
+  usageReport,
+  watchCompatibility,
 } from '@/utils/compatibility';
 import { convexApi } from '@/utils/convex-api';
 import { convex } from '@/utils/convex-client';
@@ -72,15 +72,8 @@ export default defineBackground(() => {
 
   void ensureCompatibilityAlarm();
   pollCompatibility();
-  void browser.storage.local
-    .get(COMPATIBILITY_STORAGE_KEY)
-    .then((stored) => showCompatibility(stored[COMPATIBILITY_STORAGE_KEY]));
   // Tabs store a recheck too, after a call failed.
-  browser.storage.onChanged.addListener((changes, area) => {
-    if (area === 'local' && COMPATIBILITY_STORAGE_KEY in changes) {
-      void showCompatibility(changes[COMPATIBILITY_STORAGE_KEY]!.newValue);
-    }
-  });
+  watchCompatibility((state) => void showCompatibility(state));
   browser.runtime.onStartup.addListener(syncAccount);
   // Updates and reloads skip onStartup.
   browser.runtime.onInstalled.addListener(syncAccount);
@@ -118,24 +111,20 @@ function pollCompatibility() {
 async function reportUsage() {
   const extensionVersion = browser.runtime.getManifest().version;
   const report = `${new Date().toISOString().slice(0, 10)}:${extensionVersion}`;
-  const stored = await browser.storage.local.get(USAGE_REPORT_STORAGE_KEY);
-  if (stored[USAGE_REPORT_STORAGE_KEY] === report) return;
+  if ((await usageReport.get()) === report) return;
   await convex.createClient().mutation(convexApi.compatibility.report, {
     extensionVersion,
     protocol: EXTENSION_API_PROTOCOL,
   });
-  await browser.storage.local.set({ [USAGE_REPORT_STORAGE_KEY]: report });
+  await usageReport.set(report);
 }
 
 /**
  * Badges the toolbar icon while the backend no longer serves this build,
  * and asks the browser to fetch the update it would install on its own.
  */
-async function showCompatibility(state: unknown) {
-  const compatibility = state as ExtensionCompatibilityState | undefined;
-  const unsupported =
-    compatibility?.extensionVersion === browser.runtime.getManifest().version &&
-    compatibility.status === 'unsupported';
+async function showCompatibility(state?: ExtensionCompatibilityState) {
+  const unsupported = state?.status === 'unsupported';
   // Firefox builds are still on Manifest V2.
   const action = browser.action ?? browser.browserAction;
   await action.setBadgeText({ text: unsupported ? '!' : '' });

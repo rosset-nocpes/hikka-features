@@ -11,7 +11,7 @@ import { checkField, type FieldIssue } from './edit-checks';
 import { type EditField, readEditFields } from './edit-fields';
 
 /** A new edit, an edit as it was sent, or an edit its author is changing. */
-export type EditPageMode = 'new' | 'view' | 'update';
+type EditPageMode = 'new' | 'view' | 'update';
 
 /** Which edit page this is, by its path. */
 export const useEditPage = () => {
@@ -95,6 +95,8 @@ export const useHikkaUsername = () =>
 /** The largest page hikka.io's edit list serves. */
 const PENDING_PAGE_SIZE = 100;
 
+type PendingEdit = { edit_id: number };
+
 /** A page of the pending edits, newest first. */
 const pendingPage = (page: number) =>
   queryClient.fetchQuery({
@@ -107,12 +109,10 @@ const pendingPage = (page: number) =>
         })
         .json<{
           pagination: { pages: number };
-          list: { edit_id: number }[];
+          list: PendingEdit[];
         }>(),
     staleTime: 30_000,
   });
-
-type PendingEdit = { edit_id: number };
 
 /**
  * The pending edits right before and after `editId` by number. hikka.io

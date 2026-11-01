@@ -24,7 +24,7 @@ interface PageActions {
 
 export const usePageStore = create<PageState & PageActions>((set, get) => ({
   ctx: {} as ContentScriptContext,
-  updateFromUrl: (url: URL) => {
+  updateFromUrl: (url) => {
     const path = url.pathname.split('/').filter(Boolean);
     // Called on every DOM change; only a new route may notify subscribers.
     if (path.join('/') === get().path?.join('/')) return;

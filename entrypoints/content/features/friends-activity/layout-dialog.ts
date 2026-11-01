@@ -1,9 +1,11 @@
 import { useSettings } from '@/hooks/use-settings';
 
+import { putAfter, putBefore, putBetween } from '../../core/placement';
 import {
   BLOCK_TITLE,
   icon,
   logo,
+  placement,
   resolveSide,
   type Side,
   slugByTitle,
@@ -41,12 +43,7 @@ interface Column {
 }
 
 type Point = { x: number; y: number };
-type Placement = ReturnType<
-  typeof useSettings.getState
->['features']['friendsActivity'];
-
-const placement = () => useSettings.getState().features.friendsActivity;
-const save = (patch: Partial<Placement>) =>
+const save = (patch: Partial<ReturnType<typeof placement>>) =>
   useSettings.getState().updateFeatureSettings('friendsActivity', patch);
 
 /** The layout dialog's columns, found by the labels above them. */
@@ -176,10 +173,9 @@ export class LayoutDialog {
   private place(item: HTMLElement, columns: Column[]) {
     const { side, after, before } = placement();
     const rows = columns.flatMap(({ box }) => siteItems(box, item));
-    const previous = after && rows.find((row) => slugOf(row) === after);
-    const next = before && rows.find((row) => slugOf(row) === before);
-    if (previous) return previous.after(item);
-    if (next) return next.before(item);
+    const row = (slug: string | null) =>
+      slug ? rows.find((candidate) => slugOf(candidate) === slug) : undefined;
+    if (putBetween(item, row(after), row(before))) return;
 
     const target = resolveSide(
       side,
@@ -395,16 +391,10 @@ export class LayoutDialog {
       return point.y < rect.top - (below ? shift : 0) + rect.height / 2;
     });
 
-    if (next) {
-      if (item.nextElementSibling !== next) next.before(item);
-    } else {
-      const last = rows.at(-1);
-      if (last) {
-        if (last.nextElementSibling !== item) last.after(item);
-      } else if (item.parentElement !== box) {
-        box.prepend(item);
-      }
-    }
+    const last = rows.at(-1);
+    if (next) putBefore(next, item);
+    else if (last) putAfter(last, item);
+    else if (item.parentElement !== box) box.prepend(item);
   }
 
   private scrollNear({ y }: Point) {

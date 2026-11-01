@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { account } from '@/utils/account';
 
+import RowDescription from '../_base/row-description';
+
 /** By the error code the login ended with. */
 const AUTH_ERRORS: Record<string, string> = {
   cancelled: 'Вхід скасовано.',
@@ -49,9 +51,7 @@ const UserOptions = () => {
         {error}
       </span>
     ) : (
-      <span className="text-xs font-medium text-pretty text-[#A1A1A1]">
-        {text}
-      </span>
+      <RowDescription>{text}</RowDescription>
     );
 
   if (convexSession && userData) {

@@ -14,7 +14,7 @@ import { fetchHikka, HIKKA_API } from './use-hikka';
 export const RECOMMENDATIONS_TAB = 'Схожі';
 
 /** A title users recommend with the page's, as its Hikka entry. */
-export type Recommendation = ContentCardItem & { mal_id: number };
+type Recommendation = ContentCardItem & { mal_id: number };
 
 /** A source's recommendations: MAL ids, and how many users back each. */
 type Votes = Map<number, number>;
@@ -262,7 +262,7 @@ const findOnHikka = async (contentType: ContentType, malIds: number[]) => {
 const useRecommendation = () => {
   const { contentType, slug } = usePageStore();
   const { data } = useHikka();
-  const malId: number | undefined = data?.mal_id;
+  const malId = data?.mal_id ?? undefined;
 
   return useQuery({
     queryKey: ['recommendations', contentType, slug],

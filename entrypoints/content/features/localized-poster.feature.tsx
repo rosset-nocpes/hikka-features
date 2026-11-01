@@ -52,10 +52,10 @@ const useImageLoaded = (src?: string) => {
 };
 
 const LocalizedPoster = () => {
-  const { data } = useNotionData();
+  const { data: poster } = useLocalizedPoster();
   const { enabled, autoShow } = useSettings().features.localizedPoster;
   const [visible, setVisible] = useState(autoShow);
-  const imageLoaded = useImageLoaded(data?.poster);
+  const imageLoaded = useImageLoaded(poster);
 
   return (
     <AnimatePresence>
@@ -66,7 +66,7 @@ const LocalizedPoster = () => {
           decoding="async"
           className="size-full object-cover [overflow-clip-margin:unset]"
           style={{ color: 'transparent' }}
-          src={data?.poster}
+          src={poster}
           initial={{ opacity: 0, clipPath: 'inset(100% 0% 0% 0%)' }}
           animate={{
             opacity: 1,

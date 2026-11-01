@@ -6,12 +6,8 @@ import { watchDataQuery } from '@/hooks/use-watch-data';
 import { hikkaTracker } from '@/utils/hikka-tracker';
 
 import { queryClient } from '../../core/query-client';
-import {
-  followingEpisode,
-  onAnimePage,
-  progressOf,
-  usePlayer,
-} from './context/player-context';
+import { followingEpisode, usePlayer } from './context/player-context';
+import { onAnimePage, progressOf } from './context/sources';
 import { isPlayerOpen, playNextQueued } from './player';
 import { nextEpisode, upNext } from './queue/up-next';
 import { useQueue } from './queue/use-queue';

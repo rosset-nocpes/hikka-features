@@ -1,12 +1,11 @@
-import { type ReactNode, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 import {
-  DRAWER_ROW,
-  onDrawerLinkClick,
+  DrawerLink,
   TAB,
   TAB_ACTIVE,
   TAB_IDLE,
-} from '@/components/hikka/nav-styles';
+} from '@/components/hikka/nav-links';
 import { RECOMMENDATIONS_TAB } from '@/hooks/use-recommendation';
 import {
   isRecommendationsPagePath,
@@ -14,7 +13,7 @@ import {
   recommendationsPagePath,
 } from '@/utils/hikka-router';
 
-import { AnchoredUisFeature, renderApp } from '../core/base-feature';
+import { AnchoredUisFeature, type SiteTarget } from '../core/base-feature';
 import { HikkaPages } from '../core/core.enums';
 
 /** The anime, manga or novel that a title's tab, or its discussion, is about. */
@@ -75,26 +74,22 @@ const DrawerRow = () => {
   const { href, active } = useRecommendationsLink();
   if (!href) return null;
   return (
-    <a
-      href={href}
-      onClick={onDrawerLinkClick}
-      data-active={active}
-      aria-current={active ? 'page' : undefined}
-      className={DRAWER_ROW}
-    >
+    <DrawerLink href={href} active={active}>
       <span>{RECOMMENDATIONS_TAB}</span>
-    </a>
+    </DrawerLink>
   );
 };
 
-const TARGETS: { find: () => HTMLElement | undefined; render: ReactNode }[] = [
+const TARGETS: SiteTarget[] = [
   {
     find: findDiscussion('main section[data-slot="block-surface"]'),
-    render: <Tab />,
+    append: 'before',
+    render: () => <Tab />,
   },
   {
     find: findDiscussion('[data-slot="drawer-content"]'),
-    render: <DrawerRow />,
+    append: 'before',
+    render: () => <DrawerRow />,
   },
 ];
 
@@ -109,21 +104,6 @@ export default class RecommendationNavLinkFeature extends AnchoredUisFeature {
   readonly pages = [HikkaPages.All];
 
   async init() {
-    const { ctx } = usePageStore.getState();
-    this.uis = TARGETS.map((target) => {
-      const ui = createIntegratedUi(ctx, {
-        tag: this.id,
-        position: 'inline',
-        append: 'before',
-        anchor: target.find,
-        onMount(wrapper) {
-          // Lays the link out as one of the list's own.
-          wrapper.style.display = 'contents';
-          return renderApp(wrapper, target.render);
-        },
-        onRemove: (root) => root?.unmount(),
-      });
-      return { present: () => !!target.find(), ui, element: () => ui.wrapper };
-    });
+    this.integrate(TARGETS);
   }
 }

@@ -16,7 +16,7 @@ import type { BackgroundMessage } from './messaging';
 import { convexApi } from './convex-api';
 import { CONVEX_SITE_URL, convex } from './convex-client';
 import { getHikkaViewerId } from './hikka-viewer';
-import { LOGIN_STATE_KEY, type LoginState } from './login-state';
+import { loginState } from './login-state';
 import { syncTeamPriority } from './team-priority-sync';
 import { looseKey } from './utils';
 
@@ -66,20 +66,20 @@ const tokenRejected = (error: unknown) =>
   error instanceof Error &&
   /"code":"(?:InvalidAuthHeader|NoAuthProvider)"/.test(error.message);
 
-async function authRequest(path: string, body?: unknown) {
+/** A URL of the backend's HTTP routes. */
+function siteUrl(path: string) {
   if (!CONVEX_SITE_URL) {
     throw new Error('WXT_CONVEX_SITE_URL is not configured');
   }
-  const response = await fetch(
-    `${CONVEX_SITE_URL}${path}`,
-    body === undefined
-      ? undefined
-      : {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify(body),
-        },
-  );
+  return `${CONVEX_SITE_URL}${path}`;
+}
+
+async function authRequest(path: string, body: object) {
+  const response = await fetch(siteUrl(path), {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
   if (!response.ok) {
     const data = (await response.json().catch(() => undefined)) as
       | { error?: string }
@@ -108,14 +108,6 @@ async function loginChallenge() {
   return { verifier, challenge: base64Url(new Uint8Array(digest)) };
 }
 
-async function readLogin() {
-  const stored = await browser.storage.local.get(LOGIN_STATE_KEY);
-  return stored[LOGIN_STATE_KEY] as LoginState | undefined;
-}
-
-const writeLogin = (state: LoginState) =>
-  browser.storage.local.set({ [LOGIN_STATE_KEY]: state });
-
 /** Brings a tab, and its window where there are windows, to the front. */
 async function focusTab(tabId: number) {
   const tab = await browser.tabs.update(tabId, { active: true });
@@ -132,18 +124,17 @@ async function focusTab(tabId: number) {
  */
 type LoginTabEvent = { url: string } | 'loaded' | 'closed';
 
-/** Waits for persisted settings so a cold service worker sees the session. */
-function settingsHydrated() {
-  return new Promise<void>((resolve) => {
-    const unsubscribe = useSettings.persist.onFinishHydration(() => {
-      unsubscribe();
-      resolve();
+/** The settings once loaded, so a cold service worker sees the session. */
+async function loadedSettings() {
+  if (!useSettings.persist.hasHydrated()) {
+    await new Promise<void>((resolve) => {
+      const unsubscribe = useSettings.persist.onFinishHydration(() => {
+        unsubscribe();
+        resolve();
+      });
     });
-    if (useSettings.persist.hasHydrated()) {
-      unsubscribe();
-      resolve();
-    }
-  });
+  }
+  return useSettings.getState();
 }
 
 /**
@@ -162,10 +153,8 @@ class AccountSession {
    * wait with `awaitLogin`, as Chrome may restart this worker meanwhile.
    */
   async login(openerTabId?: number) {
-    if (!CONVEX_SITE_URL) {
-      throw new Error('WXT_CONVEX_SITE_URL is not configured');
-    }
-    const current = await readLogin();
+    const startUrl = siteUrl('/auth/hikka/start');
+    const current = await loginState.get();
     if (current?.status === 'pending' && current.expiresAt > Date.now()) {
       // Another click returns to the login tab instead of starting over.
       if (await focusTab(current.tabId).catch(() => undefined)) return;
@@ -177,10 +166,10 @@ class AccountSession {
       .catch(() => undefined);
     const { verifier, challenge } = await loginChallenge();
     const tab = await browser.tabs.create({
-      url: `${CONVEX_SITE_URL}/auth/hikka/start?challenge=${challenge}`,
+      url: `${startUrl}?challenge=${challenge}`,
     });
     if (tab.id === undefined) throw new Error('login_tab_failed');
-    await writeLogin({
+    await loginState.set({
       status: 'pending',
       verifier,
       tabId: tab.id,
@@ -205,13 +194,13 @@ class AccountSession {
   }
 
   private async finishLogin(tabId: number, event: LoginTabEvent) {
-    const login = await readLogin();
+    const login = await loginState.get();
     if (login?.status !== 'pending' || login.tabId !== tabId) return;
 
     const error =
       typeof event === 'object' && new URL(event.url).searchParams.get('error');
     // The done page explains it, so its tab stays open.
-    if (error) return await writeLogin({ status: 'failed', error });
+    if (error) return await loginState.set({ status: 'failed', error });
 
     let auth: AuthResponse;
     try {
@@ -228,7 +217,7 @@ class AccountSession {
       ) {
         return;
       }
-      return await writeLogin({
+      return await loginState.set({
         status: 'failed',
         // Closed before Hikka sent it back, nothing waits to be claimed.
         error:
@@ -244,15 +233,15 @@ class AccountSession {
     // finish someone else's login; only hikka.io's own user is kept.
     const viewerId = await getHikkaViewerId().catch(() => undefined);
     if (viewerId === auth.user.hikkaId) {
-      await settingsHydrated();
+      await loadedSettings();
       this.store(auth);
-      await browser.storage.local.remove(LOGIN_STATE_KEY);
+      await loginState.remove();
       void this.sync();
     } else {
       await authRequest('/auth/session/revoke', {
         refreshToken: auth.refreshToken,
       }).catch(() => undefined);
-      await writeLogin({
+      await loginState.set({
         status: 'failed',
         error:
           viewerId === undefined ? 'hikka_unavailable' : 'account_mismatch',
@@ -267,8 +256,7 @@ class AccountSession {
   }
 
   async logout() {
-    await settingsHydrated();
-    const session = useSettings.getState().convexSession;
+    const session = (await loadedSettings()).convexSession;
     this.clear();
     if (session) {
       await authRequest('/auth/session/revoke', {
@@ -282,8 +270,7 @@ class AccountSession {
    * account is always the site's user.
    */
   async followHikka(viewerId: string | null) {
-    await settingsHydrated();
-    const { convexSession, userData } = useSettings.getState();
+    const { convexSession, userData } = await loadedSettings();
     if (convexSession && userData?.hikkaId !== viewerId) await this.logout();
   }
 
@@ -292,8 +279,7 @@ class AccountSession {
    * out.
    */
   async lendToken(forceRefresh: boolean) {
-    await settingsHydrated();
-    if (!useSettings.getState().convexSession) return null;
+    if (!(await loadedSettings()).convexSession) return null;
     if (forceRefresh) this.accessToken = undefined;
     return await this.token().catch(() => null);
   }
@@ -317,7 +303,7 @@ class AccountSession {
   }
 
   async syncTeamPriority() {
-    await settingsHydrated();
+    await loadedSettings();
     await syncTeamPriority({
       get: () => this.query(convexApi.teamPriority.get, {}),
       set: (input) => this.mutation(convexApi.teamPriority.set, input),
@@ -330,8 +316,7 @@ class AccountSession {
    * found stay local-only.
    */
   async syncFavorites() {
-    await settingsHydrated();
-    if (!useSettings.getState().convexSession) return;
+    if (!(await loadedSettings()).convexSession) return;
 
     const synced = await this.query(convexApi.favorites.list, {});
     const syncedSlugs = new Set(synced.map((favorite) => favorite.animeSlug));
@@ -429,8 +414,7 @@ class AccountSession {
   }
 
   private async refresh() {
-    await settingsHydrated();
-    const session = useSettings.getState().convexSession;
+    const session = (await loadedSettings()).convexSession;
     if (!session) throw new Error('Not authenticated');
     try {
       const response = await authRequest('/auth/session/refresh', {

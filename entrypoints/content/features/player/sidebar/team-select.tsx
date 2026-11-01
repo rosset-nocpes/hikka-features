@@ -1,5 +1,4 @@
 import { motion } from 'motion/react';
-import { useMemo } from 'react';
 import MaterialSymbolsStarRateOutlineRounded from '~icons/material-symbols/star-rate-outline-rounded';
 import MaterialSymbolsStarRounded from '~icons/material-symbols/star-rounded';
 import MaterialSymbolsUnfoldMoreRounded from '~icons/material-symbols/unfold-more-rounded';
@@ -17,13 +16,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
-import { ProviderTeamIFrame } from '@/utils/provider_classes';
+import { ProviderTeamIFrame } from '@/utils/providers';
 
-import {
-  episodesOf,
-  isFavoriteTeam,
-  usePlayer,
-} from '../context/player-context';
+import { isFavoriteTeam, usePlayer } from '../context/player-context';
 import { getEpisodeRanges, getTeamName, groupTeams } from '../teams';
 
 const TeamSelect = () => {
@@ -38,59 +33,59 @@ const TeamSelect = () => {
     watchData: data,
   } = usePlayer();
 
-  const teamGroups = useMemo(() => {
-    if (!data || !provider) return [];
-    if (!(data[provider] instanceof ProviderTeamIFrame)) return [];
+  const source = data && provider ? data[provider] : undefined;
+  if (!(source instanceof ProviderTeamIFrame) || !team) return;
 
-    return groupTeams(data[provider].getTeams(), favoriteTeam?.team);
-  }, [data, provider, favoriteTeam]);
-
-  if (!data || !provider || !team) return;
+  const teamGroups = groupTeams(source.getTeams(), favoriteTeam?.team);
 
   return (
-    data[provider] instanceof ProviderTeamIFrame && (
-      <SidebarMenuItem>
-        <DropdownMenu modal={false}>
-          <DropdownMenuTrigger
-            render={
-              <SidebarMenuButton
-                size="lg"
-                tooltip={getTeamName(team)}
-                tooltipContainer={container}
-              >
-                <Avatar className="size-8 rounded-md">
-                  <AvatarImage src={team.logo} />
-                  <AvatarFallback>{getTeamName(team)[0]}</AvatarFallback>
-                </Avatar>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">
-                    {getTeamName(team)}
-                  </span>
-                  <span className="truncate text-xs">
-                    {episodeData && getEpisodeRanges(episodeData)}
-                  </span>
-                </div>
-                <MaterialSymbolsUnfoldMoreRounded className="ml-auto" />
-              </SidebarMenuButton>
-            }
-          />
-          <DropdownMenuContent
-            className="w-(--anchor-width) min-w-56 rounded-lg"
-            align="end"
-            side="bottom"
-            sideOffset={4}
-            container={container}
-          >
-            <ScrollArea
-              className="max-h-96 *:data-[slot=scroll-area-viewport]:overscroll-contain"
-              scrollFade
+    <SidebarMenuItem>
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger
+          render={
+            <SidebarMenuButton
+              size="lg"
+              tooltip={getTeamName(team)}
+              tooltipContainer={container}
             >
-              {teamGroups.map((group) => (
-                <DropdownMenuGroup key={group.type}>
-                  <DropdownMenuLabel className="text-muted-foreground text-xs">
-                    {group.label}
-                  </DropdownMenuLabel>
-                  {group.teams.map((team) => (
+              <Avatar className="size-8 rounded-md">
+                <AvatarImage src={team.logo} />
+                <AvatarFallback>{getTeamName(team)[0]}</AvatarFallback>
+              </Avatar>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-semibold">
+                  {getTeamName(team)}
+                </span>
+                <span className="truncate text-xs">
+                  {episodeData && getEpisodeRanges(episodeData)}
+                </span>
+              </div>
+              <MaterialSymbolsUnfoldMoreRounded className="ml-auto" />
+            </SidebarMenuButton>
+          }
+        />
+        <DropdownMenuContent
+          className="w-(--anchor-width) min-w-56 rounded-lg"
+          align="end"
+          side="bottom"
+          sideOffset={4}
+          container={container}
+        >
+          <ScrollArea
+            className="max-h-96 *:data-[slot=scroll-area-viewport]:overscroll-contain"
+            scrollFade
+          >
+            {teamGroups.map((group) => (
+              <DropdownMenuGroup key={group.type}>
+                <DropdownMenuLabel className="text-muted-foreground text-xs">
+                  {group.label}
+                </DropdownMenuLabel>
+                {group.teams.map((team) => {
+                  const favorite = isFavoriteTeam(
+                    { favoriteTeam, provider },
+                    team,
+                  );
+                  return (
                     <motion.div
                       key={team.title}
                       layoutId={team.title}
@@ -121,7 +116,7 @@ const TeamSelect = () => {
                             </span>
                             <span className="truncate text-xs">
                               {getEpisodeRanges(
-                                episodesOf(data, provider, team.title) ?? [],
+                                source.teams[team.title]?.episodes ?? [],
                               )}
                             </span>
                           </div>
@@ -130,10 +125,8 @@ const TeamSelect = () => {
                             size="icon-sm"
                             className={cn(
                               'group',
-                              !isFavoriteTeam(
-                                { favoriteTeam, provider },
-                                team,
-                              ) && 'hidden group-hover/item:inline-flex',
+                              !favorite &&
+                                'hidden group-hover/item:inline-flex',
                             )}
                             onClick={(e) => {
                               e.stopPropagation();
@@ -141,10 +134,7 @@ const TeamSelect = () => {
                             }}
                           >
                             <SwapIcon
-                              active={isFavoriteTeam(
-                                { favoriteTeam, provider },
-                                team,
-                              )}
+                              active={favorite}
                               on={
                                 <MaterialSymbolsStarRounded className="size-5! text-yellow-400 transition-transform duration-150 ease-out motion-safe:group-hover:scale-125" />
                               }
@@ -156,14 +146,14 @@ const TeamSelect = () => {
                         </div>
                       </DropdownMenuItem>
                     </motion.div>
-                  ))}
-                </DropdownMenuGroup>
-              ))}
-            </ScrollArea>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </SidebarMenuItem>
-    )
+                  );
+                })}
+              </DropdownMenuGroup>
+            ))}
+          </ScrollArea>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </SidebarMenuItem>
   );
 };
 

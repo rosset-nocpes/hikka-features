@@ -58,14 +58,9 @@ export const RoomSubtitle = ({
 export const memberName = (member: WatchRoomProfile) =>
   member.username ?? 'Глядач';
 
-export const MemberAvatar = ({
-  member,
-  className,
-}: {
-  member: WatchRoomProfile;
-  className?: string;
-}) => (
-  <Avatar size="sm" className={className}>
+/** Centred on a row's 16px icon column, so names line up with labels. */
+export const MemberAvatar = ({ member }: { member: WatchRoomProfile }) => (
+  <Avatar size="sm" className="-mx-0.5 data-[size=sm]:size-5">
     {member.avatar && <AvatarImage src={member.avatar} alt="" />}
     <AvatarFallback>{memberName(member)[0]?.toUpperCase()}</AvatarFallback>
   </Avatar>

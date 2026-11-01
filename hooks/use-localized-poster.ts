@@ -3,18 +3,16 @@ import { useQuery } from '@tanstack/react-query';
 import { convexApi } from '@/utils/convex-api';
 import { convex } from '@/utils/convex-client';
 
-const useNotionData = () => {
+/** The page's anime's Ukrainian poster, from the extension's catalog. */
+const useLocalizedPoster = () => {
   const { slug } = usePageStore();
 
   return useQuery({
-    queryKey: ['notion-data', slug],
-    queryFn: async (): Promise<API.NotionData> => {
+    queryKey: ['localized-poster', slug],
+    queryFn: async () => {
       const data = await convex.query(convexApi.catalog.get, { slug: slug! });
       if (!data) throw new Error('Not found');
-      return {
-        poster: data.poster,
-        fandub: data.fandub.map((team) => ({ ...team, logo: team.logo ?? '' })),
-      };
+      return data.poster;
     },
     retry: false,
     staleTime: 0,
@@ -23,4 +21,4 @@ const useNotionData = () => {
   });
 };
 
-export default useNotionData;
+export default useLocalizedPoster;

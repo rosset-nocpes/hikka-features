@@ -32,7 +32,7 @@ const WatchTogetherInvite = () => {
     if (autoJoinedRef.current) return;
     autoJoinedRef.current = true;
     void handleJoin(roomInvite);
-    // oxlint-disable-next-line eslint-plugin-react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [roomInvite, roomInviteAccepted, convexSession]);
 
   if (!roomInvite || status === 'joined') return null;

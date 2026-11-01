@@ -34,6 +34,13 @@ const roomEpisode = ({ slug, episode }: QueueEpisode) => ({
   episode,
 });
 
+const roomItem = ({ slug, provider, team, episode }: QueueItem) => ({
+  animeSlug: slug,
+  provider,
+  team,
+  episode,
+});
+
 const ownQueue = (items: QueueItem[]): ActiveQueue => {
   const { add, remove, toggle, move, restore, clear } = useQueue.getState();
   return {
@@ -58,15 +65,7 @@ const roomQueue = (room: WatchRoom): ActiveQueue => {
     episode,
   }));
   const enqueue = (added: QueueItem[]) =>
-    editQueue({
-      type: 'enqueue',
-      items: added.map(({ slug, provider, team, episode }) => ({
-        animeSlug: slug,
-        provider,
-        team,
-        episode,
-      })),
-    });
+    editQueue({ type: 'enqueue', items: added.map(roomItem) });
   const move = (episode: QueueEpisode, index: number) =>
     editQueue({ type: 'requeue', item: roomEpisode(episode), index });
   const remove = (episode: QueueEpisode) =>

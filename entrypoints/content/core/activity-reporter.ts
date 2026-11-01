@@ -7,7 +7,7 @@ const REPORT_INTERVAL_MS = 60_000;
 /** Lets a burst of changes, like switching episodes, settle into one report. */
 const REPORT_DELAY_MS = 1_500;
 
-export interface ActivitySource<Report> {
+interface ActivitySource<Report> {
   /** What the open player or reader shows; undefined while it has nothing. */
   current: () => Report | undefined;
   /** Calls `listener` whenever `current` may have changed. */

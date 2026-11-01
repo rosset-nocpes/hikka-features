@@ -11,7 +11,7 @@ interface TeamPriorityInput {
   translationType: PreferredTranslation;
 }
 
-export interface TeamPriorityAccount {
+interface TeamPriorityAccount {
   get: () => Promise<TeamPriority | null>;
   set: (input: TeamPriorityInput) => Promise<TeamPriority>;
 }

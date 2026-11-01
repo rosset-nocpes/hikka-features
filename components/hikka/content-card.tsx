@@ -14,9 +14,6 @@ export interface ContentCardItem extends MediaTooltipItem {
   slug: string;
   image: string | null;
   year: number | null;
-  title_ua: string | null;
-  title_en: string | null;
-  title_ja?: string | null;
 }
 
 interface Props {

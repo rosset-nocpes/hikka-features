@@ -4,7 +4,7 @@ import { useIsMobile } from '@/components/hooks/use-mobile';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useIFramePlayer } from '@/hooks/use-iframe-player';
 
-import { usePlayer } from '../context/player-context';
+import { compactMode, usePlayer } from '../context/player-context';
 import { useStackedLayout } from '../mobile/use-stacked-layout';
 import UpNext from '../queue/up-next';
 import PlayerSidebar from '../sidebar/player-sidebar';
@@ -17,10 +17,10 @@ import VideoToolbar from './video-toolbar';
 const PlayerOverlay = () => {
   const { adInProgress, uiShown } = useIFramePlayer();
   const { setOverlay, miniPlayer, videoPiPActive } = usePlayer();
+  const isCompactMode = compactMode({ miniPlayer, videoPiPActive });
   const isMobile = useIsMobile();
   const stacked = useStackedLayout();
 
-  const isCompactMode = miniPlayer || videoPiPActive;
   const swallowTapRef = useRef(false);
 
   // A tap on hidden controls only reveals them, so it can't hit a button

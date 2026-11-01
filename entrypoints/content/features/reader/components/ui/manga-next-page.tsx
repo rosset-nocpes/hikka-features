@@ -23,7 +23,7 @@ const MangaNextPage = () => {
       <CarouselItem className="flex h-full flex-col items-center justify-center gap-4">
         <div className="flex flex-col gap-1">
           <div className="text-sm font-medium">Закінчено:</div>
-          <div>{`Том ${currentChapter?.volume}. Розділ ${currentChapter?.chapter}`}</div>
+          <div>{`Том ${currentChapter.volume}. Розділ ${currentChapter.chapter}`}</div>
         </div>
         <div className="flex flex-col gap-1">
           {nextChapterData ? (
@@ -40,4 +40,5 @@ const MangaNextPage = () => {
     </>
   );
 };
+
 export default MangaNextPage;

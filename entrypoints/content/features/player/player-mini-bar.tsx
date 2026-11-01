@@ -5,30 +5,20 @@ import MaterialSymbolsDragIndicator from '~icons/material-symbols/drag-indicator
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { useHikkaContent } from '@/hooks/use-hikka';
 
-import { usePlayer } from './context/player-context';
 import { closePlayer } from './player';
 import { MiniPlayer, Mute, Play } from './player-overlay/buttons/toggles';
 import Time from './player-overlay/sliders/time';
 import NextInQueue from './queue/next-in-queue';
 import UpNext from './queue/up-next';
-import { getTeamName } from './teams';
+import { useNowPlaying } from './use-now-playing';
 
 interface Props {
   onDragStart: (event: ReactPointerEvent<HTMLButtonElement>) => void;
 }
 
 const PlayerMiniBar = ({ onDragStart }: Props) => {
-  const { currentEpisode, team, slug } = usePlayer();
-  // The player's anime, which the page may no longer show.
-  const { data: anime } = useHikkaContent('anime', slug);
-  const title = hikkaTitle(anime);
-
-  const teamName = team && getTeamName(team);
-  const subtitle = currentEpisode?.episode
-    ? `Епізод ${currentEpisode.episode}${teamName ? ` · ${teamName}` : ''}`
-    : teamName;
+  const { slug, team, teamName, title, subtitle } = useNowPlaying();
 
   return (
     <div className="relative flex w-full flex-col">

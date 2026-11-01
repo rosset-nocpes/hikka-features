@@ -10,7 +10,7 @@ import {
 import { type MiniPlayerCorner, usePlayer } from './context/player-context';
 
 /** `bar` is the strip shown while the browser's picture-in-picture plays. */
-export type PlayerLayout = 'full' | 'mini' | 'bar';
+type PlayerLayout = 'full' | 'mini' | 'bar';
 
 /** Gap to the viewport edges; top corners also clear hikka's header. */
 const MARGIN = 16;
@@ -28,7 +28,7 @@ interface Point {
   y: number;
 }
 
-const layoutOf = (state: {
+export const layoutOf = (state: {
   miniPlayer: boolean;
   videoPiPActive: boolean;
 }): PlayerLayout =>

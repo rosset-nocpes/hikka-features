@@ -9,7 +9,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   SidebarMenu,
@@ -20,19 +19,12 @@ import {
 import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-import type {
-  BaseKeys,
-  KeysOfUnion,
-  ReaderSettings as ReaderSettingsType,
-  UISettingMetadata,
-} from '../../../reader.types';
+import type { SettingKey, UISettingMetadata } from '../../../reader.types';
 
 import { useReader } from '../../../hooks/use-reader';
 import { READER_POWERED_BY, SETTINGS_CONFIG } from '../../../reader.constants';
 import SettingRow from '../_base/setting-row';
 import SwitchOption from '../_base/switch-option';
-
-type SettingKey = Exclude<KeysOfUnion<ReaderSettingsType>, BaseKeys>;
 
 const FONT_PREVIEW = 'Рікка після роботи йде гуляти з Хіккою.';
 
@@ -73,19 +65,13 @@ const ReaderSettings = () => {
 /** The reader's settings as a popup-style group, with the source credit. */
 export const SettingsItems = () => {
   const { settings, setSettings } = useReader();
-  const {
-    type,
-    sortBy: _sortBy,
-    fullscreen: _fullscreen,
-    translator: _translator,
-    ...dynamicFields
-  } = settings;
-  const poweredBy = READER_POWERED_BY[type];
+  const poweredBy = READER_POWERED_BY[settings.type];
 
   return (
     <div className="flex flex-col gap-2">
       <SettingsGroup>
-        {Object.entries(dynamicFields).map(([key, value]) => {
+        {/* The open type's settings that have a control. */}
+        {Object.entries(settings).map(([key, value]) => {
           const config = SETTINGS_CONFIG[key as SettingKey];
           if (!config) return null;
 
@@ -176,20 +162,6 @@ const SettingItem = ({
         </SettingRow>
       );
 
-    case 'number':
-      return (
-        <SettingRow label={label} description={description}>
-          <Input
-            type="number"
-            className="w-20 shrink-0"
-            min={config.min}
-            max={config.max}
-            value={value}
-            onChange={(e) => onChange(Number(e.target.value))}
-          />
-        </SettingRow>
-      );
-
     case 'slider':
       return (
         <div className="flex flex-col gap-3 px-4 py-3">
@@ -204,7 +176,7 @@ const SettingItem = ({
             max={config.max}
             step={1}
             value={value}
-            onValueChange={(val) => onChange(val)}
+            onValueChange={onChange}
           />
         </div>
       );
@@ -215,9 +187,6 @@ const SettingItem = ({
       ) : (
         <ThemeSelect config={config} value={value} onChange={onChange} />
       );
-
-    default:
-      return null;
   }
 };
 

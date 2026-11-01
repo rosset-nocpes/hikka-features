@@ -16,7 +16,7 @@ import { activeQueue, useActiveQueue } from './use-active-queue';
 const COUNTDOWN_MS = 8_000;
 
 /** What plays next: the queue's first episode, else the anime's next one. */
-export interface NextEpisode {
+interface NextEpisode {
   slug: string;
   episode: number;
   /** The team's key in the watch data; empty for providers without teams. */
@@ -260,7 +260,7 @@ const UpNext: FC<Props> = ({ inline, corner }) => {
               )}
             >
               <Poster
-                src={anime?.image}
+                src={anime?.image ?? undefined}
                 className={corner ? 'h-14 w-10' : 'h-10 w-7'}
               />
               <div className="grid min-w-0 flex-1 gap-0.5 leading-tight">

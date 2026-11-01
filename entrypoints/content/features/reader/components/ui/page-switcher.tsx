@@ -6,18 +6,17 @@ import { Button } from '@/components/ui/button';
 import { useReader } from '../../hooks/use-reader';
 import { MangaOrientation, ReaderType } from '../../reader.enums';
 
+/** Arrows to page through manga, or between a novel's chapters. */
 const PageSwitcher = () => {
   const { settings, carouselApi, nextChapter, prevChapter } = useReader();
 
+  if (!settings.type) return;
+
   const isManga = settings.type === ReaderType.Manga;
-  const isNovel = settings.type === ReaderType.Novel;
+  // Novels page sideways, as horizontal manga does.
   const isVertical =
     isManga && settings.orientation === MangaOrientation.Vertical;
-  const isHorizontal =
-    (isManga && settings.orientation === MangaOrientation.Horizontal) ||
-    isNovel;
 
-  /** Pages through manga; a novel's chapter is one page. */
   const handleScroll = (direction: 'next' | 'prev') => {
     if (isManga) {
       if (direction === 'next') carouselApi?.scrollNext();
@@ -29,21 +28,16 @@ const PageSwitcher = () => {
     }
   };
 
-  const positionClasses = cn(
-    isVertical && 'bottom-1/2 left-2 translate-y-1/2',
-    isHorizontal &&
-      'bottom-2 left-1/2 -translate-x-1/2 translate-y-1/4 -rotate-90',
-  );
+  const positionClasses = isVertical
+    ? 'bottom-1/2 left-2 translate-y-1/2'
+    : 'bottom-2 left-1/2 -translate-x-1/2 translate-y-1/4 -rotate-90';
 
-  const visibilityClasses = cn(
+  const visibilityClasses =
     isManga && settings.scrollMode
       ? isVertical
         ? '-left-8 opacity-0'
         : '-bottom-8 opacity-0'
-      : 'opacity-40 hover:opacity-100',
-  );
-
-  if (!settings.type) return;
+      : 'opacity-40 hover:opacity-100';
 
   return (
     <div

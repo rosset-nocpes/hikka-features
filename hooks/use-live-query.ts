@@ -60,7 +60,7 @@ export function useLiveQuery<Query extends FunctionReference<'query'>>(
       cleanup?.();
     };
     // `key` covers the query and its arguments.
-    // oxlint-disable-next-line eslint-plugin-react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 
   return state?.key === key ? state : undefined;

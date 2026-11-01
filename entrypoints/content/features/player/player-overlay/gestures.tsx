@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { useSidebar } from '@/components/ui/sidebar';
 import { playerControls, useIFramePlayer } from '@/hooks/use-iframe-player';
@@ -16,96 +16,78 @@ const Gestures = () => {
   const pendingSeekTimeRef = useRef<number | null>(null);
   const skipTotalRef = useRef(0);
   const skipResetTimerRef = useRef<NodeJS.Timeout>(null);
-  const {
-    play,
-    pause,
-    isPlaying,
-    uiShown,
-    currentTime,
-    duration,
-    seek,
-    toggleMute,
-    changeVolume,
-    isMuted,
-    volume,
-  } = useIFramePlayer();
+  const isPlaying = useIFramePlayer((state) => state.isPlaying);
+  const uiShown = useIFramePlayer((state) => state.uiShown);
   const { toggleFullscreen, toggleTheatreMode, overlay, miniPlayer } =
     usePlayer();
   const { open, setOpen } = useSidebar();
 
-  const togglePlayPause = useCallback(() => {
-    if (isPlaying) {
-      pause();
-      dispatchPlayerOverlayAction(overlay, { type: 'pause' });
-    } else {
-      play();
-      dispatchPlayerOverlayAction(overlay, { type: 'play' });
-    }
-  }, [isPlaying, overlay, play, pause]);
-
-  const handleSkip = useCallback(
-    (seconds: number) => {
-      const baseTime = pendingSeekTimeRef.current ?? currentTime;
-      const newTime =
-        duration > 0
-          ? Math.min(Math.max(0, baseTime + seconds), duration)
-          : Math.max(0, baseTime + seconds);
-      const nextSkipTotal =
-        Math.sign(skipTotalRef.current) === Math.sign(seconds)
-          ? skipTotalRef.current + seconds
-          : seconds;
-
-      pendingSeekTimeRef.current = newTime;
-      skipTotalRef.current = nextSkipTotal;
-      seek(newTime);
-      dispatchPlayerOverlayAction(overlay, {
-        type: 'skip',
-        seconds: nextSkipTotal,
-      });
-
-      if (skipResetTimerRef.current) {
-        clearTimeout(skipResetTimerRef.current);
-      }
-
-      skipResetTimerRef.current = setTimeout(() => {
-        pendingSeekTimeRef.current = null;
-        skipTotalRef.current = 0;
-      }, 750);
-    },
-    [currentTime, duration, overlay, seek],
-  );
-
-  const handleToggleMute = useCallback(() => {
-    toggleMute();
-    dispatchPlayerOverlayAction(overlay, {
-      type: isMuted || volume === 0 ? 'unmute' : 'mute',
+  // The handlers read the player when called, so the listeners below aren't
+  // replaced as it reports its time.
+  const togglePlayPause = () => {
+    const { isPlaying, play, pause } = useIFramePlayer.getState();
+    if (isPlaying) pause();
+    else play();
+    dispatchPlayerOverlayAction(usePlayer.getState().overlay, {
+      type: isPlaying ? 'pause' : 'play',
     });
-  }, [isMuted, overlay, toggleMute, volume]);
+  };
 
-  const handleVolumeStep = useCallback(
-    (delta: number) => {
-      // `changeVolume` takes an absolute level, not a delta.
-      const base = isMuted ? 0 : volume;
-      const next = Math.round(Math.min(1, Math.max(0, base + delta)) * 100);
-      if (isMuted && next > 0) toggleMute();
-      changeVolume(next / 100);
-      dispatchPlayerOverlayAction(overlay, {
-        type: 'volume',
-        percent: next,
-      });
-    },
-    [changeVolume, isMuted, overlay, toggleMute, volume],
-  );
+  const handleSkip = (seconds: number) => {
+    const { currentTime, duration, seek } = useIFramePlayer.getState();
+    const baseTime = pendingSeekTimeRef.current ?? currentTime;
+    const newTime =
+      duration > 0
+        ? Math.min(Math.max(0, baseTime + seconds), duration)
+        : Math.max(0, baseTime + seconds);
+    const nextSkipTotal =
+      Math.sign(skipTotalRef.current) === Math.sign(seconds)
+        ? skipTotalRef.current + seconds
+        : seconds;
 
-  const handleSeekTo = useCallback(
-    (time: number) => {
+    pendingSeekTimeRef.current = newTime;
+    skipTotalRef.current = nextSkipTotal;
+    seek(newTime);
+    dispatchPlayerOverlayAction(usePlayer.getState().overlay, {
+      type: 'skip',
+      seconds: nextSkipTotal,
+    });
+
+    if (skipResetTimerRef.current) clearTimeout(skipResetTimerRef.current);
+    skipResetTimerRef.current = setTimeout(() => {
       pendingSeekTimeRef.current = null;
       skipTotalRef.current = 0;
-      seek(time);
-      playerControls.show();
-    },
-    [seek],
-  );
+    }, 750);
+  };
+
+  const handleToggleMute = () => {
+    const { isMuted, volume, toggleMute } = useIFramePlayer.getState();
+    toggleMute();
+    dispatchPlayerOverlayAction(usePlayer.getState().overlay, {
+      type: isMuted || volume === 0 ? 'unmute' : 'mute',
+    });
+  };
+
+  const handleVolumeStep = (delta: number) => {
+    const { isMuted, volume, toggleMute, changeVolume } =
+      useIFramePlayer.getState();
+    // `changeVolume` takes an absolute level, not a delta.
+    const base = isMuted ? 0 : volume;
+    const next = Math.round(Math.min(1, Math.max(0, base + delta)) * 100);
+    if (isMuted && next > 0) toggleMute();
+    changeVolume(next / 100);
+    dispatchPlayerOverlayAction(usePlayer.getState().overlay, {
+      type: 'volume',
+      percent: next,
+    });
+  };
+
+  const handleSeekTo = (time: number) => {
+    pendingSeekTimeRef.current = null;
+    skipTotalRef.current = 0;
+    useIFramePlayer.getState().seek(time);
+    playerControls.show();
+  };
 
   useEffect(
     () => () => {
@@ -134,6 +116,8 @@ const Gestures = () => {
       }
 
       if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+      const { duration } = useIFramePlayer.getState();
 
       if (/^\d$/.test(e.key)) {
         if (duration <= 0) return;
@@ -220,19 +204,7 @@ const Gestures = () => {
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [
-    open,
-    miniPlayer,
-    duration,
-    setOpen,
-    togglePlayPause,
-    toggleFullscreen,
-    toggleTheatreMode,
-    handleSkip,
-    handleSeekTo,
-    handleVolumeStep,
-    handleToggleMute,
-  ]);
+  }, [open, miniPlayer, setOpen, toggleFullscreen, toggleTheatreMode]);
 
   // Hold on the video for 2x playback.
   useEffect(() => {

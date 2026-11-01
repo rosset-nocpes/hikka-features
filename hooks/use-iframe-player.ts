@@ -140,7 +140,7 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
 
     setCurrentQuality: (quality: string) => {
       const { qualities } = get();
-      const index = qualities.findIndex((q) => q === quality);
+      const index = qualities.indexOf(quality);
 
       sendIFramePlayerCommand({
         action: 'set-quality',
@@ -151,7 +151,7 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
 
     setCurrentSubtitle: (subtitle: string) => {
       const { subtitles } = get();
-      const index = subtitles.findIndex((s) => s === subtitle);
+      const index = subtitles.indexOf(subtitle);
 
       sendIFramePlayerCommand({
         action: 'set-subtitle',
@@ -166,7 +166,7 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
 
     changeSpeed: (speed: number) => {
       const { speedOptions } = get();
-      const index = speedOptions.findIndex((q) => q === speed);
+      const index = speedOptions.indexOf(speed);
 
       sendIFramePlayerCommand({
         action: 'set-speed',
@@ -185,10 +185,12 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
 );
 
 const getCurrentPlayerIFrameWindow = () => {
-  const container = usePlayer.getState().container;
-  const iframe = (container?.querySelector('#player-iframe') ??
-    document.getElementById('player-iframe')) as HTMLIFrameElement | null;
-
+  const selector = 'iframe#player-iframe';
+  const iframe =
+    usePlayer
+      .getState()
+      .container?.querySelector<HTMLIFrameElement>(selector) ??
+    document.querySelector<HTMLIFrameElement>(selector);
   return iframe?.contentWindow;
 };
 

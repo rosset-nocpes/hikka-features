@@ -1,4 +1,4 @@
-import { type FC, useEffect } from 'react';
+import { useEffect } from 'react';
 import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
 import MaterialSymbolsFullscreenExitRounded from '~icons/material-symbols/fullscreen-exit-rounded';
 import MaterialSymbolsFullscreenRounded from '~icons/material-symbols/fullscreen-rounded';
@@ -10,11 +10,8 @@ import { useReader } from '../hooks/use-reader';
 import { closeReader } from '../reader';
 import { ReaderType } from '../reader.enums';
 
-interface Props {
-  showControls?: boolean;
-}
-
-const ReaderNavbar: FC<Props> = ({ showControls = true }) => {
+/** The reader's buttons over the page on desktops. */
+const ReaderNavbar = () => {
   const { open } = useSidebar();
   const {
     settings,
@@ -49,8 +46,7 @@ const ReaderNavbar: FC<Props> = ({ showControls = true }) => {
       <div
         className={cn(
           'absolute top-2 left-2 z-20 flex gap-2 duration-300',
-          showControls && !open ? 'opacity-100' : 'opacity-0',
-          open && '-top-8',
+          open ? '-top-8 opacity-0' : 'opacity-100',
         )}
       >
         <Button
@@ -70,8 +66,7 @@ const ReaderNavbar: FC<Props> = ({ showControls = true }) => {
       </div>
       <div
         className={cn(
-          'absolute top-2 right-2 z-20 flex gap-2 duration-300',
-          !showControls && !open ? 'opacity-0' : 'opacity-100',
+          'absolute top-2 right-2 z-20 flex gap-2 opacity-100 duration-300',
           open && 'gap-0',
         )}
       >

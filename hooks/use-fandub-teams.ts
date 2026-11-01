@@ -10,9 +10,9 @@ import type {
 
 import { convexApi } from '@/utils/convex-api';
 import { convex } from '@/utils/convex-client';
-import { ProviderTeamIFrame } from '@/utils/provider_classes';
+import { ProviderTeamIFrame } from '@/utils/providers';
 
-export interface FandubTeam extends Omit<TeamSummary, 'id'> {
+interface FandubTeam extends Omit<TeamSummary, 'id'> {
   /** Catalog teams' id, else the player's title. */
   key: string;
   releases: TeamRelease[];

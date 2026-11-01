@@ -13,8 +13,9 @@ import MaterialSymbolsSubtitlesRounded from '~icons/material-symbols/subtitles-r
 
 import type { ReleaseNotification } from '@/utils/convex-api';
 
-import { onDrawerLinkClick } from '@/components/hikka/nav-styles';
+import { onDrawerLinkClick } from '@/components/hikka/nav-links';
 
+import { putBefore, putLast } from '../../core/placement';
 import {
   type ReleaseRun,
   SLOT_ATTRIBUTE,
@@ -135,11 +136,9 @@ function useRunSlots(list: HTMLElement, runs: ReleaseRun[]) {
         slot.remove();
         return;
       }
-      // Hikka just removed it; the next read places the run again.
-      if (run.anchor && run.anchor.parentNode !== list) return;
-      if (slot.parentNode !== list || slot.nextElementSibling !== run.anchor) {
-        list.insertBefore(slot, run.anchor);
-      }
+      if (!run.anchor) putLast(list, slot);
+      // Unless Hikka just removed it; the next read places the run again.
+      else if (run.anchor.parentNode === list) putBefore(run.anchor, slot);
     });
   }, [list, runs, slots]);
 

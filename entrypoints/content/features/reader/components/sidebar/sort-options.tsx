@@ -77,7 +77,7 @@ const SortOptions = () => {
           <DropdownMenuGroup>
             <DropdownMenuLabel>Сортування</DropdownMenuLabel>
             <DropdownMenuRadioGroup
-              value={settings.sortBy?.field || ReaderSortBy.Chapter}
+              value={settings.sortBy.field}
               onValueChange={(field) =>
                 setSettings({
                   sortBy: { ...settings.sortBy, field },

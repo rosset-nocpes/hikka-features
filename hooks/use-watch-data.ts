@@ -1,15 +1,19 @@
 import { queryOptions, useQuery } from '@tanstack/react-query';
 
-import { type ConvexWatchResult, convexApi } from '@/utils/convex-api';
+import {
+  type ConvexWatchResult,
+  type ConvexWatchSource,
+  convexApi,
+} from '@/utils/convex-api';
 import { convex } from '@/utils/convex-client';
-import { ProviderIFrame, ProviderTeamIFrame } from '@/utils/provider_classes';
+import { ProviderIFrame, ProviderTeamIFrame } from '@/utils/providers';
 
 const toWatchData = (data: ConvexWatchResult): API.WatchData => {
   const info = new Map(
     data.episodes.map((episode) => [episode.number, episode]),
   );
   const toEpisodes = (
-    episodes: ConvexWatchResult['providers'][number]['sources'][number]['episodes'],
+    episodes: ConvexWatchSource['episodes'],
   ): API.EpisodeData[] =>
     episodes.map(({ number, url, releasedAt }) => ({
       episode: number,
@@ -24,16 +28,15 @@ const toWatchData = (data: ConvexWatchResult): API.WatchData => {
   } as API.WatchData;
 
   for (const provider of data.providers) {
-    const language = provider.language as ProviderLanguage;
     const [first] = provider.sources;
     if (first && !first.team) {
-      const value = new ProviderIFrame(language);
+      const value = new ProviderIFrame(provider.language);
       value.episodes = toEpisodes(first.episodes);
       out[provider.id] = value;
       continue;
     }
 
-    const value = new ProviderTeamIFrame(language);
+    const value = new ProviderTeamIFrame(provider.language);
     for (const { team, translationType, episodes } of provider.sources) {
       if (!team) continue;
       // The title doubles as the key (favourites and share links store it),

@@ -6,7 +6,7 @@ import type { ReleaseNotification } from '@/utils/convex-api';
  */
 
 /** hikka.io's day labels in the menu, newest first. */
-export const SECTION_LABELS = ['Сьогодні', 'Вчора', 'Раніше'] as const;
+const SECTION_LABELS = ['Сьогодні', 'Вчора', 'Раніше'] as const;
 
 /** On the extension's elements in the list, so reading it skips them. */
 export const SLOT_ATTRIBUTE = 'data-hf-release-slot';
@@ -22,7 +22,7 @@ interface HikkaEntry {
   time: number;
 }
 
-export interface HikkaFeed {
+interface HikkaFeed {
   entries: HikkaEntry[];
   /** Hikka's own notifications are in, not its loading placeholders. */
   loaded: boolean;
@@ -39,7 +39,7 @@ export interface ReleaseRun {
 }
 
 /** The day label a time goes under, as hikka.io groups them (local days). */
-export function sectionOf(time: number, now: number) {
+function sectionOf(time: number, now: number) {
   const day = new Date(now);
   day.setHours(0, 0, 0, 0);
   if (time >= day.getTime()) return 0;

@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 
-import { usePlayer } from '../context/player-context';
+import { compactMode, usePlayer } from '../context/player-context';
 import NextInQueue from '../queue/next-in-queue';
 import Share from './buttons/share';
 import {
@@ -35,39 +35,30 @@ const VolumeControl = () => (
   </div>
 );
 
+/** Play, skip, mute and the time, for toolbars too narrow for the slider. */
+const CompactGroup = () => (
+  <div className={cn(GROUP, 'min-w-0')}>
+    <Play />
+    <NextInQueue />
+    <Mute />
+    <Divider />
+    <div className="min-w-0">
+      <TimeGroup />
+    </div>
+  </div>
+);
+
 const VideoToolbar = () => {
-  const { miniPlayer, videoPiPActive } = usePlayer();
+  const isCompactMode = usePlayer(compactMode);
   const mobileActionsRef = useRef<HTMLDivElement>(null);
   const actionsRef = useRef<HTMLDivElement>(null);
 
-  const isCompactMode = miniPlayer || videoPiPActive;
-
-  if (isCompactMode) {
-    return (
-      <div className={cn(GROUP, 'min-w-0')}>
-        <Play />
-        <NextInQueue />
-        <Mute />
-        <Divider />
-        <div className="min-w-0">
-          <TimeGroup />
-        </div>
-      </div>
-    );
-  }
+  if (isCompactMode) return <CompactGroup />;
 
   return (
     <>
       <div className="flex w-full items-center justify-between gap-2 md:hidden">
-        <div className={cn(GROUP, 'min-w-0')}>
-          <Play />
-          <NextInQueue />
-          <Mute />
-          <Divider />
-          <div className="min-w-0">
-            <TimeGroup />
-          </div>
-        </div>
+        <CompactGroup />
         <div ref={mobileActionsRef} className={cn(GROUP, 'shrink-0')}>
           <Settings anchor={mobileActionsRef} />
           <Fullscreen />

@@ -1,6 +1,8 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { type Root } from 'react-dom/client';
 
+import type { HikkaContent } from '@/hooks/use-hikka';
+
 import FeatureCard from '@/components/feature-card';
 import { buttonVariants } from '@/components/ui/button';
 import { ButtonGroup } from '@/components/ui/button-group';
@@ -39,12 +41,13 @@ const iconOf = (source: SourcesType) =>
   SOURCES[source].icon ??
   `https://www.google.com/s2/favicons?domain=${SOURCES[source].host}&sz=64`;
 
-const SOURCE_PATH_OVERRIDES: Partial<
-  Record<SourceContentType, Partial<Record<'mal' | 'al' | 'ad', string>>>
+/** A source's path for the content type, where it isn't the type itself. */
+const SOURCE_PATHS: Partial<
+  Record<SourceContentType, Partial<Record<SourcesType, string>>>
 > = {
-  character: { al: 'characters' },
-  person: { mal: 'people', al: 'staff', ad: 'creator' },
-  novel: { mal: 'manga', al: 'manga' },
+  character: { anilist: 'characters' },
+  person: { mal: 'people', anilist: 'staff', anidb: 'creator' },
+  novel: { mal: 'manga', anilist: 'manga' },
 };
 
 const CONTENT_LINKS: Record<SourceContentType, SourcesType[]> = {
@@ -55,7 +58,7 @@ const CONTENT_LINKS: Record<SourceContentType, SourcesType[]> = {
   novel: ['mal', 'anilist', 'wiki', 'mu'],
 };
 
-const MEDIA_TYPES: readonly string[] = ['anime', 'manga', 'novel'];
+const MEDIA_TYPES: readonly SourceContentType[] = ['anime', 'manga', 'novel'];
 
 /** The dialog hikka.io opens for a character or person from a list. */
 const MODAL = '[data-slug][data-content-type]';
@@ -67,47 +70,43 @@ interface SourceLink {
   search: boolean;
 }
 
-const pickTitle = (data: any): string =>
+const pickTitle = (data: HikkaContent): string =>
   [
-    data?.title_ja,
-    data?.title_en,
-    data?.title_original,
-    data?.content?.title_ja,
-    data?.content?.title_en,
-    data?.content?.title_original,
-    data?.name_en,
-    data?.content?.name_en,
+    data.title_ja,
+    data.title_en,
+    data.title_original,
+    data.content?.title_ja,
+    data.content?.title_en,
+    data.content?.title_original,
+    data.name_en,
+    data.content?.name_en,
   ].find(Boolean) ?? '';
 
 const sourceLink = (
   source: SourcesType,
-  data: any,
+  data: HikkaContent,
   contentType: SourceContentType,
 ): SourceLink | undefined => {
   const title = pickTitle(data);
   const q = encodeURIComponent(title);
-  const override = (key: 'mal' | 'al' | 'ad') =>
-    SOURCE_PATH_OVERRIDES[contentType]?.[key];
+  const path = SOURCE_PATHS[contentType]?.[source] ?? contentType;
   const direct = (href?: string) =>
     href ? { source, href, search: false } : undefined;
   const search = (href: string) => ({ source, href, search: true });
   const external = (): string | undefined =>
     MEDIA_TYPES.includes(contentType)
-      ? data?.external?.find((link: any) =>
-          link.url?.includes(SOURCES[source].host),
-        )?.url
+      ? data.external?.find((link) => link.url.includes(SOURCES[source].host))
+          ?.url
       : undefined;
 
   switch (source) {
-    case 'mal': {
-      const path = override('mal') ?? contentType;
-      return data?.mal_id
+    case 'mal':
+      return data.mal_id
         ? direct(`https://myanimelist.net/${path}/${data.mal_id}`)
         : search(`https://myanimelist.net/${path}.php?q=${q}`);
-    }
     case 'anilist':
       return search(
-        `https://anilist.co/search/${override('al') ?? contentType}?search=${q}&sort=SEARCH_MATCH`,
+        `https://anilist.co/search/${path}?search=${q}&sort=SEARCH_MATCH`,
       );
     case 'anidb': {
       // AniDB expects "Surname GivenName" for people/characters.
@@ -120,7 +119,7 @@ const sourceLink = (
       return (
         direct(external()) ??
         search(
-          `https://anidb.net/${override('ad') ?? contentType}/?adb.search=${encodeURIComponent(swapped)}&do.search=1`,
+          `https://anidb.net/${path}/?adb.search=${encodeURIComponent(swapped)}&do.search=1`,
         )
       );
     }
@@ -141,8 +140,9 @@ const sourceLink = (
   }
 };
 
-const sourceLinks = (data: any): SourceLink[] => {
-  const contentType: SourceContentType = data?.data_type ?? data?.content_type;
+const sourceLinks = (data: HikkaContent): SourceLink[] => {
+  const contentType = (data.data_type ??
+    data.content_type) as SourceContentType;
   return (CONTENT_LINKS[contentType] ?? []).flatMap(
     (source) => sourceLink(source, data, contentType) ?? [],
   );
@@ -163,15 +163,13 @@ export default class AniButtonsFeature extends BaseFeature {
   private modalObserver: MutationObserver | null = null;
 
   async init() {
-    const isEdit = () => document.location.pathname.startsWith('/edit/');
+    const isEdit = () => location.pathname.startsWith('/edit/');
 
     this.ui = await createFeatureUi({
       name: this.id,
       position: 'inline',
-      append: (anchor, ui) => {
-        if (isEdit()) anchor.append(ui);
-        else anchor.parentElement?.insertBefore(ui, anchor);
-      },
+      append: (anchor, ui) =>
+        isEdit() ? anchor.append(ui) : anchor.before(ui),
       anchor: () =>
         isEdit() ? 'div.grid > div' : '#content-right-side > #content-stats',
       hostCss: 'margin-bottom: -2rem !important;',
@@ -196,8 +194,13 @@ export default class AniButtonsFeature extends BaseFeature {
     });
   }
 
+  /** The page block's pages, and any with the dialog open. */
   override get shouldMount(): boolean {
-    return super.shouldMount || !!document.querySelector(MODAL);
+    return this.onPage || !!document.querySelector(MODAL);
+  }
+
+  private get onPage() {
+    return this.matches(location.pathname);
   }
 
   override get isMounted(): boolean {
@@ -205,7 +208,7 @@ export default class AniButtonsFeature extends BaseFeature {
   }
 
   override mount() {
-    if (super.shouldMount && this.ui) {
+    if (this.onPage && this.ui) {
       // hikka.io re-renders the column, dropping the block, and WXT still
       // counts it as mounted.
       if (this.ui.mounted) this.ui.remove();
@@ -233,7 +236,7 @@ export default class AniButtonsFeature extends BaseFeature {
       this.modalUi.mount();
     } else if (!modalOpen && this.modalUi?.mounted) {
       this.modalUi.remove();
-      if (!super.shouldMount) {
+      if (!this.onPage) {
         this.modalObserver?.disconnect();
         this.modalObserver = null;
       }

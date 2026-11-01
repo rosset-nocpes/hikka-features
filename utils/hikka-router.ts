@@ -16,7 +16,7 @@ export const teamPagePath = (slug?: string) =>
   slug ? `/teams/${encodeURIComponent(slug)}` : '/teams';
 
 /** `/<type>/<slug>/recommendations`, the titles MAL users liked with one. */
-export const RECOMMENDATIONS_PAGE_PATH =
+const RECOMMENDATIONS_PAGE_PATH =
   /^\/(anime|manga|novel)\/([^/]+)\/recommendations\/?$/;
 
 export const isRecommendationsPagePath = (path: string) =>

@@ -1,3 +1,5 @@
+import { countMissing } from '@/components/missing-divider';
+
 import type {
   Chapter,
   ReaderContent,
@@ -72,6 +74,23 @@ export const sortVolumes = (
           ? uploadTime(a.chapters[0]!) - uploadTime(b.chapters[0]!)
           : a.number - b.number) * direction(sortBy),
     );
+
+/**
+ * How many chapter numbers each chapter of a sorted list skips down to its
+ * lower neighbour: the one before it ascending, after it descending. Gaps
+ * only mean something when sorted by number.
+ */
+export const missingBelow = (sorted: Chapter[], sortBy: SortBy) => {
+  const descending = sortBy.order !== ReaderOrderBy.Ascending;
+  return sorted.map((chapter, index) =>
+    sortBy.field === ReaderSortBy.Chapter
+      ? countMissing(
+          chapter.chapter,
+          sorted[descending ? index + 1 : index - 1]?.chapter,
+        )
+      : 0,
+  );
+};
 
 /**
  * The chapter `offset` away from `current` in reading order, which is the

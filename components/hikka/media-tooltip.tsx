@@ -12,6 +12,9 @@ import { Separator } from '@/components/ui/separator';
 /** The parts of a Hikka anime, manga or novel that its card shows. */
 export interface MediaTooltipItem {
   data_type: MediaType;
+  title_ua: string | null;
+  title_en: string | null;
+  title_ja?: string | null;
   media_type: string | null;
   status: string | null;
   score: number;

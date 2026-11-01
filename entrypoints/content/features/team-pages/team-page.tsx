@@ -10,6 +10,7 @@ import MdiInstagram from '~icons/mdi/instagram';
 import MdiTelegram from '~icons/mdi/telegram';
 import MdiYoutube from '~icons/mdi/youtube';
 
+import { MEDIA_TYPES } from '@/components/hikka/media-tooltip';
 import { CardMeta, POSTER_GRID, Poster } from '@/components/hikka/poster';
 import TeamLogo from '@/components/hikka/team-logo';
 import { Badge } from '@/components/ui/badge';
@@ -24,11 +25,7 @@ import {
 } from '@/utils/convex-api';
 import { convex } from '@/utils/convex-client';
 import { onHikkaLinkClick, teamPagePath } from '@/utils/hikka-router';
-import {
-  MEDIA_TYPE_LABELS,
-  releaseProgress,
-  TRANSLATION_LABELS,
-} from '@/utils/team-releases';
+import { releaseProgress, TRANSLATION_LABELS } from '@/utils/team-releases';
 
 import {
   type ContentsEntry,
@@ -186,7 +183,7 @@ const ReleaseCard: FC<{ entry: AnimeReleases }> = ({ entry }) => {
         </span>
         <CardMeta
           items={[
-            anime.mediaType && MEDIA_TYPE_LABELS[anime.mediaType],
+            anime.mediaType && MEDIA_TYPES[anime.mediaType],
             anime.year?.toString(),
           ]}
         />

@@ -26,7 +26,9 @@ import { SettingsItems } from '../../sidebar/settings/reader-settings';
 import SortOptions from '../../sidebar/sort-options';
 import { useMangaPage } from '../manga/manga-page-indicator';
 
-const GLASS = 'bg-background/60 backdrop-blur-xl';
+/** The frosted bars at the top and bottom. */
+const BAR =
+  'bg-background/60 backdrop-blur-xl border-border/50 rounded-xl border p-1.5 font-sans';
 
 const chapterLabel = (chapter?: Chapter) =>
   chapter
@@ -129,12 +131,7 @@ const ReaderMobileToolbar = () => {
           barsHidden && 'pointer-events-none -translate-y-full opacity-0',
         )}
       >
-        <div
-          className={cn(
-            GLASS,
-            'border-border/50 flex items-center gap-2 rounded-xl border p-1.5 font-sans',
-          )}
-        >
+        <div className={cn(BAR, 'flex items-center gap-2')}>
           <Button
             variant="ghost"
             size="icon-md"
@@ -172,12 +169,7 @@ const ReaderMobileToolbar = () => {
           barsHidden && 'pointer-events-none translate-y-full opacity-0',
         )}
       >
-        <div
-          className={cn(
-            GLASS,
-            'border-border/50 flex w-full max-w-md items-center gap-1.5 rounded-xl border p-1.5 font-sans',
-          )}
-        >
+        <div className={cn(BAR, 'flex w-full max-w-md items-center gap-1.5')}>
           <Button
             variant="ghost"
             size="icon-md"

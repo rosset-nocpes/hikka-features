@@ -1,7 +1,7 @@
 import { ChevronRight } from 'lucide-react';
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 
-import MissingDivider, { countMissing } from '@/components/missing-divider';
+import MissingDivider from '@/components/missing-divider';
 import {
   Collapsible,
   CollapsibleContent,
@@ -17,14 +17,10 @@ import {
 } from '@/components/ui/sidebar';
 import { hikkaTracker } from '@/utils/hikka-tracker';
 
-import { allChapters, sortVolumes } from '../../../chapters';
+import { allChapters, missingBelow, sortVolumes } from '../../../chapters';
 import useReadData from '../../../hooks/use-read-data';
 import { useReader } from '../../../hooks/use-reader';
-import {
-  ReaderContentMode,
-  ReaderOrderBy,
-  ReaderSortBy,
-} from '../../../reader.enums';
+import { ReaderContentMode, ReaderOrderBy } from '../../../reader.enums';
 import ChapterRow from './chapter-row';
 
 const VolumesView = () => {
@@ -37,9 +33,11 @@ const VolumesView = () => {
   // The open chapter's volume opens with it; others stay as the user left them.
   const [openVolumes, setOpenVolumes] = useState<Record<number, boolean>>({});
   const currentVolume = currentChapter?.volume ?? 0;
-  useEffect(() => {
+  const [openedVolume, setOpenedVolume] = useState<number>();
+  if (openedVolume !== currentVolume) {
+    setOpenedVolume(currentVolume);
     setOpenVolumes((open) => ({ ...open, [currentVolume]: true }));
-  }, [currentVolume]);
+  }
 
   const sortedVolumes = useMemo(
     () => sortVolumes(volumes ?? [], sortBy, translator),
@@ -51,16 +49,12 @@ const VolumesView = () => {
   // Counted across volume boundaries, since some sources restart chapter
   // numbers per volume and others don't.
   const missingById = useMemo(() => {
-    if (sortBy.field !== ReaderSortBy.Chapter) return new Map<string, number>();
-
     const chapters = sortedVolumes.flatMap((volume) => volume.chapters);
+    const missingCounts = missingBelow(chapters, sortBy);
     return new Map(
-      chapters.map((chapter, index) => {
-        const below = chapters[descending ? index + 1 : index - 1];
-        return [chapter.id, countMissing(chapter.chapter, below?.chapter)];
-      }),
+      chapters.map((chapter, index) => [chapter.id, missingCounts[index]!]),
     );
-  }, [sortedVolumes, sortBy.field, descending]);
+  }, [sortedVolumes, sortBy]);
 
   // Progress counts chapters in reading order, whatever the list shows.
   const readingOrder = useMemo(

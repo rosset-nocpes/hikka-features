@@ -1,19 +1,14 @@
 import { type FC, Fragment, useEffect } from 'react';
-import MaterialSymbolsPersonalizedRecommendations from '~icons/material-symbols/personalized-recommendations';
 
 import ContentCard, {
   ContentCardSkeleton,
 } from '@/components/hikka/content-card';
-import EmptyState from '@/components/ui/empty-state';
 import { RECOMMENDATIONS_TAB } from '@/hooks/use-recommendation';
-import {
-  COVERED_STYLE,
-  coverSiteContent,
-  isRecommendationsPagePath,
-} from '@/utils/hikka-router';
+import { isRecommendationsPagePath } from '@/utils/hikka-router';
 
-import { BaseFeature, createFeatureUi } from '../core/base-feature';
+import { OwnPageFeature } from '../core/base-feature';
 import { HikkaPages } from '../core/core.enums';
+import { NoRecommendations } from './recommendation-block.feature';
 
 /** On `<html>` while the page replaces the authors tab it is shown over. */
 const PAGE_ATTRIBUTE = 'data-hikka-features-recommendations';
@@ -24,13 +19,11 @@ const AUTHORS_ROW = `${PAGE} [data-slot="drawer-content"] a[data-active="true"][
 
 /**
  * hikka.io shows a title's authors under its recommendations (see
- * `ownPageRoute`): their list is hidden (`coverSiteContent`), and "Автори",
- * which the site marks as the current tab under the header and in the
- * mobile drawer of sections, looks like the other tabs (hikka.io's idle tab
- * and row).
+ * `ownPageRoute`): "Автори", which the site marks as the current tab under
+ * the header and in the mobile drawer of sections, looks like the other
+ * tabs (hikka.io's idle tab and row).
  */
 const PAGE_STYLE = `
-  ${COVERED_STYLE}
   ${AUTHORS_TAB} {
     border-color: transparent;
     background-color: color-mix(in oklab, var(--secondary) 40%, transparent);
@@ -96,35 +89,19 @@ function useTabName(name: string) {
  * that Hikka has, at `/<type>/<slug>/recommendations`: the page that the block's title
  * and a tab of the title's open, laid out like its authors' tab.
  */
-export default class RecommendationPageFeature extends BaseFeature {
+export default class RecommendationPageFeature extends OwnPageFeature {
   readonly id = 'recommendation-page';
   readonly pages = [HikkaPages.RecommendationsPage];
 
-  async init() {
-    const { ctx } = usePageStore.getState();
-    const style = document.createElement('style');
-    style.textContent = PAGE_STYLE;
-    document.head.append(style);
-    ctx.onInvalidated(() => style.remove());
-    // The authors' route is under the page.
-    this.followNavigation();
-
-    let uncover = () => {};
-    this.ui = await createFeatureUi({
-      name: this.id,
+  init() {
+    return this.createPage({
+      attribute: PAGE_ATTRIBUTE,
+      style: PAGE_STYLE,
       position: 'inline',
       append: 'first',
       // The tab's content, after the header and tabs (`content-subpage.tsx`);
       // the floating bar at the bottom has an `isolate` box as well.
       anchor: 'main > div > section[data-slot="block-surface"] ~ div.isolate',
-      onMount: (_container, _wrapper, host) => {
-        document.documentElement.setAttribute(PAGE_ATTRIBUTE, '');
-        uncover = coverSiteContent(host, isRecommendationsPagePath);
-      },
-      onRemove: () => {
-        document.documentElement.removeAttribute(PAGE_ATTRIBUTE);
-        uncover();
-      },
       render: (container) => <RecommendationPage container={container} />,
     });
   }
@@ -150,16 +127,7 @@ const RecommendationPage: FC<{ container: HTMLElement }> = ({ container }) => {
     );
   }
 
-  if (!data?.list.length) {
-    return (
-      <EmptyState
-        bordered
-        icon={<MaterialSymbolsPersonalizedRecommendations />}
-        title="Рекомендацій не знайдено"
-        description="Рікка засмучена через відсутність рекомендацій"
-      />
-    );
-  }
+  if (!data?.list.length) return <NoRecommendations />;
 
   return (
     <div className="flex flex-col gap-8">

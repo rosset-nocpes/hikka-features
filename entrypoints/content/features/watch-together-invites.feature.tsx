@@ -92,10 +92,7 @@ const InviteToasts = () => {
           >
             <MenuLabel>Запрошення до спільного перегляду</MenuLabel>
             <div className="flex items-center gap-2 px-2 py-1.5">
-              <MemberAvatar
-                member={invite.friend}
-                className="-mx-0.5 data-[size=sm]:size-5"
-              />
+              <MemberAvatar member={invite.friend} />
               <span className="grid min-w-0 flex-1 leading-tight">
                 <span className="truncate">{memberName(invite.friend)}</span>
                 <RoomSubtitle

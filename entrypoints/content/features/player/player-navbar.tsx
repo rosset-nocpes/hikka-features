@@ -10,7 +10,7 @@ import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { useHikkaContent } from '@/hooks/use-hikka';
 
-import { usePlayer } from './context/player-context';
+import { compactMode, usePlayer } from './context/player-context';
 import PlayerMobilePanel from './mobile/player-mobile-panel';
 import { useStackedLayout } from './mobile/use-stacked-layout';
 import { closePlayer } from './player';
@@ -28,14 +28,8 @@ interface Props {
 }
 
 const PlayerNavbar: FC<Props> = ({ onDragStart }) => {
-  const {
-    container,
-    slug,
-    currentEpisode,
-    miniPlayer,
-    videoPiPActive,
-    toggleMiniPlayer,
-  } = usePlayer();
+  const { container, slug, currentEpisode, toggleMiniPlayer } = usePlayer();
+  const isCompactMode = usePlayer(compactMode);
   const page = usePageStore();
   // Once the queue moves on to another anime, the chip names it.
   const otherAnime =
@@ -48,7 +42,6 @@ const PlayerNavbar: FC<Props> = ({ onDragStart }) => {
   const isMobile = useIsMobile();
   const stacked = useStackedLayout();
 
-  const isCompactMode = miniPlayer || videoPiPActive;
   // Phones on their side or in fullscreen have no room for the panel.
   const panelInDrawer = isMobile && !stacked && !isCompactMode;
 

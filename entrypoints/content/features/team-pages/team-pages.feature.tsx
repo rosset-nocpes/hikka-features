@@ -1,12 +1,6 @@
-import {
-  COVERED_STYLE,
-  coverSiteContent,
-  isTeamPagePath,
-  navigateOnHikka,
-  TEAM_PAGE_PATH,
-} from '@/utils/hikka-router';
+import { navigateOnHikka, TEAM_PAGE_PATH } from '@/utils/hikka-router';
 
-import { BaseFeature, createFeatureUi } from '../../core/base-feature';
+import { OwnPageFeature } from '../../core/base-feature';
 import { HikkaPages } from '../../core/core.enums';
 import { ContainerContext } from './parts';
 import TeamList from './team-list';
@@ -16,12 +10,11 @@ import TeamPage from './team-page';
 const PAGE_ATTRIBUTE = 'data-hikka-features-page';
 
 /**
- * The page hikka.io's router shows under team pages (its home page, see
- * `entrypoints/hikka-router.ts`) stays mounted but hidden
- * (`coverSiteContent`), and the mobile tab bar doesn't light "Головна" for it.
+ * hikka.io's router shows its home page under team pages (see
+ * `entrypoints/hikka-router.ts`); the mobile tab bar doesn't light
+ * "Головна" for it.
  */
 const PAGE_STYLE = `
-  ${COVERED_STYLE}
   html[${PAGE_ATTRIBUTE}] nav.fixed a[href="/"][data-active="true"] > span {
     background-color: transparent !important;
     color: inherit !important;
@@ -54,35 +47,19 @@ const goHome = (event: MouseEvent) => {
  * The extension's own pages: the list of teams (`/teams`) and each team's
  * page (`/teams/<slug>`), in the content area of hikka.io's layout.
  */
-export default class TeamPagesFeature extends BaseFeature {
+export default class TeamPagesFeature extends OwnPageFeature {
   readonly id = 'team-pages';
   readonly pages = [HikkaPages.TeamPages];
 
-  async init() {
-    const { ctx } = usePageStore.getState();
-    const style = document.createElement('style');
-    style.textContent = PAGE_STYLE;
-    document.head.append(style);
-    ctx.onInvalidated(() => style.remove());
-    // Home is the route under team pages.
-    this.followNavigation();
-
-    let uncover = () => {};
-    this.ui = await createFeatureUi({
-      name: this.id,
+  init() {
+    return this.createPage({
+      attribute: PAGE_ATTRIBUTE,
+      style: PAGE_STYLE,
       position: 'inline',
       append: 'first',
       anchor: 'main',
-      onMount: (_container, _wrapper, host) => {
-        document.documentElement.setAttribute(PAGE_ATTRIBUTE, '');
-        document.addEventListener('click', goHome, true);
-        uncover = coverSiteContent(host, isTeamPagePath);
-      },
-      onRemove: () => {
-        document.documentElement.removeAttribute(PAGE_ATTRIBUTE);
-        document.removeEventListener('click', goHome, true);
-        uncover();
-      },
+      onMount: () => document.addEventListener('click', goHome, true),
+      onRemove: () => document.removeEventListener('click', goHome, true),
       render: (container) => (
         <ContainerContext value={container}>
           <TeamPages />

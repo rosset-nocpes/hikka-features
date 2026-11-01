@@ -14,7 +14,7 @@ export interface FieldIssue {
   fix?: (text: string) => string;
 }
 
-export interface CheckedField {
+interface CheckedField {
   group: FieldGroup;
   language: FieldLanguage;
   kind: FieldKind;

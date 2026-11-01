@@ -22,11 +22,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-import {
-  preferredSource,
-  progressOf,
-  providerOrder,
-} from '../context/player-context';
+import { preferredSource, progressOf, providerOrder } from '../context/sources';
 import { getEpisodeTitle, revealRow } from '../sidebar/episode-list';
 import {
   getEpisodeRanges,

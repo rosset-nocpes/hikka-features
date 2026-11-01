@@ -38,16 +38,29 @@ export default class RecommendationBlockFeature extends BaseFeature {
   }
 }
 
+/** For a title no site recommends anything with that Hikka has. */
+export const NoRecommendations: FC<{ className?: string }> = ({
+  className,
+}) => (
+  <EmptyState
+    bordered
+    icon={<MaterialSymbolsPersonalizedRecommendations />}
+    title="Рекомендацій не знайдено"
+    description="Рікка засмучена через відсутність рекомендацій"
+    className={className}
+  />
+);
+
 const RecommendationBlock: FC<{ container: HTMLElement }> = ({ container }) => {
   const { enabled } = useSettings().features.recommendationBlock;
 
   const { contentType, slug } = usePageStore();
-  const { data: content_data } = useHikka();
+  const { data: content } = useHikka();
   const { data, isLoading } = useRecommendation();
 
   return (
     <AnimatePresence>
-      {enabled && content_data && (
+      {enabled && content && (
         <motion.div
           {...reveal('height', { marginTop: '2rem' })}
           className="flex min-w-0 flex-col gap-5"
@@ -68,13 +81,7 @@ const RecommendationBlock: FC<{ container: HTMLElement }> = ({ container }) => {
                 <ContentCardSkeleton key={index} />
               ))}
             {!isLoading && !data?.list.length && (
-              <EmptyState
-                bordered
-                icon={<MaterialSymbolsPersonalizedRecommendations />}
-                title="Рекомендацій не знайдено"
-                description="Рікка засмучена через відсутність рекомендацій"
-                className="col-span-5"
-              />
+              <NoRecommendations className="col-span-5" />
             )}
             {data?.list.slice(0, SHOWN).map((item) => (
               <ContentCard

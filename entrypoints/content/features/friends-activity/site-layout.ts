@@ -1,3 +1,8 @@
+import { useSettings } from '@/hooks/use-settings';
+
+/** Where the user put the block: its column and the widgets around it. */
+export const placement = () => useSettings.getState().features.friendsActivity;
+
 /** What the block is called on the page, in the layout dialog and as a tab. */
 export const BLOCK_TITLE = 'Активність друзів';
 
@@ -101,7 +106,7 @@ export function icon(name: keyof typeof ICONS, className: string) {
 }
 
 /** The extension's mark in the text colour, so either theme works. */
-export const LOGO_PATHS: [d: string, fill: string][] = [
+const LOGO_PATHS: [d: string, fill: string][] = [
   [
     'M4.7144 4.38911L2 7.11024L4.91029 9.99967L2 13.0013L4.74239 15.6663L7.65267 12.7769L10.535 15.6663L13.2774 12.9452L10.3391 10.0558L13.3333 7.11024L10.535 4.33301L7.65267 7.3066L4.7144 4.38911Z',
     '#BF4147',

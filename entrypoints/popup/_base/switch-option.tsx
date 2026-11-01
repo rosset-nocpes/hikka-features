@@ -3,6 +3,8 @@ import type { FC } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 
+import RowDescription from './row-description';
+
 interface Props {
   label: string;
   beta?: boolean;
@@ -35,11 +37,7 @@ const SwitchOption: FC<Props> = ({
           </Badge>
         )}
       </span>
-      {description && (
-        <p className="text-xs font-medium text-pretty text-[#A1A1A1]">
-          {description}
-        </p>
-      )}
+      {description && <RowDescription>{description}</RowDescription>}
     </div>
     <Switch
       checked={checked}

@@ -1,6 +1,6 @@
-import { type ReactNode, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { AnchoredUisFeature, renderApp } from '../../core/base-feature';
+import { AnchoredUisFeature, type SiteTarget } from '../../core/base-feature';
 import { HikkaPages } from '../../core/core.enums';
 import { MenuFeed, hideNativeElement } from './menu-feed';
 import { useReleaseNotifications } from './use-release-notifications';
@@ -17,15 +17,7 @@ interface NativeCount {
   saturated: boolean;
 }
 
-/** A piece of UI and the element of Hikka's it is appended to. */
-interface Target {
-  /** The anchor, or undefined while it is not on the page. */
-  find: () => HTMLElement | undefined;
-  render: (anchor: HTMLElement) => ReactNode;
-  append?: ContentScriptAppendMode;
-}
-
-const TARGETS: Target[] = [
+const TARGETS: SiteTarget[] = [
   {
     find: () => findBell('desktop'),
     render: (anchor) => <BellCount container={anchor} placement="desktop" />,
@@ -62,22 +54,7 @@ export default class ReleaseNotificationsFeature extends AnchoredUisFeature {
   readonly pages = [HikkaPages.All];
 
   async init() {
-    const { ctx } = usePageStore.getState();
-    this.uis = TARGETS.map((target) => {
-      const ui = createIntegratedUi(ctx, {
-        tag: this.id,
-        position: 'inline',
-        anchor: target.find,
-        append: target.append,
-        onMount(wrapper) {
-          // Lays the UI out as if it were the anchor's own children.
-          wrapper.style.display = 'contents';
-          return renderApp(wrapper, target.render(wrapper.parentElement!));
-        },
-        onRemove: (root) => root?.unmount(),
-      });
-      return { present: () => !!target.find(), ui, element: () => ui.wrapper };
-    });
+    this.integrate(TARGETS);
   }
 }
 

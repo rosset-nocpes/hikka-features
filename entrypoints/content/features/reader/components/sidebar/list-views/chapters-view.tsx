@@ -1,7 +1,7 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { type FC, type RefObject, useLayoutEffect, useMemo } from 'react';
 
-import MissingDivider, { countMissing } from '@/components/missing-divider';
+import MissingDivider from '@/components/missing-divider';
 import {
   SidebarGroup,
   SidebarMenu,
@@ -11,14 +11,10 @@ import { hikkaTracker } from '@/utils/hikka-tracker';
 
 import type { Chapter } from '../../../reader.types';
 
-import { sortChapters } from '../../../chapters';
+import { missingBelow, sortChapters } from '../../../chapters';
 import useReadData from '../../../hooks/use-read-data';
 import { useReader } from '../../../hooks/use-reader';
-import {
-  ReaderContentMode,
-  ReaderOrderBy,
-  ReaderSortBy,
-} from '../../../reader.enums';
+import { ReaderContentMode, ReaderOrderBy } from '../../../reader.enums';
 import ChapterRow from './chapter-row';
 
 type Row = { id: string; chapter: Chapter } | { id: string; missing: number };
@@ -29,26 +25,22 @@ interface Props {
 
 const ChaptersView: FC<Props> = ({ scrollRef }) => {
   const { data } = useReadData();
-  const { container, settings, currentChapter } = useReader();
+  const { settings, currentChapter } = useReader();
   const { sortBy, translator } = settings;
   const chapters =
     data?.displayMode === ReaderContentMode.Chapters
       ? data.chapters
       : undefined;
 
-  // Gaps only mean something when sorted by number. Each one sits between a
-  // chapter and its lower neighbour: above it ascending, below it descending.
+  // A gap's divider sits between a chapter and its lower neighbour.
   const rows = useMemo(() => {
     const sorted = sortChapters(chapters ?? [], sortBy, translator);
+    const missingCounts = missingBelow(sorted, sortBy);
     const descending = sortBy.order !== ReaderOrderBy.Ascending;
 
     return sorted.flatMap((chapter, index): Row[] => {
       const row = { id: chapter.id, chapter };
-      const below = sorted[descending ? index + 1 : index - 1];
-      const missing =
-        sortBy.field === ReaderSortBy.Chapter
-          ? countMissing(chapter.chapter, below?.chapter)
-          : 0;
+      const missing = missingCounts[index]!;
       if (!missing) return [row];
 
       const divider = { id: `missing-${chapter.id}`, missing };
@@ -73,7 +65,7 @@ const ChaptersView: FC<Props> = ({ scrollRef }) => {
         behavior: 'auto',
       });
     }
-  }, [container, currentChapter, rowVirtualizer, rows]);
+  }, [currentChapter, rowVirtualizer, rows]);
 
   if (!chapters) return;
   const progress = hikkaTracker.progress;

@@ -132,11 +132,6 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
 
-  --animate-collapsible-down: collapsible-down 200ms ease-out;
-  --animate-collapsible-up: collapsible-up 200ms ease-out;
-  --animate-content-show: content-show 0.1s ease-out;
-  --animate-content-hide: content-hide 0.1s ease-out;
-
   --font-inter: Inter, sans-serif;
   --font-nunitosans: Nunito Sans Variable, sans-serif;
   --font-roboto: Roboto Variable, sans-serif;
@@ -144,43 +139,6 @@
   --font-ebgaramond: EB Garamond Variable, serif;
   --font-sans: Geist Variable, system-ui, sans-serif;
   --font-mono: ui-monospace, monospace;
-
-  @keyframes collapsible-down {
-    from {
-      height: 0;
-    }
-    to {
-      height: var(--radix-collapsible-content-height);
-    }
-  }
-  @keyframes collapsible-up {
-    from {
-      height: var(--radix-collapsible-content-height);
-    }
-    to {
-      height: 0;
-    }
-  }
-  @keyframes content-show {
-    from {
-      opacity: 0;
-      transform: scale(0.96);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-  @keyframes content-hide {
-    from {
-      opacity: 1;
-      transform: scale(1);
-    }
-    to {
-      opacity: 0;
-      transform: scale(0.96);
-    }
-  }
 }
 
 /*
@@ -343,23 +301,6 @@
     }
   }
 
-  .vertical-slide-fade-enter-active {
-    transition: all 0.3s ease;
-  }
-  .vertical-slide-fade-exit-active {
-    transition: all 0.1s cubic-bezier(1, 0.5, 0.8, 1);
-  }
-
-  .vertical-slide-fade-exit {
-    transform: translateY(10px);
-    opacity: 0;
-  }
-
-  .vertical-slide-fade-enter {
-    transform: translateY(-10px);
-    opacity: 0;
-  }
-
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
@@ -508,20 +449,10 @@
   .grid-min-6 {
     --grid-min: 6rem;
   }
-
-  [data-media-player][data-view-type='video'][data-started]:not(
-      [data-controls]
-    ) {
-    pointer-events: auto;
-    cursor: none;
-  }
 }
 
 @layer base {
   * {
     @apply border-border;
   }
-  /* body {
-    @apply bg-background text-foreground;
-  } */
 }

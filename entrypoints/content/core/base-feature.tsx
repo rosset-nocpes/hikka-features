@@ -3,7 +3,11 @@ import type { ReactNode } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { createRoot, type Root } from 'react-dom/client';
 
-import { onHikkaNavigation } from '@/utils/hikka-router';
+import {
+  COVERED_STYLE,
+  coverSiteContent,
+  onHikkaNavigation,
+} from '@/utils/hikka-router';
 import { hikkaTheme } from '@/utils/hikka-theme';
 
 import { HIKKA_PAGE_CHECKERS } from './core.constant';
@@ -11,7 +15,7 @@ import { HikkaPages } from './core.enums';
 import { queryClient } from './query-client';
 
 /** Renders `node` with what every content script UI needs. */
-export function renderApp(element: HTMLElement, node: ReactNode) {
+function renderApp(element: HTMLElement, node: ReactNode) {
   const root = createRoot(element);
   root.render(
     <QueryClientProvider client={queryClient}>{node}</QueryClientProvider>,
@@ -23,7 +27,7 @@ type DistributiveOmit<T, K extends PropertyKey> = T extends unknown
   ? Omit<T, K>
   : never;
 
-export type FeatureUiOptions = DistributiveOmit<
+type FeatureUiOptions = DistributiveOmit<
   ShadowRootContentScriptUiOptions<Root>,
   'onMount' | 'onRemove'
 > & {
@@ -111,9 +115,13 @@ export abstract class BaseFeature {
   abstract readonly pages: HikkaPages[];
   protected ui: ShadowRootContentScriptUi<Root> | null = null;
 
+  /** Whether `path` is one of the feature's pages. */
+  protected matches(path: string) {
+    return this.pages.some((page) => HIKKA_PAGE_CHECKERS[page](path));
+  }
+
   get shouldMount(): boolean {
-    const path = location.pathname;
-    return this.pages.some((page) => HIKKA_PAGE_CHECKERS[page]?.(path));
+    return this.matches(location.pathname);
   }
 
   /** Creates the UI; the manager mounts it once the page fits. */
@@ -132,24 +140,66 @@ export abstract class BaseFeature {
   unmount() {
     if (this.isMounted) this.ui?.remove();
   }
+}
+
+type OwnPageOptions = DistributiveOmit<FeatureUiOptions, 'name'> & {
+  /** Set on `<html>` while the page is open, for `style` to key on. */
+  attribute: string;
+  /** Rules for the site's route under the page, besides hiding its content. */
+  style: string;
+};
+
+/**
+ * One of the extension's pages, shown over a route of hikka.io's (see
+ * `ownPageRoute`) in the site's layout. The route's content stays mounted
+ * but hidden (`coverSiteContent`) while the page is open.
+ */
+export abstract class OwnPageFeature extends BaseFeature {
+  protected async createPage({
+    attribute,
+    style,
+    onMount,
+    onRemove,
+    ...options
+  }: OwnPageOptions) {
+    const { ctx } = usePageStore.getState();
+    const element = document.createElement('style');
+    element.textContent = COVERED_STYLE + style;
+    document.head.append(element);
+    ctx.onInvalidated(() => element.remove());
+    ctx.onInvalidated(onHikkaNavigation(this.followNavigation));
+
+    let uncover = () => {};
+    this.ui = await createFeatureUi({
+      ...options,
+      name: this.id,
+      onMount: (container, wrapper, host) => {
+        document.documentElement.setAttribute(attribute, '');
+        uncover = coverSiteContent(host, (path) => this.matches(path));
+        onMount?.(container, wrapper, host);
+      },
+      onRemove: () => {
+        document.documentElement.removeAttribute(attribute);
+        uncover();
+        onRemove?.();
+      },
+    });
+  }
 
   /**
-   * Mounts or unmounts on each of the site's navigations as well. The
-   * extension's pages need it: going between one and the route it is shown
-   * over changes nothing in the DOM, which is all the manager watches.
+   * Mounts or unmounts on each of the site's navigations as well: going
+   * between the page and the route it is shown over changes nothing in the
+   * DOM, which is all the manager watches.
    */
-  protected followNavigation() {
-    const stop = onHikkaNavigation(() => {
-      if (this.shouldMount === this.isMounted) return;
-      try {
-        if (this.shouldMount) this.mount();
-        else this.unmount();
-      } catch {
-        // Its anchor isn't on the page yet; the manager mounts it once it is.
-      }
-    });
-    usePageStore.getState().ctx.onInvalidated(stop);
-  }
+  private followNavigation = () => {
+    if (this.shouldMount === this.isMounted) return;
+    try {
+      if (this.shouldMount) this.mount();
+      else this.unmount();
+    } catch {
+      // Its anchor isn't on the page yet; the manager mounts it once it is.
+    }
+  };
 }
 
 interface AnchoredUi {
@@ -158,6 +208,15 @@ interface AnchoredUi {
   ui: ContentScriptUi<Root>;
   /** The element the UI puts on the page. */
   element: () => Element;
+}
+
+/** A UI rendered right into an element of hikka.io's, for its styles. */
+export interface SiteTarget {
+  /** The anchor, or undefined while it is not on the page. */
+  find: () => HTMLElement | undefined;
+  /** Gets the element the UI is in: the anchor, or its parent beside it. */
+  render: (parent: HTMLElement) => ReactNode;
+  append?: ContentScriptAppendMode;
 }
 
 /**
@@ -188,5 +247,24 @@ export abstract class AnchoredUisFeature extends BaseFeature {
     for (const { ui } of this.uis) {
       if (ui.mounted) ui.remove();
     }
+  }
+
+  /** Follows `targets` with UIs laid out as their anchors' own children. */
+  protected integrate(targets: SiteTarget[]) {
+    const { ctx } = usePageStore.getState();
+    this.uis = targets.map(({ find, render, append }) => {
+      const ui = createIntegratedUi(ctx, {
+        tag: this.id,
+        position: 'inline',
+        anchor: find,
+        append,
+        onMount(wrapper) {
+          wrapper.style.display = 'contents';
+          return renderApp(wrapper, render(wrapper.parentElement!));
+        },
+        onRemove: (root) => root?.unmount(),
+      });
+      return { present: () => !!find(), ui, element: () => ui.wrapper };
+    });
   }
 }

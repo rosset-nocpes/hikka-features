@@ -10,22 +10,12 @@ export const TRANSLATION_LABELS: Record<TranslationType, string> = {
   unknown: 'Реліз',
 };
 
-export const RELEASE_STATUS_LABELS: Record<ReleaseStatus, string> = {
+const RELEASE_STATUS_LABELS: Record<ReleaseStatus, string> = {
   announced: 'Анонс',
   ongoing: 'Виходить',
   finished: 'Завершено',
   paused: 'Призупинено',
   dropped: 'Закинуто',
-};
-
-/** hikka.io's names for its media types. */
-export const MEDIA_TYPE_LABELS: Record<string, string> = {
-  tv: 'TV Серіал',
-  movie: 'Фільм',
-  ona: 'ONA',
-  ova: 'OVA',
-  special: 'Спешл',
-  music: 'Музика',
 };
 
 /**

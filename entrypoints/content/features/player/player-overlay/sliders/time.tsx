@@ -1,7 +1,7 @@
 import { Slider as SliderPrimitive } from '@base-ui/react/slider';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { usePlayer } from '../../context/player-context';
+import { compactMode, usePlayer } from '../../context/player-context';
 import { formatTime } from '../time-group';
 
 const useSeeking = (duration: number, seek: (t: number) => void) => {
@@ -132,9 +132,8 @@ interface TimeProps {
 const Time = ({ className, trackClassName }: TimeProps = {}) => {
   const { currentTime, duration, seek, bufferedTime, checkBuffering } =
     useIFramePlayer();
-  const { overlay, miniPlayer, videoPiPActive } = usePlayer();
-
-  const isCompact = miniPlayer || videoPiPActive;
+  const overlay = usePlayer((state) => state.overlay);
+  const isCompact = usePlayer(compactMode);
 
   const step = duration > 0 ? (1 / duration) * 100 : 1;
   const [value, setValue] = useState(0);

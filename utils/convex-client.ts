@@ -7,14 +7,14 @@ import {
 import { ConvexError } from 'convex/values';
 
 import {
-  COMPATIBILITY_STORAGE_KEY,
+  compatibilityState,
+  currentCompatibility,
   EXTENSION_API_PROTOCOL,
-  type ExtensionCompatibilityState,
 } from '@/utils/compatibility';
 import { convexApi } from '@/utils/convex-api';
 import { sendToBackground } from '@/utils/messaging';
 
-export const CONVEX_URL = import.meta.env.WXT_CONVEX_URL ?? '';
+const CONVEX_URL = import.meta.env.WXT_CONVEX_URL ?? '';
 export const CONVEX_SITE_URL = import.meta.env.WXT_CONVEX_SITE_URL ?? '';
 
 const requireConvexUrl = () => {
@@ -24,8 +24,6 @@ const requireConvexUrl = () => {
 
 /** How soon a failed call may ask about compatibility again. */
 const RECHECK_INTERVAL = 60_000;
-let lastRecheck = 0;
-let rechecking: Promise<void> | undefined;
 
 /**
  * The backend over HTTP. Public calls go straight to it; account calls go
@@ -34,6 +32,8 @@ let rechecking: Promise<void> | undefined;
  */
 class Convex {
   private publicClient?: ConvexHttpClient;
+  private lastRecheck = 0;
+  private rechecking?: Promise<void>;
 
   /** A client of its own, e.g. for one account call's token. */
   createClient() {
@@ -47,12 +47,10 @@ class Convex {
       convexApi.compatibility.get,
       { extensionVersion, protocol: EXTENSION_API_PROTOCOL },
     );
-    await browser.storage.local.set({
-      [COMPATIBILITY_STORAGE_KEY]: {
-        ...compatibility,
-        extensionVersion,
-        checkedAt: Date.now(),
-      } satisfies ExtensionCompatibilityState,
+    await compatibilityState.set({
+      ...compatibility,
+      extensionVersion,
+      checkedAt: Date.now(),
     });
   }
 
@@ -64,15 +62,15 @@ class Convex {
    */
   async explainFailure(error: unknown): Promise<never> {
     if (!(error instanceof ConvexError)) {
-      if (Date.now() - lastRecheck > RECHECK_INTERVAL) {
-        lastRecheck = Date.now();
-        rechecking ??= this.refreshCompatibility()
+      if (Date.now() - this.lastRecheck > RECHECK_INTERVAL) {
+        this.lastRecheck = Date.now();
+        this.rechecking ??= this.refreshCompatibility()
           .catch(console.error)
           .finally(() => {
-            rechecking = undefined;
+            this.rechecking = undefined;
           });
       }
-      await rechecking;
+      await this.rechecking;
       await this.assertCompatible();
     }
     throw error;
@@ -80,14 +78,7 @@ class Convex {
 
   /** Stops API calls once the backend reports this build as unsupported. */
   async assertCompatible() {
-    const stored = await browser.storage.local.get(COMPATIBILITY_STORAGE_KEY);
-    const state = stored[COMPATIBILITY_STORAGE_KEY] as
-      | ExtensionCompatibilityState
-      | undefined;
-    if (
-      state?.extensionVersion === browser.runtime.getManifest().version &&
-      state.status === 'unsupported'
-    ) {
+    if ((await currentCompatibility())?.status === 'unsupported') {
       throw new Error('EXTENSION_UPDATE_REQUIRED');
     }
   }

@@ -1,3 +1,17 @@
+import type { ConvexWatchResult } from './convex-api';
+
+type ProviderLanguage = ConvexWatchResult['providers'][number]['language'];
+
+/** Language groups of the provider menus, in the order they list them. */
+export const LANGUAGE_GROUP_NAMES: Record<ProviderLanguage, string> = {
+  uk: 'Українськомовні',
+  en: 'Англомовні',
+  multi: 'Багатомовні',
+};
+export const ALL_LANGUAGES = Object.keys(
+  LANGUAGE_GROUP_NAMES,
+) as ProviderLanguage[];
+
 type TeamEntry = Omit<API.TeamData, 'title'> & {
   episodes: API.EpisodeData[];
 };
@@ -16,7 +30,7 @@ export class ProviderTeamIFrame {
   readonly type = 'team-iframe';
   teams: Record<string, TeamEntry> = {};
 
-  constructor(readonly lang = ProviderLanguage.UKRAINIAN) {}
+  constructor(readonly lang: ProviderLanguage) {}
 
   sortTeams() {
     this.teams = Object.fromEntries(
@@ -41,5 +55,5 @@ export class ProviderIFrame {
   readonly type = 'iframe';
   episodes: API.EpisodeData[] = [];
 
-  constructor(readonly lang = ProviderLanguage.UKRAINIAN) {}
+  constructor(readonly lang: ProviderLanguage) {}
 }

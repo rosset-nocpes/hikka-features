@@ -21,7 +21,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { queryClient } from '../../core/query-client';
 
 /** hikka.io's editing rules, which its own new edit page opens the same way. */
-export const RULES_URL = 'https://github.com/hikka-io/rules/blob/main/RULES.md';
+const RULES_URL = 'https://github.com/hikka-io/rules/blob/main/RULES.md';
 const RULES_SOURCE =
   'https://raw.githubusercontent.com/hikka-io/rules/main/RULES.md';
 

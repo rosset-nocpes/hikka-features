@@ -1,18 +1,8 @@
 import * as cheerio from 'cheerio';
 import DOMPurify from 'dompurify';
 
-const SUPER_TO_NUM: Record<string, string> = {
-  '¹': '1',
-  '²': '2',
-  '³': '3',
-  '⁴': '4',
-  '⁵': '5',
-  '⁶': '6',
-  '⁷': '7',
-  '⁸': '8',
-  '⁹': '9',
-  '⁰': '0',
-};
+/** Superscript digits, each at its value. */
+const SUPERSCRIPT_DIGITS = '⁰¹²³⁴⁵⁶⁷⁸⁹';
 
 const escapeHtml = (value: string, attribute = false) => {
   const escaped = value
@@ -22,15 +12,8 @@ const escapeHtml = (value: string, attribute = false) => {
   return attribute ? escaped.replaceAll('"', '&quot;') : escaped;
 };
 
-const parseSuperscriptToIndex = (superscripts: string): number => {
-  return parseInt(
-    superscripts
-      .split('')
-      .map((s) => SUPER_TO_NUM[s] || '')
-      .join(''),
-    10,
-  );
-};
+const superscriptNumber = (superscripts: string) =>
+  Number([...superscripts].map((d) => SUPERSCRIPT_DIGITS.indexOf(d)).join(''));
 
 export const parseNovelPage = (html: string) => {
   const sanitizedHtml = DOMPurify.sanitize(html, {
@@ -55,25 +38,17 @@ export const parseNovelPage = (html: string) => {
   });
 
   if (explanationHeader.length > 0) {
-    let currentAutoIndex = 1;
+    // Unnumbered definitions follow on from the one before.
+    let nextIndex = 1;
     explanationHeader.nextAll().each((_, el) => {
       const $el = $(el);
       const text = $el.text().trim();
       if (!text) return;
 
-      const numberMatch = text.match(/^(\d+)[.)]\s*(.*)/);
-      let definitionText = text;
-      let index = currentAutoIndex;
-
-      if (numberMatch) {
-        index = parseInt(numberMatch[1]!, 10);
-        definitionText = numberMatch[2]!;
-        currentAutoIndex = index + 1;
-      } else {
-        currentAutoIndex++;
-      }
-
-      definitionsMap.set(index, definitionText.trim());
+      const [, number, definition] = text.match(/^(\d+)[.)]\s*(.*)/) ?? [];
+      const index = number ? parseInt(number, 10) : nextIndex;
+      nextIndex = index + 1;
+      definitionsMap.set(index, (definition ?? text).trim());
 
       if ($el.find('img').length === 0) {
         $el.remove();
@@ -98,15 +73,11 @@ export const parseNovelPage = (html: string) => {
       if (this.type !== 'text') return;
       // Text nodes hold decoded text; it goes back into the page as HTML.
       const text = escapeHtml($(this).text());
-      superscriptRegex.lastIndex = 0;
-      if (!superscriptRegex.test(text)) return;
-
-      superscriptRegex.lastIndex = 0;
       const html = text.replace(
         superscriptRegex,
         (match, term: string, punctuation: string, superscripts: string) => {
           const definition = definitionsMap.get(
-            parseSuperscriptToIndex(superscripts),
+            superscriptNumber(superscripts),
           );
           if (!definition) return match;
 
@@ -114,7 +85,7 @@ export const parseNovelPage = (html: string) => {
           return `<span class="hover-card-trigger" data-definition="${escapeHtml(definition, true)}" data-term="${termWithPunctuation.replaceAll('"', '&quot;')}">${termWithPunctuation}${superscripts}</span>`;
         },
       );
-      $(this).replaceWith(html);
+      if (html !== text) $(this).replaceWith(html);
     });
 
   return $('body').contents().toArray();

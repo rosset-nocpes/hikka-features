@@ -1,5 +1,7 @@
 import MaterialSymbolsChevronRightRounded from '~icons/material-symbols/chevron-right-rounded';
 
+import RowDescription from './row-description';
+
 interface Props {
   label: string;
   description?: string;
@@ -15,11 +17,7 @@ const NavigationRow = ({ label, description, onClick }: Props) => {
     >
       <div className="mr-10 flex flex-col gap-1">
         <span className="text-sm font-medium">{label}</span>
-        {description && (
-          <span className="text-xs font-medium text-pretty text-[#A1A1A1]">
-            {description}
-          </span>
-        )}
+        {description && <RowDescription>{description}</RowDescription>}
       </div>
       <MaterialSymbolsChevronRightRounded className="text-muted-foreground size-5 shrink-0 transition-transform group-hover/row:translate-x-0.5" />
     </button>

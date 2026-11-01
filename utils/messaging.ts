@@ -11,7 +11,7 @@ export interface RemoteFetchResponse {
  * The messages the background answers: each takes its payload and returns
  * the reply. The background owns the session and the cross-origin fetches.
  */
-export interface BackgroundMessages {
+interface BackgroundMessages {
   /** Opens the hikka.io login tab; `awaitLogin` waits for it to end. */
   login(): void;
   logout(): void;
@@ -39,7 +39,7 @@ export interface BackgroundMessages {
   'hikka-content-status'(): boolean;
 }
 
-export type BackgroundMessageType = keyof BackgroundMessages;
+type BackgroundMessageType = keyof BackgroundMessages;
 
 type Payload<T extends BackgroundMessageType> = Parameters<
   BackgroundMessages[T]
@@ -51,7 +51,7 @@ export type BackgroundMessage<
   [K in T]: { type: K } & (Payload<K> extends [infer P] ? P : unknown);
 }[T];
 
-export type BackgroundReply<T extends BackgroundMessageType> = ReturnType<
+type BackgroundReply<T extends BackgroundMessageType> = ReturnType<
   BackgroundMessages[T]
 >;
 
