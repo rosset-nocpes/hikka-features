@@ -20,10 +20,11 @@ const getEditorParams = () => {
   return { slug, type: contentType ? hikkaApiPath(contentType) : undefined };
 };
 
-const useEditorContent = () => {
+const useEditorContent = (enabled = true) => {
   const { slug, type } = getEditorParams();
 
   return useQuery({
+    enabled,
     queryKey: ['editor-content', slug],
     queryFn: async () => {
       if (!slug || (type !== 'characters' && type !== 'people')) {
@@ -32,8 +33,8 @@ const useEditorContent = () => {
       return await convex.action(convexApi.editor.suggest, { type, slug });
     },
     retry: false,
-    staleTime: 0,
-    gcTime: 0,
+    // The name field and the edit toolbar ask for the same suggestion.
+    staleTime: 5 * 60_000,
   });
 };
 

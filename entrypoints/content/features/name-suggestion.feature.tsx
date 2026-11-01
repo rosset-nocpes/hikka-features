@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Kbd } from '@/components/ui/kbd';
+import { fillInput } from '@/utils/edit-form';
 
 import { AnchoredUisFeature, createFeatureUi } from '../core/base-feature';
 import { HikkaPages } from '../core/core.enums';
@@ -53,11 +54,6 @@ const getNameSuggestionInput = (target: NameSuggestionTarget) =>
   document.querySelector<HTMLInputElement>(
     `input[placeholder*="${target.placeholder}"]`,
   );
-
-const fillInput = (input: HTMLInputElement, value: string) => {
-  input.value = value;
-  input.dispatchEvent(new InputEvent('input', { bubbles: true }));
-};
 
 const NameSuggestionButton = ({ target }: { target: NameSuggestionTarget }) => {
   const { data } = useEditorContent();

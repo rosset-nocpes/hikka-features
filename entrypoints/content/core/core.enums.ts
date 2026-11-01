@@ -22,4 +22,6 @@ export enum HikkaPages {
   EditCreate = 'edit-create',
   EditCreateCharacter = 'edit-create-character',
   EditCreatePerson = 'edit-create-person',
+  /** A new edit, an edit, or an edit being changed: the pages with its form. */
+  EditForm = 'edit-form',
 }

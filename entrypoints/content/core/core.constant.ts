@@ -5,6 +5,9 @@ import {
 
 import { HikkaPages } from './core.enums';
 
+/** `/edit/new`, `/edit/<id>` and `/edit/<id>/update`. */
+export const EDIT_FORM_PATH = /^\/edit\/(?:new|(\d+)(\/update)?)\/?$/;
+
 export const HIKKA_PAGE_CHECKERS: Record<
   HikkaPages,
   (path: string) => boolean
@@ -31,4 +34,5 @@ export const HIKKA_PAGE_CHECKERS: Record<
   [HikkaPages.EditCreatePerson]: (p) =>
     p.startsWith('/edit/new') &&
     new URLSearchParams(location.search).get('content_type') === 'person',
+  [HikkaPages.EditForm]: (p) => EDIT_FORM_PATH.test(p),
 };

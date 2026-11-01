@@ -143,6 +143,12 @@ function HomePage() {
               description="Показує переклад імені українською при редагуванні персонажа"
               beta
             />
+            <FeatureSwitch
+              feature="editorToolbar"
+              label="Панель редактора"
+              description="Перевірка правки за правилами, підпис джерела й перехід між правками на розгляді"
+              beta
+            />
           </SettingsGroup>
         </motion.div>
       </motion.div>

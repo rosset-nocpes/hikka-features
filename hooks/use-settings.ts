@@ -80,6 +80,10 @@ interface AppState {
     editorCharacters: {
       enabled: boolean;
     };
+    /** The floating bar of tools on hikka.io's edit pages. */
+    editorToolbar: {
+      enabled: boolean;
+    };
     devOptions: {
       enabled: boolean;
       devTools: boolean;
@@ -135,6 +139,9 @@ export const useSettings = create<AppState>()(
           before: 'list' as string | null,
         },
         editorCharacters: {
+          enabled: true,
+        },
+        editorToolbar: {
           enabled: true,
         },
         devOptions: {
