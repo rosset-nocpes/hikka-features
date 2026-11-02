@@ -75,23 +75,24 @@ const RecommendationBlock: FC<{ container: HTMLElement }> = ({ container }) => {
             disabled={isLoading || !data?.list.length}
             icon={<HFLogo />}
           />
-          <div className="no-scrollbar md:gradient-mask-none auto-cols-scroll grid-cols-scroll grid-min-6 relative -mx-4 -my-4 grid grid-flow-col gap-4 overflow-x-scroll p-4 sm:grid-cols-4 md:grid-cols-5 lg:gap-6">
-            {isLoading &&
-              Array.from({ length: SHOWN }).map((_, index) => (
-                <ContentCardSkeleton key={index} />
+          {!isLoading && !data?.list.length ? (
+            <NoRecommendations />
+          ) : (
+            <div className="no-scrollbar md:gradient-mask-none auto-cols-scroll grid-cols-scroll grid-min-6 relative -mx-4 -my-4 grid grid-flow-col gap-4 overflow-x-scroll p-4 sm:grid-cols-4 md:grid-cols-5 lg:gap-6">
+              {isLoading &&
+                Array.from({ length: SHOWN }).map((_, index) => (
+                  <ContentCardSkeleton key={index} />
+                ))}
+              {data?.list.slice(0, SHOWN).map((item) => (
+                <ContentCard
+                  key={item.slug}
+                  item={item}
+                  container={container}
+                  newTab
+                />
               ))}
-            {!isLoading && !data?.list.length && (
-              <NoRecommendations className="col-span-5" />
-            )}
-            {data?.list.slice(0, SHOWN).map((item) => (
-              <ContentCard
-                key={item.slug}
-                item={item}
-                container={container}
-                newTab
-              />
-            ))}
-          </div>
+            </div>
+          )}
         </motion.div>
       )}
     </AnimatePresence>
