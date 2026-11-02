@@ -15,12 +15,12 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
+import { useActivitySharing } from '@/hooks/use-activity-sharing';
 import { useHikkaContent } from '@/hooks/use-hikka';
 import { useLiveQuery } from '@/hooks/use-live-query';
 import { useSettings } from '@/hooks/use-settings';
 import { account } from '@/utils/account';
 import { convexApi } from '@/utils/convex-api';
-import { liveConvex } from '@/utils/convex-client';
 import { useHikkaViewer } from '@/utils/hikka-viewer';
 
 import { memberName } from '../player/watch-together/menu';
@@ -216,19 +216,7 @@ const SkeletonRow = () => (
 /** The user's own sharing, in the card's footer as the site's tracker has. */
 const SharingFooter = () => {
   const id = useId();
-  const sharing = useLiveQuery(convexApi.activity.settings, {})?.data
-    ?.shareActivity;
-  const [pending, setPending] = useState<boolean>();
-  const shown = pending ?? sharing ?? false;
-
-  const toggle = (shareActivity: boolean) => {
-    setPending(shareActivity);
-    // Resolves once the live query shows it.
-    void liveConvex
-      .mutation(convexApi.activity.setSharing, { shareActivity })
-      .catch(console.error)
-      .finally(() => setPending(undefined));
-  };
+  const { shared, pending, setShared } = useActivitySharing();
 
   return (
     <div className="text-muted-foreground -mx-4 -mb-4 flex items-center gap-2 rounded-b-lg border-t px-4 py-3">
@@ -238,9 +226,9 @@ const SharingFooter = () => {
       </Label>
       <Switch
         id={id}
-        checked={shown}
-        disabled={sharing === undefined || pending !== undefined}
-        onCheckedChange={toggle}
+        checked={shared ?? false}
+        disabled={shared === undefined || pending}
+        onCheckedChange={setShared}
       />
     </div>
   );

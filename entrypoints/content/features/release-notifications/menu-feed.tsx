@@ -60,7 +60,7 @@ const TYPE_ICON = {
  * whenever Hikka changes the list (a page loaded, a day label added).
  */
 export function MenuFeed({ list }: { list: HTMLElement }) {
-  const { data, enabled, refetch, markSeen } = useReleaseNotifications();
+  const { data, markSeen } = useReleaseNotifications();
   // The menu mounts this as it opens; Hikka's dates and days date from then too.
   const [now] = useState(Date.now);
   const feed = useHikkaFeed(list, now);
@@ -70,11 +70,6 @@ export function MenuFeed({ list }: { list: HTMLElement }) {
   );
   const slots = useRunSlots(list, runs);
   const shown = runs.length > 0;
-
-  // Mounted as the menu opens, which is when fresh data matters most.
-  useEffect(() => {
-    if (enabled) void refetch();
-  }, [enabled, refetch]);
 
   useEffect(() => {
     if (feed.empty && shown) return hideNativeElement(feed.empty);

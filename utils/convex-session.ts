@@ -47,9 +47,6 @@ const ACCOUNT_FUNCTIONS = new Set(
     convexApi.favorites.list,
     convexApi.favorites.set,
     convexApi.favorites.remove,
-    convexApi.notifications.menu,
-    convexApi.notifications.markSeen,
-    convexApi.notifications.markAllSeen,
     convexApi.teamPriority.get,
     convexApi.teamPriority.set,
     convexApi.activity.report,
@@ -57,7 +54,6 @@ const ACCOUNT_FUNCTIONS = new Set(
     convexApi.activity.reportReading,
     convexApi.activity.clearReading,
     convexApi.activity.settings,
-    convexApi.activity.setSharing,
   ].map((reference) => getFunctionName(reference)),
 );
 
