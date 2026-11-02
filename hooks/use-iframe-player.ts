@@ -2,6 +2,11 @@ import { create } from 'zustand';
 
 import { usePlayer } from '@/entrypoints/content/features/player/context/player-context';
 import {
+  requestSkipSegments,
+  type SkipSegment,
+  skipSegmentsOf,
+} from '@/integrations/iframe-player/moon';
+import {
   type IFramePlayerEvent,
   isIFramePlayerEvent,
   sendIFramePlayerCommand,
@@ -27,6 +32,8 @@ interface IFramePlayerState {
   /** Prevents auto-hiding the overlay UI (e.g. while a menu is open) */
   uiLocked: boolean;
   endedCount: number;
+  /** The openings, endings and recaps the player marks, if it does. */
+  skipSegments: SkipSegment[];
 }
 
 interface IFramePlayerActions {
@@ -112,6 +119,7 @@ const initialPlayback: Omit<IFramePlayerState, 'speedOptions'> = {
   uiShown: true,
   uiLocked: false,
   endedCount: 0,
+  skipSegments: [],
 };
 
 export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
@@ -184,14 +192,14 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
   }),
 );
 
-const getCurrentPlayerIFrameWindow = () => {
+const getCurrentPlayerIFrame = () => {
   const selector = 'iframe#player-iframe';
-  const iframe =
+  return (
     usePlayer
       .getState()
       .container?.querySelector<HTMLIFrameElement>(selector) ??
-    document.querySelector<HTMLIFrameElement>(selector);
-  return iframe?.contentWindow;
+    document.querySelector<HTMLIFrameElement>(selector)
+  );
 };
 
 const set = useIFramePlayer.setState;
@@ -212,8 +220,11 @@ const subtitles = ({ data, answer }: IFramePlayerEvent) => {
 
 /** How the store follows each event the episode's player reports. */
 const PLAYER_EVENTS: Record<string, (event: IFramePlayerEvent) => void> = {
-  inited: () => set({ isReady: true }),
+  // Each episode's player says so once, so the last one's segments go.
+  inited: () => set({ isReady: true, skipSegments: [] }),
   start: () => {
+    const iframe = getCurrentPlayerIFrame();
+    if (iframe) requestSkipSegments(iframe);
     sendIFramePlayerCommand({ action: 'get-quality' });
     sendIFramePlayerCommand({ action: 'get-qualities' });
     sendIFramePlayerCommand({ action: 'get-subtitles' });
@@ -273,9 +284,15 @@ const PLAYER_EVENTS: Record<string, (event: IFramePlayerEvent) => void> = {
 };
 
 window.addEventListener('message', (event: MessageEvent) => {
-  if (!isIFramePlayerEvent(event.data)) return;
-  const iframeWindow = getCurrentPlayerIFrameWindow();
+  const skipSegments = skipSegmentsOf(event.data);
+  if (!skipSegments && !isIFramePlayerEvent(event.data)) return;
+  const iframeWindow = getCurrentPlayerIFrame()?.contentWindow;
   if (!iframeWindow || event.source !== iframeWindow) return;
+  if (skipSegments) {
+    set({ skipSegments });
+    return;
+  }
+  if (!isIFramePlayerEvent(event.data)) return;
   if (event.data.event !== 'inited' && !useIFramePlayer.getState().isReady) {
     return;
   }

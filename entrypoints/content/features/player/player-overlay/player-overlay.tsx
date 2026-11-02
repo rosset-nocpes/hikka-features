@@ -11,6 +11,7 @@ import PlayerSidebar from '../sidebar/player-sidebar';
 import ActionPopup from './action-popup';
 import BufferingIndicator from './buffering-indicator';
 import Gestures from './gestures';
+import SkipSegment from './skip-segment';
 import Time from './sliders/time';
 import VideoToolbar from './video-toolbar';
 
@@ -62,6 +63,7 @@ const PlayerOverlay = () => {
         <ActionPopup />
         <BufferingIndicator />
         <UpNext corner={!isCompactMode && !stacked} />
+        <SkipSegment />
         <div
           data-player-controls
           onPointerDownCapture={handlePointerDownCapture}

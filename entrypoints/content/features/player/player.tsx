@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import { useIFramePlayer } from '@/hooks/use-iframe-player';
 import { watchDataQuery } from '@/hooks/use-watch-data';
+import { playerSrc } from '@/integrations/iframe-player/moon';
 
 import { ModalUi } from '../../core/base-feature';
 import { queryClient } from '../../core/query-client';
@@ -247,7 +248,7 @@ const Player = () => {
         <iframe
           id="player-iframe"
           key={`${currentEpisode?.episode}:${currentEpisode?.video_url}`}
-          src={currentEpisode?.video_url}
+          src={playerSrc(currentEpisode?.video_url)}
           loading="lazy"
           className="size-full"
           allow="fullscreen; accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"

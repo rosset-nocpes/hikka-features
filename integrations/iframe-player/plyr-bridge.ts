@@ -91,7 +91,8 @@ export class PlyrBridge extends IFramePlayerBridge {
     .ma-player-wrap > :not(.plyr):not(video),
     body > .ma-promo,
     .plyr__controls,
-    .plyr__control--overlaid {
+    .plyr__control--overlaid,
+    .ma-skip-btn {
       display: none !important;
     }
   `;
