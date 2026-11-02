@@ -54,6 +54,7 @@ const toWatchData = (data: ConvexWatchResult): API.WatchData => {
         episodes: toEpisodes(episodes),
       };
     }
+    if (Object.keys(value.teams).length === 0) continue;
     value.sortTeams();
     out[provider.id] = value;
   }

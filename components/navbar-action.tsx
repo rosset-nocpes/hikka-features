@@ -11,7 +11,7 @@ import { reveal } from '@/utils/motion';
 interface Props {
   enabled: boolean;
   /** The query looking for something to open. */
-  status: { isLoading: boolean; isError: boolean; found: boolean };
+  status: { isLoading: boolean; found: boolean };
   label: string;
   icon: ReactNode;
   onClick: () => void;
@@ -19,10 +19,8 @@ interface Props {
   children?: ReactNode;
 }
 
-const statusText = (
-  { isLoading, isError, found }: Props['status'],
-  label: string,
-) => (isLoading ? 'Шукаю' : isError ? 'Немає' : found ? label : '');
+const statusText = ({ isLoading, found }: Props['status'], label: string) =>
+  isLoading ? 'Шукаю' : found ? label : 'Немає';
 
 /** A button the extension adds to a title's navbar, e.g. to open the player. */
 const NavbarAction: FC<Props> = ({
@@ -45,7 +43,7 @@ const NavbarAction: FC<Props> = ({
           // Phones' navbar only fits the icon; the label still names it.
           aria-label={statusText(status, label) || undefined}
           className="gap-2 max-sm:px-2.5"
-          disabled={status.isLoading || status.isError}
+          disabled={!status.found}
           onClick={onClick}
         >
           <SwapIcon

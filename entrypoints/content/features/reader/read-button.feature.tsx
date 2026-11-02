@@ -25,12 +25,12 @@ export default class ReadButtonFeature extends BaseFeature {
 
 const ReadButton = () => {
   const { enabled } = useSettings().features.reader;
-  const { data, isLoading, isError } = useReadData();
+  const { data, isLoading } = useReadData();
 
   return (
     <NavbarAction
       enabled={enabled}
-      status={{ isLoading, isError, found: !!data }}
+      status={{ isLoading, found: !!data }}
       label="Читати"
       icon={<MaterialSymbolsMenuBookOutlineRounded className="size-full" />}
       onClick={openReader}
