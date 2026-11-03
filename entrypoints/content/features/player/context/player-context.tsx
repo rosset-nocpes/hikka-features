@@ -108,9 +108,6 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
   const handleFullscreenChange = () => {
     if (document.fullscreenElement) return;
     set({ fullscreen: false });
-    get()
-      .container?.querySelector('#player-frame')
-      ?.classList.remove('fullscreen');
     document.removeEventListener('fullscreenchange', handleFullscreenChange);
   };
 
@@ -254,11 +251,8 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
     dismissRoomInvite: () =>
       set({ roomInvite: undefined, roomInviteAccepted: undefined }),
     toggleFullscreen: () => {
-      const wrapper = get().container?.querySelector('#player-frame');
-
       if (get().fullscreen) {
         set({ fullscreen: false });
-        wrapper?.classList.remove('fullscreen');
         document.exitFullscreen();
         document.removeEventListener(
           'fullscreenchange',
@@ -266,7 +260,6 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
         );
       } else {
         set({ fullscreen: true, miniPlayer: false });
-        wrapper?.classList.add('fullscreen');
         document.documentElement.requestFullscreen();
         document.addEventListener('fullscreenchange', handleFullscreenChange);
       }

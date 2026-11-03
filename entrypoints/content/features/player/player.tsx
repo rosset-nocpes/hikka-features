@@ -180,6 +180,7 @@ const PlayerFrame = () => {
       id="player-frame"
       className={cn(
         'relative flex size-full items-center justify-center md:p-8',
+        fullscreen && 'md:p-0',
         // Without the blur, menus turn solid so their text stays readable.
         disableBlur &&
           '**:[.player-menu]:bg-background **:[.player-glass]:backdrop-filter-none **:[[class*=backdrop-blur]]:backdrop-blur-none',

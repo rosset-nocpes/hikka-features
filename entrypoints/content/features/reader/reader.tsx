@@ -18,8 +18,9 @@ import { ReaderType } from './reader.enums';
 const readerUi = new ModalUi({
   name: 'reader-ui',
   onMount(container, wrapper) {
+    // No padding round the card in fullscreen.
     wrapper.className =
-      'size-full md:backdrop-blur-xs bg-black/60 flex items-center justify-center md:p-8 duration-300';
+      'size-full md:backdrop-blur-xs bg-black/60 flex items-center justify-center md:p-8 md:has-data-fullscreen:p-0 duration-300';
     container.classList.add('h-full');
     Fonts.injectAllFonts();
     readingReporter.start();
@@ -75,6 +76,7 @@ const Reader = () => {
   return (
     <Card
       data-reader-card
+      data-fullscreen={settings.fullscreen || undefined}
       className={cn(
         'relative z-10 flex size-full overflow-hidden rounded-none border-none duration-300 md:max-w-[1282px] md:rounded-lg md:border',
         settings.fullscreen && 'max-w-full! rounded-none! border-none!',

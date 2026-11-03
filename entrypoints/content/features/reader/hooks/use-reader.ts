@@ -126,14 +126,10 @@ export const useReader = create<ReaderState & ReaderActions>((set, get) => {
       })),
     toggleFullscreen: async () => {
       try {
-        const wrapper = get().container?.querySelector('div');
-
         if (!document.fullscreenElement) {
           await document.documentElement.requestFullscreen();
-          wrapper?.classList.add('fullscreen');
         } else {
           await document.exitFullscreen();
-          wrapper?.classList.remove('fullscreen');
         }
       } catch (err) {
         console.error(`Fullscreen error: ${err}`);

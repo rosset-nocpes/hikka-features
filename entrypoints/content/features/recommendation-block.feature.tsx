@@ -78,7 +78,7 @@ const RecommendationBlock: FC<{ container: HTMLElement }> = ({ container }) => {
           {!isLoading && !data?.list.length ? (
             <NoRecommendations />
           ) : (
-            <div className="no-scrollbar md:gradient-mask-none auto-cols-scroll grid-cols-scroll grid-min-6 relative -mx-4 -my-4 grid grid-flow-col gap-4 overflow-x-scroll p-4 sm:grid-cols-4 md:grid-cols-5 lg:gap-6">
+            <div className="no-scrollbar md:gradient-mask-none auto-cols-scroll grid-cols-scroll relative -mx-4 -my-4 grid grid-flow-col gap-4 overflow-x-scroll p-4 [--grid-min:6rem] sm:grid-cols-4 md:grid-cols-5 lg:gap-6">
               {isLoading &&
                 Array.from({ length: SHOWN }).map((_, index) => (
                   <ContentCardSkeleton key={index} />

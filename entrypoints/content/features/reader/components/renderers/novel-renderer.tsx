@@ -67,7 +67,7 @@ const NovelRenderer = () => {
 
       <div
         className={cn(
-          'bg-background text-foreground flex w-full flex-1 justify-center overflow-y-auto px-5 **:font-[inherit] md:px-3',
+          'bg-background text-foreground flex w-full flex-1 justify-center overflow-y-auto px-5 md:px-3',
           novel?.fontFamily,
           novel?.theme,
         )}

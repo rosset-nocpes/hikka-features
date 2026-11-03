@@ -6,17 +6,6 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-@utility container {
-  margin-inline: auto;
-  padding-inline: 2rem;
-  @media (width >= --theme(--breakpoint-sm)) {
-    max-width: none;
-  }
-  @media (width >= 1400px) {
-    max-width: 1400px;
-  }
-}
-
 /* Mirrors hikka's card surface; --surface and --shadow-card inherit from the page */
 @utility surface {
   background-color: var(--surface, hsl(var(--card)));
@@ -88,6 +77,24 @@
   }
 }
 
+/* An inner edge that darkens or lightens whatever is under it. */
+@utility border-overlay {
+  outline: 1px solid rgba(0, 0, 0, 0.1);
+  outline-offset: -1px;
+
+  @variant dark {
+    outline-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @theme inline {
   --grid-auto-columns-scroll: minmax(
     var(--grid-min, 7rem),
@@ -123,9 +130,6 @@
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
 
-  --color-error: var(--error);
-  --color-error-foreground: var(--error-foreground);
-
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
 
@@ -155,31 +159,12 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
 
-  --font-inter: Inter, sans-serif;
   --font-nunitosans: Nunito Sans Variable, sans-serif;
   --font-roboto: Roboto Variable, sans-serif;
   --font-literata: Literata Variable, serif;
   --font-ebgaramond: EB Garamond Variable, serif;
   --font-sans: Geist Variable, system-ui, sans-serif;
   --font-mono: ui-monospace, monospace;
-}
-
-/*
-  The default border color has changed to `currentcolor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
-@layer base {
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
-  }
 }
 
 @layer base {
@@ -291,77 +276,8 @@
     --sidebar-border: oklch(0.2741 0.0055 286.03);
     --sidebar-ring: oklch(0.6232 0.1879 259.8);
   }
-}
 
-@layer base {
-  * {
-    @apply border-border;
-    @apply font-sans;
-    font-feature-settings:
-      'rlig' 1,
-      'calt' 1;
-  }
-
-  button:not(:disabled),
-  [role='button']:not(:disabled) {
-    cursor: pointer;
-  }
-
-  h3 {
-    @apply scroll-m-20 font-sans text-lg font-bold tracking-normal;
-  }
-
-  h4,
-  h5 {
-    @apply scroll-m-20 font-sans text-base font-bold tracking-normal;
-  }
-}
-
-@layer utilities {
-  @media (max-width: 640px) {
-    .container {
-      @apply px-4;
-    }
-  }
-
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-
-  .no-scrollbar {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
-  }
-
-  /* Popups' enter and exit keyframes (tailwindcss-animate) keep only the fade. */
-  @media (prefers-reduced-motion: reduce) {
-    *,
-    ::before,
-    ::after {
-      --tw-enter-scale: 1 !important;
-      --tw-enter-rotate: 0 !important;
-      --tw-enter-translate-x: 0 !important;
-      --tw-enter-translate-y: 0 !important;
-      --tw-exit-scale: 1 !important;
-      --tw-exit-rotate: 0 !important;
-      --tw-exit-translate-x: 0 !important;
-      --tw-exit-translate-y: 0 !important;
-    }
-  }
-
-  .border-overlay {
-    outline: 1px solid rgba(0, 0, 0, 0.1);
-    outline-offset: -1px;
-  }
-
-  .dark .border-overlay {
-    outline-color: rgba(255, 255, 255, 0.1);
-  }
-
-  .fullscreen {
-    padding: 0 !important;
-  }
-
+  /* The reader's novel themes; light is the default above. */
   .novel-theme-sepia {
     --background: oklch(0.9316 0.0187 74.82);
     --foreground: oklch(0.2477 0.0024 247.92);
@@ -419,7 +335,6 @@
 
   .novel-theme-dark {
     --background: oklch(0.1871 0.0081 274.46);
-    /*--foreground: 230 3% 64%;*/
     --foreground: oklch(0.9848 0 0);
     --card: oklch(0.2096 0.0082 274.52);
     --card-foreground: oklch(0.7108 0.0067 277.13);
@@ -468,14 +383,56 @@
     --input: oklch(0.2758 0.0075 264.44);
     --ring: oklch(0.6889 0.163 263.89);
   }
-
-  .grid-min-6 {
-    --grid-min: 6rem;
-  }
 }
 
 @layer base {
-  * {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
     @apply border-border;
+  }
+
+  /*
+   * On the root only, so a font set on an element (the reader's) reaches its
+   * children. In a shadow root, WXT's <html> is the root.
+   */
+  html,
+  :host {
+    @apply font-sans;
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
+  }
+
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+
+  h3 {
+    @apply scroll-m-20 text-lg font-bold tracking-normal;
+  }
+
+  h4,
+  h5 {
+    @apply scroll-m-20 text-base font-bold tracking-normal;
+  }
+
+  /* Popups' enter and exit keyframes (tailwindcss-animate) keep only the fade. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      --tw-enter-scale: 1 !important;
+      --tw-enter-rotate: 0 !important;
+      --tw-enter-translate-x: 0 !important;
+      --tw-enter-translate-y: 0 !important;
+      --tw-exit-scale: 1 !important;
+      --tw-exit-rotate: 0 !important;
+      --tw-exit-translate-x: 0 !important;
+      --tw-exit-translate-y: 0 !important;
+    }
   }
 }
