@@ -216,7 +216,7 @@ const Player = () => {
         // theatre mode's size and the corners use CSS transitions. Corners
         // grown past the radius take the `min` with it, so they're square,
         // like the rest, when the user's hikka theme squares the corners.
-        'border-overlay relative z-10 box-content flex size-full overflow-hidden rounded-none border-none transition-[max-width,max-height,border-radius] duration-300 motion-reduce:transition-none md:max-h-[720px] md:max-w-[1280px] md:rounded-[min(calc(var(--radius)+8px),var(--radius)*100)] md:border',
+        'border-overlay relative z-10 box-content flex size-full overflow-hidden rounded-none border-none border-transparent transition-[max-width,max-height,border-radius] duration-300 motion-reduce:transition-none md:max-h-[720px] md:max-w-[1280px] md:rounded-[min(calc(var(--radius)+8px),var(--radius)*100)] md:border',
         theatreMode && 'md:max-h-full md:max-w-full',
         fullscreen && 'max-h-full! max-w-full! rounded-none! border-none!',
         // Concentric with the controls inside: their radius, 8px inset and the border.

@@ -46,6 +46,13 @@
   --muted: color-mix(in oklab, var(--player-glass), var(--foreground) 15%);
   --secondary: var(--muted);
   --sidebar-accent: var(--muted);
+  /*
+   * Edges and dividers as the text colour at border-overlay's 10%, not the
+   * page's solid grey, which stands out as a light line over the video.
+   */
+  --border: color-mix(in oklab, var(--foreground) 10%, transparent);
+  --color-border: var(--border);
+  --sidebar-border: var(--border);
 }
 
 /* The player's menus, on its glass: the highlighted row is the glass lit too. */
