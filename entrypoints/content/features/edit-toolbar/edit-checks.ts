@@ -126,6 +126,47 @@ const mixedScripts = ({
   ];
 };
 
+/**
+ * Cyrillic words in a name's English spelling, often the Ukrainian one typed
+ * in the wrong field. Words that mix in Latin are `mixedScripts`' to flag.
+ */
+const cyrillicInEnglishName = ({
+  group,
+  language,
+  text,
+  editable,
+}: CheckedField): FieldIssue[] => {
+  if (group !== 'name' || language !== 'en') return [];
+  const words = [
+    ...new Set(
+      (text.match(WORD) ?? []).filter(
+        (word) => CYRILLIC.test(word) && !LATIN.test(word),
+      ),
+    ),
+  ];
+  if (!words.length) return [];
+
+  // Only lookalike letters: Latin ones the keyboard or a copy swapped.
+  const toLatin = (word: string) =>
+    [...word].every((letter) => TO_LATIN[letter])
+      ? [...word].map((letter) => TO_LATIN[letter]).join('')
+      : undefined;
+  const fixable = editable && words.every((word) => toLatin(word));
+  return [
+    {
+      rule: 'cyrillic-in-english',
+      severity: 'error',
+      message: `Кирилиця в англійському імені: ${quote(words)}`,
+      fix: fixable
+        ? (part) =>
+            part.replace(WORD, (word) =>
+              words.includes(word) ? toLatin(word)! : word,
+            )
+        : undefined,
+    },
+  ];
+};
+
 /** Two or more spaces in a row; a rich text editor keeps typed ones as such. */
 const DOUBLE_SPACES = /[ \u00a0]{2,}/g;
 const BETWEEN_WORDS = /\S[ \t\u00a0]{2,}\S/;
@@ -263,6 +304,7 @@ const emptyComment = ({ group, editable, text }: CheckedField): FieldIssue[] =>
 const CHECKS = [
   russianLetters,
   mixedScripts,
+  cyrillicInEnglishName,
   spaces,
   seasonFormat,
   honorifics,
