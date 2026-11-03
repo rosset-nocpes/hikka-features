@@ -87,7 +87,7 @@ const Share: FC<Props> = ({ anchor }) => {
         />
       </ToolbarTooltip>
       <PopoverContent
-        className="ring-border w-56 gap-0 rounded-lg p-1"
+        className="player-glass player-menu w-56 gap-0 rounded-lg border bg-(--player-glass) p-1 shadow-lg ring-0"
         {...position}
       >
         <div className="text-muted-foreground truncate px-2 py-1.5 text-xs font-medium">

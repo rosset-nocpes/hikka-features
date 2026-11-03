@@ -177,7 +177,7 @@ const Settings: FC<Props> = ({ anchor }) => {
         />
       </ToolbarTooltip>
       <DropdownMenuContent
-        className="ring-border w-56 rounded-lg"
+        className="player-glass player-menu w-56 rounded-lg border bg-(--player-glass) shadow-lg ring-0"
         {...position}
       >
         <SettingsPages />

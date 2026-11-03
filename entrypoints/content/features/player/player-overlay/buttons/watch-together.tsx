@@ -462,7 +462,7 @@ const WatchTogether: FC<Props> = ({
         />
       </ToolbarTooltip>
       <PopoverContent
-        className="ring-border w-56 gap-0 rounded-lg p-1"
+        className="player-glass player-menu w-56 gap-0 rounded-lg border bg-(--player-glass) p-1 shadow-lg ring-0"
         {...position}
       >
         <MenuPages

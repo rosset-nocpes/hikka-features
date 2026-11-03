@@ -48,6 +48,12 @@
   --sidebar-accent: var(--muted);
 }
 
+/* The player's menus, on its glass: the highlighted row is the glass lit too. */
+@utility player-menu {
+  --accent: var(--muted);
+  --accent-foreground: var(--foreground);
+}
+
 /*
  * A ring and soft depth in place of a border; with `border`, its transparent
  * edge is what forced-colors mode draws. A utility, so variants apply.
