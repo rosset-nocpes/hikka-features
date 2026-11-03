@@ -4,6 +4,7 @@ import { BaseFeature, createFeatureUi } from '../../core/base-feature';
 import { HikkaPages } from '../../core/core.enums';
 import ChecksPopover from './checks-popover';
 import { EDIT_FORM } from './edit-fields';
+import IssueMarks from './issue-marks';
 import { NameFillButton, QueueButtons, SourceMenu } from './toolbar-tools';
 import { useEditFields, useEditPage } from './use-edit-page';
 
@@ -17,23 +18,26 @@ const EditToolbar: FC<
   const fields = useEditFields();
 
   return (
-    <div
-      role="toolbar"
-      aria-label="Інструменти редактора"
-      className="surface-glass border-border animate-in fade-in-0 slide-in-from-bottom-2 mt-5 flex items-center gap-2 rounded-lg border px-3 py-2 duration-200 motion-reduce:animate-none"
-    >
-      <ChecksPopover fields={fields} container={container} />
-      {mode !== 'view' && <SourceMenu container={container} />}
-      {mode === 'new' && (
-        <NameFillButton fields={fields} container={container} />
-      )}
-      {mode === 'view' && editId && (
-        <>
-          <div className="bg-border h-6 w-px" />
-          <QueueButtons editId={editId} container={container} />
-        </>
-      )}
-    </div>
+    <>
+      <div
+        role="toolbar"
+        aria-label="Інструменти редактора"
+        className="surface-glass border-border animate-in fade-in-0 slide-in-from-bottom-2 mt-5 flex items-center gap-2 rounded-lg border px-3 py-2 duration-200 motion-reduce:animate-none"
+      >
+        <ChecksPopover fields={fields} container={container} />
+        {mode !== 'view' && <SourceMenu container={container} />}
+        {mode === 'new' && (
+          <NameFillButton fields={fields} container={container} />
+        )}
+        {mode === 'view' && editId && (
+          <>
+            <div className="bg-border h-6 w-px" />
+            <QueueButtons editId={editId} container={container} />
+          </>
+        )}
+      </div>
+      <IssueMarks fields={fields} container={container} />
+    </>
   );
 };
 

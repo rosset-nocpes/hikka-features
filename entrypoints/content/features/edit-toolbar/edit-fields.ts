@@ -55,23 +55,32 @@ const LANGUAGES: Record<string, FieldLanguage> = {
 /** A field's input, rich text editor, or its rendered text when viewed. */
 const CONTROL = 'input[type="text"], [data-slate-editor], .prose';
 
-const isTextInput = (
+export const isTextInput = (
   element: Element,
 ): element is HTMLInputElement | HTMLTextAreaElement =>
   element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement;
 
-/** Rich text as its paragraphs, without the editor's hidden markers. */
-const richText = (control: Element) => {
-  const blocks = [...control.children];
-  return blocks
-    .map((block) =>
-      control.matches('[data-slate-editor]')
-        ? [...block.querySelectorAll('[data-slate-string]')]
-            .map((leaf) => leaf.textContent)
-            .join('')
-        : (block.textContent ?? ''),
-    )
-    .join('\n');
+/**
+ * Rich text as its paragraphs, without the editor's hidden markers, and the
+ * text nodes it's made of, each with where it starts in it.
+ */
+export const richText = (control: Element) => {
+  let text = '';
+  const nodes: { node: Text; start: number }[] = [];
+  [...control.children].forEach((block, index) => {
+    if (index) text += '\n';
+    const parts = control.matches('[data-slate-editor]')
+      ? block.querySelectorAll('[data-slate-string]')
+      : [block];
+    for (const part of parts) {
+      const walker = document.createTreeWalker(part, NodeFilter.SHOW_TEXT);
+      for (let node; (node = walker.nextNode() as Text | null);) {
+        nodes.push({ node, start: text.length });
+        text += node.data;
+      }
+    }
+  });
+  return { text, nodes };
 };
 
 /**
@@ -123,7 +132,7 @@ const fieldOf = (label: Element): EditField | undefined => {
     group,
     language: LANGUAGES[labelText] ?? 'other',
     kind: plain ? 'plain' : 'rich',
-    text: plain ? control.value : richText(control),
+    text: plain ? control.value : richText(control).text,
     editable: plain
       ? !!input
       : control.matches('[data-slate-editor][contenteditable="true"]'),

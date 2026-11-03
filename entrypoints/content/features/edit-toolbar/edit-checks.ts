@@ -12,7 +12,15 @@ export interface FieldIssue {
    * whole of a line's, or each run of a rich text editor's.
    */
   fix?: (text: string) => string;
+  /** Where in the field's text it is, to mark there; none when it's missing text. */
+  ranges?: TextRange[];
 }
+
+/**
+ * A piece of a field's text: where it starts, where the next begins, and
+ * what's wrong with this piece in particular, when the issue's spread out.
+ */
+export type TextRange = [start: number, end: number, note?: string];
 
 interface CheckedField {
   group: FieldGroup;
@@ -29,6 +37,8 @@ const RUSSIAN_LETTERS = /[ыэъёЫЭЪЁ]/gu;
 const WORD = /[\p{Script=Latin}\p{Script=Cyrillic}]+/gu;
 const LATIN = /\p{Script=Latin}/u;
 const CYRILLIC = /\p{Script=Cyrillic}/u;
+const LATIN_RUN = /\p{Script=Latin}+/gu;
+const CYRILLIC_RUN = /\p{Script=Cyrillic}+/gu;
 
 /** Latin letters that look the same as Cyrillic ones, and back. */
 const TO_CYRILLIC: Record<string, string> = {
@@ -58,22 +68,45 @@ const TO_LATIN = Object.fromEntries(
 );
 
 /**
- * The word in the script most of its letters are in, or in the field's
- * language's on a tie; undefined when a letter has no lookalike there.
+ * The script of a mixed word's stray letters: the one fewer of its letters
+ * are in, or on a tie the one that isn't the field's language's.
  */
-const unmixWord = (word: string, language: FieldLanguage) => {
+const strayScript = (word: string, language: FieldLanguage) => {
   const letters = [...word];
   const latin = letters.filter((letter) => LATIN.test(letter)).length;
   const cyrillic = letters.length - latin;
-  const toCyrillic =
-    cyrillic > latin || (cyrillic === latin && language === 'uk');
+  return cyrillic > latin || (cyrillic === latin && language === 'uk')
+    ? 'latin'
+    : 'cyrillic';
+};
+
+/**
+ * The word with its stray letters swapped for their lookalikes; undefined
+ * when one has none.
+ */
+const unmixWord = (word: string, language: FieldLanguage) => {
+  const toCyrillic = strayScript(word, language) === 'latin';
   const map = toCyrillic ? TO_CYRILLIC : TO_LATIN;
-  const minority = toCyrillic ? LATIN : CYRILLIC;
-  const fixed = letters.map((letter) =>
-    minority.test(letter) ? map[letter] : letter,
+  const stray = toCyrillic ? LATIN : CYRILLIC;
+  const fixed = [...word].map((letter) =>
+    stray.test(letter) ? map[letter] : letter,
   );
   return fixed.every(Boolean) ? fixed.join('') : undefined;
 };
+
+/** Where `pattern` matches in `text`, each match `keep` takes. */
+const rangesOf = (
+  text: string,
+  pattern: RegExp,
+  keep: (match: string) => boolean = () => true,
+): TextRange[] =>
+  [
+    ...text.matchAll(
+      pattern.global ? pattern : new RegExp(pattern, `${pattern.flags}g`),
+    ),
+  ]
+    .filter(([match]) => match && keep(match))
+    .map((match) => [match.index, match.index + match[0].length]);
 
 const quote = (values: string[], limit = 3) =>
   values
@@ -90,32 +123,91 @@ const russianLetters = ({ language, text }: CheckedField): FieldIssue[] => {
       rule: 'russian-letters',
       severity: 'error',
       message: `Літери, яких немає в українській: ${quote(letters, 4)}`,
+      ranges: rangesOf(text, RUSSIAN_LETTERS),
     },
   ];
 };
 
+/** A field's words with letters in both scripts. */
+const wordsOf = (text: string, keep: (word: string) => boolean) =>
+  [...text.matchAll(WORD)].filter(([word]) => keep(word));
+
+/** A word's letters in `script`: their runs, and the letters themselves. */
+const lettersIn = (
+  { 0: word, index }: RegExpExecArray,
+  script: 'latin' | 'cyrillic',
+) => {
+  const pattern = script === 'latin' ? LATIN_RUN : CYRILLIC_RUN;
+  const runs = [...word.matchAll(pattern)];
+  return {
+    ranges: runs.map((run): TextRange => [
+      index + run.index,
+      index + run.index + run[0].length,
+    ]),
+    letters: [...new Set(runs.flatMap(([run]) => [...run]))],
+  };
+};
+
+/** E.g. «кирилична «а»»: what's said of a word's letters in the wrong script. */
+const describeLetters = (letters: string[], script: 'latin' | 'cyrillic') => {
+  const many = letters.length > 1;
+  const adjective =
+    script === 'cyrillic'
+      ? many
+        ? 'кириличні'
+        : 'кирилична'
+      : many
+        ? 'латинські'
+        : 'латинська';
+  return `${adjective} ${quote(letters, 4)}`;
+};
+
+/** Descriptions of words, each once, the first few of them. */
+const listWords = (descriptions: string[], limit = 3) => {
+  const unique = [...new Set(descriptions)];
+  return unique.slice(0, limit).join('; ') + (unique.length > limit ? '…' : '');
+};
+
 const mixedScripts = ({
+  group,
   language,
   text,
   editable,
 }: CheckedField): FieldIssue[] => {
-  if (language === 'native') return [];
-  const mixed = [
-    ...new Set(
-      (text.match(WORD) ?? []).filter(
-        (word) => LATIN.test(word) && CYRILLIC.test(word),
-      ),
-    ),
-  ];
-  if (!mixed.length) return [];
+  // An English name takes no Cyrillic at all: `cyrillicInEnglishName`'s.
+  if (language === 'native' || (group === 'name' && language === 'en')) {
+    return [];
+  }
+  const words = wordsOf(
+    text,
+    (word) => LATIN.test(word) && CYRILLIC.test(word),
+  );
+  if (!words.length) return [];
 
+  const title = 'Латиниця й кирилиця в одному слові';
+  const ranges: TextRange[] = [];
+  const descriptions = words.map((match) => {
+    const script = strayScript(match[0], language);
+    const stray = lettersIn(match, script);
+    const description = `${describeLetters(stray.letters, script)} в «${match[0]}»`;
+    ranges.push(
+      ...stray.ranges.map(([start, end]): TextRange => [
+        start,
+        end,
+        `${title}: ${description}`,
+      ]),
+    );
+    return description;
+  });
+  const mixed = words.map(([word]) => word);
   const fixable =
     editable && mixed.every((word) => unmixWord(word, language) !== undefined);
   return [
     {
       rule: 'mixed-scripts',
       severity: 'error',
-      message: `Латиниця й кирилиця в одному слові: ${quote(mixed)}`,
+      message: `${title}: ${listWords(descriptions)}`,
+      ranges,
       fix: fixable
         ? (part) =>
             part.replace(WORD, (word) =>
@@ -127,8 +219,8 @@ const mixedScripts = ({
 };
 
 /**
- * Cyrillic words in a name's English spelling, often the Ukrainian one typed
- * in the wrong field. Words that mix in Latin are `mixedScripts`' to flag.
+ * Cyrillic in a name's English spelling: lookalike letters slipped into a
+ * Latin word, or the Ukrainian name typed in the wrong field.
  */
 const cyrillicInEnglishName = ({
   group,
@@ -137,30 +229,43 @@ const cyrillicInEnglishName = ({
   editable,
 }: CheckedField): FieldIssue[] => {
   if (group !== 'name' || language !== 'en') return [];
-  const words = [
-    ...new Set(
-      (text.match(WORD) ?? []).filter(
-        (word) => CYRILLIC.test(word) && !LATIN.test(word),
-      ),
-    ),
-  ];
+  const words = wordsOf(text, (word) => CYRILLIC.test(word));
   if (!words.length) return [];
 
+  const title = 'Кирилиця в англійському імені';
+  const ranges: TextRange[] = [];
+  const descriptions = words.map((match) => {
+    const word = match[0];
+    const cyrillic = lettersIn(match, 'cyrillic');
+    const description = LATIN.test(word)
+      ? `${describeLetters(cyrillic.letters, 'cyrillic')} в «${word}»`
+      : `усе слово «${word}»`;
+    ranges.push(
+      ...cyrillic.ranges.map(([start, end]): TextRange => [
+        start,
+        end,
+        `${title}: ${description}`,
+      ]),
+    );
+    return description;
+  });
+
   // Only lookalike letters: Latin ones the keyboard or a copy swapped.
-  const toLatin = (word: string) =>
-    [...word].every((letter) => TO_LATIN[letter])
-      ? [...word].map((letter) => TO_LATIN[letter]).join('')
-      : undefined;
-  const fixable = editable && words.every((word) => toLatin(word));
+  const fixable =
+    editable &&
+    [...text.matchAll(CYRILLIC_RUN)].every(([run]) =>
+      [...run].every((letter) => TO_LATIN[letter]),
+    );
   return [
     {
       rule: 'cyrillic-in-english',
       severity: 'error',
-      message: `Кирилиця в англійському імені: ${quote(words)}`,
+      message: `${title}: ${listWords(descriptions)}`,
+      ranges,
       fix: fixable
         ? (part) =>
-            part.replace(WORD, (word) =>
-              words.includes(word) ? toLatin(word)! : word,
+            part.replace(CYRILLIC_RUN, (run) =>
+              [...run].map((letter) => TO_LATIN[letter] ?? letter).join(''),
             )
         : undefined,
     },
@@ -180,6 +285,10 @@ const collapseLines = (text: string) =>
 const collapseLine = (text: string) => text.replace(/\s+/g, ' ').trim();
 const collapseRuns = (text: string) => text.replace(DOUBLE_SPACES, ' ');
 
+/** The spaces `collapseLines` and `collapseLine` take out or change. */
+const EXTRA_LINE_SPACES = /^\s+|\s+$|[ \t]+(?=\n)|[ \t]{2,}|\t/g;
+const EXTRA_SPACES = /^\s+|\s+$|\s{2,}|[^\S ]/g;
+
 const spaces = ({
   group,
   kind,
@@ -196,6 +305,7 @@ const spaces = ({
         severity: 'warning',
         message: 'Подвійні пробіли між словами',
         fix: collapseRuns,
+        ranges: rangesOf(text, DOUBLE_SPACES),
       },
     ];
   }
@@ -209,6 +319,10 @@ const spaces = ({
         ? 'Подвійні пробіли між словами'
         : 'Пробіли на початку чи в кінці',
       fix: editable ? collapse : undefined,
+      ranges: rangesOf(
+        text,
+        group === 'comment' ? EXTRA_LINE_SPACES : EXTRA_SPACES,
+      ),
     },
   ];
 };
@@ -229,22 +343,26 @@ const seasonFormat = ({
   text,
 }: CheckedField): FieldIssue[] => {
   if (group !== 'title' || language !== 'uk') return [];
-  if (SEASON_PATTERNS.some((pattern) => pattern.test(text))) {
+  const season = SEASON_PATTERNS.flatMap((pattern) => rangesOf(text, pattern));
+  if (season.length) {
     return [
       {
         rule: 'season-format',
         severity: 'warning',
         message: 'Сезон і частину пишуть так: «Назва - 2 сезон, 2 частина»',
+        ranges: season,
       },
     ];
   }
   // The first season goes unnumbered unless the title has parts.
-  if (/ - 1 сезон(?!, \d+ частина)/u.test(text)) {
+  const first = rangesOf(text, / - 1 сезон(?!, \d+ частина)/u);
+  if (first.length) {
     return [
       {
         rule: 'first-season',
         severity: 'hint',
         message: 'Перший сезон у назві не вказують',
+        ranges: first,
       },
     ];
   }
@@ -254,18 +372,22 @@ const seasonFormat = ({
 const honorifics = ({ group, language, text }: CheckedField): FieldIssue[] => {
   if (group !== 'name' || language !== 'uk') return [];
   const issues: FieldIssue[] = [];
-  if (/(?<!\p{L})(?:містер|місіс|міс)(?!\p{L})/iu.test(text)) {
+  const titles = rangesOf(text, /(?<!\p{L})(?:містер|місіс|міс)(?!\p{L})/iu);
+  if (titles.length) {
     issues.push({
       rule: 'honorifics',
       severity: 'hint',
       message: '«Містер», «місіс» замінюють на «пан», «пані»',
+      ranges: titles,
     });
   }
-  if (/(?<!\p{L})(?:проф|д-р|св)\./iu.test(text)) {
+  const abbreviations = rangesOf(text, /(?<!\p{L})(?:проф|д-р|св)\./iu);
+  if (abbreviations.length) {
     issues.push({
       rule: 'abbreviations',
       severity: 'hint',
       message: 'Додатки до імені, як-от «професор», не скорочують',
+      ranges: abbreviations,
     });
   }
   return issues;

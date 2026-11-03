@@ -34,6 +34,7 @@ function TooltipContent({
   collisionBoundary,
   collisionPadding,
   positionMethod,
+  anchor,
   children,
   ...props
 }: TooltipPrimitive.Popup.Props &
@@ -47,6 +48,7 @@ function TooltipContent({
     | 'collisionBoundary'
     | 'collisionPadding'
     | 'positionMethod'
+    | 'anchor'
   > &
   Pick<TooltipPrimitive.Portal.Props, 'container'>) {
   return (
@@ -60,6 +62,7 @@ function TooltipContent({
         collisionBoundary={collisionBoundary}
         collisionPadding={collisionPadding}
         positionMethod={resolvePositionMethod(container, positionMethod)}
+        anchor={anchor}
         className="isolate z-50"
       >
         <TooltipPrimitive.Popup
