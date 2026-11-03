@@ -34,6 +34,7 @@ const ToolbarTooltip: FC<Props> = ({ label, shortcut, children, disabled }) => {
         render={children}
       />
       <TooltipContent
+        className="player-tooltip"
         side="top"
         sideOffset={32}
         collisionBoundary={overlay ?? undefined}

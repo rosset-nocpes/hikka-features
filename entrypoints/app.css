@@ -62,6 +62,16 @@
 }
 
 /*
+ * The player's tooltips take its glass colour, solid; they're portaled out
+ * of the glass, so it's set here. The text follows the page, since the
+ * colour is light in light mode.
+ */
+@utility player-tooltip {
+  --tooltip: var(--background);
+  --tooltip-foreground: var(--foreground);
+}
+
+/*
  * A ring and soft depth in place of a border; with `border`, its transparent
  * edge is what forced-colors mode draws. A utility, so variants apply.
  */
