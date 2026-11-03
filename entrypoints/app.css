@@ -33,17 +33,17 @@
 }
 
 /*
- * hikka's glass, for the player's controls over the video. The glass is about
- * as light as the fills on it (hovers, the open menu's button, the chosen
- * row, slider tracks), so there they are the glass lit by the text colour.
+ * hikka's glass, for the player's controls over the video, tinted with the
+ * page background rather than hikka's lifted card: over a picture it stays
+ * dark, not grey, in dark mode. The glass is about as light as the fills on
+ * it (hovers, the open menu's button, the chosen row, slider tracks), so
+ * there they are the glass lit by the text colour.
  */
 @utility player-glass {
   @apply surface-glass;
-  --muted: color-mix(
-    in oklab,
-    var(--surface-glass, var(--card)),
-    var(--foreground) 15%
-  );
+  --player-glass: color-mix(in oklab, var(--background) 80%, transparent);
+  background-color: var(--player-glass);
+  --muted: color-mix(in oklab, var(--player-glass), var(--foreground) 15%);
   --secondary: var(--muted);
   --sidebar-accent: var(--muted);
 }

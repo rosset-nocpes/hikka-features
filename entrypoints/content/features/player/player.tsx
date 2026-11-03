@@ -225,7 +225,7 @@ const Player = () => {
           'aspect-video h-auto w-[min(calc(100vw-1rem),420px)]',
         // The glass's colour as a `bg-` class too, so it replaces the card's.
         layout === 'bar' &&
-          'player-glass h-auto w-[min(calc(100vw-1rem),480px)] bg-(--surface-glass)',
+          'player-glass h-auto w-[min(calc(100vw-1rem),480px)] bg-(--player-glass)',
         // Phones held upright: the video on top, its episode panel below.
         stacked && 'bg-background flex-col',
       )}
