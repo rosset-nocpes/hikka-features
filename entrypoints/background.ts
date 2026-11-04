@@ -42,9 +42,11 @@ export default defineBackground(() => {
     'hikka-content-status': (_, sender) =>
       sender.tab?.id !== undefined && hikkaContentTabs.has(sender.tab.id),
     'convex-auth': (request) => accountSession.run(request),
-    // Only the player on hikka.io keeps a live connection.
+    // Live connections are kept by hikka.io tabs and the popup.
     'convex-token': ({ forceRefresh }, sender) =>
-      fromHikkaPage(sender) ? accountSession.lendToken(forceRefresh) : null,
+      fromHikkaPage(sender) || fromExtensionPage(sender)
+        ? accountSession.lendToken(forceRefresh)
+        : null,
     login: (_, sender) => accountSession.login(sender.tab?.id),
     logout: () => accountSession.logout(),
     'hikka-viewer': ({ viewerId }, sender) => {
@@ -141,6 +143,14 @@ async function ensureCompatibilityAlarm() {
       periodInMinutes: 60,
     });
   }
+}
+
+/** The popup or another page of this extension, not a content script. */
+function fromExtensionPage(sender: Browser.runtime.MessageSender) {
+  return (
+    sender.id === browser.runtime.id &&
+    !!sender.url?.startsWith(browser.runtime.getURL('/'))
+  );
 }
 
 /** Whether the message comes from hikka.io's page, not one of its frames. */

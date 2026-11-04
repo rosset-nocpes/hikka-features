@@ -10,8 +10,8 @@ import { liveConvex } from '@/utils/convex-client';
  * known; `pending` while a change is on its way.
  */
 export function useActivitySharing() {
-  const shared = useLiveQuery(convexApi.activity.settings, {})?.data
-    ?.shareActivity;
+  const settings = useLiveQuery(convexApi.activity.settings, {});
+  const shared = settings?.data?.shareActivity;
   const [pending, setPending] = useState<boolean>();
 
   const setShared = (shareActivity: boolean) => {
@@ -26,6 +26,8 @@ export function useActivitySharing() {
   return {
     shared: pending ?? shared,
     pending: pending !== undefined,
+    /** Why the setting couldn't be loaded; the switch then can't be used. */
+    error: settings?.error,
     setShared,
   };
 }

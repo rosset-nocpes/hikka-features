@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import SwitchOption from './switch-option';
 
 type Features = ReturnType<typeof useSettings.getState>['features'];
@@ -12,6 +14,7 @@ interface Props<F extends keyof Features> {
   option?: BooleanKey<Features[F]>;
   label: string;
   description?: string;
+  icon?: ReactNode;
   beta?: boolean;
 }
 

@@ -9,6 +9,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { account } from '@/utils/account';
 
 import RowDescription from '../_base/row-description';
+import RowLabel from '../_base/row-label';
 
 /** By the error code the login ended with. */
 const AUTH_ERRORS: Record<string, string> = {
@@ -47,7 +48,7 @@ const UserOptions = () => {
   // Errors replace the description, so the row never changes height.
   const description = (text: string) =>
     error ? (
-      <span role="alert" className="text-destructive text-xs font-medium">
+      <span role="alert" className="text-destructive text-xs leading-snug">
         {error}
       </span>
     ) : (
@@ -56,23 +57,21 @@ const UserOptions = () => {
 
   if (convexSession && userData) {
     return (
-      <div className="flex items-center gap-3 px-4 py-3">
-        <Avatar className="rounded-md">
+      <div className="flex min-h-14 items-center gap-3 px-4 py-3">
+        <Avatar className="size-10 rounded-lg">
           <AvatarImage src={userData.avatar} alt="" />
-          <AvatarFallback>
+          <AvatarFallback className="rounded-lg">
             <MaterialSymbolsPersonRounded className="size-5" />
           </AvatarFallback>
         </Avatar>
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <span className="truncate text-sm font-medium">
-            {userData.username}
-          </span>
-          {description('Обрані команди синхронізуються')}
-        </div>
+        <RowLabel
+          label={<span className="truncate">{userData.username}</span>}
+          description={description('Пріоритет команд синхронізується')}
+        />
         <Button
           variant="ghost"
           size="sm"
-          className="text-muted-foreground hover:text-destructive min-w-15"
+          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 min-w-15"
           disabled={Boolean(pending)}
           onClick={() => run('logout')}
         >
@@ -87,19 +86,19 @@ const UserOptions = () => {
       type="button"
       disabled={Boolean(pending)}
       onClick={() => run('login')}
-      className="group/row hover:bg-accent/30 flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left transition-[background-color] disabled:cursor-progress disabled:hover:bg-transparent"
+      className="group/row hover:bg-accent/40 focus-visible:bg-accent/40 flex min-h-14 w-full cursor-pointer items-center gap-3 px-4 py-3 text-left transition-[background-color] outline-none disabled:cursor-progress disabled:hover:bg-transparent"
     >
-      <span className="grid size-10 shrink-0 place-items-center rounded-md bg-black">
-        <img src={HikkaLogo} className="size-8" alt="" />
+      <span className="border-border/70 grid size-10 shrink-0 place-items-center rounded-lg border bg-black">
+        <img src={HikkaLogo} className="size-7" alt="" />
       </span>
-      <span className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className="text-sm font-medium">Увійти через hikka.io</span>
-        {description(
+      <RowLabel
+        label="Увійти через hikka.io"
+        description={description(
           pending === 'login'
             ? 'Завершіть вхід у вкладці hikka.io'
-            : 'Синхронізація обраних команд',
+            : 'Синхронізація команд і активність друзів',
         )}
-      </span>
+      />
       {pending === 'login' ? (
         <Spinner className="text-muted-foreground size-5" />
       ) : (

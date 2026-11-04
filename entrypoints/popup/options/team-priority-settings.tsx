@@ -24,11 +24,15 @@ import {
 import { convex } from '@/utils/convex-client';
 import { looseKey } from '@/utils/utils';
 
-import SelectOption from '../_base/select-option';
+import RowDescription from '../_base/row-description';
+import SegmentedOption from '../_base/segmented-option';
 import SettingsGroup from '../_base/settings-group';
 import SettingsPage from '../_base/settings-page';
 
-const translationOptions: { value: PreferredTranslation; label: string }[] = [
+const translationOptions: readonly {
+  value: PreferredTranslation;
+  label: string;
+}[] = [
   { value: 'dub', label: 'Озвучення' },
   { value: 'sub', label: 'Субтитри' },
 ];
@@ -71,9 +75,9 @@ const PriorityRow: FC<RowProps> = ({
         onDragEnd();
       }}
       className={cn(
-        'border-border/50 relative flex items-center gap-3 border-t py-2 pr-2 pl-2 first:border-t-0',
+        'before:bg-border/70 relative flex items-center gap-2 py-2 pr-2 pl-1 before:absolute before:inset-x-4 before:top-0 before:h-px first:before:hidden',
         dragging &&
-          'bg-background z-10 rounded-md border-transparent shadow-lg',
+          'bg-accent z-10 rounded-lg shadow-lg ring-1 ring-white/10 before:hidden',
       )}
     >
       <button
@@ -90,7 +94,7 @@ const PriorityRow: FC<RowProps> = ({
       >
         <MaterialSymbolsDragIndicator className="size-5" />
       </button>
-      <span className="text-muted-foreground w-3 shrink-0 text-center text-xs tabular-nums">
+      <span className="text-muted-foreground w-4 shrink-0 text-center text-xs font-medium tabular-nums">
         {index + 1}
       </span>
       <TeamAvatar team={team} />
@@ -168,28 +172,26 @@ const TeamPrioritySettings = () => {
 
   return (
     <SettingsPage>
-      <p className="px-1 text-xs font-medium text-pretty text-[#A1A1A1]">
-        Програвач відкриється з першою командою зі списку, яка вже має наступний
-        епізод у вибраному перекладі. Улюблена команда тайтлу має перевагу над
-        списком.{' '}
-        {convexSession
-          ? 'Список синхронізується з акаунтом. Коли одна з цих команд випустить у ньому нову серію тайтлу зі списку «Дивлюсь», на Hikka з’явиться сповіщення.'
-          : 'Увійдіть, щоб синхронізувати список між пристроями й отримувати сповіщення про нові серії тайтлів, які ви дивитеся.'}
-      </p>
-
       <SettingsGroup>
-        <SelectOption
+        <SegmentedOption
           label="Переклад"
           value={translation}
           options={translationOptions}
           onChange={(value) => save({ teamPriorityTranslation: value })}
-          width="w-36"
         />
       </SettingsGroup>
 
       <SettingsGroup
-        title="Порядок"
-        icon={<MaterialSymbolsFormatListNumberedRounded className="size-4" />}
+        title={order.length ? `Порядок · ${order.length}` : 'Порядок'}
+        footer={
+          <>
+            Програвач відкриється з першою командою, яка вже має наступний
+            епізод у вибраному перекладі. Улюблена команда тайтлу має перевагу.{' '}
+            {convexSession
+              ? 'Список синхронізується з акаунтом, а про нові серії тайтлів зі списку «Дивлюсь» від цих команд з’являться сповіщення на Hikka.'
+              : 'Увійдіть, щоб синхронізувати список між пристроями й отримувати сповіщення про нові серії.'}
+          </>
+        }
       >
         {order.length ? (
           <Reorder.Group
@@ -223,18 +225,19 @@ const TeamPrioritySettings = () => {
             ))}
           </Reorder.Group>
         ) : (
-          <p className="px-4 py-3 text-xs font-medium text-[#A1A1A1]">
-            Список порожній. Додайте команди нижче, починаючи з найулюбленішої.
-          </p>
+          <div className="flex flex-col items-center gap-1 px-6 py-5 text-center">
+            <MaterialSymbolsFormatListNumberedRounded className="text-muted-foreground mb-1 size-6" />
+            <span className="text-sm font-medium">Список порожній</span>
+            <RowDescription>
+              Додайте команди нижче, починаючи з найулюбленішої
+            </RowDescription>
+          </div>
         )}
       </SettingsGroup>
 
-      <SettingsGroup
-        title="Додати команду"
-        icon={<MaterialSymbolsAddRounded className="size-4" />}
-      >
-        <div className="p-3">
-          <InputGroup>
+      <SettingsGroup title="Додати команду">
+        <div className="p-2">
+          <InputGroup className="bg-muted/40 border-transparent">
             <InputGroupAddon>
               <MaterialSymbolsSearchRounded />
             </InputGroupAddon>
@@ -243,11 +246,12 @@ const TeamPrioritySettings = () => {
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Пошук команди"
               aria-label="Пошук команди"
+              className="text-sm"
             />
           </InputGroup>
         </div>
         {catalog.isPending ? (
-          <div className="text-muted-foreground flex items-center justify-center gap-2 px-4 py-3 text-xs font-medium">
+          <div className="text-muted-foreground flex items-center justify-center gap-2 px-4 py-4 text-xs font-medium">
             <Spinner />
             Завантаження команд
           </div>
@@ -266,7 +270,8 @@ const TeamPrioritySettings = () => {
               key={team.id}
               type="button"
               onClick={() => save({ teamPriority: [...order, team] })}
-              className="group/row hover:bg-accent/30 flex w-full items-center gap-3 px-4 py-2 text-left transition-[background-color]"
+              aria-label={`Додати «${team.title}»`}
+              className="group/row hover:bg-accent/40 focus-visible:bg-accent/40 flex w-full items-center gap-3 px-4 py-2 text-left transition-[background-color] outline-none"
             >
               <TeamAvatar team={team} />
               <span className="min-w-0 flex-1 truncate text-sm font-medium">
@@ -276,8 +281,8 @@ const TeamPrioritySettings = () => {
             </button>
           ))
         ) : (
-          <p className="px-4 py-3 text-xs font-medium text-[#A1A1A1]">
-            {search ? 'Нічого не знайдено.' : 'Усі команди вже у списку.'}
+          <p className="text-muted-foreground px-4 py-4 text-center text-xs">
+            {search ? 'Нічого не знайдено' : 'Усі команди вже у списку'}
           </p>
         )}
       </SettingsGroup>
