@@ -33,6 +33,7 @@ import {
   ContentsSection,
 } from './contents';
 import { TextExpand, type TypeFilter, TypeFilterButtons } from './parts';
+import ReleaseDays from './release-days';
 
 type Team = TeamPageData['team'];
 type AnimeReleases = TeamPageData['releases'][number];
@@ -105,8 +106,14 @@ const TeamLinks: FC<{ links: Team['links'] }> = ({ links }) =>
     </div>
   );
 
-/** The page's title block, as a collection's: name, badges, description. */
-const TeamHeader: FC<{ team: Team }> = ({ team }) => (
+/**
+ * The page's title block, as a collection's: name, badges, description,
+ * links, and the days its releases come out on.
+ */
+const TeamHeader: FC<{ team: Team; releaseTimes: number[] }> = ({
+  team,
+  releaseTimes,
+}) => (
   <div className="flex flex-col gap-6">
     <div className="flex items-center gap-4">
       <TeamLogo
@@ -137,6 +144,7 @@ const TeamHeader: FC<{ team: Team }> = ({ team }) => (
       <TextExpand className="text-sm leading-6">{team.description}</TextExpand>
     )}
     <TeamLinks links={team.links} />
+    <ReleaseDays times={releaseTimes} />
   </div>
 );
 
@@ -339,7 +347,7 @@ const TeamPage: FC<{ slug: string }> = ({ slug }) => {
         )
       }
     >
-      <TeamHeader team={data.team} />
+      <TeamHeader team={data.team} releaseTimes={data.releaseTimes} />
       {groups.length > 0 ? (
         <div className="flex flex-col gap-12">
           {groups.map(({ id, title, count, entries }) => (

@@ -278,6 +278,8 @@ export interface TeamPage {
     releases: TeamRelease[];
     updatedAt: number;
   }>;
+  /** When its latest release posts went up, newest first. */
+  releaseTimes: number[];
 }
 
 export interface TeamListing extends TeamSummary {
