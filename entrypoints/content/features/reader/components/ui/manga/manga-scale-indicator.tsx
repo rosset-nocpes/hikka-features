@@ -1,4 +1,5 @@
-import { Minus, Plus } from 'lucide-react';
+import MaterialSymbolsAddRounded from '~icons/material-symbols/add-rounded';
+import MaterialSymbolsRemoveRounded from '~icons/material-symbols/remove-rounded';
 
 import { Button } from '@/components/ui/button';
 
@@ -31,7 +32,7 @@ const MangaScaleIndicator = () => {
         className="size-6 rounded-sm"
         onClick={handleZoomOut}
       >
-        <Minus className="size-4" />
+        <MaterialSymbolsRemoveRounded className="size-4" />
       </Button>
       <div>{Math.round(settings.scale * 100)}%</div>
       <Button
@@ -40,7 +41,7 @@ const MangaScaleIndicator = () => {
         className="size-6 rounded-sm"
         onClick={handleZoomIn}
       >
-        <Plus className="size-4" />
+        <MaterialSymbolsAddRounded className="size-4" />
       </Button>
     </div>
   );

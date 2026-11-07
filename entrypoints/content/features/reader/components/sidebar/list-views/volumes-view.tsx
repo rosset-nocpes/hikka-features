@@ -1,5 +1,5 @@
-import { ChevronRight } from 'lucide-react';
 import { Fragment, useMemo, useState } from 'react';
+import MaterialSymbolsChevronRightRounded from '~icons/material-symbols/chevron-right-rounded';
 
 import MissingDivider from '@/components/missing-divider';
 import {
@@ -89,7 +89,7 @@ const VolumesView = () => {
                   className="group-data-open/collapsible:bg-sidebar-accent sticky top-0 z-10 font-medium duration-200 group-data-open/collapsible:rounded-b-none"
                 >
                   <span>Том {volume.number}</span>
-                  <ChevronRight className="ml-auto transition-transform duration-200 group-data-open/collapsible:rotate-90" />
+                  <MaterialSymbolsChevronRightRounded className="ml-auto transition-transform duration-200 group-data-open/collapsible:rotate-90" />
                 </SidebarMenuButton>
               }
             />

@@ -1,11 +1,9 @@
-import {
-  CircleCheck,
-  CornerDownRight,
-  Info,
-  ListChecks,
-  TriangleAlert,
-} from 'lucide-react';
 import { type FC, useState } from 'react';
+import MaterialSymbolsCheckCircleOutlineRounded from '~icons/material-symbols/check-circle-outline-rounded';
+import MaterialSymbolsChecklistRounded from '~icons/material-symbols/checklist-rounded';
+import MaterialSymbolsInfoOutlineRounded from '~icons/material-symbols/info-outline-rounded';
+import MaterialSymbolsSubdirectoryArrowRightRounded from '~icons/material-symbols/subdirectory-arrow-right-rounded';
+import MaterialSymbolsWarningOutlineRounded from '~icons/material-symbols/warning-outline-rounded';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -25,9 +23,9 @@ const issuesWord = (count: number) =>
   pluralRules.select(count) === 'many' ? 'зауважень' : 'зауваження';
 
 const SEVERITY_ICON: Record<IssueSeverity, FC<{ className?: string }>> = {
-  error: TriangleAlert,
-  warning: TriangleAlert,
-  hint: Info,
+  error: MaterialSymbolsWarningOutlineRounded,
+  warning: MaterialSymbolsWarningOutlineRounded,
+  hint: MaterialSymbolsInfoOutlineRounded,
 };
 
 const SEVERITY_CLASS: Record<IssueSeverity, string> = {
@@ -90,10 +88,10 @@ const ChecksPopover: FC<{
       ? `${count} ${issuesWord(count)}`
       : 'Без зауважень';
   const Icon = !fields.length
-    ? ListChecks
+    ? MaterialSymbolsChecklistRounded
     : count
-      ? TriangleAlert
-      : CircleCheck;
+      ? MaterialSymbolsWarningOutlineRounded
+      : MaterialSymbolsCheckCircleOutlineRounded;
 
   return (
     <>
@@ -150,7 +148,7 @@ const ChecksPopover: FC<{
                     }}
                     className="text-muted-foreground hover:text-foreground focus-visible:ring-ring flex cursor-pointer items-center gap-1.5 rounded-sm px-2 py-1 text-left text-xs font-medium outline-none focus-visible:ring-2"
                   >
-                    <CornerDownRight className="size-3.5" />
+                    <MaterialSymbolsSubdirectoryArrowRightRounded className="size-3.5" />
                     {field.name}
                   </button>
                   <ul>

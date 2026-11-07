@@ -1,5 +1,6 @@
-import { Check, ClipboardCopy } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import MaterialSymbolsCheckRounded from '~icons/material-symbols/check-rounded';
+import MaterialSymbolsContentCopyOutlineRounded from '~icons/material-symbols/content-copy-outline-rounded';
 
 import SwapIcon from '@/components/swap-icon';
 import { Button } from '@/components/ui/button';
@@ -54,8 +55,10 @@ const DevButtons = () => {
             >
               <SwapIcon
                 active={copied === String(value)}
-                on={<Check className="size-4" />}
-                off={<ClipboardCopy className="size-4" />}
+                on={<MaterialSymbolsCheckRounded className="size-4" />}
+                off={
+                  <MaterialSymbolsContentCopyOutlineRounded className="size-4" />
+                }
               />
               <span className="truncate">{value}</span>
             </Button>

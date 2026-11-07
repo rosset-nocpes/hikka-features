@@ -1,4 +1,3 @@
-import { ExternalLink, Minus, Plus, X } from 'lucide-react';
 import {
   AnimatePresence,
   motion,
@@ -14,6 +13,10 @@ import {
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
+import MaterialSymbolsAddRounded from '~icons/material-symbols/add-rounded';
+import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
+import MaterialSymbolsOpenInNewRounded from '~icons/material-symbols/open-in-new-rounded';
+import MaterialSymbolsRemoveRounded from '~icons/material-symbols/remove-rounded';
 
 import { Button } from '@/components/ui/button';
 
@@ -330,7 +333,7 @@ const ViewerToolbar = ({
         title="Зменшити"
         onClick={onZoomOut}
       >
-        <Minus className="size-4" />
+        <MaterialSymbolsRemoveRounded className="size-4" />
       </Button>
       <motion.button
         type="button"
@@ -346,7 +349,7 @@ const ViewerToolbar = ({
         title="Збільшити"
         onClick={onZoomIn}
       >
-        <Plus className="size-4" />
+        <MaterialSymbolsAddRounded className="size-4" />
       </Button>
       <div className="bg-border mx-1 h-5 w-px" />
       <Button
@@ -356,10 +359,10 @@ const ViewerToolbar = ({
         nativeButton={false}
         render={<a href={src} target="_blank" rel="noopener noreferrer" />}
       >
-        <ExternalLink className="size-4" />
+        <MaterialSymbolsOpenInNewRounded className="size-4" />
       </Button>
       <Button variant="ghost" size="icon-sm" title="Закрити" onClick={onClose}>
-        <X className="size-4" />
+        <MaterialSymbolsCloseRounded className="size-4" />
       </Button>
     </motion.div>
   );

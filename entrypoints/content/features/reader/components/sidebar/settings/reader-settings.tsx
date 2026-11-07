@@ -1,7 +1,8 @@
-import { Check, ChevronsUpDown } from 'lucide-react';
 import { Children, type FC, type PropsWithChildren } from 'react';
+import MaterialSymbolsCheckRounded from '~icons/material-symbols/check-rounded';
 import MaterialSymbolsChevronRightRounded from '~icons/material-symbols/chevron-right-rounded';
 import MaterialSymbolsPageInfoOutlineRounded from '~icons/material-symbols/page-info-outline-rounded';
+import MaterialSymbolsUnfoldMoreRounded from '~icons/material-symbols/unfold-more-rounded';
 
 import {
   DropdownMenu,
@@ -44,7 +45,7 @@ const ReaderSettings = () => {
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">Налаштування</span>
                 </div>
-                <ChevronsUpDown className="ml-auto" />
+                <MaterialSymbolsUnfoldMoreRounded className="ml-auto" />
               </SidebarMenuButton>
             }
           />
@@ -258,7 +259,7 @@ const FontFamilySelect = ({ config, value, onChange }: SelectProps) => {
                     {option.label}
                   </span>
                   {option.value === value && (
-                    <Check className="text-foreground size-4" />
+                    <MaterialSymbolsCheckRounded className="text-foreground size-4" />
                   )}
                 </div>
                 <div className={cn('text-sm', option.value)}>
@@ -310,7 +311,11 @@ const ThemeSelect = ({ config, value, onChange }: SelectProps) => {
                   option.value,
                 )}
               >
-                {selected ? <Check className="size-4" /> : 'Aa'}
+                {selected ? (
+                  <MaterialSymbolsCheckRounded className="size-4" />
+                ) : (
+                  'Aa'
+                )}
               </span>
             </button>
           );

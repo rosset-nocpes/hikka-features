@@ -1,11 +1,9 @@
-import {
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  Languages,
-  Quote,
-} from 'lucide-react';
 import { type FC, type ReactElement, useEffect, useState } from 'react';
+import MaterialSymbolsCheckRounded from '~icons/material-symbols/check-rounded';
+import MaterialSymbolsChevronLeftRounded from '~icons/material-symbols/chevron-left-rounded';
+import MaterialSymbolsChevronRightRounded from '~icons/material-symbols/chevron-right-rounded';
+import MaterialSymbolsFormatQuoteOutlineRounded from '~icons/material-symbols/format-quote-outline-rounded';
+import MaterialSymbolsTranslateRounded from '~icons/material-symbols/translate-rounded';
 
 import SwapIcon from '@/components/swap-icon';
 import { Button } from '@/components/ui/button';
@@ -127,8 +125,8 @@ export const SourceMenu: FC<{ container: HTMLElement }> = ({ container }) => {
       >
         <SwapIcon
           active={copied}
-          on={<Check className="text-success size-4" />}
-          off={<Quote className="size-4" />}
+          on={<MaterialSymbolsCheckRounded className="text-success size-4" />}
+          off={<MaterialSymbolsFormatQuoteOutlineRounded className="size-4" />}
           className="size-4"
         />
         <span className="hidden sm:inline">Джерело</span>
@@ -234,7 +232,7 @@ export const NameFillButton: FC<{
         className="gap-2"
         onClick={() => void fillUkrainianName(suggestion)}
       >
-        <Languages />
+        <MaterialSymbolsTranslateRounded />
         <span className="hidden max-w-48 truncate sm:inline">{suggestion}</span>
       </Button>
     </Hint>
@@ -265,7 +263,10 @@ const QueueButton: FC<{
     setState(target === undefined ? 'none' : 'idle');
   };
 
-  const Icon = direction === 'next' ? ChevronRight : ChevronLeft;
+  const Icon =
+    direction === 'next'
+      ? MaterialSymbolsChevronRightRounded
+      : MaterialSymbolsChevronLeftRounded;
   return (
     <Hint
       label={
