@@ -7,7 +7,7 @@ export type ContentType =
   | 'manga'
   | 'novel'
   | 'characters'
-  | 'person'
+  | 'people'
   | 'edit';
 
 interface PageState {

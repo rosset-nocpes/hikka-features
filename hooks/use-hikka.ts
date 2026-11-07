@@ -43,7 +43,7 @@ const PAGE_TYPES = new Set([
   'manga',
   'novel',
   'characters',
-  'person',
+  'people',
   'edit',
 ]);
 
