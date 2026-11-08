@@ -18,16 +18,20 @@ const toWatchData = (data: ConvexWatchResponse): API.WatchData => {
       title: team.title,
       logo: team.logo ?? '',
       translationType,
-      sources: episodes.flatMap(({ number, sources }) =>
-        sources.map(({ provider, url, releasedAt }) => ({
+      sources: episodes.flatMap(({ number, sources }) => {
+        // When the team first put the episode out, so a provider that
+        // doesn't say still dates it.
+        const dates = sources.flatMap(({ releasedAt }) => releasedAt ?? []);
+        const releasedAt = dates.length ? Math.min(...dates) : undefined;
+        return sources.map(({ provider, url }) => ({
           episode: number,
           video_url: url,
           provider,
           title: info.get(number)?.title,
           episode_type: info.get(number)?.type,
           releasedAt,
-        })),
-      ),
+        }));
+      }),
     })),
   };
 };

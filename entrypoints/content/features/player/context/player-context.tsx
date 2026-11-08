@@ -4,6 +4,7 @@ import type { FavoriteTeam } from '@/hooks/use-settings';
 
 import { playerControls } from '@/hooks/use-iframe-player';
 import { account } from '@/utils/account';
+import { favoriteTeamOf } from '@/utils/favorite-team';
 
 import type { QueueItem } from '../queue/use-queue';
 import type { MergedTeam } from '../teams';
@@ -30,10 +31,13 @@ interface PlayerState {
   /** The anime's teams, each once whichever providers list it. */
   teams?: MergedTeam[];
   /**
-   * The provider the user picked to play from wherever it has the episode;
-   * without one, each episode plays from the first provider that has it.
+   * The provider the user picked to play this anime from wherever it has
+   * the episode; without one, each episode plays from the first provider
+   * that has it (see providerOrder).
    */
   pinnedProvider?: string;
+  /** Where the episode picks up once its new source loads. */
+  resumeAt?: { time: number; playing: boolean };
   team?: MergedTeam;
   /** The playing episode's provider. */
   provider?: string;
@@ -135,7 +139,26 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
       team,
       provider: entry.provider,
       currentEpisode: entry,
+      resumeAt: undefined,
     };
+  };
+
+  /**
+   * Follows a favourite whose team changed key, as when it joins the
+   * catalogue, so the account matches its releases by catalogue id.
+   */
+  const refreshFavorite = (slug: string, found?: MergedTeam) => {
+    const favorite = useSettings.getState().features.player.favoriteTeams[slug];
+    if (!favorite || !found || favorite.key === found.key) return;
+    setFavoriteTeam(slug, favoriteTeamOf(found));
+    account
+      .saveFavorite({
+        animeSlug: slug,
+        teamId: found.id,
+        teamTitle: found.title,
+        translationType: found.translationType,
+      })
+      .catch(console.error);
   };
 
   return {
@@ -148,13 +171,19 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
 
     initialize: (data, slug, target) => {
       const key = watchDataKey(data);
-      const teams = teamsOf(data, get().pinnedProvider);
+      // A pick works around one anime's source, not the next one's.
+      const pinnedProvider =
+        get().slug === slug ? get().pinnedProvider : undefined;
+      const teams = teamsOf(data, pinnedProvider);
+      const favorite = favoriteOf(teams, slug);
+      refreshFavorite(slug, favorite);
       const loaded = {
         watchData: data,
         watchDataKey: key,
         slug,
         teams,
-        favoriteKey: favoriteOf(teams, slug)?.key,
+        pinnedProvider,
+        favoriteKey: favorite?.key,
       };
 
       if (target) {
@@ -198,11 +227,26 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
 
       const teams = teamsOf(watchData, pinnedProvider);
       const shown = teams.find(({ key }) => key === team?.key) ?? teams[0]!;
-      const entry =
-        shown.episodes.find(
-          ({ episode }) => episode === currentEpisode?.episode,
-        ) ?? nextUnwatched(shown.episodes, slug);
-      set({ pinnedProvider, teams, ...show({ team: shown, entry }) });
+      const sameEpisode = shown.episodes.find(
+        ({ episode }) => episode === currentEpisode?.episode,
+      );
+      const entry = sameEpisode ?? nextUnwatched(shown.episodes, slug);
+      if (entry === currentEpisode) {
+        set({ pinnedProvider, teams, team: shown });
+        return;
+      }
+
+      // The same episode from elsewhere carries on where it was.
+      const { currentTime, isPlaying } = useIFramePlayer.getState();
+      set({
+        pinnedProvider,
+        teams,
+        ...show({ team: shown, entry }),
+        resumeAt:
+          sameEpisode && shown.key === team?.key && currentTime > 0
+            ? { time: currentTime, playing: isPlaying }
+            : undefined,
+      });
     },
     setTeam: (team) =>
       set(show({ team, entry: nextUnwatched(team.episodes, get().slug) })),
@@ -217,12 +261,7 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
         return;
       }
 
-      setFavoriteTeam(slug, {
-        key: team.key,
-        team: team.title,
-        teamId: team.id,
-        translationType: team.translationType,
-      });
+      setFavoriteTeam(slug, favoriteTeamOf(team));
       set({ favoriteKey: team.key });
       account
         .saveFavorite({

@@ -1,5 +1,4 @@
-import type { FavoriteTeam } from '@/hooks/use-settings';
-
+import { findFavorite } from '@/utils/favorite-team';
 import { hikkaTracker } from '@/utils/hikka-tracker';
 
 import type { QueueItem } from '../queue/use-queue';
@@ -51,26 +50,6 @@ export const teamsOf = (data: API.WatchData, pinned?: string): MergedTeam[] => {
     ...team,
     episodes: pickEpisodes(team.sources, order),
   }));
-};
-
-/**
- * The team a favourite names: by its key, else by catalogue id or name, as
- * keys change once a team joins the catalogue.
- */
-export const findFavorite = (teams: MergedTeam[], favorite?: FavoriteTeam) => {
-  if (!favorite) return undefined;
-  const exact = teams.find((team) => team.key === favorite.key);
-  if (exact) return exact;
-  const candidates = teams.filter((team) =>
-    favorite.teamId
-      ? team.id === favorite.teamId
-      : looseKey(team.title) === looseKey(favorite.team),
-  );
-  return (
-    candidates.find(
-      (team) => team.translationType === (favorite.translationType ?? 'dub'),
-    ) ?? candidates[0]
-  );
 };
 
 /** `slug`'s favourite team, if any provider still lists it. */

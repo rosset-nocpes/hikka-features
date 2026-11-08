@@ -77,8 +77,14 @@ const PlayerIFrameEffects = () => {
   const watchedRef = useRef(false);
   const preloadedRef = useRef(false);
   const skipWatchedCheckEpisodeKeyRef = useRef<string | undefined>(undefined);
-  const { slug, sharedParams, isShared, setSharedStatus, currentEpisode } =
-    usePlayer();
+  const {
+    slug,
+    sharedParams,
+    isShared,
+    setSharedStatus,
+    currentEpisode,
+    resumeAt,
+  } = usePlayer();
   const { setOpen } = useSidebar();
 
   useEffect(() => {
@@ -126,6 +132,17 @@ const PlayerIFrameEffects = () => {
       }),
     [],
   );
+
+  // After switching source, the episode picks up where it was. Read from
+  // the store: right after a switch, the render's `isReady` is still the
+  // previous source's.
+  useEffect(() => {
+    if (!resumeAt || !useIFramePlayer.getState().isReady) return;
+
+    seek(resumeAt.time);
+    if (resumeAt.playing) play();
+    usePlayer.setState({ resumeAt: undefined });
+  }, [isReady, play, resumeAt, seek]);
 
   useEffect(() => {
     if (!isReady || !pendingAutoPlay) return;

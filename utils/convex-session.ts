@@ -16,10 +16,19 @@ import type { BackgroundMessage } from './messaging';
 
 import { convexApi } from './convex-api';
 import { CONVEX_SITE_URL, convex } from './convex-client';
+import { favoriteTeamOf, findFavorite } from './favorite-team';
 import { getHikkaViewerId } from './hikka-viewer';
 import { loginState } from './login-state';
 import { syncTeamPriority } from './team-priority-sync';
-import { looseKey } from './utils';
+
+/** A watch response's team as favourites match it. */
+const teamRef = ({ key, team, translationType }: ConvexWatchTeam) => ({
+  key,
+  id: team.id,
+  slug: team.slug,
+  title: team.title,
+  translationType,
+});
 
 /** As long as the backend's login cookie lives. */
 const LOGIN_TTL_MS = 15 * 60 * 1_000;
@@ -324,26 +333,15 @@ class AccountSession {
       if (syncedSlugs.has(slug)) continue;
       try {
         const watch = await convex.action(convexApi.watch.resolve, { slug });
-        const match = (team: ConvexWatchTeam) =>
-          favorite.teamId
-            ? team.team.id === favorite.teamId
-            : looseKey(team.team.title) === looseKey(favorite.team);
-        const candidates = watch.teams.filter(match);
-        const found =
-          watch.teams.find((team) => team.key === favorite.key) ??
-          candidates.find(
-            (team) =>
-              team.translationType === (favorite.translationType ?? 'dub'),
-          ) ??
-          candidates[0];
+        const found = findFavorite(watch.teams.map(teamRef), favorite);
         if (!found) throw new Error('Team is no longer available');
 
         synced.push(
           await this.mutation(convexApi.favorites.set, {
             favorite: {
               animeSlug: slug,
-              teamId: found.team.id,
-              teamTitle: found.team.title,
+              teamId: found.id,
+              teamTitle: found.title,
               translationType: found.translationType,
               notificationsEnabled: true,
             },
@@ -360,12 +358,12 @@ class AccountSession {
         ...Object.fromEntries(
           synced.map((favorite) => [
             favorite.animeSlug,
-            {
+            favoriteTeamOf({
               key: favorite.teamKey,
-              team: favorite.teamTitle,
-              teamId: favorite.teamId,
+              id: favorite.teamId,
+              title: favorite.teamTitle,
               translationType: favorite.translationType,
-            },
+            }),
           ]),
         ),
       },
