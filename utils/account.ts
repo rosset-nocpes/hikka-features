@@ -31,7 +31,6 @@ class Account {
   /** Mirrors a favorite team to the account, when signed in. */
   async saveFavorite(input: {
     animeSlug: string;
-    provider: string;
     teamId?: string;
     teamTitle: string;
     translationType?: TranslationType;

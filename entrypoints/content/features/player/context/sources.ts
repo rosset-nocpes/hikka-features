@@ -1,35 +1,16 @@
+import type { FavoriteTeam } from '@/hooks/use-settings';
+
 import { hikkaTracker } from '@/utils/hikka-tracker';
-import { ProviderIFrame, ProviderTeamIFrame } from '@/utils/providers';
 
 import type { QueueItem } from '../queue/use-queue';
+import type { SharedPlayerParams } from './link-params';
 
-import { pickPriorityTeam, providersOf } from '../teams';
-
-/** The team of providers that don't split playback by team. */
-const NO_TEAM: API.TeamData = { title: '', logo: '' };
-
-export const teamOf = (data: API.WatchData, provider: string, team: string) => {
-  const source = data[provider];
-  return source instanceof ProviderTeamIFrame ? source.getTeam(team) : NO_TEAM;
-};
-
-/** A provider's first team; providers without teams have none. */
-const firstTeam = (data: API.WatchData, provider: string) => {
-  const source = data[provider];
-  return source instanceof ProviderTeamIFrame ? source.getTeams()[0]! : NO_TEAM;
-};
-
-/** A provider's episodes by `team`; providers without teams ignore it. */
-export const episodesOf = (
-  data: API.WatchData,
-  provider: string,
-  team: string,
-) => {
-  const source = data[provider];
-  if (source instanceof ProviderTeamIFrame) return source.teams[team]?.episodes;
-  if (source instanceof ProviderIFrame) return source.episodes;
-  return undefined;
-};
+import {
+  hasEpisode,
+  type MergedTeam,
+  pickEpisodes,
+  pickPriorityTeam,
+} from '../teams';
 
 /** Whether the page is `slug`'s, whose tracker the player may read and use. */
 export const onAnimePage = (slug?: string) => {
@@ -43,182 +24,192 @@ export const progressOf = (slug?: string) =>
 
 /** The episode after the user's progress on hikka.io, else the first. */
 export const nextUnwatched = (episodes: API.EpisodeData[], slug?: string) =>
-  episodes.find((episode) => episode.episode === progressOf(slug) + 1) ??
-  episodes[0];
+  episodes.find(({ episode }) => episode === progressOf(slug) + 1) ??
+  episodes[0]!;
 
-/** The user's team priority's pick for `episode` among `providers`. */
-const priorityPick = (
-  data: API.WatchData,
-  providers: string[],
-  episode: number,
-) => {
+/**
+ * The order providers play episodes in: the one the user picked, then the
+ * default one from the settings, then the rest.
+ */
+export const providerOrder = (data: API.WatchData, pinned?: string) => {
+  const { defaultProvider } = useSettings.getState().features.player;
+  const available = data.providers.map(({ id }) => id);
+  return [
+    ...new Set([
+      ...[pinned, defaultProvider].filter(
+        (name): name is string => !!name && available.includes(name),
+      ),
+      ...available,
+    ]),
+  ];
+};
+
+/** The watch data's teams, each episode from the first provider in order. */
+export const teamsOf = (data: API.WatchData, pinned?: string): MergedTeam[] => {
+  const order = providerOrder(data, pinned);
+  return data.teams.map((team) => ({
+    ...team,
+    episodes: pickEpisodes(team.sources, order),
+  }));
+};
+
+/**
+ * The team a favourite names: by its key, else by catalogue id or name, as
+ * keys change once a team joins the catalogue.
+ */
+export const findFavorite = (teams: MergedTeam[], favorite?: FavoriteTeam) => {
+  if (!favorite) return undefined;
+  const exact = teams.find((team) => team.key === favorite.key);
+  if (exact) return exact;
+  const candidates = teams.filter((team) =>
+    favorite.teamId
+      ? team.id === favorite.teamId
+      : looseKey(team.title) === looseKey(favorite.team),
+  );
+  return (
+    candidates.find(
+      (team) => team.translationType === (favorite.translationType ?? 'dub'),
+    ) ?? candidates[0]
+  );
+};
+
+/** `slug`'s favourite team, if any provider still lists it. */
+export const favoriteOf = (teams: MergedTeam[], slug: string) =>
+  findFavorite(
+    teams,
+    useSettings.getState().features.player.favoriteTeams[slug],
+  );
+
+/** The user's team priority's pick for `episode`. */
+const priorityPick = (teams: MergedTeam[], episode: number) => {
   const { teamPriority, teamPriorityTranslation } =
     useSettings.getState().features.player;
   return pickPriorityTeam(
-    data,
-    providers,
+    teams,
     teamPriority,
     teamPriorityTranslation,
     episode,
   );
 };
 
-/** The team the user's priority picks on `provider`, else its first one. */
-export const priorityTeam = (
-  data: API.WatchData,
-  provider: string,
-  slug?: string,
-) =>
-  priorityPick(data, [provider], progressOf(slug) + 1)?.team ??
-  firstTeam(data, provider);
-
-/** `slug`'s favourite team, if its provider still lists it. */
-export const favoriteIn = (data: API.WatchData, slug: string) => {
-  const stored = useSettings.getState().features.player.favoriteTeams[slug];
-  const source = stored && data[stored.provider];
-  const team =
-    source instanceof ProviderTeamIFrame
-      ? source
-          .getTeams()
-          .find(
-            (candidate) =>
-              candidate.title === stored!.team ||
-              candidate.canonicalTitle === stored!.team,
-          )
-      : undefined;
-  return {
-    team: team && { provider: stored!.provider, team },
-    favoriteTeam: team
-      ? { provider: stored!.provider, team: team.title }
-      : stored,
-  };
-};
-
-/** The watch data's providers, the user's default one first. */
-export const providerOrder = (data: API.WatchData) => {
-  const { defaultProvider } = useSettings.getState().features.player;
-  const available = providersOf(data).map(({ title }) => title);
-  return available.includes(defaultProvider)
-    ? [defaultProvider, ...available.filter((name) => name !== defaultProvider)]
-    : available;
-};
-
 /**
- * The source the player opens `slug` with: this anime's favourite team, then
- * the team priority list, then the default provider's first team.
+ * The team the player opens `slug` with: its favourite, then the team
+ * priority's pick, then the first team with the next episode.
  */
-export const preferredSource = (data: API.WatchData, slug: string) => {
-  const providers = providerOrder(data);
-  const provider = providers[0]!;
+export const preferredTeam = (teams: MergedTeam[], slug: string) => {
+  const next = progressOf(slug) + 1;
   return (
-    favoriteIn(data, slug).team ??
-    priorityPick(data, providers, progressOf(slug) + 1) ?? {
-      provider,
-      team: firstTeam(data, provider),
-    }
+    favoriteOf(teams, slug) ??
+    priorityPick(teams, next) ??
+    teams.find((team) => hasEpisode(team, next)) ??
+    teams[0]!
   );
 };
 
+/** What the player shows: a team, and its episode that plays. */
+export interface Selection {
+  team: MergedTeam;
+  entry: API.EpisodeData;
+}
+
+/** `team`'s episode `number`, from whichever provider the list takes it. */
+const episodeIn = (team: MergedTeam, number: number) =>
+  team.episodes.find(({ episode }) => episode === number);
+
 /**
- * Where a share link's `provider` and `team` play, falling back to the
- * preferred source when the provider is gone, and to the preferred or first
- * team when the team is.
+ * The team `key` playing `provider`'s copy of `episode`, even where its list
+ * takes that episode from another provider.
  */
-export const sharedSource = (
-  data: API.WatchData,
-  slug: string,
+export const exactSource = (
+  teams: MergedTeam[],
   provider: string,
-  team: string,
-) => {
-  const preferred = preferredSource(data, slug);
-  const source = data[provider];
-  if (!providersOf(data).some(({ title }) => title === provider)) {
-    return preferred;
-  }
+  key: string,
+  episode: number,
+): Selection | undefined => {
+  const team = teams.find((candidate) => candidate.key === key);
+  const entry = team?.sources.find(
+    (source) => source.provider === provider && source.episode === episode,
+  );
+  if (!team || !entry) return undefined;
+  if (team.episodes.includes(entry)) return { team, entry };
+
+  // This provider's copy takes the place of the others'.
+  const rest = team.episodes.filter((other) => other.episode !== episode);
+  const index = rest.findIndex((other) => other.episode > episode);
   return {
-    provider,
-    team: !(source instanceof ProviderTeamIFrame)
-      ? NO_TEAM
-      : source.teams[team]
-        ? source.getTeam(team)
-        : preferred.provider === provider
-          ? preferred.team
-          : source.getTeams()[0]!,
+    team: {
+      ...team,
+      episodes: index < 0 ? [...rest, entry] : rest.toSpliced(index, 0, entry),
+    },
+    entry,
   };
 };
 
 /**
- * Where a queued episode plays: the source it was queued from, else the team
- * priority's pick, else any source that has it.
+ * Where a share link plays: its provider's copy, else its team's from
+ * another provider, else the preferred team, at the link's episode where
+ * they have it.
  */
-export const queuedSource = (data: API.WatchData, target: QueueItem) => {
-  const providers = providersOf(data).map(({ title }) => title);
-  const pick = priorityPick(data, providers, target.episode);
-  const candidates = [
-    target,
-    ...(pick ? [{ provider: pick.provider, team: pick.team.title }] : []),
-    ...providers.flatMap((provider) => {
-      const source = data[provider];
-      return source instanceof ProviderTeamIFrame
-        ? Object.keys(source.teams).map((team) => ({ provider, team }))
-        : [{ provider, team: '' }];
-    }),
-  ];
+export const sharedSource = (
+  teams: MergedTeam[],
+  slug: string,
+  { provider, team, episode }: SharedPlayerParams,
+): Selection => {
+  const number = Number(episode);
+  const exact = exactSource(teams, provider!, team!, number);
+  if (exact) return exact;
 
-  for (const { provider, team } of candidates) {
-    const episodeData = episodesOf(data, provider, team);
-    const currentEpisode = episodeData?.find(
-      (episode) => episode.episode === target.episode,
-    );
-    if (currentEpisode) {
-      return {
-        provider,
-        team: teamOf(data, provider, team),
-        episodeData: episodeData!,
-        currentEpisode,
-      };
-    }
+  const shown =
+    teams.find((candidate) => candidate.key === team) ??
+    preferredTeam(teams, slug);
+  return {
+    team: shown,
+    entry: episodeIn(shown, number) ?? nextUnwatched(shown.episodes, slug),
+  };
+};
+
+/**
+ * Where a queued episode plays: the provider it was queued from, else its
+ * team's from another one, else the team priority's pick, else any team
+ * that has it.
+ */
+export const queuedSource = (
+  teams: MergedTeam[],
+  target: QueueItem,
+): Selection | undefined => {
+  const exact = exactSource(
+    teams,
+    target.provider,
+    target.team,
+    target.episode,
+  );
+  if (exact) return exact;
+
+  const candidates = [
+    teams.find((team) => team.key === target.team),
+    priorityPick(teams, target.episode),
+    ...teams,
+  ];
+  for (const team of candidates) {
+    const entry = team && episodeIn(team, target.episode);
+    if (entry) return { team: team!, entry };
   }
   return undefined;
 };
 
-const episodeKey = (episode: API.EpisodeData) => [
-  episode.episode,
-  episode.video_url,
-];
-
-/** Changes only when the watch data's sources or episodes do. */
+/** Changes only when the watch data's teams or episodes do. */
 export const watchDataKey = (data: API.WatchData) =>
   JSON.stringify([
     data.type,
-    ...Object.entries(data)
-      .filter(([key]) => key !== 'type')
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([provider, entry]) => {
-        if (entry instanceof ProviderTeamIFrame) {
-          return [
-            provider,
-            entry.type,
-            entry.lang,
-            Object.entries(entry.teams)
-              .sort(([a], [b]) => a.localeCompare(b))
-              .map(([team, teamData]) => [
-                team,
-                teamData.logo,
-                teamData.episodes.map(episodeKey),
-              ]),
-          ];
-        }
-
-        if (entry instanceof ProviderIFrame) {
-          return [
-            provider,
-            entry.type,
-            entry.lang,
-            entry.episodes.map(episodeKey),
-          ];
-        }
-
-        return [provider, entry];
-      }),
+    data.providers.map(({ id }) => id),
+    data.teams.map((team) => [
+      team.key,
+      team.title,
+      team.logo,
+      team.sources.map((source) => [
+        source.episode,
+        source.provider,
+        source.video_url,
+      ]),
+    ]),
   ]);

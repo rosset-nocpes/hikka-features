@@ -7,7 +7,6 @@ import { BaseFeature, createFeatureUi } from '../../core/base-feature';
 import { HikkaPages } from '../../core/core.enums';
 import { openPlayer } from './player';
 import QueueMenu from './queue/queue-menu';
-import { providersOf } from './teams';
 
 export default class WatchButtonFeature extends BaseFeature {
   readonly id = 'watch-button';
@@ -36,9 +35,8 @@ const WatchButton = ({ container }: { container: HTMLElement }) => {
   const { enabled } = useSettings().features.player;
   const { slug } = usePageStore();
   const query = useWatchData();
-  // The backend answers with no providers when no site has the anime.
-  const data =
-    query.data && providersOf(query.data).length > 0 ? query.data : undefined;
+  // The backend answers with no teams when no site has the anime.
+  const data = query.data?.teams.length ? query.data : undefined;
 
   useEffect(() => {
     if (data && slug && opensPlayer(new URLSearchParams(location.search))) {

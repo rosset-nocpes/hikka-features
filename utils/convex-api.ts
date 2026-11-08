@@ -13,20 +13,23 @@ export interface ConvexEpisodeInfo {
   type?: 'canon' | 'filler' | 'mixed' | 'recap';
 }
 
-export interface ConvexWatchSource {
-  /** Absent for providers that do not split playback by team. */
-  team?: { id?: string; slug?: string; title: string; logo?: string };
+/** A team in one translation, with every provider's copy of its episodes. */
+export interface ConvexWatchTeam {
+  /** Names the team whichever provider lists it; favorites, links store it. */
+  key: string;
+  team: { id?: string; slug?: string; title: string; logo?: string };
   translationType: TranslationType;
-  episodes: Array<{ number: number; url: string; releasedAt?: number }>;
+  /** By number; a provider can give an episode more than once. */
+  episodes: Array<{
+    number: number;
+    sources: Array<{ provider: string; url: string; releasedAt?: number }>;
+  }>;
 }
 
-export interface ConvexWatchResult {
+export interface ConvexWatchResponse {
   anime: { slug: string; mediaType: 'tv' | 'movie' | 'ona' | 'unknown' };
-  providers: Array<{
-    id: string;
-    language: 'uk' | 'en' | 'multi';
-    sources: ConvexWatchSource[];
-  }>;
+  providers: Array<{ id: string; language: 'uk' | 'en' | 'multi' }>;
+  teams: ConvexWatchTeam[];
   episodes: ConvexEpisodeInfo[];
   warnings: Array<{ provider: string; code: string }>;
   refreshedAt: number;
@@ -46,7 +49,8 @@ export interface TeamPriority {
 
 export interface SyncedFavorite {
   animeSlug: string;
-  provider: string;
+  /** The watch response's key for the team. */
+  teamKey: string;
   teamId?: string;
   teamTitle: string;
   translationType: TranslationType;
@@ -78,7 +82,7 @@ export interface ReleaseNotificationMenu {
 // A type rather than an interface, so it fits Convex's argument constraint.
 export type WatchRoomSelection = {
   provider: string;
-  /** Team key in the watch data; empty for providers without teams. */
+  /** The watch response's team key. */
   team: string;
   episode: number;
 };
@@ -311,7 +315,7 @@ export const convexApi = {
     resolve: makeFunctionReference<
       'action',
       { slug: string },
-      ConvexWatchResult
+      ConvexWatchResponse
     >('watch:resolve'),
   },
   catalog: {
@@ -364,7 +368,6 @@ export const convexApi = {
       {
         favorite: {
           animeSlug: string;
-          provider: string;
           teamTitle: string;
           teamId?: string;
           translationType: TranslationType;

@@ -56,7 +56,7 @@ export const selectionOf = ({
     ? {
         animeSlug: slug,
         provider,
-        team: team?.title ?? '',
+        team: team?.key ?? '',
         episode: currentEpisode.episode,
       }
     : undefined;

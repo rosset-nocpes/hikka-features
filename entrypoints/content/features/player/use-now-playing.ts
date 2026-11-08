@@ -1,7 +1,6 @@
 import { useHikkaContent } from '@/hooks/use-hikka';
 
 import { usePlayer } from './context/player-context';
-import { getTeamName } from './teams';
 
 /**
  * What the player shows, for its compact headings: the anime's title, and
@@ -12,7 +11,7 @@ export const useNowPlaying = () => {
   // The player's anime, which the page may no longer show.
   const { data: anime } = useHikkaContent('anime', slug);
 
-  const teamName = team && getTeamName(team);
+  const teamName = team?.title;
   return {
     slug,
     team,

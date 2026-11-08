@@ -40,12 +40,14 @@ import QueueNotice, { offerUndo } from './queue-notice';
 import { Poster } from './up-next';
 import { type ActiveQueue, useActiveQueue } from './use-active-queue';
 import { type QueueItem, queueKey, useQueue } from './use-queue';
+import { useTeamName } from './use-team-name';
 
 /** A row's poster, anime and episode. */
 const EpisodeSummary: FC<
   Pick<QueueItem, 'slug' | 'episode' | 'team'> & { loading?: boolean }
 > = ({ slug, episode, team, loading }) => {
   const { data: anime, isLoading } = useHikkaContent('anime', slug);
+  const teamName = useTeamName(slug, team);
 
   return (
     <>
@@ -67,7 +69,7 @@ const EpisodeSummary: FC<
         )}
         <span className="text-muted-foreground truncate text-xs">
           Епізод {episode}
-          {team && ` · ${team}`}
+          {teamName && ` · ${teamName}`}
         </span>
       </div>
     </>
@@ -206,7 +208,7 @@ const NowPlaying = () => {
         <EpisodeSummary
           slug={slug}
           episode={currentEpisode.episode}
-          team={team?.title ?? ''}
+          team={team?.key ?? ''}
         />
       </div>
       <div
@@ -253,7 +255,7 @@ const FollowingEpisode = () => {
             <EpisodeSummary
               slug={slug}
               episode={following.episode}
-              team={team?.title ?? ''}
+              team={team?.key ?? ''}
             />
           </SidebarMenuButton>
         </SidebarMenuItem>

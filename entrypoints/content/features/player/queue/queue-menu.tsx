@@ -22,17 +22,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-import { preferredSource, progressOf, providerOrder } from '../context/sources';
+import { usePlayer } from '../context/player-context';
+import { preferredTeam, progressOf, teamsOf } from '../context/sources';
 import { getEpisodeTitle, revealRow } from '../sidebar/episode-list';
-import {
-  getEpisodeRanges,
-  getTeamName,
-  groupTeams,
-  type MergedTeam,
-  mergeTeams,
-  type TeamEpisode,
-  teamKey,
-} from '../teams';
+import { getEpisodeRanges, groupTeams, type MergedTeam } from '../teams';
 import { useActiveQueue } from './use-active-queue';
 import { queueKey } from './use-queue';
 
@@ -47,12 +40,12 @@ const TeamSummary: FC<{ team: MergedTeam }> = ({ team }) => (
   <>
     <Avatar className="size-8 rounded-md">
       <AvatarImage src={team.logo} alt="" />
-      <AvatarFallback>{getTeamName(team)[0]}</AvatarFallback>
+      <AvatarFallback>{team.title[0]}</AvatarFallback>
     </Avatar>
     <div className="grid min-w-0 flex-1 text-left leading-tight">
-      <span className="truncate font-medium">{getTeamName(team)}</span>
+      <span className="truncate font-medium">{team.title}</span>
       <span className="text-muted-foreground truncate text-xs">
-        {getEpisodeRanges(team.episodes.map(({ data }) => data))}
+        {getEpisodeRanges(team.episodes)}
       </span>
     </div>
   </>
@@ -73,16 +66,11 @@ const QueueMenu: FC<Props> = ({ data, slug, container }) => {
   // Picked on opening, by the settings and the tracker of that moment.
   const menu = useMemo(() => {
     if (!open) return undefined;
-    const preferred = preferredSource(data, slug);
-    const preferredKey = teamKey(preferred.provider, preferred.team);
+    const teams = teamsOf(data, usePlayer.getState().pinnedProvider);
+    const preferredKey = preferredTeam(teams, slug).key;
     // The player's pick first, then the rest by name.
-    const teams = mergeTeams(data, [
-      preferred.provider,
-      ...providerOrder(data),
-    ]).toSorted(
-      (a, b) =>
-        Number(b.key === preferredKey) - Number(a.key === preferredKey) ||
-        getTeamName(a).localeCompare(getTeamName(b)),
+    teams.sort(
+      (a, b) => Number(b.key === preferredKey) - Number(a.key === preferredKey),
     );
     return { teams, groups: groupTeams(teams), watched: progressOf(slug) };
   }, [open, data, slug]);
@@ -105,16 +93,16 @@ const QueueMenu: FC<Props> = ({ data, slug, container }) => {
 
   const queued = new Set(items.map(queueKey));
   const queuedHere = items.some((item) => item.slug === slug);
-  const itemOf = ({ provider, team, data }: TeamEpisode) => ({
+  const itemOf = ({ provider, episode }: API.EpisodeData) => ({
     slug,
-    episode: data.episode,
+    episode,
     provider,
-    team,
+    team: team!.key,
   });
   const unwatched =
     team?.episodes.filter(
       (episode) =>
-        episode.data.episode > menu!.watched &&
+        episode.episode > menu!.watched &&
         !queued.has(queueKey(itemOf(episode))),
     ) ?? [];
 
@@ -204,8 +192,8 @@ const QueueMenu: FC<Props> = ({ data, slug, container }) => {
               {/* Re-measures when another team's list replaces this one. */}
               <ScrollAreaPrimitive.Content style={{ minWidth: 0 }}>
                 {team.episodes.map((episode) => {
-                  const { episode: number } = episode.data;
-                  const title = getEpisodeTitle(episode.data);
+                  const { episode: number } = episode;
+                  const title = getEpisodeTitle(episode);
                   return (
                     <DropdownMenuCheckboxItem
                       key={number}

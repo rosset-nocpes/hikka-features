@@ -9,8 +9,9 @@ import {
   makeFunctionReference,
 } from 'convex/server';
 
-import { useSettings } from '@/hooks/use-settings';
+import { type FavoriteTeam, useSettings } from '@/hooks/use-settings';
 
+import type { ConvexWatchTeam } from './convex-api';
 import type { BackgroundMessage } from './messaging';
 
 import { convexApi } from './convex-api';
@@ -316,30 +317,34 @@ class AccountSession {
 
     const synced = await this.query(convexApi.favorites.list, {});
     const syncedSlugs = new Set(synced.map((favorite) => favorite.animeSlug));
-    const localOnly: Record<string, { provider: string; team: string }> = {};
+    const localOnly: Record<string, FavoriteTeam> = {};
 
     const local = useSettings.getState().features.player.favoriteTeams;
     for (const [slug, favorite] of Object.entries(local)) {
       if (syncedSlugs.has(slug)) continue;
       try {
         const watch = await convex.action(convexApi.watch.resolve, { slug });
-        const source = watch.providers
-          .find((provider) => provider.id === favorite.provider)
-          ?.sources.find(
-            (candidate) =>
-              candidate.team &&
-              looseKey(candidate.team.title) === looseKey(favorite.team),
-          );
-        if (!source?.team) throw new Error('Team is no longer available');
+        const match = (team: ConvexWatchTeam) =>
+          favorite.teamId
+            ? team.team.id === favorite.teamId
+            : looseKey(team.team.title) === looseKey(favorite.team);
+        const candidates = watch.teams.filter(match);
+        const found =
+          watch.teams.find((team) => team.key === favorite.key) ??
+          candidates.find(
+            (team) =>
+              team.translationType === (favorite.translationType ?? 'dub'),
+          ) ??
+          candidates[0];
+        if (!found) throw new Error('Team is no longer available');
 
         synced.push(
           await this.mutation(convexApi.favorites.set, {
             favorite: {
               animeSlug: slug,
-              provider: favorite.provider,
-              teamId: source.team.id,
-              teamTitle: source.team.title,
-              translationType: source.translationType,
+              teamId: found.team.id,
+              teamTitle: found.team.title,
+              translationType: found.translationType,
               notificationsEnabled: true,
             },
           }),
@@ -355,7 +360,12 @@ class AccountSession {
         ...Object.fromEntries(
           synced.map((favorite) => [
             favorite.animeSlug,
-            { provider: favorite.provider, team: favorite.teamTitle },
+            {
+              key: favorite.teamKey,
+              team: favorite.teamTitle,
+              teamId: favorite.teamId,
+              translationType: favorite.translationType,
+            },
           ]),
         ),
       },

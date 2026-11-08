@@ -6,11 +6,13 @@ import MaterialSymbolsSkipNextRounded from '~icons/material-symbols/skip-next-ro
 import { Button } from '@/components/ui/button';
 import { useHikkaContent } from '@/hooks/use-hikka';
 
+import type { MergedTeam } from '../teams';
 import type { QueueItem } from './use-queue';
 
 import { followingEpisode, usePlayer } from '../context/player-context';
 import { playNext } from '../player-iframe-effects';
 import { activeQueue, useActiveQueue } from './use-active-queue';
+import { useTeamName } from './use-team-name';
 
 /** How long the next episode waits, so the user can stop it. */
 const COUNTDOWN_MS = 8_000;
@@ -19,7 +21,7 @@ const COUNTDOWN_MS = 8_000;
 interface NextEpisode {
   slug: string;
   episode: number;
-  /** The team's key in the watch data; empty for providers without teams. */
+  /** The team's key in the anime's watch data. */
   team: string;
   queued: boolean;
 }
@@ -27,7 +29,7 @@ interface NextEpisode {
 /** The queue's first episode, else the player's anime's following one. */
 const nextOf = (
   queued: QueueItem | undefined,
-  { slug, team }: { slug?: string; team?: API.TeamData },
+  { slug, team }: { slug?: string; team?: MergedTeam },
   following?: API.EpisodeData,
 ): NextEpisode | undefined => {
   if (queued) return { ...queued, queued: true };
@@ -35,7 +37,7 @@ const nextOf = (
   return {
     slug,
     episode: following.episode,
-    team: team?.title ?? '',
+    team: team?.key ?? '',
     queued: false,
   };
 };
@@ -179,6 +181,7 @@ const UpNext: FC<Props> = ({ inline, corner }) => {
   const { status, playsAt } = useUpNext();
   const next = useNextEpisode();
   const { data: anime } = useHikkaContent('anime', next?.slug);
+  const teamName = useTeamName(next?.slug, next?.team);
   const seconds = useSecondsLeft(playsAt);
   const shown = status !== 'idle' && !!next;
 
@@ -190,7 +193,7 @@ const UpNext: FC<Props> = ({ inline, corner }) => {
   const title = next && (hikkaTitle(anime) ?? next.slug);
   const heading = playsAt ? `Далі через ${seconds} с` : 'Далі';
   const details =
-    next && `Епізод ${next.episode}${next.team ? ` · ${next.team}` : ''}`;
+    next && `Епізод ${next.episode}${teamName ? ` · ${teamName}` : ''}`;
   // Said once as it shows; the count itself is only seen.
   const announcement = (
     <p role="status" className="sr-only">

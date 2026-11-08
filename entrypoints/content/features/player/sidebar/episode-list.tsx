@@ -68,15 +68,10 @@ export const revealRow = (row: HTMLElement, block: 'center' | 'nearest') => {
   }
 };
 
-/** The player's episode as the queue holds it, from the player's source. */
-const queueItemOf = (episode: API.EpisodeData): QueueItem => {
-  const { slug, provider, team } = usePlayer.getState();
-  return {
-    slug: slug!,
-    episode: episode.episode,
-    provider: provider!,
-    team: team?.title ?? '',
-  };
+/** A row's episode as the queue holds it, from the provider that plays it. */
+const queueItemOf = ({ provider, episode }: API.EpisodeData): QueueItem => {
+  const { slug, team } = usePlayer.getState();
+  return { slug: slug!, episode, provider, team: team!.key };
 };
 
 interface EpisodeMenuProps {
@@ -160,8 +155,8 @@ const EpisodeMenu: FC<EpisodeMenuProps> = ({
 };
 
 const EpisodeList = () => {
-  const { container, slug, provider, episodeData, currentEpisode, setEpisode } =
-    usePlayer();
+  const { container, slug, team, currentEpisode, setEpisode } = usePlayer();
+  const episodes = team?.episodes;
   const queue = useActiveQueue();
   const currentRowRef = useRef<HTMLLIElement>(null);
   const revealedRef = useRef(false);
@@ -175,24 +170,24 @@ const EpisodeList = () => {
       revealedRef.current ? 'nearest' : 'center',
     );
     revealedRef.current = true;
-  }, [currentEpisode?.video_url, episodeData]);
+  }, [currentEpisode?.video_url, episodes]);
 
-  if (!episodeData?.length) return null;
+  if (!episodes?.length) return null;
 
   const watched = progressOf(slug);
   const queued = new Set(queue.items.map(queueKey));
   // Decided per list so every row shares the same layout and height.
-  const numbered = episodeData.some((episode) => getEpisodeTitle(episode));
-  const numberWidth = `${String(Math.max(...episodeData.map((episode) => episode.episode))).length}ch`;
-  const dated = episodeData.some((episode) => episode.releasedAt);
+  const numbered = episodes.some((episode) => getEpisodeTitle(episode));
+  const numberWidth = `${String(Math.max(...episodes.map(({ episode }) => episode))).length}ch`;
+  const dated = episodes.some(({ releasedAt }) => releasedAt);
 
   return (
     <SidebarGroup>
       <SidebarMenu>
-        {episodeData.map((ep, index) => {
+        {episodes.map((ep, index) => {
           const title = getEpisodeTitle(ep);
           const releaseDate = formatReleaseDate(ep.releasedAt);
-          const previous = episodeData[index - 1]?.episode;
+          const previous = episodes[index - 1]?.episode;
           const missing = countMissing(ep.episode, previous);
           const duplicate = previous === ep.episode;
           const typeBadge =
@@ -203,7 +198,7 @@ const EpisodeList = () => {
           const isQueued =
             !!slug && queued.has(queueKey({ slug, episode: ep.episode }));
           // The playing episode can't be queued, only taken off the queue.
-          const queueable = !!slug && !!provider && (!isCurrent || isQueued);
+          const queueable = !!slug && (!isCurrent || isQueued);
 
           return (
             <Fragment key={ep.video_url}>
@@ -271,7 +266,7 @@ const EpisodeList = () => {
                   </ContextMenuTrigger>
                   <ContextMenuContent container={container}>
                     <EpisodeMenu
-                      episodes={episodeData.slice(index)}
+                      episodes={episodes.slice(index)}
                       isCurrent={isCurrent}
                       isQueued={isQueued}
                       queueable={queueable}

@@ -14,7 +14,6 @@ import { Switch } from '@/components/ui/switch';
 import { useCopy } from '@/hooks/use-copy';
 
 import { usePlayer } from '../../context/player-context';
-import { getTeamName } from '../../teams';
 import { MenuItem, MenuSeparator } from '../../watch-together/menu';
 import { formatTime } from '../time-group';
 import ToolbarTooltip from '../toolbar-tooltip';
@@ -68,7 +67,7 @@ const Share: FC<Props> = ({ anchor }) => {
 
     const url = new URL(window.location.pathname, window.location.origin);
     url.searchParams.set('playerProvider', provider);
-    url.searchParams.set('playerTeam', team?.title ?? '');
+    url.searchParams.set('playerTeam', team?.key ?? '');
     url.searchParams.set('playerEpisode', String(currentEpisode.episode));
     if (withTime) url.searchParams.set('time', String(commitTime()));
 
@@ -92,7 +91,7 @@ const Share: FC<Props> = ({ anchor }) => {
       >
         <div className="text-muted-foreground truncate px-2 py-1.5 text-xs font-medium">
           Епізод {currentEpisode?.episode}
-          {team?.title && ` · ${getTeamName(team)}`}
+          {team && ` · ${team.title}`}
         </div>
         <div className="flex items-center gap-2 px-2 py-1.5 text-sm">
           <label className="flex flex-1 cursor-pointer items-center gap-2 select-none">

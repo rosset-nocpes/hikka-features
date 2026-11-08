@@ -18,8 +18,7 @@ import {
 } from '@/utils/convex-api';
 import { liveConvex } from '@/utils/convex-client';
 
-import { usePlayer } from '../context/player-context';
-import { episodesOf } from '../context/sources';
+import { followingEpisode, usePlayer } from '../context/player-context';
 import { followRoom } from '../player';
 import { dispatchPlayerOverlayAction } from '../player-overlay/action-popup';
 import {
@@ -491,17 +490,20 @@ export class RoomSession {
       !item &&
       selection &&
       sameSelection(selection, room) &&
-      player.watchData &&
-      episodesOf(player.watchData, room.provider, room.team)?.find(
-        (episode) => episode.episode === room.episode + 1,
-      );
+      followingEpisode(player);
     this.send({
       type: 'advance',
       from: pickPlace(room),
       ...(item && {
         item: { animeSlug: item.animeSlug, episode: item.episode },
       }),
-      ...(next && { next: { ...pickSelection(room), episode: next.episode } }),
+      ...(next && {
+        next: {
+          provider: next.provider,
+          team: room.team,
+          episode: next.episode,
+        },
+      }),
     });
   }
 

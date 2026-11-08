@@ -12,7 +12,6 @@ import {
 
 import PanelTabs, { PanelContent, type PanelTab } from '../queue/panel-tabs';
 import { AutoplaySwitch } from '../queue/queue-list';
-import ProviderSelect from './provider-select';
 import TeamSelect from './team-select';
 
 const PlayerSidebar = () => {
@@ -34,14 +33,7 @@ const PlayerSidebar = () => {
           </SidebarMenuItem>
         </SidebarMenu>
         <SidebarMenu>
-          {tab === 'episodes' ? (
-            <>
-              <ProviderSelect />
-              <TeamSelect />
-            </>
-          ) : (
-            <AutoplaySwitch />
-          )}
+          {tab === 'episodes' ? <TeamSelect /> : <AutoplaySwitch />}
         </SidebarMenu>
       </SidebarHeader>
       <SidebarSeparator className="mx-0" />

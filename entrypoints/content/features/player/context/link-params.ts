@@ -31,11 +31,8 @@ export const takeLinkParams = () => {
 
   return {
     sharedParams,
-    // Teamless providers share an empty playerTeam.
     isShared:
-      !!sharedParams.provider &&
-      sharedParams.team !== null &&
-      !!sharedParams.episode,
+      !!sharedParams.provider && !!sharedParams.team && !!sharedParams.episode,
     /** Watch together room code from an invite link. */
     roomInvite: params.get('room') ?? undefined,
     /** The invite was accepted before the page opened, e.g. from a toast. */

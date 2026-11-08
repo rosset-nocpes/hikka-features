@@ -9,7 +9,7 @@ export interface QueueItem {
   episode: number;
   /** The source it was queued from, tried first when it plays. */
   provider: string;
-  /** The team's key in the watch data; empty for providers without teams. */
+  /** The team's key in the watch data. */
   team: string;
 }
 

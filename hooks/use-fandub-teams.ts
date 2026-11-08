@@ -1,16 +1,10 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import type {
-  AnimeFandub,
-  TeamRelease,
-  TeamSummary,
-  TranslationType,
-} from '@/utils/convex-api';
+import type { AnimeFandub, TeamRelease, TeamSummary } from '@/utils/convex-api';
 
 import { convexApi } from '@/utils/convex-api';
 import { convex } from '@/utils/convex-client';
-import { ProviderTeamIFrame } from '@/utils/providers';
 
 interface FandubTeam extends Omit<TeamSummary, 'id'> {
   /** Catalog teams' id, else the player's title. */
@@ -24,41 +18,25 @@ interface FandubTeam extends Omit<TeamSummary, 'id'> {
  */
 const unknownPlayerTeams = (data: API.WatchData | undefined) => {
   const teams = new Map<string, FandubTeam>();
-  for (const entry of Object.values(data ?? {})) {
-    if (!(entry instanceof ProviderTeamIFrame)) continue;
-    for (const team of entry.getTeams()) {
-      if (team.id) continue;
-      // The title is a key with a dub/sub suffix; the canonical one is the name.
-      const title = team.canonicalTitle || team.title;
-      const key = looseKey(title);
-      const type: TranslationType = team.translationType ?? 'unknown';
-      const episodes = Math.max(
-        0,
-        ...(entry.teams[team.title]?.episodes ?? []).map((ep) => ep.episode),
-      );
+  for (const team of data?.teams ?? []) {
+    if (team.id) continue;
+    const key = looseKey(team.title);
+    const episodes = Math.max(0, ...team.sources.map((ep) => ep.episode));
 
-      const current = teams.get(key) ?? {
-        key,
-        title,
-        logo: team.logo || undefined,
-        releases: [],
-      };
-      const release = current.releases.find(
-        (candidate) => candidate.translationType === type,
-      );
-      if (release) {
-        release.episodes = Math.max(release.episodes ?? 0, episodes);
-      } else {
-        current.releases.push({
-          source: 'player',
-          sources: ['player'],
-          translationType: type,
-          episodes: episodes || undefined,
-          updatedAt: 0,
-        });
-      }
-      teams.set(key, current);
-    }
+    const current = teams.get(key) ?? {
+      key,
+      title: team.title,
+      logo: team.logo || undefined,
+      releases: [],
+    };
+    current.releases.push({
+      source: 'player',
+      sources: ['player'],
+      translationType: team.translationType,
+      episodes: episodes || undefined,
+      updatedAt: 0,
+    });
+    teams.set(key, current);
   }
   return [...teams.values()];
 };

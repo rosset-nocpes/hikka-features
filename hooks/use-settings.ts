@@ -5,7 +5,11 @@ import {
   type StateStorage,
 } from 'zustand/middleware';
 
-import type { CatalogTeam, PreferredTranslation } from '@/utils/convex-api';
+import type {
+  CatalogTeam,
+  PreferredTranslation,
+  TranslationType,
+} from '@/utils/convex-api';
 
 import { StoredValue } from '@/utils/stored-value';
 
@@ -24,6 +28,19 @@ export const followStoredChanges = (
 ) => new StoredValue(name).watch(() => void store.persist.rehydrate());
 
 let hasMigratedFromOldStorage = false;
+
+/**
+ * An anime's favourite team, whichever provider plays it. Older favourites
+ * have only the team's name (see findFavorite).
+ */
+export interface FavoriteTeam {
+  /** The watch data's key for the team. */
+  key?: string;
+  /** Its name. */
+  team: string;
+  teamId?: string;
+  translationType?: TranslationType;
+}
 
 interface AppState {
   convexSession?: { refreshToken: string };
@@ -44,7 +61,7 @@ interface AppState {
       defaultProvider: string;
       disableBlur: boolean;
       miniModeType: 'custom' | 'video-native';
-      favoriteTeams: Record<string, { provider: string; team: string }>;
+      favoriteTeams: Record<string, FavoriteTeam>;
       /** Catalog teams, most preferred first (see pickPriorityTeam). */
       teamPriority: CatalogTeam[];
       /** Version of those teams' releases to open and be notified about. */

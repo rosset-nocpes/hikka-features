@@ -5,7 +5,6 @@ import { SidebarMenu, SidebarSeparator } from '@/components/ui/sidebar';
 
 import PanelTabs, { PanelContent, type PanelTab } from '../queue/panel-tabs';
 import { AutoplaySwitch } from '../queue/queue-list';
-import ProviderSelect from '../sidebar/provider-select';
 import TeamSelect from '../sidebar/team-select';
 import { useNowPlaying } from '../use-now-playing';
 
@@ -15,8 +14,7 @@ interface Props {
 
 /**
  * The player's sidebar for phones, under the video or in a drawer: what's
- * playing, its provider and team side by side, then the episodes, or the
- * queue instead.
+ * playing, its team, then the episodes, or the queue instead.
  */
 const PlayerMobilePanel: FC<Props> = ({ className }) => {
   const { title, subtitle } = useNowPlaying();
@@ -35,8 +33,7 @@ const PlayerMobilePanel: FC<Props> = ({ className }) => {
         </div>
         <PanelTabs value={tab} onChange={setTab} />
         {tab === 'episodes' ? (
-          <SidebarMenu className="flex-row gap-1 *:min-w-0 *:flex-1">
-            <ProviderSelect />
+          <SidebarMenu>
             <TeamSelect />
           </SidebarMenu>
         ) : (

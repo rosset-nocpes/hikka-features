@@ -1,22 +1,24 @@
 import { create } from 'zustand';
 
+import type { FavoriteTeam } from '@/hooks/use-settings';
+
 import { playerControls } from '@/hooks/use-iframe-player';
 import { account } from '@/utils/account';
-import { ProviderTeamIFrame } from '@/utils/providers';
 
 import type { QueueItem } from '../queue/use-queue';
+import type { MergedTeam } from '../teams';
 import type { SharedPlayerParams } from './link-params';
 
 import { takeLinkParams } from './link-params';
 import {
-  episodesOf,
-  favoriteIn,
+  exactSource,
+  favoriteOf,
   nextUnwatched,
-  preferredSource,
-  priorityTeam,
+  preferredTeam,
   queuedSource,
+  type Selection,
   sharedSource,
-  teamOf,
+  teamsOf,
   watchDataKey,
 } from './sources';
 
@@ -25,10 +27,18 @@ interface PlayerState {
   watchData?: API.WatchData; // todo: remove it from there
   watchDataKey?: string;
   slug?: string;
+  /** The anime's teams, each once whichever providers list it. */
+  teams?: MergedTeam[];
+  /**
+   * The provider the user picked to play from wherever it has the episode;
+   * without one, each episode plays from the first provider that has it.
+   */
+  pinnedProvider?: string;
+  team?: MergedTeam;
+  /** The playing episode's provider. */
   provider?: string;
-  team?: API.TeamData;
-  favoriteTeam?: FavoriteTeam;
-  episodeData?: API.EpisodeData[];
+  /** `key` of the anime's favourite team. */
+  favoriteKey?: string;
   currentEpisode?: API.EpisodeData;
   fullscreen: boolean;
   theatreMode: boolean;
@@ -57,10 +67,11 @@ interface PlayerActions {
     slug: string,
     target?: QueueItem,
   ) => boolean;
-  setProvider: (provider: string) => void;
-  setTeam: (team: API.TeamData) => void;
+  /** Plays from `provider` wherever it can, or from any without one. */
+  setPinnedProvider: (provider?: string) => void;
+  setTeam: (team: MergedTeam) => void;
   /** Makes the team this anime's favourite, or stops it being one. */
-  toggleFavoriteTeam: (team: API.TeamData) => void;
+  toggleFavoriteTeam: (team: MergedTeam) => void;
   setEpisode: (episode: API.EpisodeData) => void;
   /** Shows exactly this source and episode; false when it isn't available. */
   selectSource: (provider: string, team: string, episode: number) => boolean;
@@ -77,18 +88,16 @@ interface PlayerActions {
 }
 
 /**
- * The episode after the playing one from the same source, which plays once
- * the queue runs out.
+ * The team's episode after the playing one, from whichever provider has it,
+ * which plays once the queue runs out.
  */
 export const followingEpisode = ({
-  watchData,
-  provider,
   team,
   currentEpisode,
-}: Pick<PlayerState, 'watchData' | 'provider' | 'team' | 'currentEpisode'>) =>
-  watchData && provider && currentEpisode
-    ? episodesOf(watchData, provider, team?.title ?? '')?.find(
-        (episode) => episode.episode === currentEpisode.episode + 1,
+}: Pick<PlayerState, 'team' | 'currentEpisode'>) =>
+  currentEpisode
+    ? team?.episodes.find(
+        ({ episode }) => episode === currentEpisode.episode + 1,
       )
     : undefined;
 
@@ -100,9 +109,9 @@ export const compactMode = ({
   miniPlayer || videoPiPActive;
 
 export const isFavoriteTeam = (
-  { favoriteTeam, provider }: Pick<PlayerState, 'favoriteTeam' | 'provider'>,
-  team: API.TeamData,
-) => favoriteTeam?.provider === provider && favoriteTeam?.team === team.title;
+  { favoriteKey }: Pick<PlayerState, 'favoriteKey'>,
+  team: MergedTeam,
+) => favoriteKey === team.key;
 
 export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
   const handleFullscreenChange = () => {
@@ -117,7 +126,16 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
     useSettings.getState().updateFeatureSettings('player', {
       favoriteTeams: favorite ? { ...others, [slug]: favorite } : others,
     });
-    set({ favoriteTeam: favorite });
+  };
+
+  /** The state that shows `entry` of `team`. */
+  const show = ({ team, entry }: Selection) => {
+    if (entry.provider !== get().provider) setSpeedOptions(entry.provider);
+    return {
+      team,
+      provider: entry.provider,
+      currentEpisode: entry,
+    };
   };
 
   return {
@@ -130,22 +148,19 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
 
     initialize: (data, slug, target) => {
       const key = watchDataKey(data);
-      const { favoriteTeam } = favoriteIn(data, slug);
+      const teams = teamsOf(data, get().pinnedProvider);
+      const loaded = {
+        watchData: data,
+        watchDataKey: key,
+        slug,
+        teams,
+        favoriteKey: favoriteOf(teams, slug)?.key,
+      };
 
       if (target) {
-        const selection = queuedSource(data, target);
+        const selection = queuedSource(teams, target);
         if (!selection) return false;
-        if (selection.provider !== get().provider) {
-          setSpeedOptions(selection.provider);
-        }
-        set({
-          watchData: data,
-          watchDataKey: key,
-          slug,
-          favoriteTeam,
-          ...selection,
-          isShared: false,
-        });
+        set({ ...loaded, ...show(selection), isShared: false });
         return true;
       }
 
@@ -156,25 +171,17 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
       const { sharedParams, isShared, roomInvite, roomInviteAccepted } =
         takeLinkParams();
       // A shared link wins over the user's preferences.
-      const { provider, team } = isShared
-        ? sharedSource(data, slug, sharedParams.provider!, sharedParams.team!)
-        : preferredSource(data, slug);
+      let selection: Selection;
+      if (isShared) {
+        selection = sharedSource(teams, slug, sharedParams);
+      } else {
+        const team = preferredTeam(teams, slug);
+        selection = { team, entry: nextUnwatched(team.episodes, slug) };
+      }
 
-      const episodeData = episodesOf(data, provider, team.title)!;
-      const sharedEpisode = isShared
-        ? episodeData.find((ep) => ep.episode === Number(sharedParams.episode))
-        : undefined;
-
-      setSpeedOptions(provider);
       set({
-        watchData: data,
-        watchDataKey: key,
-        slug,
-        provider,
-        team,
-        favoriteTeam,
-        episodeData,
-        currentEpisode: sharedEpisode ?? nextUnwatched(episodeData, slug),
+        ...loaded,
+        ...show(selection),
         sharedParams,
         isShared,
         roomInvite,
@@ -182,70 +189,56 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
       });
       return true;
     },
-    setProvider: (provider) => {
-      const { watchData } = get();
-      if (!watchData) return;
-
-      const { slug } = get();
-      const team = priorityTeam(watchData, provider, slug);
-      const episodeData = episodesOf(watchData, provider, team.title)!;
-      setSpeedOptions(provider);
-      set({
-        provider,
-        team,
-        episodeData,
-        currentEpisode: nextUnwatched(episodeData, slug),
-      });
-    },
-    setTeam: (team) => {
-      const { watchData, provider, slug } = get();
-      if (!watchData || !(watchData[provider!] instanceof ProviderTeamIFrame)) {
+    setPinnedProvider: (pinnedProvider) => {
+      const { watchData, slug, team, currentEpisode } = get();
+      if (!watchData) {
+        set({ pinnedProvider });
         return;
       }
 
-      const episodeData = episodesOf(watchData, provider!, team.title)!;
-      set({
-        team,
-        episodeData,
-        currentEpisode: nextUnwatched(episodeData, slug),
-      });
+      const teams = teamsOf(watchData, pinnedProvider);
+      const shown = teams.find(({ key }) => key === team?.key) ?? teams[0]!;
+      const entry =
+        shown.episodes.find(
+          ({ episode }) => episode === currentEpisode?.episode,
+        ) ?? nextUnwatched(shown.episodes, slug);
+      set({ pinnedProvider, teams, ...show({ team: shown, entry }) });
     },
+    setTeam: (team) =>
+      set(show({ team, entry: nextUnwatched(team.episodes, get().slug) })),
     toggleFavoriteTeam: (team) => {
-      const { slug, provider, watchData } = get();
-      if (!slug || !provider) return;
+      const { slug } = get();
+      if (!slug) return;
 
       if (isFavoriteTeam(get(), team)) {
         setFavoriteTeam(slug);
+        set({ favoriteKey: undefined });
         account.removeFavorite(slug).catch(console.error);
         return;
       }
 
-      setFavoriteTeam(slug, { provider, team: team.title });
-      const selected = watchData && teamOf(watchData, provider, team.title);
+      setFavoriteTeam(slug, {
+        key: team.key,
+        team: team.title,
+        teamId: team.id,
+        translationType: team.translationType,
+      });
+      set({ favoriteKey: team.key });
       account
         .saveFavorite({
           animeSlug: slug,
-          provider,
-          teamId: selected?.id,
-          teamTitle: selected?.canonicalTitle ?? team.title,
-          translationType: selected?.translationType,
+          teamId: team.id,
+          teamTitle: team.title,
+          translationType: team.translationType,
         })
         .catch(console.error);
     },
-    setEpisode: (episode) => set({ currentEpisode: episode }),
+    setEpisode: (entry) => set(show({ team: get().team!, entry })),
     selectSource: (provider, team, episode) => {
-      const { watchData } = get();
-      const episodeData = watchData && episodesOf(watchData, provider, team);
-      const currentEpisode = episodeData?.find((ep) => ep.episode === episode);
-      if (!currentEpisode) return false;
-
-      if (provider !== get().provider) setSpeedOptions(provider);
-      set({
-        provider,
-        team: teamOf(watchData!, provider, team),
-        episodeData,
-        currentEpisode,
-      });
+      const { teams } = get();
+      const selection = teams && exactSource(teams, provider, team, episode);
+      if (!selection) return false;
+      set(show(selection));
       return true;
     },
     dismissRoomInvite: () =>
@@ -313,11 +306,6 @@ const setSpeedOptions = (provider: string) =>
         ? [1, 1.25, 1.5, 2]
         : useIFramePlayer.getInitialState().speedOptions,
   });
-
-interface FavoriteTeam {
-  provider: string;
-  team: string;
-}
 
 export type MiniPlayerCorner =
   | 'top-left'

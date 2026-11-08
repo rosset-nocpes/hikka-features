@@ -2,6 +2,7 @@ import { type FC, type ReactNode, type RefObject, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import MaterialSymbolsArrowBackRounded from '~icons/material-symbols/arrow-back-rounded';
 import MaterialSymbolsChevronRightRounded from '~icons/material-symbols/chevron-right-rounded';
+import MaterialSymbolsCloudOutlineRounded from '~icons/material-symbols/cloud-outline-rounded';
 import MaterialSymbolsHighQualityOutlineRounded from '~icons/material-symbols/high-quality-outline-rounded';
 import MaterialSymbolsSettingsOutlineRounded from '~icons/material-symbols/settings-outline-rounded';
 import MaterialSymbolsSpeedOutlineRounded from '~icons/material-symbols/speed-outline-rounded';
@@ -18,18 +19,67 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+import { usePlayer } from '../context/player-context';
+import { getEpisodeRanges } from '../teams';
 import MenuPages from './menu-pages';
 import ToolbarTooltip from './toolbar-tooltip';
 import { useToolbarMenuPosition, useUiLock } from './use-ui-lock';
 
 interface Submenu {
-  id: 'quality' | 'subtitles' | 'speed';
+  id: 'source' | 'quality' | 'subtitles' | 'speed';
   label: string;
   icon: ReactNode;
   value: string;
-  options: Array<{ value: string; label: string }>;
+  /** Shown on the root page, when the option's label says too little. */
+  summary?: string;
+  options: Array<{ value: string; label: string; detail?: string }>;
   select: (value: string) => void;
 }
+
+/**
+ * Where the team's episodes play from: whichever provider has each one, or
+ * the one the user picks, wherever it has it. Only offered when more than
+ * one provider has the team, and lists only those.
+ */
+const useSourceSubmenu = (): Submenu | undefined => {
+  const { team, provider, pinnedProvider, setPinnedProvider } = usePlayer(
+    useShallow((state) => ({
+      team: state.team,
+      provider: state.provider,
+      pinnedProvider: state.pinnedProvider,
+      setPinnedProvider: state.setPinnedProvider,
+    })),
+  );
+  if (!team || !provider) return undefined;
+
+  const all = new Set(team.sources.map(({ episode }) => episode)).size;
+  const options = [
+    ...new Set(team.sources.map((source) => source.provider)),
+  ].map((id) => {
+    const episodes = team.sources.filter((source) => source.provider === id);
+    // Ranges only where the provider lacks some of the team's episodes.
+    const partial = new Set(episodes.map(({ episode }) => episode)).size < all;
+    return {
+      value: id,
+      label: id.toUpperCase(),
+      detail: partial ? getEpisodeRanges(episodes) : undefined,
+    };
+  });
+  if (options.length < 2) return undefined;
+
+  const pinned = options.some(({ value }) => value === pinnedProvider);
+  return {
+    id: 'source',
+    label: 'Джерело',
+    icon: <MaterialSymbolsCloudOutlineRounded />,
+    value: pinned ? pinnedProvider! : '',
+    summary: pinned
+      ? provider.toUpperCase()
+      : `Авто · ${provider.toUpperCase()}`,
+    options: [{ value: '', label: 'Авто' }, ...options],
+    select: (value) => setPinnedProvider(value || undefined),
+  };
+};
 
 const formatSpeed = (speed: number) => (speed === 1 ? 'Звичайна' : `${speed}x`);
 
@@ -48,7 +98,8 @@ const useSubmenus = (): Submenu[] => {
     })),
   );
 
-  const submenus: Submenu[] = [];
+  const source = useSourceSubmenu();
+  const submenus: Submenu[] = source ? [source] : [];
   if (player.qualities.length > 0) {
     submenus.push({
       id: 'quality',
@@ -88,8 +139,10 @@ const useSubmenus = (): Submenu[] => {
   return submenus;
 };
 
-const selectedLabel = ({ options, value }: Submenu) =>
-  options.find((option) => option.value === value)?.label ?? (value || 'Авто');
+const selectedLabel = ({ options, value, summary }: Submenu) =>
+  summary ??
+  options.find((option) => option.value === value)?.label ??
+  (value || 'Авто');
 
 const SettingsPages = () => {
   const submenus = useSubmenus();
@@ -109,7 +162,7 @@ const SettingsPages = () => {
               goBack();
             }}
           >
-            {active.options.map(({ value, label }) => (
+            {active.options.map(({ value, label, detail }) => (
               <DropdownMenuRadioItem
                 key={value}
                 value={value}
@@ -117,6 +170,11 @@ const SettingsPages = () => {
                 className="tabular-nums"
               >
                 <span className="truncate">{label}</span>
+                {detail && (
+                  <span className="text-muted-foreground ml-auto shrink-0 text-xs">
+                    {detail}
+                  </span>
+                )}
               </DropdownMenuRadioItem>
             ))}
           </DropdownMenuRadioGroup>

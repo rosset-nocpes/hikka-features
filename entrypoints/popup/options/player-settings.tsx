@@ -12,7 +12,7 @@ const MINI_MODE_OPTIONS = [
   { value: 'video-native', label: 'Нативний' },
 ] as const;
 
-const PROVIDER_OPTIONS = ['moon', 'ashdi'].map((value) => ({
+const PROVIDER_OPTIONS = ['moon', 'ashdi', 'tortuga'].map((value) => ({
   value,
   label: value.toUpperCase(),
 }));
@@ -39,8 +39,8 @@ const PlayerSettings = () => {
 
       <SettingsGroup title="Джерело">
         <SegmentedOption
-          label="Програвач"
-          description="Відкривається першим"
+          label="Спершу"
+          description="Коли серія є в кількох джерелах"
           value={defaultProvider}
           options={PROVIDER_OPTIONS}
           onChange={(value) =>

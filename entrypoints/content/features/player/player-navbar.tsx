@@ -135,7 +135,7 @@ const PlayerNavbar: FC<Props> = ({ onDragStart }) => {
                       variant="ghost"
                       size="icon-sm"
                       className={GLASS_BUTTON}
-                      aria-label="Епізоди та джерело"
+                      aria-label="Епізоди та команди"
                     />
                   }
                 >

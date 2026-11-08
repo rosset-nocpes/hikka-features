@@ -16,27 +16,18 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
-import { ProviderTeamIFrame } from '@/utils/providers';
 
 import { isFavoriteTeam, usePlayer } from '../context/player-context';
-import { getEpisodeRanges, getTeamName, groupTeams } from '../teams';
+import { getEpisodeRanges, groupTeams, type MergedTeam } from '../teams';
 
 const TeamSelect = () => {
-  const {
-    container,
-    provider,
-    team,
-    setTeam,
-    favoriteTeam,
-    toggleFavoriteTeam,
-    episodeData,
-    watchData: data,
-  } = usePlayer();
+  const { container, teams, team, setTeam, favoriteKey, toggleFavoriteTeam } =
+    usePlayer();
 
-  const source = data && provider ? data[provider] : undefined;
-  if (!(source instanceof ProviderTeamIFrame) || !team) return;
+  if (!teams || !team) return;
 
-  const teamGroups = groupTeams(source.getTeams(), favoriteTeam?.team);
+  const teamGroups = groupTeams(teams, favoriteKey);
+  const rangesOf = (shown: MergedTeam) => getEpisodeRanges(shown.episodes);
 
   return (
     <SidebarMenuItem>
@@ -45,20 +36,16 @@ const TeamSelect = () => {
           render={
             <SidebarMenuButton
               size="lg"
-              tooltip={getTeamName(team)}
+              tooltip={team.title}
               tooltipContainer={container}
             >
               <Avatar className="size-8 rounded-md">
                 <AvatarImage src={team.logo} />
-                <AvatarFallback>{getTeamName(team)[0]}</AvatarFallback>
+                <AvatarFallback>{team.title[0]}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">
-                  {getTeamName(team)}
-                </span>
-                <span className="truncate text-xs">
-                  {episodeData && getEpisodeRanges(episodeData)}
-                </span>
+                <span className="truncate font-semibold">{team.title}</span>
+                <span className="truncate text-xs">{rangesOf(team)}</span>
               </div>
               <MaterialSymbolsUnfoldMoreRounded className="ml-auto" />
             </SidebarMenuButton>
@@ -81,14 +68,11 @@ const TeamSelect = () => {
                   {group.label}
                 </DropdownMenuLabel>
                 {group.teams.map((team) => {
-                  const favorite = isFavoriteTeam(
-                    { favoriteTeam, provider },
-                    team,
-                  );
+                  const favorite = isFavoriteTeam({ favoriteKey }, team);
                   return (
                     <motion.div
-                      key={team.title}
-                      layoutId={team.title}
+                      key={team.key}
+                      layoutId={team.key}
                       layout
                       transition={{
                         type: 'spring',
@@ -102,22 +86,15 @@ const TeamSelect = () => {
                       >
                         <div className="flex w-full items-center justify-between gap-2 px-1 py-1.5 text-left text-sm">
                           <Avatar className="h-8 w-8 rounded-md">
-                            <AvatarImage
-                              src={team.logo}
-                              alt={getTeamName(team)}
-                            />
-                            <AvatarFallback>
-                              {getTeamName(team)[0]}
-                            </AvatarFallback>
+                            <AvatarImage src={team.logo} alt={team.title} />
+                            <AvatarFallback>{team.title[0]}</AvatarFallback>
                           </Avatar>
                           <div className="grid flex-1 text-left text-sm leading-tight">
                             <span className="truncate font-semibold">
-                              {getTeamName(team)}
+                              {team.title}
                             </span>
                             <span className="truncate text-xs">
-                              {getEpisodeRanges(
-                                source.teams[team.title]?.episodes ?? [],
-                              )}
+                              {rangesOf(team)}
                             </span>
                           </div>
                           <Button
