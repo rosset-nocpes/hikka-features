@@ -1,4 +1,6 @@
-export const IFRAME_PLAYER_COMMAND_TYPE = 'iframe-player-command' as const;
+import { sendToBackground } from '@/utils/messaging';
+
+const IFRAME_PLAYER_COMMAND_TYPE = 'iframe-player-command';
 
 const SIMPLE_COMMAND_ACTIONS = [
   'play',
@@ -27,18 +29,15 @@ export type IFramePlayerCommandPayload =
   | { action: 'set-quality'; value: string; index: number }
   | { action: 'set-subtitle'; value: string; index: number };
 
-export type IFramePlayerCommand = IFramePlayerCommandPayload & {
+type IFramePlayerCommand = IFramePlayerCommandPayload & {
   type: typeof IFRAME_PLAYER_COMMAND_TYPE;
 };
 
-type IFramePlayerBridgeCommandPayload = Exclude<
+/** The commands a bridge forwards to its player; the base handles the rest. */
+export type IFramePlayerBridgeCommand = Exclude<
   IFramePlayerCommandPayload,
   { action: 'toggle-picture-in-picture' }
 >;
-
-export type IFramePlayerBridgeCommand = IFramePlayerBridgeCommandPayload & {
-  type: typeof IFRAME_PLAYER_COMMAND_TYPE;
-};
 
 export interface IFramePlayerEvent {
   event: string;
@@ -46,11 +45,9 @@ export interface IFramePlayerEvent {
   answer?: unknown;
 }
 
+/** Sends `command` to the episode's player through the background. */
 export const sendIFramePlayerCommand = (command: IFramePlayerCommandPayload) =>
-  browser.runtime.sendMessage({
-    type: IFRAME_PLAYER_COMMAND_TYPE,
-    ...command,
-  } satisfies IFramePlayerCommand);
+  sendToBackground(IFRAME_PLAYER_COMMAND_TYPE, command);
 
 export const isIFramePlayerCommand = (
   message: unknown,

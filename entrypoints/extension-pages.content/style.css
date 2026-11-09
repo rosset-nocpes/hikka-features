@@ -1,0 +1,11 @@
+/* Shown anyway after a few seconds, should the extension never get there. */
+html:not([data-hikka-features-ready]) body {
+  visibility: hidden;
+  animation: hikka-features-reveal 0s 3s forwards;
+}
+
+@keyframes hikka-features-reveal {
+  to {
+    visibility: visible;
+  }
+}

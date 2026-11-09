@@ -1,80 +1,48 @@
-import type { ProviderIFrame, ProviderTeamIFrame } from './provider_classes';
+import type {
+  ConvexEpisodeInfo,
+  ConvexWatchResponse,
+  TranslationType,
+} from './convex-api';
 
 declare global {
   namespace API {
-    /* Anime */
     type WatchData = {
       type: 'tv' | 'movie' | 'ona';
-      [key: string]: ProviderTeamIFrame | ProviderIFrame;
+      /** In the order the backend lists them. */
+      providers: ConvexWatchResponse['providers'];
+      /** Each team once, in one translation, by name. */
+      teams: WatchTeam[];
     };
 
-    type NotionData = {
-      poster?: string;
-      fandub?: FandubTeam[];
-    };
-
-    type FandubTeam = {
-      title: string;
-      logo: string;
-      link: string;
-    };
-
-    type ProviderData = {
-      [key: string]: EpisodeData[];
-    };
-
+    /** An episode as one provider plays it. */
     type EpisodeData = {
       episode: number;
       video_url: string;
+      provider: string;
+      title?: ConvexEpisodeInfo['title'];
+      releasedAt?: number;
+      episode_type?: ConvexEpisodeInfo['type'];
     };
-
-    /* Manga */
-    type ReadData = {
-      chapters: ChapterData[];
-    };
-
-    type ChapterData = {
-      id: string;
-      scanlator: string;
-      date_upload: string;
-      volume: number;
-      chapter: number;
-      title: string;
-      url: string;
-    };
-
-    type ReadChapterData = {
-      images: string[];
-    };
-
-    type ScanlationGroup = {
-      id: string;
-      name: string;
-      website: string;
-      description: string;
-    };
-
-    type ChapterUser = {
-      id: string;
-      username: string;
-    };
-
-    /* New WatchData (need refactor, for now just fast hotfix for smaller bundle size) */
-    type ProviderType = 'team-iframe' | 'team-hls' | 'iframe' | 'hls' | 'id';
 
     type TeamData = {
+      /** Names the team whichever provider lists it (see the backend). */
+      key: string;
+      id?: string;
+      /** The team's page, `/teams/<slug>`. */
+      slug?: string;
       title: string;
       logo: string;
+      /** Uploads crediting no team, named after their provider. */
+      unnamed?: boolean;
+      translationType: TranslationType;
     };
 
-    type EpisodeDataIFrame = {
-      episode: number;
-      video_url: string;
-    };
+    /** A team with every provider's copy of its episodes, by number. */
+    type WatchTeam = TeamData & { sources: EpisodeData[] };
 
     interface EditorContent {
       suggestion: {
-        name_ua: string;
+        name_ua?: string;
         name_en?: string;
         name_ja?: string;
         name_native?: string;

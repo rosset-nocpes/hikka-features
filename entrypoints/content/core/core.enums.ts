@@ -1,21 +1,25 @@
 export enum HikkaPages {
   All = 'all',
+  Home = 'home',
   AllContent = 'all-content',
-  // Anime
-  AnimeSearch = 'anime-search',
   AnimeContent = 'anime-content',
   AnimeMainPage = 'anime-main-page',
-  // Manga
-  MangaSearch = 'manga-search',
   MangaContent = 'manga-content',
   MangaMainPage = 'manga-main-page',
-  // Novel
-  NovelSearch = 'novel-search',
   NovelContent = 'novel-content',
   NovelMainPage = 'novel-main-page',
-  // Edit
+  CharacterPage = 'character-page',
+  PersonPage = 'person-page',
+  /** A user's profile, `/u/<username>`. */
+  UserPage = 'user-page',
+  // The extension's own pages
+  TeamPages = 'team-pages',
+  RecommendationsPage = 'recommendations-page',
   EditContent = 'edit-content',
-  EditCreate = 'edit-create',
+  /** An edit's own page, `/edit/<id>`. */
+  EditPage = 'edit-page',
   EditCreateCharacter = 'edit-create-character',
   EditCreatePerson = 'edit-create-person',
+  /** A new edit, an edit, or an edit being changed: the pages with its form. */
+  EditForm = 'edit-form',
 }

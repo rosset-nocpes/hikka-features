@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    // The backend's own options, which it is checked with.
+    "noUncheckedIndexedAccess": false
+  },
+  "include": ["../../.wxt/wxt.d.ts", "../../**/*.d.ts", "./*.ts"],
+  "exclude": ["../../**/node_modules", "../../.output"]
+}

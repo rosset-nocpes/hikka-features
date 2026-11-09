@@ -1,10 +1,7 @@
-import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
-import { createRoot } from 'react-dom/client';
 
-import { queryClient } from '../..';
-import { BaseFeature } from '../../core/base-feature';
+import { BaseFeature, createFeatureUi } from '../../core/base-feature';
 import { HikkaPages } from '../../core/core.enums';
 import useMediaCover from './hooks/use-media-cover';
 
@@ -13,27 +10,14 @@ export default class MediaCoverFeature extends BaseFeature {
   readonly pages = [HikkaPages.All];
 
   async init() {
-    this.ui = await createShadowRootUi(usePageStore.getState().ctx, {
+    this.ui = await createFeatureUi({
       name: this.id,
       position: 'inline',
       append: 'last',
       anchor: 'main',
-      onMount(container) {
-        const wrapper = document.createElement('div');
-        container.append(wrapper);
-
-        const root = createRoot(wrapper);
-        root.render(
-          <QueryClientProvider client={queryClient}>
-            <MediaCover />
-          </QueryClientProvider>,
-        );
-
-        return root;
-      },
-      onRemove: (root) => {
-        root?.unmount();
-      },
+      inheritStyles: false,
+      themeVariables: false,
+      render: () => <MediaCover />,
     });
   }
 }

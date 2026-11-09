@@ -1,31 +1,29 @@
 import * as cheerio from 'cheerio';
 
-import type { Chapter, ReaderContent } from '../reader.types';
+import type { Chapter, ReaderContent, TitleInfo } from '../reader.types';
 
 import { ReaderContentMode } from '../reader.enums';
 import BaseScraper from './_scraper';
 
-class MIUScraper extends BaseScraper {
-  name = 'MIUScraper';
-  baseUrl = 'https://manga.in.ua';
-  endpoints = {
-    search: `${this.baseUrl}/index.php?do=search`,
-    loadChapters: 'engine/ajax/controller.php?mod=load_chapters',
-    loadImages: 'engine/ajax/controller.php?mod=load_chapters_image',
-  };
+const ENDPOINTS = {
+  search: 'index.php?do=search',
+  loadChapters: 'engine/ajax/controller.php?mod=load_chapters',
+  loadImages: 'engine/ajax/controller.php?mod=load_chapters_image',
+};
 
-  /**
-   * Internal parser: Extracts site_login_hash
-   */
+class MIUScraper extends BaseScraper {
+  constructor() {
+    super('MIUScraper', 'https://manga.in.ua');
+  }
+
+  /** The session hash the site's AJAX endpoints want. */
   private extractUserHash(html: string): string {
     const match = html.match(/site_login_hash\s*=\s*'([^']+)'/);
     if (!match?.[1]) throw new Error('Could not find site_login_hash.');
     return match[1];
   }
 
-  /**
-   * Internal parser: Detects the dynamic key name for the hash query
-   */
+  /** The name the page's script sends that hash under to `endpoint`. */
   private extractQueryKey(html: string, endpoint: string): string {
     const escaped = endpoint.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const regex = new RegExp(`${escaped}.*?{(.*?)}`, 's');
@@ -45,12 +43,12 @@ class MIUScraper extends BaseScraper {
     return html.includes('dle_user_hash') ? 'dle_user_hash' : 'user_hash';
   }
 
-  public async search(data: any) {
+  async search(data: TitleInfo) {
     const title = data.title_ua || data.title_en || data.title_original;
-    if (!title) return;
+    if (!title) throw new Error('The title has no name to search by.');
 
-    let mangaUrl = data.external.find(
-      (link: any) => link.text === 'Manga.in.ua',
+    let mangaUrl = data.external?.find(
+      (link) => link.text === 'Manga.in.ua',
     )?.url;
 
     if (!mangaUrl) {
@@ -61,22 +59,12 @@ class MIUScraper extends BaseScraper {
         search_start: '1',
       });
 
-      let searchHtml = await this.request(
-        this.endpoints.search,
-        'POST',
-        searchData,
-      );
+      let $search = await this.load(ENDPOINTS.search, 'POST', searchData);
 
-      let $search = cheerio.load(searchHtml);
-
+      // Nothing found with the year; try the title alone.
       if ($search('.berrors').length) {
         searchData.set('story', title);
-        searchHtml = await this.request(
-          this.endpoints.search,
-          'POST',
-          searchData,
-        );
-        $search = cheerio.load(searchHtml);
+        $search = await this.load(ENDPOINTS.search, 'POST', searchData);
       }
 
       mangaUrl = $search('main.main article.item h3.card__title a')
@@ -88,10 +76,7 @@ class MIUScraper extends BaseScraper {
     return mangaUrl;
   }
 
-  /**
-   * Public API: Fetches all chapters for a manga
-   */
-  public async getChapterList(url: string): Promise<ReaderContent> {
+  async getChapterList(url: string): Promise<ReaderContent> {
     const pageHtml = await this.request(url);
     const $page = cheerio.load(pageHtml);
     const container = $page('div#linkstocomics');
@@ -101,16 +86,11 @@ class MIUScraper extends BaseScraper {
       news_id: container.attr('data-news_id') || '',
       news_category: container.attr('data-news_category') || '',
       this_link: container.attr('data-this_link') || '',
-      [this.extractQueryKey(pageHtml, this.endpoints.loadChapters)]:
+      [this.extractQueryKey(pageHtml, ENDPOINTS.loadChapters)]:
         this.extractUserHash(pageHtml),
     });
 
-    const listHtml = await this.request(
-      this.endpoints.loadChapters,
-      'POST',
-      params,
-    );
-    const $list = cheerio.load(listHtml);
+    const $list = await this.load(ENDPOINTS.loadChapters, 'POST', params);
     const chapters: Chapter[] = [];
 
     $list('div.ltcitems').each((_, el) => {
@@ -130,7 +110,7 @@ class MIUScraper extends BaseScraper {
         date_upload: $el.children().first().text().trim(),
         volume: Number($el.attr('manga-tom') || 0),
         chapter: Number($el.attr('manga-chappter') || 0),
-        title: text.includes('-') ? text.split('-')[1].trim() : '',
+        title: text.split('-')[1]?.trim() ?? '',
         url: href,
       });
     });
@@ -138,35 +118,23 @@ class MIUScraper extends BaseScraper {
     return { displayMode: ReaderContentMode.Chapters, chapters };
   }
 
-  /**
-   * Public API: Fetches image pages for a specific chapter URL
-   */
-  public async getChapter(url: string) {
+  /** The chapter's page images. */
+  async getChapter(url: string) {
     const html = await this.request(url);
     const $ = cheerio.load(html);
 
     const params = new URLSearchParams({
       news_id: $('div#comics').attr('data-news_id') || '',
       action: 'show',
-      [this.extractQueryKey(html, this.endpoints.loadImages)]:
+      [this.extractQueryKey(html, ENDPOINTS.loadImages)]:
         this.extractUserHash(html),
     });
 
-    const imgListHtml = await this.request(
-      `${this.endpoints.loadImages}&${params.toString()}`,
-    );
-    const $imgs = cheerio.load(imgListHtml);
-
-    const images: string[] = [];
-    $imgs('img').each((_, img) => {
-      const src = $(img).attr('data-src');
-      if (src) images.push(src);
-    });
-
-    return images;
+    const $images = await this.load(`${ENDPOINTS.loadImages}&${params}`);
+    return $images('img')
+      .toArray()
+      .flatMap((img) => $images(img).attr('data-src') || []);
   }
 }
 
-const miuScraper = new MIUScraper();
-
-export default miuScraper;
+export const miuScraper = new MIUScraper();

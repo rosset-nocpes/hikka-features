@@ -91,7 +91,8 @@ export class PlyrBridge extends IFramePlayerBridge {
     .ma-player-wrap > :not(.plyr):not(video),
     body > .ma-promo,
     .plyr__controls,
-    .plyr__control--overlaid {
+    .plyr__control--overlaid,
+    .ma-skip-btn {
       display: none !important;
     }
   `;
@@ -102,7 +103,7 @@ export class PlyrBridge extends IFramePlayerBridge {
 
   private readonly qualityController = new PlyrQualityController(this.video);
 
-  protected onStart() {
+  protected override onStart() {
     this.listen(this.video, 'play', () => this.postEvent('play'));
     this.listen(this.video, 'pause', () => this.postEvent('pause'));
     this.listen(this.video, 'ended', () => this.postEvent('end'));

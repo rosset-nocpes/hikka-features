@@ -30,6 +30,7 @@ export abstract class IFramePlayerBridge {
     this.listen(this.video, 'leavepictureinpicture', () => {
       this.postEvent('pip', false);
     });
+    this.handleNextTrack();
 
     this.onStart();
   }
@@ -58,6 +59,21 @@ export abstract class IFramePlayerBridge {
   ) {
     target.addEventListener(event, listener, options);
     this.addCleanup(() => target.removeEventListener(event, listener, options));
+  }
+
+  /**
+   * Media keys and the picture-in-picture window's next button skip to the
+   * episode that follows, which the page's player picks.
+   */
+  private handleNextTrack() {
+    const session = navigator.mediaSession;
+    if (!session) return;
+    try {
+      session.setActionHandler('nexttrack', () => this.postEvent('nexttrack'));
+      this.addCleanup(() => session.setActionHandler('nexttrack', null));
+    } catch {
+      // A browser without the action.
+    }
   }
 
   private addCleanup(cleanup: () => void) {

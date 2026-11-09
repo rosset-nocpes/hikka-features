@@ -1,36 +1,36 @@
-import type { FC, PropsWithChildren } from 'react';
+import type { FC } from 'react';
 
-import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 
-interface Props extends PropsWithChildren {
+import SettingRow from './setting-row';
+
+interface Props {
   label: string;
   description?: string;
   checked: boolean;
   onCheckedChange?: (checked: boolean) => void;
 }
 
+/** A settings row that toggles when clicked anywhere. */
 const SwitchOption: FC<Props> = ({
   label,
   description,
   checked,
   onCheckedChange,
-}) => {
-  return (
-    <div className="flex items-center justify-between">
-      <div className="mr-10 flex flex-col gap-1">
-        <Label className="font-semibold">{label}</Label>
-        {description && (
-          <p className="text-xs font-medium text-[#A1A1A1]">{description}</p>
-        )}
-      </div>
-      <Switch
-        checked={checked}
-        onCheckedChange={onCheckedChange}
-        className="flex items-center justify-between"
-      />
-    </div>
-  );
-};
+}) => (
+  <SettingRow
+    label={label}
+    description={description}
+    onClick={() => onCheckedChange?.(!checked)}
+  >
+    <Switch
+      checked={checked}
+      aria-label={label}
+      onClick={(event) => event.stopPropagation()}
+      onCheckedChange={onCheckedChange}
+      className="after:-inset-y-3"
+    />
+  </SettingRow>
+);
 
 export default SwitchOption;

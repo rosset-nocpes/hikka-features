@@ -10,7 +10,7 @@ import {
   SidebarHeader,
 } from '@/components/ui/sidebar';
 
-import reader from '../../reader';
+import { closeReader } from '../../reader';
 import ChapterList from './chapter-list';
 import ReaderSettings from './settings/reader-settings';
 import SortOptions from './sort-options';
@@ -21,11 +21,7 @@ const ReaderSidebar = () => {
       <SidebarHeader>
         <div className="flex items-center justify-end">
           <div className="flex min-w-8 flex-1 items-center gap-2 truncate">
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => reader().then((x) => x.remove())}
-            >
+            <Button variant="ghost" size="icon-sm" onClick={closeReader}>
               <MaterialSymbolsCloseRounded />
             </Button>
             <span className="cursor-default font-medium">Читалка</span>

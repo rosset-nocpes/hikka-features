@@ -1,15 +1,11 @@
-import { ExternalLink, Minus, Plus, X } from 'lucide-react';
 import {
-  animate,
   AnimatePresence,
   motion,
   type MotionValue,
-  useMotionValue,
-  useMotionValueEvent,
   useTransform,
 } from 'motion/react';
 import {
-  type PointerEvent as ReactPointerEvent,
+  type MouseEvent,
   type RefObject,
   useCallback,
   useEffect,
@@ -17,58 +13,29 @@ import {
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
+import MaterialSymbolsAddRounded from '~icons/material-symbols/add-rounded';
+import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
+import MaterialSymbolsOpenInNewRounded from '~icons/material-symbols/open-in-new-rounded';
+import MaterialSymbolsRemoveRounded from '~icons/material-symbols/remove-rounded';
 
 import { Button } from '@/components/ui/button';
 
 import { useReader } from '../../../hooks/use-reader';
 import { ReaderType } from '../../../reader.enums';
+import { type Box, getFittedBox, spring, usePanZoom } from './pan-zoom';
 
-const MIN_SCALE = 1;
-const MAX_SCALE = 8;
 const ZOOM_STEP = 1.5;
 const DOUBLE_TAP_SCALE = 2.5;
-const DRAG_THRESHOLD = 4;
-const VIEWPORT_FILL = 0.9;
 
 const OPEN_RADIUS = 8;
 const OPEN_BORDER = 1;
 const NO_CLIP = 'inset(0px 0px 0px 0px)';
 
-const spring = { type: 'spring', stiffness: 400, damping: 40 } as const;
-
-interface Point {
-  x: number;
-  y: number;
-}
-
-interface Box extends Point {
-  width: number;
-  height: number;
-}
-
-const clamp = (value: number, min: number, max: number) =>
-  Math.min(Math.max(value, min), max);
-
-const getFittedBox = (thumb: HTMLImageElement): Box => {
-  const rect = thumb.getBoundingClientRect();
-  const naturalWidth = thumb.naturalWidth || rect.width;
-  const naturalHeight = thumb.naturalHeight || rect.height;
-
-  const ratio = Math.min(
-    (window.innerHeight * VIEWPORT_FILL) / naturalHeight,
-    (window.innerWidth * VIEWPORT_FILL) / naturalWidth,
-  );
-  const width = naturalWidth * ratio;
-  const height = naturalHeight * ratio;
-
-  return {
-    x: (window.innerWidth - width) / 2,
-    y: (window.innerHeight - height) / 2,
-    width,
-    height,
-  };
-};
-
+/**
+ * How the opened image animates from and back to `thumb`: clipped to the
+ * chapter's scroll area, over it and with its corners. Without a visible
+ * thumb it fades in place.
+ */
 const getThumbState = (thumb: HTMLImageElement | null, box: Box) => {
   const rect = thumb?.getBoundingClientRect();
 
@@ -240,12 +207,12 @@ const ImageViewer = ({
       window.removeEventListener('keydown', handleKeyDown, { capture: true });
   }, [close, closing, reset, zoomBy]);
 
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (gesture.current.moved || e.target !== e.currentTarget) return;
+  const handleBackdropClick = (e: MouseEvent) => {
+    if (gesture.moved || e.target !== e.currentTarget) return;
     close();
   };
 
-  const handleDoubleClick = (e: React.MouseEvent) => {
+  const handleDoubleClick = (e: MouseEvent) => {
     if (zoomed) reset();
     else zoomTo(DOUBLE_TAP_SCALE, { x: e.clientX, y: e.clientY });
   };
@@ -329,167 +296,6 @@ const ImageViewer = ({
   );
 };
 
-const usePanZoom = (box: Box, overlayRef: RefObject<HTMLElement | null>) => {
-  const scale = useMotionValue(1);
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-
-  const [zoomed, setZoomed] = useState(false);
-  const [panning, setPanning] = useState(false);
-
-  useMotionValueEvent(scale, 'change', (value) =>
-    setZoomed(value > MIN_SCALE + 0.01),
-  );
-
-  const clampPan = useCallback(
-    (value: number, axis: 'x' | 'y', currentScale: number) => {
-      const size = axis === 'x' ? box.width : box.height;
-      const viewport = axis === 'x' ? window.innerWidth : window.innerHeight;
-      const limit = Math.max(0, (size * currentScale - viewport) / 2);
-      return clamp(value, -limit, limit);
-    },
-    [box],
-  );
-
-  const zoomTo = useCallback(
-    (nextScale: number, origin?: Point, animated = true) => {
-      const target = clamp(nextScale, MIN_SCALE, MAX_SCALE);
-      const ratio = target / scale.get();
-
-      const dx = (origin?.x ?? window.innerWidth / 2) - (box.x + box.width / 2);
-      const dy =
-        (origin?.y ?? window.innerHeight / 2) - (box.y + box.height / 2);
-
-      const next = {
-        scale: target,
-        x: clampPan(dx - (dx - x.get()) * ratio, 'x', target),
-        y: clampPan(dy - (dy - y.get()) * ratio, 'y', target),
-      };
-
-      for (const [value, to] of [
-        [scale, next.scale],
-        [x, next.x],
-        [y, next.y],
-      ] as const) {
-        if (animated) animate(value, to, spring);
-        else value.jump(to);
-      }
-    },
-    [box, clampPan, scale, x, y],
-  );
-
-  const zoomBy = useCallback(
-    (factor: number) => zoomTo(scale.get() * factor),
-    [scale, zoomTo],
-  );
-
-  const reset = useCallback(() => zoomTo(MIN_SCALE), [zoomTo]);
-
-  useEffect(() => {
-    const overlay = overlayRef.current;
-    if (!overlay) return;
-
-    const handleWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      const delta =
-        e.deltaMode === WheelEvent.DOM_DELTA_LINE ? e.deltaY * 16 : e.deltaY;
-      const factor = Math.exp(-delta * (e.ctrlKey ? 0.01 : 0.002));
-      zoomTo(scale.get() * factor, { x: e.clientX, y: e.clientY }, false);
-    };
-
-    overlay.addEventListener('wheel', handleWheel, { passive: false });
-    return () => overlay.removeEventListener('wheel', handleWheel);
-  }, [overlayRef, scale, zoomTo]);
-
-  const pointers = useRef(new Map<number, Point>());
-  const gesture = useRef({
-    moved: false,
-    start: { x: 0, y: 0 },
-    distance: 0,
-    center: { x: 0, y: 0 },
-  });
-
-  const getPinch = () => {
-    const [a, b] = [...pointers.current.values()] as [Point, Point];
-    return {
-      distance: Math.hypot(a.x - b.x, a.y - b.y),
-      center: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 },
-    };
-  };
-
-  const onPointerDown = (e: ReactPointerEvent) => {
-    if ((e.target as HTMLElement).closest('[data-toolbar]')) return;
-
-    const point = { x: e.clientX, y: e.clientY };
-    pointers.current.set(e.pointerId, point);
-
-    if (pointers.current.size === 1) {
-      Object.assign(gesture.current, { moved: false, start: point });
-    } else if (pointers.current.size === 2) {
-      Object.assign(gesture.current, getPinch());
-    }
-  };
-
-  const onPointerMove = (e: ReactPointerEvent) => {
-    const previous = pointers.current.get(e.pointerId);
-    if (!previous) return;
-
-    const point = { x: e.clientX, y: e.clientY };
-    pointers.current.set(e.pointerId, point);
-
-    if (pointers.current.size === 2) {
-      const { distance, center } = getPinch();
-      const current = gesture.current;
-
-      x.jump(x.get() + center.x - current.center.x);
-      y.jump(y.get() + center.y - current.center.y);
-      zoomTo((scale.get() * distance) / current.distance, center, false);
-
-      Object.assign(current, { distance, center, moved: true });
-      e.currentTarget.setPointerCapture(e.pointerId);
-      return;
-    }
-
-    const { start, moved } = gesture.current;
-    if (
-      !moved &&
-      Math.hypot(point.x - start.x, point.y - start.y) < DRAG_THRESHOLD
-    )
-      return;
-
-    gesture.current.moved = true;
-    if (!zoomed) return;
-
-    e.currentTarget.setPointerCapture(e.pointerId);
-    setPanning(true);
-    x.jump(clampPan(x.get() + point.x - previous.x, 'x', scale.get()));
-    y.jump(clampPan(y.get() + point.y - previous.y, 'y', scale.get()));
-  };
-
-  const onPointerUp = (e: ReactPointerEvent) => {
-    pointers.current.delete(e.pointerId);
-    if (pointers.current.size === 0) setPanning(false);
-  };
-
-  return {
-    scale,
-    x,
-    y,
-    zoomed,
-    panning,
-    zoomTo,
-    zoomBy,
-    reset,
-    gesture,
-    handlers: {
-      onPointerDown,
-      onPointerMove,
-      onPointerUp,
-      onPointerCancel: onPointerUp,
-    },
-  };
-};
-
 interface ViewerToolbarProps {
   scale: MotionValue<number>;
   src: string;
@@ -527,7 +333,7 @@ const ViewerToolbar = ({
         title="Зменшити"
         onClick={onZoomOut}
       >
-        <Minus className="size-4" />
+        <MaterialSymbolsRemoveRounded className="size-4" />
       </Button>
       <motion.button
         type="button"
@@ -543,7 +349,7 @@ const ViewerToolbar = ({
         title="Збільшити"
         onClick={onZoomIn}
       >
-        <Plus className="size-4" />
+        <MaterialSymbolsAddRounded className="size-4" />
       </Button>
       <div className="bg-border mx-1 h-5 w-px" />
       <Button
@@ -553,10 +359,10 @@ const ViewerToolbar = ({
         nativeButton={false}
         render={<a href={src} target="_blank" rel="noopener noreferrer" />}
       >
-        <ExternalLink className="size-4" />
+        <MaterialSymbolsOpenInNewRounded className="size-4" />
       </Button>
       <Button variant="ghost" size="icon-sm" title="Закрити" onClick={onClose}>
-        <X className="size-4" />
+        <MaterialSymbolsCloseRounded className="size-4" />
       </Button>
     </motion.div>
   );

@@ -12,6 +12,113 @@ Plugin uses:
 
 ## Development
 
+Copy `.env.example` to `.env` and set the Convex deployment URLs. The extension
+uses `WXT_CONVEX_URL` for functions and `WXT_CONVEX_SITE_URL` for the Hikka
+OAuth/session endpoints.
+
+Register `<CONVEX_SITE_URL>/auth/hikka/callback` as the redirect URL of the
+Hikka application. Configure the values returned by
+`browser.identity.getRedirectURL()` as `CHROME_EXTENSION_REDIRECT_URI` and
+`FIREFOX_EXTENSION_REDIRECT_URI` on the backend.
+
+The background worker owns the account session (`utils/convex-session.ts`).
+Refresh tokens rotate on every use, so content scripts and the popup never
+refresh on their own: they call `accountQuery`/`accountMutation`, which forward
+the request to the background. Public functions (`watch:resolve`,
+`catalog:get`, `editor:suggest`) are called directly. Watch together keeps a
+live WebSocket connection per tab (`acquireLiveClient`), shared by the room,
+the invite toasts, the friend list and the homepage's "Активність друзів" block
+until the last of them releases it; the background only lends it short-lived
+access tokens and still does every refresh.
+
+The "Активність друзів" block, what friends watch in the player and read in
+the reader, joins hikka.io's homepage widgets and its layout dialog
+(`features/friends-activity`). hikka.io stores the layout in the account and
+accepts only its own widgets, so the block's place is kept in the extension's
+settings, as the site widgets right before and after it.
+
+The "Від команд" block on anime pages lists the teams that dubbed or
+subtitled the anime from the extension's own catalog (teams' Telegram
+channels) and the player, merged by the backend in that order of trust
+(`fandub:forAnime`); player teams the catalog doesn't know are added from the
+watch data. Each team opens its page, `/teams/<slug>`, and
+the block's title, and "Команди" under "Спільнота" in the site's navbar and
+mobile menu (`teams-nav-link.feature.tsx`), open the list of teams, `/teams`
+(`features/team-pages`). Both are laid out like a hikka.io collection: one
+column, its parts listed in a "Зміст" sidebar that follows the scroll (a
+popover from the floating bar on phones), and the bar filters dubs and
+subtitles. The list's parts are how active the catalog says teams are; a
+team's are what it's still releasing, then its anime by year. hikka.io
+answers those paths with a bare 404 page,
+so `entrypoints/hikka-router.ts`, injected into the page's own JavaScript
+world, has the site's TanStack router render its home route under them (route
+masking) and the team pages replace its content, inside the site's navbar and
+footer. Links in the extension's pages navigate through that router, without
+reloads; the `extension-pages` content script hides the 404 page until then.
+As the router sees the home page under team pages, going between them changes
+nothing in the DOM, so the feature mounts itself on navigation, and the
+site's links home are sent through the router.
+
+The "Схожий контент" block on anime, manga and novel pages shows five of the
+titles MAL and AniList users recommend with it (MAL's through tenrai's
+mirror), looked up on Hikka in one `POST /integrations/mal/<type>`
+(`hooks/use-recommendation.ts`). AniList's upvotes far outnumber MAL's
+written recommendations, so titles rank by each site's share of votes for
+them, a site with few votes in all counting for less. Seasons and versions
+of a story, which AniList relates in the same request, count together and
+show as their most recommended one; the title's own franchise, which AniList
+users recommend with sequels, is left out. The block's title opens all of
+them at `/<type>/<slug>/recommendations` (`recommendation-page.feature.tsx`),
+a tab of the title's like its authors': that is the route the router masks
+under it, so the site's header and tabs stay. The page hides the authors'
+list, renames the tab where the header and the mobile top bar name it, and
+keeps "Автори" from looking current. Both kinds of page hide only the site's
+content that is there while the URL is theirs (`coverSiteContent`): the next
+route renders before they're taken off, and some of its parts measure
+themselves once, staying broken if hidden then (the catalog's sliders). "Схожі" joins the title's tabs before "Обговорення"
+and the mobile drawer of sections (`recommendation-nav-link.feature.tsx`); a
+longer name would push "Обговорення" out of the tabs on anime pages.
+
+## Extension/backend compatibility
+
+The package version and backend API protocol are intentionally separate. The
+current protocol is declared in `utils/compatibility.ts`; only increment it for
+an incompatible Convex contract. Existing function names remain the protocol 1
+contract, and future breaking contracts must use new function names so both can
+run against the same database during rollout.
+
+Breaking backend changes never force an update. Browsers update the extension
+on their own, so the backend serves the old and the new contract side by side
+until nobody uses the old one:
+
+1. Add the new contract under new function names (e.g. `watch:resolveV2`),
+   leaving the old functions as they are, and deploy the backend.
+2. Point `utils/convex-api.ts` at the new names, increment
+   `EXTENSION_API_PROTOCOL`, add it to `supportedProtocols` in Convex, and
+   publish the extension.
+3. Every install reports its version and protocol once a day
+   (`compatibility:report`, an anonymous count). Once
+   `compatibility:usage` shows no recent installs on the old protocol, delete
+   the old functions and drop the protocol from `supportedProtocols`.
+
+Additive changes (new functions, optional arguments, extra result fields) need
+none of this: deploy the backend, then publish the extension.
+
+`utils/convex-api.ts` mirrors the backend's functions by hand. `bun run
+check:contract` type-checks it against `../features-backend`'s generated API
+and lists every function whose name, kind, arguments or result disagree. It
+must pass for both the released and the new extension before a backend
+deploy, and for the current one before deleting old functions.
+
+As a safety net, the background checks `compatibility:get` on startup and
+hourly, and any context checks again (at most once a minute) when a Convex
+call fails with anything but a `ConvexError`. If Convex reports the build as
+unsupported, calls fail with `EXTENSION_UPDATE_REQUIRED`, the toolbar icon
+shows a red badge, the popup explains why, and Chrome is asked to fetch the
+update it would install anyway. Users are never sent to the store.
+
+The backend command is documented in `features-backend/convex/README.md`.
+
 ```sh
 # Run plugin on Chrome
 $ bun dev

@@ -6,5 +6,8 @@
     "paths": {
       "@/*": ["./*"]
     }
-  }
+  },
+  // WXT's excludes, plus the contract check, which needs the backend
+  // checkout and runs on its own (`check:contract`).
+  "exclude": ["**/node_modules", ".output", "tests/contract"]
 }

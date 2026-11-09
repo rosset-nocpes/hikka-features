@@ -3,7 +3,7 @@ rewrite:
 - [ ] player
 - [x] reader
 - [x] media-cover (previously ani-background)
-- [ ] ani-buttons
-- [ ] fandub-block
-- [ ] localized-poster
-- [ ] recommednation-block
+- [x] ani-buttons
+- [x] fandub-block
+- [x] localized-poster
+- [x] recommendation-block

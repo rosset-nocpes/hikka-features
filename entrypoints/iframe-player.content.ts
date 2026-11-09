@@ -4,6 +4,7 @@ import {
   findIFramePlayerBridge,
   IFRAME_PLAYER_MATCHES,
 } from '@/integrations/iframe-player/registry';
+import { sendToBackground } from '@/utils/messaging';
 
 const PLAYER_DETECTION_TIMEOUT_MS = 15_000;
 
@@ -83,18 +84,5 @@ const findPlayer = async (ctx: {
   });
 };
 
-const isHikkaContentLoaded = async () => {
-  const response = await browser.runtime
-    .sendMessage({ type: 'hikka-content-status' })
-    .catch(() => undefined);
-
-  return isHikkaContentStatusResponse(response) && response.loaded;
-};
-
-const isHikkaContentStatusResponse = (
-  response: unknown,
-): response is { loaded: boolean } =>
-  !!response &&
-  typeof response === 'object' &&
-  'loaded' in response &&
-  typeof response.loaded === 'boolean';
+const isHikkaContentLoaded = async () =>
+  (await sendToBackground('hikka-content-status').catch(() => false)) === true;

@@ -1,61 +1,48 @@
-import type { FC, PropsWithChildren } from 'react';
+import type { FC, ReactNode } from 'react';
 
-import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 
-interface Props extends PropsWithChildren {
+import RowIcon from './row-icon';
+import RowLabel from './row-label';
+
+interface Props {
   label: string;
   beta?: boolean;
-  description?: string;
+  description?: ReactNode;
+  icon?: ReactNode;
   checked: boolean;
+  disabled?: boolean;
   onClick?: () => void;
-  grouped?: boolean;
 }
 
+/** A settings row that toggles when clicked anywhere. */
 const SwitchOption: FC<Props> = ({
   label,
   description,
+  icon,
   checked,
+  disabled,
   onClick,
   beta = false,
-  grouped = false,
-}) => {
-  return (
-    <div
-      className={cn(
-        'flex items-center justify-between',
-        grouped &&
-          'hover:bg-accent/30 cursor-pointer px-4 py-3 transition-[background-color]',
-      )}
-      onClick={grouped ? onClick : undefined}
-    >
-      <div className="mr-10 flex flex-col gap-1">
-        <span className="flex items-center gap-1 text-sm leading-none font-medium">
-          {label}
-          {beta && (
-            <Badge
-              variant="outline"
-              className="text-primary-foreground bg-yellow-500 px-2 py-0"
-            >
-              Beta
-            </Badge>
-          )}
-        </span>
-        {description && (
-          <p className="text-xs font-medium text-pretty text-[#A1A1A1]">
-            {description}
-          </p>
-        )}
-      </div>
-      <Switch
-        checked={checked}
-        aria-label={label}
-        onClick={grouped ? (event) => event.stopPropagation() : undefined}
-        onCheckedChange={() => onClick?.()}
-        className="flex items-center justify-between transition-[background-color,box-shadow] after:-inset-y-3"
-      />
-    </div>
-  );
-};
+}) => (
+  <div
+    className={cn(
+      'flex min-h-14 items-center gap-3 px-4 py-3 transition-[background-color]',
+      disabled ? 'cursor-progress' : 'hover:bg-accent/40 cursor-pointer',
+    )}
+    onClick={disabled ? undefined : onClick}
+  >
+    {icon && <RowIcon active={checked}>{icon}</RowIcon>}
+    <RowLabel label={label} description={description} beta={beta} />
+    <Switch
+      checked={checked}
+      disabled={disabled}
+      aria-label={label}
+      onClick={(event) => event.stopPropagation()}
+      onCheckedChange={() => onClick?.()}
+      className="ml-1 after:-inset-y-3"
+    />
+  </div>
+);
 
 export default SwitchOption;

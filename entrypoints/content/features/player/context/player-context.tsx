@@ -1,44 +1,86 @@
-import {
-  createRef,
-  type FC,
-  type PropsWithChildren,
-  RefObject,
-  useEffect,
-} from 'react';
 import { create } from 'zustand';
 
-import { useSidebar } from '@/components/ui/sidebar';
-import { ProviderIFrame, ProviderTeamIFrame } from '@/utils/provider_classes';
+import type { FavoriteTeam } from '@/hooks/use-settings';
+
+import { playerControls } from '@/hooks/use-iframe-player';
+import { account } from '@/utils/account';
+import { favoriteTeamOf } from '@/utils/favorite-team';
+
+import type { QueueItem } from '../queue/use-queue';
+import type { MergedTeam } from '../teams';
+import type { SharedPlayerParams } from './link-params';
+
+import { takeLinkParams } from './link-params';
+import {
+  exactSource,
+  favoriteOf,
+  nextUnwatched,
+  preferredTeam,
+  queuedSource,
+  refreshedSource,
+  type Selection,
+  sharedSource,
+  teamsOf,
+  watchDataKey,
+} from './sources';
 
 interface PlayerState {
-  /* Base */
   container?: HTMLElement;
-  /* Player-related  */
   watchData?: API.WatchData; // todo: remove it from there
   watchDataKey?: string;
+  slug?: string;
+  /** The anime's teams, each once whichever providers list it. */
+  teams?: MergedTeam[];
+  /**
+   * The provider the user picked to play this anime from wherever it has
+   * the episode; without one, each episode plays from the first provider
+   * that has it (see providerOrder).
+   */
+  pinnedProvider?: string;
+  /** Where the episode picks up once its new source loads. */
+  resumeAt?: { time: number; playing: boolean };
+  team?: MergedTeam;
+  /** The playing episode's provider. */
   provider?: string;
-  team?: API.TeamData;
-  favoriteTeam?: FavoriteTeam;
-  episodeData?: API.EpisodeData[];
+  /** `key` of the anime's favourite team. */
+  favoriteKey?: string;
   currentEpisode?: API.EpisodeData;
   fullscreen: boolean;
   theatreMode: boolean;
   miniPlayer: boolean;
   miniPlayerCorner: MiniPlayerCorner;
   videoPiPActive: boolean;
-  overlayRef: RefObject<HTMLDivElement | null>;
-  /* Temporary */
+  /** The video's overlay, where gestures land and menus stay inside. */
+  overlay: HTMLDivElement | null;
+  /** The share link's, until it has started playing. */
   sharedParams?: SharedPlayerParams;
   isShared?: boolean;
+  /** Watch together room code from an invite link. */
+  roomInvite?: string;
+  /** The invite was accepted before the page opened, e.g. from a toast. */
+  roomInviteAccepted?: boolean;
 }
 
 interface PlayerActions {
-  initialize: (data: API.WatchData) => void;
-  setProvider: (provider: string) => void;
-  setTeam: (team: API.TeamData) => void; // todo
-  setFavoriteTeam: (team: string) => void;
-  removeFavoriteTeam: () => void;
+  /**
+   * Loads `slug`'s watch data at `target`, its source falling back to any
+   * other with the episode; false when none has it. Without a target, a
+   * share link or the user's preferences pick what to show.
+   */
+  initialize: (
+    data: API.WatchData,
+    slug: string,
+    target?: QueueItem,
+  ) => boolean;
+  /** Plays from `provider` wherever it can, or from any without one. */
+  setPinnedProvider: (provider?: string) => void;
+  setTeam: (team: MergedTeam) => void;
+  /** Makes the team this anime's favourite, or stops it being one. */
+  toggleFavoriteTeam: (team: MergedTeam) => void;
   setEpisode: (episode: API.EpisodeData) => void;
+  /** Shows exactly this source and episode; false when it isn't available. */
+  selectSource: (provider: string, team: string, episode: number) => boolean;
+  dismissRoomInvite: () => void;
   toggleFullscreen: () => void;
   toggleTheatreMode: () => void;
   toggleMiniPlayer: () => void;
@@ -47,217 +89,220 @@ interface PlayerActions {
   setVideoPiPActive: (status: boolean) => void;
   setSharedStatus: (status: boolean) => void;
   setContainer: (container: HTMLElement) => void;
-  setOverlayRef: (ref: HTMLDivElement | null) => void;
-  reset: () => void;
+  setOverlay: (overlay: HTMLDivElement | null) => void;
 }
+
+/**
+ * The team's episode after the playing one, from whichever provider has it,
+ * which plays once the queue runs out.
+ */
+export const followingEpisode = ({
+  team,
+  currentEpisode,
+}: Pick<PlayerState, 'team' | 'currentEpisode'>) =>
+  currentEpisode
+    ? team?.episodes.find(
+        ({ episode }) => episode === currentEpisode.episode + 1,
+      )
+    : undefined;
+
+/** The mini player or the bar shown during picture-in-picture. */
+export const compactMode = ({
+  miniPlayer,
+  videoPiPActive,
+}: Pick<PlayerState, 'miniPlayer' | 'videoPiPActive'>) =>
+  miniPlayer || videoPiPActive;
+
+export const isFavoriteTeam = (
+  { favoriteKey }: Pick<PlayerState, 'favoriteKey'>,
+  team: MergedTeam,
+) => favoriteKey === team.key;
 
 export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
   const handleFullscreenChange = () => {
-    const wrapper = get().container?.querySelector('#player-frame');
+    if (document.fullscreenElement) return;
+    set({ fullscreen: false });
+    document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  };
 
-    if (!document.fullscreenElement) {
-      set({ fullscreen: false });
-      wrapper?.classList.remove('fullscreen');
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-    }
+  const setFavoriteTeam = (slug: string, favorite?: FavoriteTeam) => {
+    const { favoriteTeams } = useSettings.getState().features.player;
+    const { [slug]: _previous, ...others } = favoriteTeams;
+    useSettings.getState().updateFeatureSettings('player', {
+      favoriteTeams: favorite ? { ...others, [slug]: favorite } : others,
+    });
+  };
+
+  /** The state that shows `entry` of `team`. */
+  const show = ({ team, entry }: Selection) => {
+    if (entry.provider !== get().provider) setSpeedOptions(entry.provider);
+    return {
+      team,
+      provider: entry.provider,
+      currentEpisode: entry,
+      resumeAt: undefined,
+    };
+  };
+
+  /**
+   * Follows a favourite whose team changed key, as when it joins the
+   * catalogue, so the account matches its releases by catalogue id.
+   */
+  const refreshFavorite = (slug: string, found?: MergedTeam) => {
+    const favorite = useSettings.getState().features.player.favoriteTeams[slug];
+    if (!favorite || !found || favorite.key === found.key) return;
+    setFavoriteTeam(slug, favoriteTeamOf(found));
+    account
+      .saveFavorite({
+        animeSlug: slug,
+        teamId: found.id,
+        teamTitle: found.title,
+        translationType: found.translationType,
+      })
+      .catch(console.error);
   };
 
   return {
-    container: undefined,
-    watchData: undefined,
-    provider: undefined,
-    team: undefined,
-    favoriteTeam: undefined,
-    episodeData: undefined,
-    currentEpisode: undefined,
     fullscreen: false,
     theatreMode: false,
     miniPlayer: false,
     miniPlayerCorner: 'bottom-right',
     videoPiPActive: false,
-    overlayRef: createRef<HTMLDivElement>(),
+    overlay: null,
 
-    initialize: async (data) => {
-      const watchDataKey = getWatchDataKey(data);
-      if (get().watchDataKey === watchDataKey) return;
-
-      const { defaultProvider, favoriteTeams } =
-        useSettings.getState().features.player;
-
-      const providers_avaliable = getAvailablePlayers(data).map((e) => e.title);
-      const { slug } = usePageStore.getState();
-      const favoriteTeam = favoriteTeams[slug!];
-
-      const params = new URLSearchParams(window.location.search);
-      const sharedParams: SharedPlayerParams = {
-        provider: params.get('playerProvider'),
-        team: params.get('playerTeam'),
-        episode: params.get('playerEpisode'),
-        time: params.get('time'),
+    initialize: (data, slug, target) => {
+      const key = watchDataKey(data);
+      // A pick works around one anime's source, not the next one's.
+      const pinnedProvider =
+        get().slug === slug ? get().pinnedProvider : undefined;
+      const teams = teamsOf(data, pinnedProvider);
+      const favorite = favoriteOf(teams, slug);
+      refreshFavorite(slug, favorite);
+      const loaded = {
+        watchData: data,
+        watchDataKey: key,
+        slug,
+        teams,
+        pinnedProvider,
+        favoriteKey: favorite?.key,
       };
 
-      const isShared = !!(
-        sharedParams.provider &&
-        sharedParams.team &&
-        sharedParams.episode
-      );
+      if (target) {
+        const selection = queuedSource(teams, target);
+        if (!selection) return false;
+        set({ ...loaded, ...show(selection), isShared: false });
+        return true;
+      }
 
-      // cleanup url
-      const url = new URL(window.location.href);
-      ['playerProvider', 'playerTeam', 'playerEpisode', 'time'].map((param) =>
-        url.searchParams.delete(param),
-      );
-
-      history.replaceState(history.state, '', url.href);
-
-      // Determine provider
-      const provider =
-        isShared && providers_avaliable.includes(sharedParams.provider!)
-          ? sharedParams.provider!
-          : favoriteTeam
-            ? favoriteTeam.provider
-            : providers_avaliable.includes(defaultProvider)
-              ? defaultProvider
-              : providers_avaliable[0];
-
-      // Determine team
-      let team: API.TeamData = {
-        title: '',
-        logo: '',
-      };
-      if (data[provider] instanceof ProviderTeamIFrame) {
-        const first_team = data[provider].getTeams()[0];
-
-        if (isShared && data[provider].teams[sharedParams.team!]) {
-          team = data[provider].getTeam(sharedParams.team!);
-        } else if (
-          favoriteTeam &&
-          (data[favoriteTeam.provider] as ProviderTeamIFrame).teams[
-            favoriteTeam.team
-          ]
-        ) {
-          team = (data[favoriteTeam.provider] as ProviderTeamIFrame).getTeam(
-            favoriteTeam.team,
-          );
-        } else {
-          team = first_team;
+      if (get().slug === slug) {
+        if (get().watchDataKey === key) return true;
+        // Refreshed data: what plays carries on where it still can.
+        const { team, currentEpisode } = get();
+        const kept =
+          team &&
+          currentEpisode &&
+          refreshedSource(teams, team.key, currentEpisode);
+        if (kept) {
+          set({
+            ...loaded,
+            ...show(kept),
+            // The same video keeps its player, which a new entry reloads.
+            ...(kept.entry.video_url === currentEpisode.video_url && {
+              currentEpisode,
+            }),
+          });
+          return true;
         }
       }
 
-      const episodeData =
-        data[provider] instanceof ProviderTeamIFrame
-          ? data[provider].teams[team.title].episodes
-          : data[provider].episodes;
-
-      const targetEpisode = isShared
-        ? episodeData?.find((ep) => ep.episode === Number(sharedParams.episode))
-        : episodeData?.find((ep) => ep.episode === getWatched() + 1);
+      const { sharedParams, isShared, roomInvite, roomInviteAccepted } =
+        takeLinkParams();
+      // A shared link wins over the user's preferences.
+      let selection: Selection;
+      if (isShared) {
+        selection = sharedSource(teams, slug, sharedParams);
+      } else {
+        const team = preferredTeam(teams, slug);
+        selection = { team, entry: nextUnwatched(team.episodes, slug) };
+      }
 
       set({
-        watchData: data,
-        watchDataKey,
-        provider,
-        team,
-        favoriteTeam,
-        episodeData,
-        currentEpisode: targetEpisode ?? episodeData[0],
+        ...loaded,
+        ...show(selection),
         sharedParams,
         isShared,
+        roomInvite,
+        roomInviteAccepted,
       });
+      return true;
     },
-    setProvider: (provider) => {
-      const { watchData } = get();
-      if (!watchData) return;
+    setPinnedProvider: (pinnedProvider) => {
+      const { watchData, slug, team, currentEpisode } = get();
+      if (!watchData) {
+        set({ pinnedProvider });
+        return;
+      }
 
-      const newTeamName =
-        watchData[provider] instanceof ProviderTeamIFrame
-          ? {
-              title: Object.keys(watchData[provider].teams)[0],
-              logo: watchData[provider].teams[
-                Object.keys(watchData[provider].teams)[0]
-              ].logo,
-            }
-          : { title: '', logo: '' };
-      const newEpisode =
-        watchData[provider] instanceof ProviderTeamIFrame
-          ? watchData[provider].teams[newTeamName.title].episodes.find(
-              (ep) => ep.episode === getWatched() + 1,
-            ) || watchData[provider].teams[newTeamName.title].episodes[0]
-          : watchData[provider].episodes.find(
-              (ep) => ep.episode === getWatched() + 1,
-            ) || watchData[provider].episodes[0];
+      const teams = teamsOf(watchData, pinnedProvider);
+      const shown = teams.find(({ key }) => key === team?.key) ?? teams[0]!;
+      const sameEpisode = shown.episodes.find(
+        ({ episode }) => episode === currentEpisode?.episode,
+      );
+      const entry = sameEpisode ?? nextUnwatched(shown.episodes, slug);
+      if (entry === currentEpisode) {
+        set({ pinnedProvider, teams, team: shown });
+        return;
+      }
 
-      const newEpisodeData =
-        watchData[provider] instanceof ProviderTeamIFrame
-          ? watchData[provider].teams[newTeamName.title].episodes
-          : watchData[provider].episodes;
-
-      useIFramePlayer.setState({
-        speedOptions:
-          provider === 'ashdi'
-            ? [1, 1.25, 1.5, 2]
-            : useIFramePlayer.getInitialState().speedOptions,
-      });
-
+      // The same episode from elsewhere carries on where it was.
+      const { currentTime, isPlaying } = useIFramePlayer.getState();
       set({
-        provider,
-        team: newTeamName,
-        episodeData: newEpisodeData,
-        currentEpisode: newEpisode,
+        pinnedProvider,
+        teams,
+        ...show({ team: shown, entry }),
+        resumeAt:
+          sameEpisode && shown.key === team?.key && currentTime > 0
+            ? { time: currentTime, playing: isPlaying }
+            : undefined,
       });
     },
-    setTeam: (team) => {
-      const { watchData, provider } = get();
-      if (!watchData || !provider) return;
-      if (!(watchData[provider] instanceof ProviderTeamIFrame)) return;
-
-      const newEpisodeData = watchData[provider].teams[team.title].episodes;
-
-      const newEpisode =
-        newEpisodeData.find(
-          (episode) => episode.episode === getWatched() + 1,
-        ) || newEpisodeData[0];
-
-      set({ team, episodeData: newEpisodeData, currentEpisode: newEpisode });
-    },
-    setFavoriteTeam: (team) => {
-      const { slug } = usePageStore.getState();
-      const provider = get().provider!;
+    setTeam: (team) =>
+      set(show({ team, entry: nextUnwatched(team.episodes, get().slug) })),
+    toggleFavoriteTeam: (team) => {
+      const { slug } = get();
       if (!slug) return;
 
-      const newTeam = {
-        provider,
-        team,
-      };
+      if (isFavoriteTeam(get(), team)) {
+        setFavoriteTeam(slug);
+        set({ favoriteKey: undefined });
+        account.removeFavorite(slug).catch(console.error);
+        return;
+      }
 
-      const { favoriteTeams } = useSettings.getState().features.player;
-      const { updateFeatureSettings } = useSettings.getState();
-
-      const updated = { ...favoriteTeams, [slug]: newTeam };
-      updateFeatureSettings('player', { favoriteTeams: updated });
-
-      set({ favoriteTeam: newTeam });
+      setFavoriteTeam(slug, favoriteTeamOf(team));
+      set({ favoriteKey: team.key });
+      account
+        .saveFavorite({
+          animeSlug: slug,
+          teamId: team.id,
+          teamTitle: team.title,
+          translationType: team.translationType,
+        })
+        .catch(console.error);
     },
-    removeFavoriteTeam: () => {
-      const { favoriteTeams } = useSettings.getState().features.player;
-      const { updateFeatureSettings } = useSettings.getState();
-      const { slug } = usePageStore.getState();
-      if (!slug) return;
-
-      const updated = { ...favoriteTeams };
-      delete updated[slug];
-      updateFeatureSettings('player', { favoriteTeams: updated });
-
-      set({ favoriteTeam: undefined });
+    setEpisode: (entry) => set(show({ team: get().team!, entry })),
+    selectSource: (provider, team, episode) => {
+      const { teams } = get();
+      const selection = teams && exactSource(teams, provider, team, episode);
+      if (!selection) return false;
+      set(show(selection));
+      return true;
     },
-    setEpisode: (episode) => set({ currentEpisode: episode }),
+    dismissRoomInvite: () =>
+      set({ roomInvite: undefined, roomInviteAccepted: undefined }),
     toggleFullscreen: () => {
-      const { fullscreen } = get();
-      const wrapper = get().container?.querySelector('#player-frame');
-
-      if (fullscreen) {
+      if (get().fullscreen) {
         set({ fullscreen: false });
-        wrapper?.classList.remove('fullscreen');
         document.exitFullscreen();
         document.removeEventListener(
           'fullscreenchange',
@@ -265,198 +310,62 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
         );
       } else {
         set({ fullscreen: true, miniPlayer: false });
-        wrapper?.classList.add('fullscreen');
         document.documentElement.requestFullscreen();
         document.addEventListener('fullscreenchange', handleFullscreenChange);
       }
     },
-    toggleTheatreMode: () => {
-      const { theatreMode } = get();
-      set({ theatreMode: !theatreMode, miniPlayer: false });
-    },
-    toggleMiniPlayer: () => {
-      const { fullscreen, miniPlayer, toggleFullscreen } = get();
-
-      if (fullscreen) toggleFullscreen();
-
-      set({
-        theatreMode: false,
-        miniPlayer: !miniPlayer,
-      });
-    },
+    toggleTheatreMode: () =>
+      set({ theatreMode: !get().theatreMode, miniPlayer: false }),
+    toggleMiniPlayer: () => get().setMiniPlayer(!get().miniPlayer),
     setMiniPlayer: (status) => {
       const { fullscreen, theatreMode, toggleFullscreen } = get();
-
       if (status && fullscreen) toggleFullscreen();
-
-      set({
-        theatreMode: status ? false : theatreMode,
-        miniPlayer: status,
-      });
+      set({ theatreMode: status ? false : theatreMode, miniPlayer: status });
     },
     setMiniPlayerCorner: (corner) => set({ miniPlayerCorner: corner }),
-    setVideoPiPActive: (status) => {
-      if (status) {
-        set({ theatreMode: false, videoPiPActive: true });
-      } else {
-        set({ videoPiPActive: false });
-      }
-    },
+    setVideoPiPActive: (status) =>
+      set(
+        status
+          ? { theatreMode: false, videoPiPActive: true }
+          : { videoPiPActive: false },
+      ),
     setSharedStatus: (status) => set({ isShared: status }),
     setContainer: (container) => set({ container }),
-    setOverlayRef: (el) => {
-      const ref = createRef<HTMLDivElement>();
-      ref.current = el;
-
-      if (el) {
-        let hideTimer: NodeJS.Timeout;
-
-        const resetTimer = () => {
-          useIFramePlayer.setState({ uiShown: true });
-          clearTimeout(hideTimer);
-          hideTimer = setTimeout(() => {
-            if (!useIFramePlayer.getState().isPlaying) return;
-            useIFramePlayer.setState({ uiShown: false });
-          }, 4000);
-        };
-
-        const resetTimerForMouse = (event: PointerEvent) => {
-          if (event.pointerType !== 'mouse') return;
-          resetTimer();
-        };
-
-        const resetTimerForVisibleTouchUi = (event: PointerEvent) => {
-          if (event.pointerType === 'mouse') return;
-          if (!useIFramePlayer.getState().uiShown) return;
-          resetTimer();
-        };
-
-        const handlePointerLeave = (event: PointerEvent) => {
-          if (event.pointerType !== 'mouse') return;
-          clearTimeout(hideTimer);
-          hideTimer = setTimeout(() => {
-            if (!useIFramePlayer.getState().isPlaying) return;
-            useIFramePlayer.setState({ uiShown: false });
-          }, 4000);
-        };
-
-        el.addEventListener('pointerenter', resetTimerForMouse);
-        el.addEventListener('pointermove', resetTimerForMouse);
-        el.addEventListener('pointerdown', resetTimerForVisibleTouchUi);
-        el.addEventListener('pointerleave', handlePointerLeave);
-      }
-
-      set({ overlayRef: ref });
-    },
-
-    reset: () => {
-      set({
-        container: undefined,
-        /* Player-related  */
-        watchData: undefined,
-        watchDataKey: undefined,
-        provider: undefined,
-        team: undefined,
-        episodeData: undefined,
-        currentEpisode: undefined,
-        fullscreen: false,
-        theatreMode: false,
-        miniPlayer: false,
-        miniPlayerCorner: 'bottom-right',
-        videoPiPActive: false,
-        /* Temporary */
-        sharedParams: undefined,
-        isShared: undefined,
+    setOverlay: (el) => {
+      // Mice reveal the controls by moving; a tap only keeps shown ones up.
+      el?.addEventListener('pointerenter', (event) => {
+        if (event.pointerType === 'mouse') playerControls.show();
       });
+      el?.addEventListener('pointermove', (event) => {
+        if (event.pointerType === 'mouse') playerControls.show();
+      });
+      el?.addEventListener('pointerdown', (event) => {
+        if (
+          event.pointerType !== 'mouse' &&
+          useIFramePlayer.getState().uiShown
+        ) {
+          playerControls.show();
+        }
+      });
+      el?.addEventListener('pointerleave', (event) => {
+        if (event.pointerType === 'mouse') playerControls.scheduleHide();
+      });
+
+      set({ overlay: el });
     },
   };
 });
 
-interface SharedPlayerParams {
-  provider: string | null;
-  team: string | null;
-  episode: string | null;
-  time: string | null;
-}
-
-interface FavoriteTeam {
-  provider: string;
-  team: string;
-}
+const setSpeedOptions = (provider: string) =>
+  useIFramePlayer.setState({
+    speedOptions:
+      provider === 'ashdi'
+        ? [1, 1.25, 1.5, 2]
+        : useIFramePlayer.getInitialState().speedOptions,
+  });
 
 export type MiniPlayerCorner =
   | 'top-left'
   | 'top-right'
   | 'bottom-left'
   | 'bottom-right';
-
-export const getAvailablePlayers = (data: API.WatchData) =>
-  Object.entries(data)
-    .filter(([key]) => key !== 'type')
-    .map(([key, entry]: [string, any]) => ({
-      title: key,
-      lang: entry.lang as ProviderLanguage,
-    }));
-
-const getEpisodeKey = (episode: API.EpisodeData) => [
-  episode.episode,
-  episode.video_url,
-];
-
-const getWatchDataKey = (data: API.WatchData) =>
-  JSON.stringify([
-    data.type,
-    ...Object.entries(data)
-      .filter(([key]) => key !== 'type')
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([provider, entry]) => {
-        if (entry instanceof ProviderTeamIFrame) {
-          return [
-            provider,
-            entry.type,
-            entry.lang,
-            Object.entries(entry.teams)
-              .sort(([a], [b]) => a.localeCompare(b))
-              .map(([team, teamData]) => [
-                team,
-                teamData.logo,
-                teamData.episodes.map(getEpisodeKey),
-              ]),
-          ];
-        }
-
-        if (entry instanceof ProviderIFrame) {
-          return [
-            provider,
-            entry.type,
-            entry.lang,
-            entry.episodes.map(getEpisodeKey),
-          ];
-        }
-
-        return [provider, entry];
-      }),
-  ]);
-
-export const getWatched = (): number => {
-  const selector =
-    '#content-left-side > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) span span';
-  const element = document.querySelector(selector);
-  return element?.firstChild?.nodeValue
-    ? parseInt(element.firstChild.nodeValue, 10)
-    : 0;
-};
-
-interface PlayerProviderProps extends PropsWithChildren {
-  container: HTMLElement;
-}
-
-export const PlayerProvider: FC<PlayerProviderProps> = ({ children }) => {
-  const { fullscreen } = usePlayer();
-  const { setOpen } = useSidebar();
-
-  // oxlint-disable-next-line eslint-plugin-react-hooks/exhaustive-deps
-  useEffect(() => setOpen(!fullscreen), [fullscreen]);
-
-  return <>{children}</>;
-};

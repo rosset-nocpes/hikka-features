@@ -1,4 +1,6 @@
-import { usePlayer } from '../context/player-context';
+import { useState } from 'react';
+
+import ToolbarTooltip from './toolbar-tooltip';
 
 export function formatTime(totalSeconds: number) {
   const s = Math.floor(totalSeconds);
@@ -19,25 +21,24 @@ export function formatTime(totalSeconds: number) {
 
 const TimeGroup = () => {
   const { currentTime, duration } = useIFramePlayer();
-  const { miniPlayer, videoPiPActive } = usePlayer();
-
-  const isCompact = miniPlayer || videoPiPActive;
+  const [showRemaining, setShowRemaining] = useState(false);
 
   return (
-    <div
-      className={cn(
-        'pointer-events-none flex items-center gap-1 font-medium tabular-nums',
-        isCompact ? 'text-xs' : 'text-sm',
-      )}
+    <ToolbarTooltip
+      label={showRemaining ? 'Показати поточний час' : 'Показати залишок'}
     >
-      {formatTime(currentTime)}
-      {!miniPlayer && (
-        <>
-          <div className="text-white/80">/</div>
-          {formatTime(duration)}
-        </>
-      )}
-    </div>
+      <button
+        type="button"
+        onClick={() => setShowRemaining(!showRemaining)}
+        className="focus-visible:ring-ring flex h-8 items-center gap-1 rounded-md px-1 text-sm font-medium whitespace-nowrap tabular-nums outline-none focus-visible:ring-1"
+      >
+        {showRemaining
+          ? `−${formatTime(Math.max(0, duration - currentTime))}`
+          : formatTime(currentTime)}
+        <span className="text-muted-foreground">/</span>
+        <span className="text-muted-foreground">{formatTime(duration)}</span>
+      </button>
+    </ToolbarTooltip>
   );
 };
 
