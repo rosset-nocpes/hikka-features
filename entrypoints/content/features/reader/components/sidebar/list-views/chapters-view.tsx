@@ -1,5 +1,5 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { type FC, type RefObject, useLayoutEffect, useMemo } from 'react';
+import { useLayoutEffect, useMemo } from 'react';
 
 import MissingDivider from '@/components/missing-divider';
 import {
@@ -7,6 +7,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { useScrollParent } from '@/hooks/use-scroll-parent';
 import { hikkaTracker } from '@/utils/hikka-tracker';
 
 import type { Chapter } from '../../../reader.types';
@@ -19,11 +20,7 @@ import ChapterRow from './chapter-row';
 
 type Row = { id: string; chapter: Chapter } | { id: string; missing: number };
 
-interface Props {
-  scrollRef: RefObject<HTMLDivElement | null>;
-}
-
-const ChaptersView: FC<Props> = ({ scrollRef }) => {
+const ChaptersView = () => {
   const { data } = useReadData();
   const { settings, currentChapter } = useReader();
   const { sortBy, translator } = settings;
@@ -48,24 +45,23 @@ const ChaptersView: FC<Props> = ({ scrollRef }) => {
     });
   }, [chapters, sortBy, translator]);
 
+  const { listRef, scrollElement, scrollMargin } = useScrollParent();
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
-    getScrollElement: () => scrollRef.current,
-    estimateSize: (index) => ('missing' in rows[index]! ? 28 : 52),
+    estimateSize: (index) => ('missing' in rows[index]! ? 24 : 48),
     getItemKey: (index) => rows[index]!.id,
-    overscan: 5,
+    gap: 4,
+    overscan: 8,
+    scrollMargin,
+    getScrollElement: () => scrollElement,
   });
 
   // Keeps the open chapter in view.
+  const currentIndex = rows.findIndex((row) => row.id === currentChapter?.id);
   useLayoutEffect(() => {
-    const index = rows.findIndex((row) => row.id === currentChapter?.id);
-    if (index !== -1) {
-      rowVirtualizer.scrollToIndex(index, {
-        align: 'center',
-        behavior: 'auto',
-      });
-    }
-  }, [currentChapter, rowVirtualizer, rows]);
+    if (currentIndex === -1 || !scrollElement) return;
+    rowVirtualizer.scrollToIndex(currentIndex, { align: 'center' });
+  }, [currentIndex, rowVirtualizer, scrollElement]);
 
   if (!chapters) return;
   const progress = hikkaTracker.progress;
@@ -73,6 +69,7 @@ const ChaptersView: FC<Props> = ({ scrollRef }) => {
   return (
     <SidebarGroup>
       <SidebarMenu
+        ref={listRef}
         className="relative"
         style={{ height: rowVirtualizer.getTotalSize() }}
       >
@@ -82,8 +79,12 @@ const ChaptersView: FC<Props> = ({ scrollRef }) => {
           return (
             <SidebarMenuItem
               key={virtualItem.key}
+              ref={rowVirtualizer.measureElement}
+              data-index={virtualItem.index}
               className="absolute inset-x-0 top-0"
-              style={{ transform: `translateY(${virtualItem.start}px)` }}
+              style={{
+                transform: `translateY(${virtualItem.start - scrollMargin}px)`,
+              }}
             >
               {'missing' in row ? (
                 <MissingDivider count={row.missing} noun="chapter" />

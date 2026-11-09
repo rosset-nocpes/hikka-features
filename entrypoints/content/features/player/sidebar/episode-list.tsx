@@ -1,4 +1,5 @@
-import { type FC, Fragment, useEffect, useRef } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { type FC, useEffect, useMemo, useRef } from 'react';
 import MaterialSymbolsKeyboardDoubleArrowDownRounded from '~icons/material-symbols/keyboard-double-arrow-down-rounded';
 import MaterialSymbolsPlayArrowRounded from '~icons/material-symbols/play-arrow-rounded';
 import MaterialSymbolsPlaylistAddCheckRounded from '~icons/material-symbols/playlist-add-check-rounded';
@@ -24,6 +25,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { useScrollParent } from '@/hooks/use-scroll-parent';
 
 import { usePlayer } from '../context/player-context';
 import { progressOf } from '../context/sources';
@@ -154,42 +156,96 @@ const EpisodeMenu: FC<EpisodeMenuProps> = ({
   );
 };
 
+type Row =
+  | { key: string; index: number; episode: API.EpisodeData }
+  | { key: string; missing: number };
+
 const EpisodeList = () => {
   const { container, slug, team, currentEpisode, setEpisode } = usePlayer();
   const episodes = team?.episodes;
   const queue = useActiveQueue();
-  const currentRowRef = useRef<HTMLLIElement>(null);
   const revealedRef = useRef(false);
+
+  // A gap's divider goes above the episode after it.
+  const rows = useMemo(
+    () =>
+      (episodes ?? []).flatMap((episode, index): Row[] => {
+        const row = { key: episode.video_url, index, episode };
+        const missing = countMissing(
+          episode.episode,
+          episodes![index - 1]?.episode,
+        );
+        return missing > 0
+          ? [{ key: `missing-${episode.video_url}`, missing }, row]
+          : [row];
+      }),
+    [episodes],
+  );
+  // Decided per list so every row shares the same layout and height.
+  const dated = !!episodes?.some(({ releasedAt }) => releasedAt);
+
+  const { listRef, scrollElement, scrollMargin } = useScrollParent();
+  const virtualizer = useVirtualizer({
+    count: rows.length,
+    estimateSize: (index) => ('missing' in rows[index]! ? 24 : dated ? 48 : 32),
+    getItemKey: (index) => rows[index]!.key,
+    gap: 4,
+    overscan: 8,
+    scrollMargin,
+    getScrollElement: () => scrollElement,
+  });
 
   // Centre the current episode when the list first appears, then keep it in
   // view as playback moves on.
+  const currentIndex = rows.findIndex(
+    (row) =>
+      'episode' in row && row.episode.video_url === currentEpisode?.video_url,
+  );
   useEffect(() => {
-    if (!currentRowRef.current) return;
-    revealRow(
-      currentRowRef.current,
-      revealedRef.current ? 'nearest' : 'center',
-    );
+    if (currentIndex === -1 || !scrollElement) return;
+    virtualizer.scrollToIndex(currentIndex, {
+      align: revealedRef.current ? 'auto' : 'center',
+    });
     revealedRef.current = true;
-  }, [currentEpisode?.video_url, episodes]);
+  }, [currentIndex, rows, scrollElement, virtualizer]);
 
   if (!episodes?.length) return null;
 
   const watched = progressOf(slug);
   const queued = new Set(queue.items.map(queueKey));
-  // Decided per list so every row shares the same layout and height.
   const numbered = episodes.some((episode) => getEpisodeTitle(episode));
   const numberWidth = `${String(Math.max(...episodes.map(({ episode }) => episode))).length}ch`;
-  const dated = episodes.some(({ releasedAt }) => releasedAt);
 
   return (
     <SidebarGroup>
-      <SidebarMenu>
-        {episodes.map((ep, index) => {
+      <SidebarMenu
+        ref={listRef}
+        className="relative"
+        style={{ height: virtualizer.getTotalSize() }}
+      >
+        {virtualizer.getVirtualItems().map((virtualItem) => {
+          const row = rows[virtualItem.index]!;
+          const itemProps = {
+            ref: virtualizer.measureElement,
+            'data-index': virtualItem.index,
+            className: 'absolute inset-x-0 top-0',
+            style: {
+              transform: `translateY(${virtualItem.start - scrollMargin}px)`,
+            },
+          };
+
+          if ('missing' in row) {
+            return (
+              <SidebarMenuItem key={virtualItem.key} {...itemProps}>
+                <MissingDivider count={row.missing} noun="episode" />
+              </SidebarMenuItem>
+            );
+          }
+
+          const { episode: ep, index } = row;
           const title = getEpisodeTitle(ep);
           const releaseDate = formatReleaseDate(ep.releasedAt);
-          const previous = episodes[index - 1]?.episode;
-          const missing = countMissing(ep.episode, previous);
-          const duplicate = previous === ep.episode;
+          const duplicate = episodes[index - 1]?.episode === ep.episode;
           const typeBadge =
             ep.episode_type && ep.episode_type !== 'canon'
               ? episodeTypeBadges[ep.episode_type]
@@ -201,97 +257,88 @@ const EpisodeList = () => {
           const queueable = !!slug && (!isCurrent || isQueued);
 
           return (
-            <Fragment key={ep.video_url}>
-              {missing > 0 && (
-                <SidebarMenuItem>
-                  <MissingDivider count={missing} noun="episode" />
-                </SidebarMenuItem>
-              )}
-              <SidebarMenuItem ref={isCurrent ? currentRowRef : null}>
-                <ContextMenu>
-                  <ContextMenuTrigger
-                    render={
-                      <SidebarMenuButton
-                        className={cn(
-                          dated && 'h-12',
-                          ep.episode <= watched &&
-                            !isCurrent &&
-                            'text-muted-foreground',
-                          // The queue button takes room only while it shows: on
-                          // hover or focus, and always when queued or on small
-                          // screens, where it never hides. Hover needs `!`: the
-                          // sidebar's `group-has` padding is as specific and later.
-                          queueable &&
-                            !isQueued &&
-                            'md:group-focus-within/menu-item:pr-8! md:group-hover/menu-item:pr-8! md:group-has-data-[sidebar=menu-action]/menu-item:pr-2',
-                        )}
-                        onClick={() => setEpisode(ep)}
-                        isActive={isCurrent}
-                      />
-                    }
-                  >
-                    {numbered && (
-                      <span
-                        className="text-muted-foreground shrink-0 text-right text-xs tabular-nums"
-                        style={{ width: numberWidth }}
-                      >
-                        {ep.episode}
-                      </span>
-                    )}
-                    <div className="grid min-w-0 flex-1 leading-tight">
-                      <span className="truncate">
-                        {title ?? `Епізод ${ep.episode}`}
-                      </span>
-                      {releaseDate && (
-                        <span className="text-muted-foreground truncate text-xs font-normal">
-                          {releaseDate}
-                        </span>
+            <SidebarMenuItem key={virtualItem.key} {...itemProps}>
+              <ContextMenu>
+                <ContextMenuTrigger
+                  render={
+                    <SidebarMenuButton
+                      className={cn(
+                        dated && 'h-12',
+                        ep.episode <= watched &&
+                          !isCurrent &&
+                          'text-muted-foreground',
+                        // The queue button takes room only while it shows: on
+                        // hover or focus, and always when queued or on small
+                        // screens, where it never hides. Hover needs `!`: the
+                        // sidebar's `group-has` padding is as specific and later.
+                        queueable &&
+                          !isQueued &&
+                          'md:group-focus-within/menu-item:pr-8! md:group-hover/menu-item:pr-8! md:group-has-data-[sidebar=menu-action]/menu-item:pr-2',
                       )}
-                    </div>
-                    {duplicate && (
-                      <Badge className="bg-muted text-muted-foreground h-4 rounded-sm px-1.5 text-[10px] font-semibold">
-                        Дублікат
-                      </Badge>
-                    )}
-                    {typeBadge && (
-                      <Badge
-                        className={cn(
-                          'h-4 rounded-sm px-1.5 text-[10px] font-semibold',
-                          typeBadge.className,
-                        )}
-                      >
-                        {typeBadge.label}
-                      </Badge>
-                    )}
-                  </ContextMenuTrigger>
-                  <ContextMenuContent container={container}>
-                    <EpisodeMenu
-                      episodes={episodes.slice(index)}
-                      isCurrent={isCurrent}
-                      isQueued={isQueued}
-                      queueable={queueable}
+                      onClick={() => setEpisode(ep)}
+                      isActive={isCurrent}
                     />
-                  </ContextMenuContent>
-                </ContextMenu>
-                {queueable && (
-                  <SidebarMenuAction
-                    showOnHover={!isQueued}
-                    aria-label={
-                      isQueued ? 'Прибрати з черги' : 'Додати до черги'
-                    }
-                    title={isQueued ? 'Прибрати з черги' : 'Додати до черги'}
-                    className="transition-opacity peer-data-[size=default]/menu-button:top-1/2 peer-data-[size=default]/menu-button:-translate-y-1/2"
-                    onClick={() => queue.toggle(queueItemOf(ep))}
-                  >
-                    {isQueued ? (
-                      <MaterialSymbolsPlaylistAddCheckRounded />
-                    ) : (
-                      <MaterialSymbolsPlaylistAddRounded />
+                  }
+                >
+                  {numbered && (
+                    <span
+                      className="text-muted-foreground shrink-0 text-right text-xs tabular-nums"
+                      style={{ width: numberWidth }}
+                    >
+                      {ep.episode}
+                    </span>
+                  )}
+                  <div className="grid min-w-0 flex-1 leading-tight">
+                    <span className="truncate">
+                      {title ?? `Епізод ${ep.episode}`}
+                    </span>
+                    {releaseDate && (
+                      <span className="text-muted-foreground truncate text-xs font-normal">
+                        {releaseDate}
+                      </span>
                     )}
-                  </SidebarMenuAction>
-                )}
-              </SidebarMenuItem>
-            </Fragment>
+                  </div>
+                  {duplicate && (
+                    <Badge className="bg-muted text-muted-foreground h-4 rounded-sm px-1.5 text-[10px] font-semibold">
+                      Дублікат
+                    </Badge>
+                  )}
+                  {typeBadge && (
+                    <Badge
+                      className={cn(
+                        'h-4 rounded-sm px-1.5 text-[10px] font-semibold',
+                        typeBadge.className,
+                      )}
+                    >
+                      {typeBadge.label}
+                    </Badge>
+                  )}
+                </ContextMenuTrigger>
+                <ContextMenuContent container={container}>
+                  <EpisodeMenu
+                    episodes={episodes.slice(index)}
+                    isCurrent={isCurrent}
+                    isQueued={isQueued}
+                    queueable={queueable}
+                  />
+                </ContextMenuContent>
+              </ContextMenu>
+              {queueable && (
+                <SidebarMenuAction
+                  showOnHover={!isQueued}
+                  aria-label={isQueued ? 'Прибрати з черги' : 'Додати до черги'}
+                  title={isQueued ? 'Прибрати з черги' : 'Додати до черги'}
+                  className="transition-opacity peer-data-[size=default]/menu-button:top-1/2 peer-data-[size=default]/menu-button:-translate-y-1/2"
+                  onClick={() => queue.toggle(queueItemOf(ep))}
+                >
+                  {isQueued ? (
+                    <MaterialSymbolsPlaylistAddCheckRounded />
+                  ) : (
+                    <MaterialSymbolsPlaylistAddRounded />
+                  )}
+                </SidebarMenuAction>
+              )}
+            </SidebarMenuItem>
           );
         })}
       </SidebarMenu>

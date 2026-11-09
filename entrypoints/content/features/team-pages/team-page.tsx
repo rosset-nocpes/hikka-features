@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import EmptyState from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
+import VirtualGrid from '@/components/virtual-grid';
 import {
   convexApi,
   type TeamLinkKind,
@@ -352,11 +353,12 @@ const TeamPage: FC<{ slug: string }> = ({ slug }) => {
         <div className="flex flex-col gap-12">
           {groups.map(({ id, title, count, entries }) => (
             <ContentsSection key={id} id={id} title={title} count={count}>
-              <div className={POSTER_GRID}>
-                {entries.map((entry) => (
-                  <ReleaseCard key={entry.anime.slug} entry={entry} />
-                ))}
-              </div>
+              <VirtualGrid
+                className={POSTER_GRID}
+                items={entries}
+                getKey={(entry) => entry.anime.slug}
+                renderItem={(entry) => <ReleaseCard entry={entry} />}
+              />
             </ContentsSection>
           ))}
         </div>

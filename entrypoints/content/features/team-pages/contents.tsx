@@ -26,6 +26,12 @@ export interface ContentsEntry {
   count?: number;
 }
 
+/** How long a jump to a section scrolls for. */
+const JUMP_MS = 500;
+
+const easeInOut = (t: number) =>
+  t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2;
+
 /** The sections on the page, by id, for the contents to follow. */
 const SectionsContext = createContext<Map<string, HTMLElement>>(new Map());
 
@@ -76,11 +82,43 @@ function useActiveSection(entries: ContentsEntry[]) {
     };
   }, [entries, sections]);
 
+  // A jump animates the scroll itself, aiming at the heading's place each
+  // frame: virtual grids correct the scroll as they measure the rows it
+  // passes, which would stop a browser smooth scroll short.
+  const jumpFrame = useRef(0);
+  useEffect(() => () => cancelAnimationFrame(jumpFrame.current), []);
+
   const jump = useCallback(
     (id: string) => {
       pinned.current = id;
       setActive(id);
-      sections.get(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const section = sections.get(id);
+      if (!section) return;
+
+      const margin =
+        Number.parseFloat(getComputedStyle(section).scrollMarginTop) || 0;
+      const target = () =>
+        Math.min(
+          Math.max(
+            window.scrollY + section.getBoundingClientRect().top - margin,
+            0,
+          ),
+          document.documentElement.scrollHeight - window.innerHeight,
+        );
+      const from = window.scrollY;
+      const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const started = performance.now();
+
+      cancelAnimationFrame(jumpFrame.current);
+      const step = (now: number) => {
+        // Scrolling, clicking or typing takes over.
+        if (pinned.current !== id) return;
+        const progress = reduced ? 1 : Math.min((now - started) / JUMP_MS, 1);
+        const top = from + (target() - from) * easeInOut(progress);
+        window.scrollTo({ top, behavior: 'instant' });
+        if (progress < 1) jumpFrame.current = requestAnimationFrame(step);
+      };
+      jumpFrame.current = requestAnimationFrame(step);
     },
     [sections],
   );

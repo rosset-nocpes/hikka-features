@@ -3,6 +3,7 @@ import { type FC, Fragment, useEffect } from 'react';
 import ContentCard, {
   ContentCardSkeleton,
 } from '@/components/hikka/content-card';
+import VirtualGrid from '@/components/virtual-grid';
 import { RECOMMENDATIONS_TAB } from '@/hooks/use-recommendation';
 import { isRecommendationsPagePath } from '@/utils/hikka-router';
 
@@ -131,11 +132,14 @@ const RecommendationPage: FC<{ container: HTMLElement }> = ({ container }) => {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className={GRID}>
-        {data.list.map((item) => (
-          <ContentCard key={item.slug} item={item} container={container} meta />
-        ))}
-      </div>
+      <VirtualGrid
+        className={GRID}
+        items={data.list}
+        getKey={(item) => item.slug}
+        renderItem={(item) => (
+          <ContentCard item={item} container={container} meta />
+        )}
+      />
       <p className="text-muted-foreground text-sm">
         За рекомендаціями користувачів{' '}
         {data.sources.map(({ name, url }, index) => (
