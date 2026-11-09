@@ -96,9 +96,23 @@ const episodeIn = (team: MergedTeam, number: number) =>
   team.episodes.find(({ episode }) => episode === number);
 
 /**
- * The team `key` playing `provider`'s copy of `episode`, even where its list
- * takes that episode from another provider.
+ * `team` playing `entry`, one of its sources, even where its list takes
+ * that episode from another provider: this copy takes the others' place.
  */
+const withEntry = (team: MergedTeam, entry: API.EpisodeData): Selection => {
+  if (team.episodes.includes(entry)) return { team, entry };
+  const rest = team.episodes.filter((other) => other.episode !== entry.episode);
+  const index = rest.findIndex((other) => other.episode > entry.episode);
+  return {
+    team: {
+      ...team,
+      episodes: index < 0 ? [...rest, entry] : rest.toSpliced(index, 0, entry),
+    },
+    entry,
+  };
+};
+
+/** The team `key` playing `provider`'s copy of `episode`. */
 export const exactSource = (
   teams: MergedTeam[],
   provider: string,
@@ -109,19 +123,26 @@ export const exactSource = (
   const entry = team?.sources.find(
     (source) => source.provider === provider && source.episode === episode,
   );
-  if (!team || !entry) return undefined;
-  if (team.episodes.includes(entry)) return { team, entry };
+  return team && entry ? withEntry(team, entry) : undefined;
+};
 
-  // This provider's copy takes the place of the others'.
-  const rest = team.episodes.filter((other) => other.episode !== episode);
-  const index = rest.findIndex((other) => other.episode > episode);
-  return {
-    team: {
-      ...team,
-      episodes: index < 0 ? [...rest, entry] : rest.toSpliced(index, 0, entry),
-    },
-    entry,
-  };
+/**
+ * What plays on once the watch data refreshes: the same video, else the
+ * team's same episode; undefined when the team is gone.
+ */
+export const refreshedSource = (
+  teams: MergedTeam[],
+  key: string,
+  playing: API.EpisodeData,
+): Selection | undefined => {
+  const team = teams.find((candidate) => candidate.key === key);
+  if (!team) return undefined;
+  const same = team.sources.find(
+    (source) => source.video_url === playing.video_url,
+  );
+  if (same) return withEntry(team, same);
+  const entry = episodeIn(team, playing.episode);
+  return entry && { team, entry };
 };
 
 /**

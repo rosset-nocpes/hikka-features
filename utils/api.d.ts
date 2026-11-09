@@ -32,6 +32,8 @@ declare global {
       slug?: string;
       title: string;
       logo: string;
+      /** Uploads crediting no team, named after their provider. */
+      unnamed?: boolean;
       translationType: TranslationType;
     };
 

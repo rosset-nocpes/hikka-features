@@ -17,6 +17,7 @@ import {
   nextUnwatched,
   preferredTeam,
   queuedSource,
+  refreshedSource,
   type Selection,
   sharedSource,
   teamsOf,
@@ -193,8 +194,25 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
         return true;
       }
 
-      if (get().slug === slug && get().watchDataKey === key) {
-        return true;
+      if (get().slug === slug) {
+        if (get().watchDataKey === key) return true;
+        // Refreshed data: what plays carries on where it still can.
+        const { team, currentEpisode } = get();
+        const kept =
+          team &&
+          currentEpisode &&
+          refreshedSource(teams, team.key, currentEpisode);
+        if (kept) {
+          set({
+            ...loaded,
+            ...show(kept),
+            // The same video keeps its player, which a new entry reloads.
+            ...(kept.entry.video_url === currentEpisode.video_url && {
+              currentEpisode,
+            }),
+          });
+          return true;
+        }
       }
 
       const { sharedParams, isShared, roomInvite, roomInviteAccepted } =

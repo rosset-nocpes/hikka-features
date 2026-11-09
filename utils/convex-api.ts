@@ -18,6 +18,8 @@ export interface ConvexWatchTeam {
   /** Names the team whichever provider lists it; favorites, links store it. */
   key: string;
   team: { id?: string; slug?: string; title: string; logo?: string };
+  /** Uploads crediting no team, named after their provider. */
+  unnamed?: true;
   translationType: TranslationType;
   /** By number; a provider can give an episode more than once. */
   episodes: Array<{

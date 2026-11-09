@@ -218,11 +218,28 @@ const subtitles = ({ data, answer }: IFramePlayerEvent) => {
   }
 };
 
+/** How long a player gets to load its qualities before it's asked again. */
+const QUALITY_RETRY_MS = 500;
+const QUALITY_RETRIES = 10;
+const qualityRetries = { 'get-quality': 0, 'get-qualities': 0 };
+
+/**
+ * Players answer `1` while their qualities load: asks again a little later,
+ * a few times, rather than as fast as they answer.
+ */
+const askAgain = (action: keyof typeof qualityRetries) => {
+  if (qualityRetries[action] >= QUALITY_RETRIES) return;
+  qualityRetries[action] += 1;
+  setTimeout(() => sendIFramePlayerCommand({ action }), QUALITY_RETRY_MS);
+};
+
 /** How the store follows each event the episode's player reports. */
 const PLAYER_EVENTS: Record<string, (event: IFramePlayerEvent) => void> = {
   // Each episode's player says so once, so the last one's segments go.
   inited: () => set({ isReady: true, skipSegments: [] }),
   start: () => {
+    qualityRetries['get-quality'] = 0;
+    qualityRetries['get-qualities'] = 0;
     const iframe = getCurrentPlayerIFrame();
     if (iframe) requestSkipSegments(iframe);
     sendIFramePlayerCommand({ action: 'get-quality' });
@@ -243,12 +260,12 @@ const PLAYER_EVENTS: Record<string, (event: IFramePlayerEvent) => void> = {
   quality: ({ data, answer }) => {
     const quality = data ?? answer;
     if (typeof quality !== 'string' || !quality) return;
-    if (quality === '1') sendIFramePlayerCommand({ action: 'get-quality' });
+    if (quality === '1') askAgain('get-quality');
     else set({ currentQuality: quality });
   },
   qualities: ({ answer }) => {
     if (!Array.isArray(answer)) return;
-    if (answer[0] === 1) sendIFramePlayerCommand({ action: 'get-qualities' });
+    if (answer[0] === 1) askAgain('get-qualities');
     else set({ qualities: strings(answer) });
   },
   speed: ({ data, answer }) => {

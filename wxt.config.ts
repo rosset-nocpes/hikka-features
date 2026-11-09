@@ -38,33 +38,45 @@ export default defineConfig({
       include: ['react', 'react-dom'],
     },
   }),
-  manifest: () => ({
-    name: 'Hikka Features',
-    permissions: ['storage', 'alarms'],
-    host_permissions: [
-      'https://api.hikka.io/*',
-      ...convexHostPermissions,
-      'https://graphql.anilist.co/*',
-      'https://api.tenrai.org/*',
-      'https://manga.in.ua/*',
-      'https://baka.in.ua/*',
-    ],
-    web_accessible_resources: [
-      {
-        // Injected into hikka.io's own world for its router.
-        matches: ['https://hikka.io/*', 'https://dev.hikka.io/*'],
-        resources: ['hikka-router.js', 'hf-x-cpr.svg', 'hf-x-cpr-dark.svg'],
-      },
-    ],
-    browser_specific_settings: {
-      gecko: {
-        id: 'extension@hikka-features.pp.ua',
-        data_collection_permissions: {
-          required: ['none'],
+  manifest: ({ mode }) => {
+    // Without them every account and player call fails; .env isn't in git.
+    if (
+      mode === 'production' &&
+      !process.argv.includes('prepare') &&
+      convexHostPermissions.length < 2
+    ) {
+      throw new Error(
+        'Set WXT_CONVEX_URL and WXT_CONVEX_SITE_URL (see .env.example)',
+      );
+    }
+    return {
+      name: 'Hikka Features',
+      permissions: ['storage', 'alarms'],
+      host_permissions: [
+        'https://api.hikka.io/*',
+        ...convexHostPermissions,
+        'https://graphql.anilist.co/*',
+        'https://api.tenrai.org/*',
+        'https://manga.in.ua/*',
+        'https://baka.in.ua/*',
+      ],
+      web_accessible_resources: [
+        {
+          // Injected into hikka.io's own world for its router.
+          matches: ['https://hikka.io/*', 'https://dev.hikka.io/*'],
+          resources: ['hikka-router.js', 'hf-x-cpr.svg', 'hf-x-cpr-dark.svg'],
+        },
+      ],
+      browser_specific_settings: {
+        gecko: {
+          id: 'extension@hikka-features.pp.ua',
+          data_collection_permissions: {
+            required: ['none'],
+          },
         },
       },
-    },
-  }),
+    };
+  },
   webExt: {
     startUrls: ['https://hikka.io'],
     chromiumArgs:

@@ -11,28 +11,31 @@ const toWatchData = (data: ConvexWatchResponse): API.WatchData => {
   return {
     type: data.anime.mediaType === 'unknown' ? 'tv' : data.anime.mediaType,
     providers: data.providers,
-    teams: data.teams.map(({ key, team, translationType, episodes }) => ({
-      key,
-      id: team.id,
-      slug: team.slug,
-      title: team.title,
-      logo: team.logo ?? '',
-      translationType,
-      sources: episodes.flatMap(({ number, sources }) => {
-        // When the team first put the episode out, so a provider that
-        // doesn't say still dates it.
-        const dates = sources.flatMap(({ releasedAt }) => releasedAt ?? []);
-        const releasedAt = dates.length ? Math.min(...dates) : undefined;
-        return sources.map(({ provider, url }) => ({
-          episode: number,
-          video_url: url,
-          provider,
-          title: info.get(number)?.title,
-          episode_type: info.get(number)?.type,
-          releasedAt,
-        }));
+    teams: data.teams.map(
+      ({ key, team, unnamed, translationType, episodes }) => ({
+        key,
+        id: team.id,
+        slug: team.slug,
+        title: team.title,
+        logo: team.logo ?? '',
+        unnamed,
+        translationType,
+        sources: episodes.flatMap(({ number, sources }) => {
+          // When the team first put the episode out, so a provider that
+          // doesn't say still dates it.
+          const dates = sources.flatMap(({ releasedAt }) => releasedAt ?? []);
+          const releasedAt = dates.length ? Math.min(...dates) : undefined;
+          return sources.map(({ provider, url }) => ({
+            episode: number,
+            video_url: url,
+            provider,
+            title: info.get(number)?.title,
+            episode_type: info.get(number)?.type,
+            releasedAt,
+          }));
+        }),
       }),
-    })),
+    ),
   };
 };
 

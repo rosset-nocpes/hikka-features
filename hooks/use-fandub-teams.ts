@@ -19,7 +19,8 @@ interface FandubTeam extends Omit<TeamSummary, 'id'> {
 const unknownPlayerTeams = (data: API.WatchData | undefined) => {
   const teams = new Map<string, FandubTeam>();
   for (const team of data?.teams ?? []) {
-    if (team.id) continue;
+    // Catalog teams come from the catalog; unnamed uploads aren't a team.
+    if (team.id || team.unnamed) continue;
     const key = looseKey(team.title);
     const episodes = Math.max(0, ...team.sources.map((ep) => ep.episode));
 
