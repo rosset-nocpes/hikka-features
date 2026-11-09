@@ -71,9 +71,9 @@ const addReleases = (team: FandubTeam, releases: TeamRelease[]) => {
 
 /**
  * Teams that dubbed or subtitled the page's anime, from the extension's
- * catalog, the Notion catalog and the players, in that order of trust (the
- * backend merges them). Asked again once the player's data is fresh, which
- * also refreshes what the backend knows of the players.
+ * catalog and the players, in that order of trust (the backend merges
+ * them). Asked again once the player's data is fresh, which also refreshes
+ * what the backend knows of the players.
  */
 const useFandubTeams = () => {
   const { slug } = usePageStore();

@@ -39,9 +39,9 @@ settings, as the site widgets right before and after it.
 
 The "Від команд" block on anime pages lists the teams that dubbed or
 subtitled the anime from the extension's own catalog (teams' Telegram
-channels), the CPR Notion catalog and the player, merged by the backend in
-that order of trust (`fandub:forAnime`); player teams the catalog doesn't know
-are added from the watch data. Each team opens its page, `/teams/<slug>`, and
+channels) and the player, merged by the backend in that order of trust
+(`fandub:forAnime`); player teams the catalog doesn't know are added from the
+watch data. Each team opens its page, `/teams/<slug>`, and
 the block's title, and "Команди" under "Спільнота" in the site's navbar and
 mobile menu (`teams-nav-link.feature.tsx`), open the list of teams, `/teams`
 (`features/team-pages`). Both are laid out like a hikka.io collection: one

@@ -203,9 +203,9 @@ export type FriendActivity = {
 
 /**
  * Where a team release comes from, most trusted first: the extension's own
- * catalog (teams' Telegram channels), the CPR Notion catalog, the players.
+ * catalog (teams' Telegram channels), then the players.
  */
-export type ReleaseSource = 'catalog' | 'notion' | 'player';
+export type ReleaseSource = 'catalog' | 'player';
 
 export type ReleaseStatus =
   | 'announced'
@@ -324,10 +324,7 @@ export const convexApi = {
     get: makeFunctionReference<
       'query',
       { slug: string },
-      {
-        poster?: string;
-        fandub: Array<{ title: string; logo?: string; link: string }>;
-      } | null
+      { poster?: string } | null
     >('catalog:get'),
   },
   fandub: {
