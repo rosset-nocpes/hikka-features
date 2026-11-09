@@ -21,14 +21,15 @@ const sameLayout = (left: Layout, right: Layout) =>
   left.rowGap === right.rowGap &&
   left.top === right.top;
 
-/** Reads the columns and gaps that the grid's classes give it. */
+/** Until the grid is measured: one column, as if at the page's top. */
+const UNMEASURED: Layout = { columns: 1, columnWidth: 0, rowGap: 0, top: 0 };
+
+/**
+ * Reads the columns and gaps that the grid's classes give it; null until
+ * the grid is on the page.
+ */
 function useGridLayout(grid: HTMLElement | null) {
-  const [layout, setLayout] = useState<Layout>({
-    columns: 1,
-    columnWidth: 0,
-    rowGap: 0,
-    top: 0,
-  });
+  const [layout, setLayout] = useState<Layout | null>(null);
 
   useLayoutEffect(() => {
     if (!grid) return;
@@ -41,7 +42,9 @@ function useGridLayout(grid: HTMLElement | null) {
         rowGap: Number.parseFloat(style.rowGap) || 0,
         top: grid.getBoundingClientRect().top + window.scrollY,
       };
-      setLayout((current) => (sameLayout(current, next) ? current : next));
+      setLayout((current) =>
+        current && sameLayout(current, next) ? current : next,
+      );
     };
     update();
     // The page above the grid moves it whenever it changes size.
@@ -80,7 +83,8 @@ const VirtualGrid = <T,>({
   // memoize around, but not `useWindowVirtualizer`.
   'use no memo';
   const [grid, setGrid] = useState<HTMLDivElement | null>(null);
-  const { columns, columnWidth, rowGap, top } = useGridLayout(grid);
+  const layout = useGridLayout(grid);
+  const { columns, columnWidth, rowGap, top } = layout ?? UNMEASURED;
 
   const virtualizer = useWindowVirtualizer({
     count: Math.ceil(items.length / columns),
@@ -95,12 +99,18 @@ const VirtualGrid = <T,>({
     overscan: 2,
   });
   // A grid out of view still gets its first rows as overscan; on a page of
-  // many grids, only those near the view render any.
+  // many grids, only those near the view render any. Unmeasured, every grid
+  // would think it's at the top in one column, and render dozens of cards
+  // only to drop them once its layout effect measures it, before paint.
   const offset = virtualizer.scrollOffset ?? 0;
   const view = virtualizer.scrollRect?.height ?? window.innerHeight;
-  const rows = virtualizer
-    .getVirtualItems()
-    .filter((row) => row.end > offset - view && row.start < offset + 2 * view);
+  const rows = layout
+    ? virtualizer
+        .getVirtualItems()
+        .filter(
+          (row) => row.end > offset - view && row.start < offset + 2 * view,
+        )
+    : [];
 
   return (
     <div

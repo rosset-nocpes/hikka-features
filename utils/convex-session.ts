@@ -80,11 +80,18 @@ function siteUrl(path: string) {
   return `${CONVEX_SITE_URL}${path}`;
 }
 
+/**
+ * A refresh that never answers would hold every token request behind it,
+ * so auth requests give up after this long.
+ */
+const AUTH_REQUEST_TIMEOUT = 15_000;
+
 async function authRequest(path: string, body: object) {
   const response = await fetch(siteUrl(path), {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(AUTH_REQUEST_TIMEOUT),
   });
   if (!response.ok) {
     const data = (await response.json().catch(() => undefined)) as
@@ -282,12 +289,13 @@ class AccountSession {
 
   /**
    * Lends an access token to a tab's live connection, or null when signed
-   * out.
+   * out. A failed refresh throws: null would sign the connection out until
+   * the account changes, while the tab can keep its token and ask again.
    */
   async lendToken(forceRefresh: boolean) {
     if (!(await loadedSettings()).convexSession) return null;
     if (forceRefresh) this.accessToken = undefined;
-    return await this.token().catch(() => null);
+    return await this.token();
   }
 
   /** Makes an account call a tab or the popup forwarded. */

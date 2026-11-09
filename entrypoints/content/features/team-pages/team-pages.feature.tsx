@@ -5,6 +5,7 @@ import { HikkaPages } from '../../core/core.enums';
 import { ContainerContext } from './parts';
 import TeamList from './team-list';
 import TeamPage from './team-page';
+import { prefetchTeamPage, prefetchTeamPagesOnIntent } from './team-page-query';
 
 /** On `<html>` while a team page replaces the content of hikka.io's page. */
 const PAGE_ATTRIBUTE = 'data-hikka-features-page';
@@ -52,6 +53,10 @@ export default class TeamPagesFeature extends OwnPageFeature {
   readonly pages = [HikkaPages.TeamPages];
 
   init() {
+    // Before the site's router has put its layout under the page.
+    prefetchTeamPage(location.pathname);
+    const { ctx } = usePageStore.getState();
+    ctx.onInvalidated(prefetchTeamPagesOnIntent());
     return this.createPage({
       attribute: PAGE_ATTRIBUTE,
       style: PAGE_STYLE,

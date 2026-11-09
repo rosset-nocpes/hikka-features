@@ -263,10 +263,15 @@ export interface TeamReleaseAnime {
   title?: string;
   image?: string;
   mediaType?: string;
-  status?: string;
   year?: number;
   episodesTotal?: number;
 }
+
+/** A release as a team's page shows it on a poster. */
+export type TeamPageRelease = Pick<
+  TeamRelease,
+  'translationType' | 'episodes' | 'episodesTotal' | 'status'
+>;
 
 export interface TeamPage {
   team: TeamSummary & {
@@ -281,7 +286,7 @@ export interface TeamPage {
   /** Newest first. */
   releases: Array<{
     anime: TeamReleaseAnime;
-    releases: TeamRelease[];
+    releases: TeamPageRelease[];
     updatedAt: number;
   }>;
   /** When its latest release posts went up, newest first. */

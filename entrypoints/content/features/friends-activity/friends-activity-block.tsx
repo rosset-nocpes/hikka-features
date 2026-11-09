@@ -216,13 +216,18 @@ const SkeletonRow = () => (
 /** The user's own sharing, in the card's footer as the site's tracker has. */
 const SharingFooter = () => {
   const id = useId();
-  const { shared, pending, setShared } = useActivitySharing();
+  const { shared, pending, error, setShared } = useActivitySharing();
 
   return (
     <div className="text-muted-foreground -mx-4 -mb-4 flex items-center gap-2 rounded-b-lg border-t px-4 py-3">
       <MaterialSymbolsVisibilityOutlineRounded className="size-4 shrink-0" />
-      <Label htmlFor={id} className="flex-1">
+      <Label htmlFor={id} className="flex flex-1 flex-col items-start gap-0.5">
         Ділитися моєю активністю
+        {error && shared === undefined && (
+          <span role="alert" className="text-destructive text-xs leading-snug">
+            Не вдалося завантажити налаштування
+          </span>
+        )}
       </Label>
       <Switch
         id={id}
@@ -242,7 +247,8 @@ const isPlaying = (activity: FriendActivity) =>
   activity.contentType === 'anime' && activity.playing;
 
 const FriendsList = () => {
-  const activities = useLiveQuery(convexApi.activity.friends, {})?.data;
+  const { data: activities, error } =
+    useLiveQuery(convexApi.activity.friends, {}) ?? {};
   const now = useNow();
 
   // Friends are the mutual follows among extension users; read them again
@@ -250,6 +256,18 @@ const FriendsList = () => {
   useEffect(() => {
     void account.refreshFriends();
   }, []);
+
+  // A later result replaces the error, e.g. once the connection signs in.
+  if (error && activities === undefined) {
+    return (
+      <EmptyState
+        size="sm"
+        icon={<MaterialSymbolsGroupOutlineRounded />}
+        title="Не вдалося завантажити активність друзів"
+        description="Спробуйте оновити сторінку"
+      />
+    );
+  }
 
   if (activities?.length === 0) {
     return (

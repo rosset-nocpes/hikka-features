@@ -10,6 +10,12 @@ import MdiInstagram from '~icons/mdi/instagram';
 import MdiTelegram from '~icons/mdi/telegram';
 import MdiYoutube from '~icons/mdi/youtube';
 
+import type {
+  TeamLinkKind,
+  TeamPage as TeamPageData,
+  TranslationType,
+} from '@/utils/convex-api';
+
 import { MEDIA_TYPES } from '@/components/hikka/media-tooltip';
 import { CardMeta, POSTER_GRID, Poster } from '@/components/hikka/poster';
 import TeamLogo from '@/components/hikka/team-logo';
@@ -18,13 +24,6 @@ import { Button } from '@/components/ui/button';
 import EmptyState from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import VirtualGrid from '@/components/virtual-grid';
-import {
-  convexApi,
-  type TeamLinkKind,
-  type TeamPage as TeamPageData,
-  type TranslationType,
-} from '@/utils/convex-api';
-import { convex } from '@/utils/convex-client';
 import { onHikkaLinkClick, teamPagePath } from '@/utils/hikka-router';
 import { releaseProgress, TRANSLATION_LABELS } from '@/utils/team-releases';
 
@@ -35,6 +34,7 @@ import {
 } from './contents';
 import { TextExpand, type TypeFilter, TypeFilterButtons } from './parts';
 import ReleaseDays from './release-days';
+import { teamPageQuery } from './team-page-query';
 
 type Team = TeamPageData['team'];
 type AnimeReleases = TeamPageData['releases'][number];
@@ -277,12 +277,7 @@ const TeamPage: FC<{ slug: string }> = ({ slug }) => {
   const [filter, setFilter] = useState<TypeFilter>('all');
   // What counts as still coming out is decided once a visit.
   const [now] = useState(Date.now);
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ['team-page', slug],
-    queryFn: () => convex.query(convexApi.fandub.team, { slug }),
-    staleTime: 60_000,
-    retry: false,
-  });
+  const { data, isLoading, isError } = useQuery(teamPageQuery(slug));
   useDocumentTitle(
     data?.team.title ?? (data === null ? 'Команду не знайдено' : undefined),
   );

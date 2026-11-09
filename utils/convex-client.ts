@@ -6,6 +6,7 @@ import {
 } from 'convex/server';
 import { ConvexError } from 'convex/values';
 
+import { useSettings } from '@/hooks/use-settings';
 import {
   compatibilityState,
   currentCompatibility,
@@ -132,17 +133,138 @@ class Convex {
 
 export const convex = new Convex();
 
+/** How long a tab waits for the background to lend a token. */
+const TOKEN_TIMEOUT = 20_000;
+/** Failed reconnects in a row after which the token is suspected. */
+const SUSPECT_RETRIES = 2;
+/** Waits before signing in again with a fresh token, one per failure. */
+const REAUTH_DELAYS = [1_000, 10_000, 60_000, 300_000];
+
+/** Who the extension is signed in as, or undefined when signed out. */
+const accountOf = (state: ReturnType<typeof useSettings.getState>) =>
+  state.convexSession ? (state.userData?.hikkaId ?? '') : undefined;
+
+function withTimeout<T>(promise: Promise<T>, ms: number) {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('timeout')), ms);
+    promise.then(resolve, reject).finally(() => clearTimeout(timer));
+  });
+}
+
+/**
+ * A tab's WebSocket client and its sign-in. Convex fetches a new token only
+ * when the server answers with an auth error; the self-hosted backend drops
+ * the socket instead, so the client would retry a refused token forever and
+ * account queries would never answer. Failed reconnects in a row, a refused
+ * sign-in and a change of account all sign in again with a fresh token.
+ */
+class LiveConnection {
+  readonly client: ConvexClient;
+  holders = 0;
+  /** The last token lent, kept for when the background can't lend one. */
+  private token?: string;
+  private forceRefresh = false;
+  private failures = 0;
+  private retry?: { timer: ReturnType<typeof setTimeout>; socket: boolean };
+  private readonly stops: (() => void)[];
+
+  constructor(url: string) {
+    // Otherwise hikka.io would ask to confirm leaving while a call is pending.
+    this.client = new ConvexClient(url, { unsavedChangesWarning: false });
+    this.authenticate();
+    this.stops = [
+      this.client.subscribeToConnectionState(
+        ({ isWebSocketConnected, connectionRetries }) => {
+          if (connectionRetries >= SUSPECT_RETRIES) this.scheduleRetry(true);
+          else if (isWebSocketConnected && this.retry?.socket) {
+            this.cancelRetry();
+          }
+        },
+      ),
+      useSettings.subscribe((state, previous) => {
+        if (accountOf(state) === accountOf(previous)) return;
+        this.failures = 0;
+        this.authenticate();
+      }),
+    ];
+  }
+
+  close() {
+    for (const stop of this.stops) stop();
+    this.cancelRetry();
+    void this.client.close();
+  }
+
+  private authenticate() {
+    this.cancelRetry();
+    this.client.setAuth(
+      (args) => this.fetchToken(args),
+      (authenticated) => {
+        if (!authenticated) return this.scheduleRetry(false);
+        this.failures = 0;
+        this.cancelRetry();
+      },
+    );
+  }
+
+  /**
+   * Never throws: the client pauses the socket while it waits for a token
+   * and would leave it paused.
+   */
+  private async fetchToken({
+    forceRefreshToken,
+  }: {
+    forceRefreshToken: boolean;
+  }) {
+    const forceRefresh = forceRefreshToken || this.forceRefresh;
+    this.forceRefresh = false;
+    try {
+      this.token =
+        (await withTimeout(
+          sendToBackground('convex-token', { forceRefresh }),
+          TOKEN_TIMEOUT,
+        )) ?? undefined;
+    } catch (error) {
+      console.error(error);
+      // The last token keeps the connection going until a retry.
+      this.scheduleRetry(false);
+    }
+    return this.token ?? null;
+  }
+
+  private scheduleRetry(socket: boolean) {
+    if (this.retry || accountOf(useSettings.getState()) === undefined) return;
+    const delay =
+      REAUTH_DELAYS[Math.min(this.failures, REAUTH_DELAYS.length - 1)];
+    this.failures += 1;
+    const timer = setTimeout(() => {
+      this.retry = undefined;
+      this.forceRefresh = true;
+      this.authenticate();
+    }, delay);
+    this.retry = { timer, socket };
+  }
+
+  private cancelRetry() {
+    if (!this.retry) return;
+    clearTimeout(this.retry.timer);
+    this.retry = undefined;
+  }
+}
+
 /**
  * The tab's WebSocket client for live account queries, shared by everyone
  * who needs one until the last of them releases it. The background keeps
  * the session and only lends it short-lived access tokens.
  */
 class LiveConvex {
-  private connection?: { client: ConvexClient; holders: number };
+  private connection?: LiveConnection;
 
   async acquire() {
     await convex.assertCompatible();
-    const connection = (this.connection ??= this.connect());
+    const connection = (this.connection ??= new LiveConnection(
+      requireConvexUrl(),
+    ));
     connection.holders += 1;
     let released = false;
     return {
@@ -153,7 +275,7 @@ class LiveConvex {
         connection.holders -= 1;
         if (connection.holders > 0 || this.connection !== connection) return;
         this.connection = undefined;
-        void connection.client.close();
+        connection.close();
       },
     };
   }
@@ -180,20 +302,6 @@ class LiveConvex {
     args: Action['_args'],
   ) {
     return this.run((client) => client.action(action, args));
-  }
-
-  private connect() {
-    // Otherwise hikka.io would ask to confirm leaving while a call is pending.
-    const client = new ConvexClient(requireConvexUrl(), {
-      unsavedChangesWarning: false,
-    });
-    client.setAuth(
-      async ({ forceRefreshToken }) =>
-        (await sendToBackground('convex-token', {
-          forceRefresh: forceRefreshToken,
-        })) ?? null,
-    );
-    return { client, holders: 0 };
   }
 }
 
