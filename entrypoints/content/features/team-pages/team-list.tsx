@@ -1,5 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
-import { type FC, useDeferredValue, useMemo, useState } from 'react';
+import {
+  type FC,
+  useDeferredValue,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import MaterialSymbolsArrowForwardRounded from '~icons/material-symbols/arrow-forward-rounded';
 import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
 import MaterialSymbolsGroupsOutlineRounded from '~icons/material-symbols/groups-outline-rounded';
@@ -13,7 +19,12 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { convexApi, type TeamListing } from '@/utils/convex-api';
 import { convex } from '@/utils/convex-client';
-import { onHikkaLinkClick, teamPagePath } from '@/utils/hikka-router';
+import {
+  onHikkaLinkClick,
+  onHikkaNavigation,
+  teamPagePath,
+  TEAM_SEARCH_PARAM,
+} from '@/utils/hikka-router';
 
 import {
   type ContentsEntry,
@@ -61,14 +72,6 @@ const groupOf = (team: TeamListing) =>
   ACTIVITY_GROUPS.find((group) =>
     group.activities.includes(team.activity ?? ''),
   ) ?? OTHER_GROUP;
-
-/** Whether a team's name has the query in it, in either alphabet. */
-const matchesSearch = (title: string, query: string) => {
-  if (!query) return true;
-  if (looseKey(title).includes(looseKey(query))) return true;
-  const latin = latinKey(query);
-  return !!latin && latinKey(title).includes(latin);
-};
 
 /** The last tile of a team's posters: how many it has, opening its page. */
 const MoreTile: FC<{ href: string; image?: string; count: number }> = ({
@@ -194,7 +197,17 @@ const TeamGroup: FC<ContentsEntry & { teams: TeamListing[] }> = ({
  * collection: parts by how active the teams are, listed in the contents.
  */
 const TeamList = () => {
-  const [search, setSearch] = useState('');
+  // hikka.io's search opens the list with its query (`/teams?search=`).
+  const urlSearch = useSyncExternalStore(
+    onHikkaNavigation,
+    () => new URLSearchParams(location.search).get(TEAM_SEARCH_PARAM) ?? '',
+  );
+  const [search, setSearch] = useState(urlSearch);
+  const [shownUrlSearch, setShownUrlSearch] = useState(urlSearch);
+  if (urlSearch !== shownUrlSearch) {
+    setShownUrlSearch(urlSearch);
+    setSearch(urlSearch);
+  }
   const [filter, setFilter] = useState<TypeFilter>('all');
   const [sort, setSort] = useState<Sort>('releases');
   const query = useDeferredValue(search.trim());
@@ -224,7 +237,7 @@ const TeamList = () => {
       .filter(
         (team) =>
           (filter === 'all' || (team.stats?.[filter] ?? 0) > 0) &&
-          matchesSearch(team.title, query),
+          matchesName(team.title, query),
       )
       .toSorted(sorters[sort]);
     return [...ACTIVITY_GROUPS, OTHER_GROUP].flatMap(({ id, title }) => {

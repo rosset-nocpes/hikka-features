@@ -70,3 +70,11 @@ export const latinKey = (value: string) =>
     .replace(/x/g, 'ks')
     .replace(/[yj]/g, 'i')
     .replace(/[^a-z0-9]/g, '');
+
+/** Whether a name has `query` in it, in either alphabet. */
+export const matchesName = (name: string, query: string) => {
+  if (!query) return true;
+  if (looseKey(name).includes(looseKey(query))) return true;
+  const latin = latinKey(query);
+  return !!latin && latinKey(name).includes(latin);
+};

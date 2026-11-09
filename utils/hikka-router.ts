@@ -15,6 +15,9 @@ export const isTeamPagePath = (path: string) => TEAM_PAGE_PATH.test(path);
 export const teamPagePath = (slug?: string) =>
   slug ? `/teams/${encodeURIComponent(slug)}` : '/teams';
 
+/** The list of teams' query parameter for the name it is searched by. */
+export const TEAM_SEARCH_PARAM = 'search';
+
 /** `/<type>/<slug>/recommendations`, the titles MAL users liked with one. */
 const RECOMMENDATIONS_PAGE_PATH =
   /^\/(anime|manga|novel)\/([^/]+)\/recommendations\/?$/;
