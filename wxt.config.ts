@@ -10,17 +10,28 @@ const isPersistent = env.WXT_PERSIST_BROWSER_DATA
   ? JSON.parse(env.WXT_PERSIST_BROWSER_DATA)
   : false;
 const isWindows = process.platform === 'win32';
+const convexUrls = [env.WXT_CONVEX_URL, env.WXT_CONVEX_SITE_URL];
+const convexUrlsValid = convexUrls.every(
+  (value) => !!value && URL.canParse(value),
+);
+/**
+ * The backend's hosts, without ports: Firefox ignores host permissions that
+ * name one (a local backend's), and the login's credentialed request then
+ * fails CORS. A pattern without a port matches every port.
+ */
 const convexHostPermissions = [
-  env.WXT_CONVEX_URL,
-  env.WXT_CONVEX_SITE_URL,
-].flatMap((value) => {
-  if (!value) return [];
-  try {
-    return [`${new URL(value).origin}/*`];
-  } catch {
-    return [];
-  }
-});
+  ...new Set(
+    convexUrls.flatMap((value) => {
+      if (!value) return [];
+      try {
+        const { protocol, hostname } = new URL(value);
+        return [`${protocol}//${hostname}/*`];
+      } catch {
+        return [];
+      }
+    }),
+  ),
+];
 
 export default defineConfig({
   modules: ['@wxt-dev/auto-icons'],
@@ -43,7 +54,7 @@ export default defineConfig({
     if (
       mode === 'production' &&
       !process.argv.includes('prepare') &&
-      convexHostPermissions.length < 2
+      !convexUrlsValid
     ) {
       throw new Error(
         'Set WXT_CONVEX_URL and WXT_CONVEX_SITE_URL (see .env.example)',

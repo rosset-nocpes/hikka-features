@@ -86,11 +86,16 @@ function siteUrl(path: string) {
  */
 const AUTH_REQUEST_TIMEOUT = 15_000;
 
-async function authRequest(path: string, body: object) {
+async function authRequest(
+  path: string,
+  body: object,
+  credentials: RequestCredentials = 'omit',
+) {
   const response = await fetch(siteUrl(path), {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
+    credentials,
     signal: AbortSignal.timeout(AUTH_REQUEST_TIMEOUT),
   });
   if (!response.ok) {
@@ -111,7 +116,10 @@ const base64Url = (bytes: Uint8Array) =>
     .replaceAll('/', '_')
     .replaceAll('=', '');
 
-/** A random verifier and its SHA-256, which the login tab carries instead. */
+/**
+ * A random verifier, which claims the login, and its SHA-256, the challenge
+ * the login tab carries in a cookie.
+ */
 async function loginChallenge() {
   const verifier = base64Url(crypto.getRandomValues(new Uint8Array(32)));
   const digest = await crypto.subtle.digest(
@@ -128,6 +136,31 @@ async function focusTab(tabId: number) {
   if (tab?.windowId !== undefined) {
     await browser.windows?.update(tab.windowId, { focused: true });
   }
+  return tab;
+}
+
+/**
+ * Opens the login tab where the background's cookies are, which the tab's
+ * round trip needs. A private window keeps its own, so the tab goes to a
+ * normal window, made if there's none.
+ */
+async function openLoginTab(url: string) {
+  // Firefox for Android has no windows API to choose one with.
+  if (!browser.windows) return await browser.tabs.create({ url });
+  const normal = (await browser.windows.getAll({ windowTypes: ['normal'] }))
+    .filter((window) => !window.incognito)
+    .sort((left, right) => Number(right.focused) - Number(left.focused))[0];
+  if (normal?.id === undefined) {
+    const created = await browser.windows.create({ url, incognito: false });
+    const tab = created?.tabs?.[0];
+    if (!tab) throw new Error('login_tab_failed');
+    return tab;
+  }
+  const tab = await browser.tabs.create({ url, windowId: normal.id });
+  // The tab is open either way; focusing its window is a courtesy.
+  await browser.windows
+    .update(normal.id, { focused: true })
+    .catch(() => undefined);
   return tab;
 }
 
@@ -159,13 +192,23 @@ class AccountSession {
   private refreshing?: Promise<string>;
 
   private loginQueue = Promise.resolve();
+  private starting?: Promise<void>;
 
   /**
    * Opens hikka.io's consent page in a tab and returns: the session arrives
    * when that tab reaches the backend's done page (`onLoginTab`). Callers
    * wait with `awaitLogin`, as Chrome may restart this worker meanwhile.
+   * Clicks while one is starting join it: a second start would replace the
+   * first's cookie.
    */
-  async login(openerTabId?: number) {
+  login(openerTabId?: number) {
+    this.starting ??= this.startLogin(openerTabId).finally(() => {
+      this.starting = undefined;
+    });
+    return this.starting;
+  }
+
+  private async startLogin(openerTabId?: number) {
     const startUrl = siteUrl('/auth/hikka/start');
     const current = await loginState.get();
     if (current?.status === 'pending' && current.expiresAt > Date.now()) {
@@ -178,9 +221,10 @@ class AccountSession {
       .then(([tab]) => tab?.id)
       .catch(() => undefined);
     const { verifier, challenge } = await loginChallenge();
-    const tab = await browser.tabs.create({
-      url: `${startUrl}?challenge=${challenge}`,
-    });
+    // The tab's round trip carries the challenge in a cookie that web pages
+    // can't set, so none can make the tab finish a login of its own.
+    await authRequest('/auth/hikka/login', { challenge }, 'include');
+    const tab = await openLoginTab(startUrl);
     if (tab.id === undefined) throw new Error('login_tab_failed');
     await loginState.set({
       status: 'pending',
