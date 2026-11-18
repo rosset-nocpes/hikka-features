@@ -1,13 +1,15 @@
+import type { FunctionReturnType } from 'convex/server';
+
+import type { convexApi } from './convex-api';
+
 import { StoredValue } from './stored-value';
 
 export const EXTENSION_API_PROTOCOL = 1;
 
-export interface CompatibilityResponse {
-  status: 'current' | 'update_available' | 'unsupported';
-  latestVersion: string;
-  minimumVersion: string;
-  protocolSupported: boolean;
-}
+/** Whether the backend still serves this build, as it answers. */
+export type CompatibilityResponse = FunctionReturnType<
+  typeof convexApi.compatibility.get
+>;
 
 export interface ExtensionCompatibilityState extends CompatibilityResponse {
   extensionVersion: string;

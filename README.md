@@ -93,7 +93,8 @@ until nobody uses the old one:
 
 1. Add the new contract under new function names (e.g. `watch:resolveV2`),
    leaving the old functions as they are, and deploy the backend.
-2. Point `utils/convex-api.ts` at the new names, increment
+2. Regenerate the extension's API (`bun run api:generate`), point its callers
+   at the new names, increment
    `EXTENSION_API_PROTOCOL`, add it to `supportedProtocols` in Convex, and
    publish the extension.
 3. Every install reports its version and protocol once a day
@@ -104,11 +105,15 @@ until nobody uses the old one:
 Additive changes (new functions, optional arguments, extra result fields) need
 none of this: deploy the backend, then publish the extension.
 
-`utils/convex-api.ts` mirrors the backend's functions by hand. `bun run
-check:contract` type-checks it against `../features-backend`'s generated API
-and lists every function whose name, kind, arguments or result disagree. It
-must pass for both the released and the new extension before a backend
-deploy, and for the current one before deleting old functions.
+`utils/generated/convex-api.ts` types the backend's public functions from
+their validators; `bun run api:generate` writes it from the sibling
+`../features-backend` checkout, and `bun run check:api` fails while it's
+behind. `utils/convex-api.ts` names the shapes the extension uses after it.
+`bun run check:contract` type-checks a checkout's functions against
+`../features-backend`'s and lists every function whose name, kind,
+arguments or result disagree. Run it from the released extension's checkout
+too before a backend deploy, and from the current one before deleting old
+functions.
 
 As a safety net, the background checks `compatibility:get` on startup and
 hourly, and any context checks again (at most once a minute) when a Convex

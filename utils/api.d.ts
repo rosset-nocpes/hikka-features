@@ -39,14 +39,5 @@ declare global {
 
     /** A team with every provider's copy of its episodes, by number. */
     type WatchTeam = TeamData & { sources: EpisodeData[] };
-
-    interface EditorContent {
-      suggestion: {
-        name_ua?: string;
-        name_en?: string;
-        name_ja?: string;
-        name_native?: string;
-      };
-    }
   }
 }

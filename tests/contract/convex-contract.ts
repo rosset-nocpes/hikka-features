@@ -1,8 +1,9 @@
 /**
- * Checks the hand-written mirror in `utils/convex-api.ts` against the
- * backend's generated API in the sibling `features-backend` checkout. Run
- * with `bun run check:contract`; a mismatch fails as a type error naming
- * the function and what disagrees.
+ * Checks this checkout's `convexApi`, generated from the backend it was built
+ * against, against the sibling `features-backend` checkout, which may be
+ * newer: whether a released build still works with a backend about to be
+ * deployed. Run with `bun run check:contract`; a mismatch fails as a type
+ * error naming the function and what disagrees.
  */
 import type { FunctionReference } from 'convex/server';
 

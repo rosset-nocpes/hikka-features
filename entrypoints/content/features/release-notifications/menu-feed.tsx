@@ -158,7 +158,6 @@ function ReleaseItem({
   onOpen: () => void;
 }) {
   const title = notification.animeTitle ?? 'Новий епізод';
-  const translation = notification.translationType ?? 'unknown';
   const time = formatTimestamp(notification.createdAt, now);
 
   return (
@@ -167,7 +166,7 @@ function ReleaseItem({
     >
       <LeadingVisual
         image={notification.animeImage}
-        icon={TYPE_ICON[translation]}
+        icon={TYPE_ICON[notification.translationType]}
       />
 
       <div className="relative flex min-w-0 flex-1 flex-col gap-1">
@@ -190,7 +189,7 @@ function ReleaseItem({
           <p>
             Команда <strong>{notification.teamTitle}</strong> випустила{' '}
             <strong>{notification.episodeNumber}</strong> епізод
-            {TRANSLATION_SUFFIX[translation]}
+            {TRANSLATION_SUFFIX[notification.translationType]}
           </p>
         </div>
         {notification.episodeTitle && (
