@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { teamPagePath } from '@/utils/hikka-router';
 import { describeReleases } from '@/utils/team-releases';
 
-import { BaseFeature, createFeatureUi } from '../core/base-feature';
+import { BaseFeature } from '../core/base-feature';
 import { HikkaPages } from '../core/core.enums';
 
 /** Teams shown before "show more". */
@@ -21,8 +21,7 @@ export default class FandubBlockFeature extends BaseFeature {
   readonly pages = [HikkaPages.AnimeMainPage];
 
   async init() {
-    this.ui = await createFeatureUi({
-      name: this.id,
+    this.ui = await this.createUi({
       position: 'inline',
       append: 'last',
       anchor: '#content-left-side',

@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import ky from 'ky';
 
 import useHikka, {
   fetchHikka,
@@ -7,10 +6,9 @@ import useHikka, {
   useHikkaContent,
 } from '@/hooks/use-hikka';
 import { usePageStore } from '@/hooks/use-page-store';
+import { queryAniList } from '@/utils/anilist';
 
 type CoverMedia = { malId: number; type: 'anime' | 'manga' };
-
-const ANILIST_URL = 'https://graphql.anilist.co';
 
 /** A character's first anime, else their first manga. */
 const findCharacterMedia = async (
@@ -28,25 +26,17 @@ const findCharacterMedia = async (
 };
 
 const fetchBannerImage = async ({ malId, type }: CoverMedia) => {
-  const response = await ky.post(ANILIST_URL, {
-    throwHttpErrors: false,
-    json: {
-      query: `
-        query media($mal_id: Int, $type: MediaType) {
-          Media(idMal: $mal_id, type: $type) {
-            bannerImage
-          }
-        }
-      `,
-      variables: { mal_id: malId, type: type.toUpperCase() },
-    },
-  });
-  if (!response.ok) return null;
-
-  const json = await response.json<{
-    data?: { Media?: { bannerImage?: string | null } };
-  }>();
-  return json.data?.Media?.bannerImage ?? null;
+  const data = await queryAniList<{
+    Media?: { bannerImage?: string | null } | null;
+  }>(
+    `query media($mal_id: Int, $type: MediaType) {
+      Media(idMal: $mal_id, type: $type) {
+        bannerImage
+      }
+    }`,
+    { mal_id: malId, type: type.toUpperCase() },
+  );
+  return data.Media?.bannerImage ?? null;
 };
 
 /** The title whose banner covers the page, if it has one. */

@@ -3,6 +3,8 @@ import ky from 'ky';
 
 import type { ContentCardItem } from '@/components/hikka/content-card';
 
+import { queryAniList } from '@/utils/anilist';
+
 import type { ContentType } from './use-page-store';
 
 import { fetchHikka, HIKKA_API } from './use-hikka';
@@ -130,19 +132,13 @@ const fetchAniList = async (
   malId: number,
 ): Promise<Source> => {
   const type = malType(contentType).toUpperCase();
-  const { data } = await ky
-    .post('https://graphql.anilist.co', {
-      json: { query: ANILIST_QUERY, variables: { malId, type } },
-    })
-    .json<{
-      data: {
-        Media: {
-          siteUrl: string;
-          first: AniListVotes;
-          second: AniListVotes;
-        } | null;
-      };
-    }>();
+  const data = await queryAniList<{
+    Media: {
+      siteUrl: string;
+      first: AniListVotes;
+      second: AniListVotes;
+    } | null;
+  }>(ANILIST_QUERY, { malId, type });
   const votes: Votes = new Map();
   const links: Link[] = [];
   for (const { rating, mediaRecommendation } of [

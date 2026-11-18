@@ -1,8 +1,8 @@
 import MaterialSymbolsMenuBookOutlineRounded from '~icons/material-symbols/menu-book-outline-rounded';
 
-import NavbarAction from '@/components/navbar-action';
+import NavbarAction, { NAVBAR_ACTION_UI } from '@/components/navbar-action';
 
-import { BaseFeature, createFeatureUi } from '../../core/base-feature';
+import { BaseFeature } from '../../core/base-feature';
 import { HikkaPages } from '../../core/core.enums';
 import useReadData from './hooks/use-read-data';
 import { openReader } from './reader';
@@ -12,12 +12,8 @@ export default class ReadButtonFeature extends BaseFeature {
   readonly pages = [HikkaPages.MangaContent, HikkaPages.NovelContent];
 
   async init() {
-    this.ui = await createFeatureUi({
-      name: this.id,
-      position: 'inline',
-      append: 'first',
-      anchor: '#navbar-card',
-      hostCss: 'margin-right: -0.5rem !important;',
+    this.ui = await this.createUi({
+      ...NAVBAR_ACTION_UI,
       render: () => <ReadButton />,
     });
   }

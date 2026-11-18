@@ -11,6 +11,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { plural } from '@/utils/plural';
 
 import type { FieldIssue, IssueSeverity } from './edit-checks';
 import type { CheckedEditField } from './use-edit-page';
@@ -18,9 +19,13 @@ import type { CheckedEditField } from './use-edit-page';
 import { applyFix, revealField } from './edit-fields';
 import RulesDialog, { prefetchRules } from './rules-dialog';
 
-const pluralRules = new Intl.PluralRules('uk');
 const issuesWord = (count: number) =>
-  pluralRules.select(count) === 'many' ? 'зауважень' : 'зауваження';
+  plural(count, {
+    one: 'зауваження',
+    few: 'зауваження',
+    many: 'зауважень',
+    other: 'зауваження',
+  });
 
 const SEVERITY_ICON: Record<IssueSeverity, FC<{ className?: string }>> = {
   error: MaterialSymbolsWarningOutlineRounded,

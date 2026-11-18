@@ -1,8 +1,7 @@
 import { queryOptions, useQuery } from '@tanstack/react-query';
 
+import { HIKKA_API } from '@/hooks/use-hikka';
 import { useSettings } from '@/hooks/use-settings';
-
-const HIKKA_PROFILE_URL = 'https://api.hikka.io/user/me';
 
 /**
  * The Hikka user signed in to hikka.io in this browser, which need not be
@@ -10,7 +9,7 @@ const HIKKA_PROFILE_URL = 'https://api.hikka.io/user/me';
  * couldn't tell.
  */
 export async function getHikkaViewerId() {
-  const response = await fetch(HIKKA_PROFILE_URL, {
+  const response = await fetch(`${HIKKA_API}/user/me`, {
     cache: 'no-store',
     credentials: 'include',
     headers: { accept: 'application/json' },

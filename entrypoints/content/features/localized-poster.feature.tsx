@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import MaterialSymbolsPlannerBannerAdPtOutlineRounded from '~icons/material-symbols/planner-banner-ad-pt-outline-rounded';
 import MaterialSymbolsPlannerBannerAdPtRounded from '~icons/material-symbols/planner-banner-ad-pt-rounded';
 
-import { BaseFeature, createFeatureUi } from '../core/base-feature';
+import { BaseFeature } from '../core/base-feature';
 import { HikkaPages } from '../core/core.enums';
 
 export default class LocalizedPosterFeature extends BaseFeature {
@@ -11,8 +11,7 @@ export default class LocalizedPosterFeature extends BaseFeature {
   readonly pages = [HikkaPages.AnimeMainPage];
 
   async init() {
-    this.ui = await createFeatureUi({
-      name: this.id,
+    this.ui = await this.createUi({
       position: 'inline',
       append: 'first',
       anchor: '#content-cover div.relative div.relative',

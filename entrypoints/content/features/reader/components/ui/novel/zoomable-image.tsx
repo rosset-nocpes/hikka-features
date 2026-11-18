@@ -19,6 +19,7 @@ import MaterialSymbolsOpenInNewRounded from '~icons/material-symbols/open-in-new
 import MaterialSymbolsRemoveRounded from '~icons/material-symbols/remove-rounded';
 
 import { Button } from '@/components/ui/button';
+import { NEW_TAB } from '@/utils/hikka-router';
 
 import { useReader } from '../../../hooks/use-reader';
 import { ReaderType } from '../../../reader.enums';
@@ -357,7 +358,7 @@ const ViewerToolbar = ({
         size="icon-sm"
         title="Відкрити в новій вкладці"
         nativeButton={false}
-        render={<a href={src} target="_blank" rel="noopener noreferrer" />}
+        render={<a href={src} {...NEW_TAB} />}
       >
         <MaterialSymbolsOpenInNewRounded className="size-4" />
       </Button>

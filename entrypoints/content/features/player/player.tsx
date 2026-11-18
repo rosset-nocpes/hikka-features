@@ -1,8 +1,9 @@
 import { MotionConfig } from 'motion/react';
-import { useLayoutEffect, useRef } from 'react';
+import { type ReactNode, useLayoutEffect, useRef } from 'react';
 
 import type { HikkaContent } from '@/hooks/use-hikka';
 
+import { MediaTooltipProvider } from '@/components/media/controls';
 import { Card, CardContent } from '@/components/ui/card';
 import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import { useIFramePlayer } from '@/hooks/use-iframe-player';
@@ -257,16 +258,40 @@ const Player = () => {
           allowFullScreen
         ></iframe>
       </CardContent>
-      {layout === 'bar' ? (
-        <PlayerMiniBar onDragStart={startDrag} />
-      ) : (
-        <>
-          {stacked && <PlayerMobilePanel />}
-          <PlayerNavbar onDragStart={startDrag} />
-          <PlayerOverlay />
-          {layout === 'full' && <WatchTogetherInvite />}
-        </>
-      )}
+      <PlayerTooltips>
+        {layout === 'bar' ? (
+          <PlayerMiniBar onDragStart={startDrag} />
+        ) : (
+          <>
+            {stacked && <PlayerMobilePanel />}
+            <PlayerNavbar onDragStart={startDrag} />
+            <PlayerOverlay />
+            {layout === 'full' && <WatchTogetherInvite />}
+          </>
+        )}
+      </PlayerTooltips>
     </Card>
+  );
+};
+
+/**
+ * The controls' tooltips: in the player's shadow root, kept inside the video
+ * and hidden along with the controls.
+ */
+const PlayerTooltips = ({ children }: { children: ReactNode }) => {
+  const container = usePlayer((state) => state.container);
+  const overlay = usePlayer((state) => state.overlay);
+  const uiShown = useIFramePlayer((state) => state.uiShown);
+  return (
+    <MediaTooltipProvider
+      value={{
+        container,
+        collisionBoundary: overlay ?? undefined,
+        sideOffset: 32,
+        disabled: !uiShown,
+      }}
+    >
+      {children}
+    </MediaTooltipProvider>
   );
 };

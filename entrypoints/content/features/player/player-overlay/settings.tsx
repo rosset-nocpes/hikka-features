@@ -8,6 +8,7 @@ import MaterialSymbolsSettingsOutlineRounded from '~icons/material-symbols/setti
 import MaterialSymbolsSpeedOutlineRounded from '~icons/material-symbols/speed-outline-rounded';
 import MaterialSymbolsSubtitlesOutlineRounded from '~icons/material-symbols/subtitles-outline-rounded';
 
+import { MediaTooltip } from '@/components/media/controls';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -22,7 +23,6 @@ import {
 import { usePlayer } from '../context/player-context';
 import { getEpisodeRanges } from '../teams';
 import MenuPages from './menu-pages';
-import ToolbarTooltip from './toolbar-tooltip';
 import { useToolbarMenuPosition, useUiLock } from './use-ui-lock';
 
 interface Submenu {
@@ -220,7 +220,7 @@ const Settings: FC<Props> = ({ anchor }) => {
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
-      <ToolbarTooltip label="Налаштування" disabled={open}>
+      <MediaTooltip label="Налаштування" disabled={open}>
         <DropdownMenuTrigger
           render={
             <Button variant="ghost" size="icon-sm">
@@ -233,7 +233,7 @@ const Settings: FC<Props> = ({ anchor }) => {
             </Button>
           }
         />
-      </ToolbarTooltip>
+      </MediaTooltip>
       <DropdownMenuContent
         className="player-glass player-menu w-56 rounded-lg border bg-(--player-glass) shadow-lg ring-0"
         {...position}

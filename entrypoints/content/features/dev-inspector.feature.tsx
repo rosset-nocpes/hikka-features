@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { hikkaViewerQuery } from '@/utils/hikka-viewer';
 
-import { BaseFeature, createFeatureUi } from '../core/base-feature';
+import { BaseFeature } from '../core/base-feature';
 import { HikkaPages } from '../core/core.enums';
 
 const ID = 'dev-inspector';
@@ -22,8 +22,7 @@ export default class DevInspectorFeature extends BaseFeature {
   readonly pages = [HikkaPages.All];
 
   async init() {
-    this.ui = await createFeatureUi({
-      name: this.id,
+    this.ui = await this.createUi({
       position: 'inline',
       anchor: 'body',
       append: 'last',

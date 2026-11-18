@@ -4,7 +4,7 @@ import MaterialSymbolsChevronRightRounded from '~icons/material-symbols/chevron-
 import MaterialSymbolsOpenInNewRounded from '~icons/material-symbols/open-in-new-rounded';
 
 import { buttonVariants } from '@/components/ui/button';
-import { onHikkaLinkClick } from '@/utils/hikka-router';
+import { linkTo } from '@/utils/hikka-router';
 
 interface Props {
   /** An outside address, opened in a new tab. */
@@ -51,10 +51,7 @@ const LinkRow: FC<Props> = ({ href, to, icon, label, description }) => {
     : MaterialSymbolsOpenInNewRounded;
   return (
     <a
-      href={to ?? href}
-      {...(to
-        ? { onClick: onHikkaLinkClick }
-        : { target: '_blank', rel: 'noopener noreferrer' })}
+      {...linkTo(to, href)}
       className={cn(
         buttonVariants({ variant: 'ghost' }),
         'focus-visible:ring-ring/50 focus-visible:ring-[3px]',

@@ -24,7 +24,7 @@ import { Button } from '@/components/ui/button';
 import EmptyState from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import VirtualGrid from '@/components/virtual-grid';
-import { onHikkaLinkClick, teamPagePath } from '@/utils/hikka-router';
+import { NEW_TAB, onHikkaLinkClick, teamPagePath } from '@/utils/hikka-router';
 import { releaseProgress, TRANSLATION_LABELS } from '@/utils/team-releases';
 
 import {
@@ -97,7 +97,7 @@ const TeamLinks: FC<{ links: Team['links'] }> = ({ links }) =>
             variant="outline"
             size="sm"
             className="px-2.5"
-            render={<a href={url} target="_blank" rel="noopener noreferrer" />}
+            render={<a href={url} {...NEW_TAB} />}
           >
             <Icon />
             <span className="max-w-40 truncate">{linkLabel(kind, url)}</span>

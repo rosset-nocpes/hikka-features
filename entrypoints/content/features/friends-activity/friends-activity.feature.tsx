@@ -1,6 +1,6 @@
 import { useSettings } from '@/hooks/use-settings';
 
-import { BaseFeature, createFeatureUi } from '../../core/base-feature';
+import { BaseFeature } from '../../core/base-feature';
 import { HikkaPages } from '../../core/core.enums';
 import FriendsActivityBlock from './friends-activity-block';
 import { HomePlacement, useBlockView } from './home-placement';
@@ -69,8 +69,7 @@ export default class FriendsActivityFeature extends BaseFeature {
   private layout?: Layout;
 
   async init() {
-    this.ui = await createFeatureUi({
-      name: this.id,
+    this.ui = await this.createUi({
       position: 'inline',
       // Any of the widget columns; the layout moves it where it belongs.
       anchor: () =>

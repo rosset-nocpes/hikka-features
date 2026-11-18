@@ -12,7 +12,7 @@ import EmptyState from '@/components/ui/empty-state';
 import { recommendationsPagePath } from '@/utils/hikka-router';
 import { reveal } from '@/utils/motion';
 
-import { BaseFeature, createFeatureUi } from '../core/base-feature';
+import { BaseFeature } from '../core/base-feature';
 import { HikkaPages } from '../core/core.enums';
 
 /** Titles the block shows; its title opens the page with all of them. */
@@ -27,8 +27,7 @@ export default class RecommendationBlockFeature extends BaseFeature {
   ];
 
   async init() {
-    this.ui = await createFeatureUi({
-      name: this.id,
+    this.ui = await this.createUi({
       position: 'inline',
       append: 'before',
       anchor: '#content-center > div:last-of-type',

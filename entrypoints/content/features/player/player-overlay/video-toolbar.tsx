@@ -1,5 +1,7 @@
 import { useRef, useState } from 'react';
 
+import { MediaDivider, VolumeSlideOut } from '@/components/media/controls';
+
 import { compactMode, usePlayer } from '../context/player-context';
 import NextInQueue from '../queue/next-in-queue';
 import Share from './buttons/share';
@@ -9,19 +11,16 @@ import {
   Mute,
   Play,
   TheatreMode,
+  TimeGroup,
 } from './buttons/toggles';
 import WatchTogether from './buttons/watch-together';
 import Settings from './settings';
-import Volume from './sliders/volume';
-import TimeGroup from './time-group';
 
 // Concentric: the buttons' radius plus the padding and the border. Square,
 // like the buttons, when the user's hikka theme squares the corners (`min`
 // with the radius, which is then 0).
 const GROUP =
   'player-glass flex items-center gap-1 rounded-[min(calc(var(--radius-md)+4px),var(--radius)*100)] border p-[3px]';
-
-const Divider = () => <div className="bg-border mx-0.5 h-5 w-px shrink-0" />;
 
 /**
  * Mute button with a volume slider that slides out on hover or focus. Like
@@ -34,24 +33,22 @@ const VolumeControl = ({
 }: {
   open: boolean;
   onOpen: () => void;
-}) => (
-  <div
-    className="group/volume flex items-center"
-    onPointerEnter={(e) => e.pointerType === 'mouse' && onOpen()}
-  >
-    <Mute />
-    <div
-      className={cn(
-        'w-0 overflow-hidden opacity-0 transition-[width,opacity] duration-200 ease-out group-hover/volume:w-24 group-hover/volume:opacity-100 group-has-focus-visible/volume:w-24 group-has-focus-visible/volume:opacity-100 has-data-dragging:w-24 has-data-dragging:opacity-100 motion-reduce:transition-opacity',
-        open && 'w-24 opacity-100',
-      )}
+}) => {
+  const volume = useIFramePlayer((state) => state.volume);
+  const isMuted = useIFramePlayer((state) => state.isMuted);
+  const changeVolume = useIFramePlayer((state) => state.changeVolume);
+  return (
+    <VolumeSlideOut
+      wide
+      open={open}
+      onOpen={onOpen}
+      volume={isMuted ? 0 : volume}
+      onChange={changeVolume}
     >
-      <div className="w-24 px-2">
-        <Volume />
-      </div>
-    </div>
-  </div>
-);
+      <Mute />
+    </VolumeSlideOut>
+  );
+};
 
 /** Play, skip, mute and the time, for toolbars too narrow for the slider. */
 const CompactGroup = () => (
@@ -59,7 +56,7 @@ const CompactGroup = () => (
     <Play />
     <NextInQueue />
     <Mute />
-    <Divider />
+    <MediaDivider />
     <div className="min-w-0">
       <TimeGroup />
     </div>
@@ -93,7 +90,7 @@ const VideoToolbar = () => {
           <Play />
           <NextInQueue />
           <VolumeControl open={volumeOpen} onOpen={() => setVolumeOpen(true)} />
-          <Divider />
+          <MediaDivider />
           <TimeGroup />
         </div>
       </div>
@@ -101,7 +98,7 @@ const VideoToolbar = () => {
         <WatchTogether anchor={actionsRef} />
         <Share anchor={actionsRef} />
         <Settings anchor={actionsRef} />
-        <Divider />
+        <MediaDivider />
         <MiniPlayer />
         <TheatreMode />
         <Fullscreen />

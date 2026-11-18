@@ -27,6 +27,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { type Page, useNavigation } from '@/hooks/use-navigation';
 import { version } from '@/package.json';
+import { NEW_TAB } from '@/utils/hikka-router';
 
 import FeatureSwitch from './_base/feature-switch';
 import NavigationRow from './_base/navigation-row';
@@ -282,8 +283,7 @@ function HomeHeader() {
         </AnimatePresence>
         <a
           href="https://github.com/rosset-nocpes/hikka-features"
-          target="_blank"
-          rel="noopener"
+          {...NEW_TAB}
           aria-label="GitHub"
           title="GitHub"
           className={LINK_CLASS}
@@ -292,8 +292,7 @@ function HomeHeader() {
         </a>
         <a
           href="https://t.me/hikka_features"
-          target="_blank"
-          rel="noopener"
+          {...NEW_TAB}
           aria-label="Telegram-канал"
           title="Telegram-канал"
           className={LINK_CLASS}

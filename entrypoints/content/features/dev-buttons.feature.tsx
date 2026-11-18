@@ -16,9 +16,10 @@ import {
   type HikkaContent,
   hikkaApiPath,
 } from '@/hooks/use-hikka';
+import { NEW_TAB } from '@/utils/hikka-router';
 import { reveal } from '@/utils/motion';
 
-import { BaseFeature, createFeatureUi } from '../core/base-feature';
+import { BaseFeature } from '../core/base-feature';
 import { HikkaPages } from '../core/core.enums';
 
 const title = () => document.querySelector('main h1');
@@ -54,8 +55,7 @@ export default class DevButtonsFeature extends BaseFeature {
 
   async init() {
     let gap = '0px';
-    this.ui = await createFeatureUi({
-      name: this.id,
+    this.ui = await this.createUi({
       position: 'inline',
       anchor: titleBlock,
       append: 'after',
@@ -211,9 +211,7 @@ const DevButtons = ({ gap }: { gap: string }) => {
               variant="ghost"
               size="sm"
               className="gap-2"
-              render={
-                <a href={href} target="_blank" rel="noopener noreferrer" />
-              }
+              render={<a href={href} {...NEW_TAB} />}
             >
               <MaterialSymbolsOpenInNewRounded className="size-4" />
               {label}

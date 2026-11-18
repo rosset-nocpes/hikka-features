@@ -11,14 +11,14 @@ import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
 import MaterialSymbolsGroupsOutlineRounded from '~icons/material-symbols/groups-outline-rounded';
 import MaterialSymbolsSearchRounded from '~icons/material-symbols/search-rounded';
 
+import type { TeamListing } from '@/utils/convex-api';
+
 import { Poster } from '@/components/hikka/poster';
 import TeamLogo from '@/components/hikka/team-logo';
 import { Button } from '@/components/ui/button';
 import EmptyState from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { convexApi, type TeamListing } from '@/utils/convex-api';
-import { convex } from '@/utils/convex-client';
 import {
   onHikkaLinkClick,
   onHikkaNavigation,
@@ -37,6 +37,7 @@ import {
   type TypeFilter,
   TypeFilterButtons,
 } from './parts';
+import { teamListQuery } from './team-page-query';
 
 /** Teams a part shows at first and adds by each "show more". */
 const PAGE_SIZE = 6;
@@ -213,17 +214,8 @@ const TeamList = () => {
   const query = useDeferredValue(search.trim());
   useDocumentTitle('Команди');
 
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ['team-list'],
-    queryFn: () => convex.query(convexApi.fandub.teams, {}),
-    staleTime: 5 * 60_000,
-    retry: false,
-  });
-  // Teams the catalogs know of but have no releases for aren't listed.
-  const teams = useMemo(
-    () => (data ?? []).filter((team) => (team.stats?.anime ?? 0) > 0),
-    [data],
-  );
+  const { data, isLoading, isError } = useQuery(teamListQuery);
+  const teams = useMemo(() => data ?? [], [data]);
   const counts = useMemo(
     () => ({
       all: teams.length,

@@ -28,8 +28,10 @@ export interface ConvexWatchTeam {
   }>;
 }
 
+export type AnimeMediaType = 'tv' | 'movie' | 'ona' | 'unknown';
+
 export interface ConvexWatchResponse {
-  anime: { slug: string; mediaType: 'tv' | 'movie' | 'ona' | 'unknown' };
+  anime: { slug: string; mediaType: AnimeMediaType };
   providers: Array<{ id: string; language: 'uk' | 'en' | 'multi' }>;
   teams: ConvexWatchTeam[];
   episodes: ConvexEpisodeInfo[];
@@ -262,7 +264,7 @@ export interface TeamReleaseAnime {
   slug: string;
   title?: string;
   image?: string;
-  mediaType?: string;
+  mediaType?: AnimeMediaType;
   year?: number;
   episodesTotal?: number;
 }

@@ -8,6 +8,7 @@ import {
   HoverCardTrigger,
 } from '@/components/ui/hover-card';
 import { Separator } from '@/components/ui/separator';
+import { NEW_TAB } from '@/utils/hikka-router';
 
 /** The parts of a Hikka anime, manga or novel that its card shows. */
 export interface MediaTooltipItem {
@@ -83,8 +84,6 @@ const COMPACT_NUMBER = new Intl.NumberFormat('en', {
 
 /** A markdown link, captured as its text and address. */
 const MARKDOWN_LINK = /\[([^\]]+)\]\(([^)\s]+)\)/;
-
-const linkProps = { target: '_blank', rel: 'noopener noreferrer' };
 
 const MalLogo: FC<{ className?: string }> = ({ className }) => (
   <svg viewBox="0 0 24 24" className={className} aria-hidden>
@@ -195,7 +194,7 @@ const Synopsis: FC<{ markdown: string }> = ({ markdown }) => {
           <a
             key={index}
             href={parts[index + 1]}
-            {...linkProps}
+            {...NEW_TAB}
             className="text-primary hover:underline"
           >
             {part}
@@ -263,7 +262,7 @@ const MediaTooltipBody: FC<{ item: MediaTooltipItem }> = ({ item }) => {
             <span key={genre.slug}>
               <a
                 href={`https://hikka.io/${item.data_type}?genres=${encodeURIComponent(JSON.stringify([genre.slug]))}`}
-                {...linkProps}
+                {...NEW_TAB}
                 className="decoration-primary hover:bg-primary/15 hover:text-primary text-sm underline decoration-dashed transition-colors duration-100"
               >
                 {genre.name_ua}

@@ -17,6 +17,7 @@ import {
   DrawerTitle,
 } from '@/components/ui/drawer';
 import { Spinner } from '@/components/ui/spinner';
+import { NEW_TAB } from '@/utils/hikka-router';
 
 import { queryClient } from '../../core/query-client';
 
@@ -63,8 +64,7 @@ const Rules: FC = () => {
         Не вдалося завантажити правила.{' '}
         <a
           href={RULES_URL}
-          target="_blank"
-          rel="noopener noreferrer"
+          {...NEW_TAB}
           className="text-primary hover:underline"
         >
           Відкрити на GitHub

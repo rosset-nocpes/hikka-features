@@ -14,12 +14,12 @@ import MaterialSymbolsSubtitlesRounded from '~icons/material-symbols/subtitles-r
 import type { ReleaseNotification } from '@/utils/convex-api';
 
 import { onDrawerLinkClick } from '@/components/hikka/nav-links';
+import { formatTimestamp } from '@/utils/time';
 
 import { putBefore, putLast } from '../../core/placement';
 import {
   type ReleaseRun,
   SLOT_ATTRIBUTE,
-  formatTimestamp,
   placeReleases,
   readHikkaFeed,
   sameFeed,

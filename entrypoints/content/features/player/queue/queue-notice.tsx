@@ -4,6 +4,7 @@ import { create } from 'zustand';
 import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
 
 import { Button } from '@/components/ui/button';
+import { plural } from '@/utils/plural';
 
 import type { QueueItem } from './use-queue';
 
@@ -35,11 +36,14 @@ let removal: Removal | undefined;
 let timer: ReturnType<typeof setTimeout> | undefined;
 let lastId = 0;
 
-const pluralRules = new Intl.PluralRules('uk');
-const EPISODES = { one: 'епізод', few: 'епізоди', many: 'епізодів' } as const;
+const EPISODES = {
+  one: 'епізод',
+  few: 'епізоди',
+  many: 'епізодів',
+  other: 'епізоду',
+};
 
-const episodeCount = (count: number) =>
-  `${count} ${EPISODES[pluralRules.select(count) as keyof typeof EPISODES] ?? 'епізоду'}`;
+const episodeCount = (count: number) => `${count} ${plural(count, EPISODES)}`;
 
 const hideLater = () => {
   clearTimeout(timer);

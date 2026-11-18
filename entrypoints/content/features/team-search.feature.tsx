@@ -15,8 +15,8 @@ import {
 } from 'react';
 import MaterialSymbolsGroupsRounded from '~icons/material-symbols/groups-rounded';
 
-import { convexApi, type TeamListing } from '@/utils/convex-api';
-import { convex } from '@/utils/convex-client';
+import type { TeamListing } from '@/utils/convex-api';
+
 import {
   isTeamPagePath,
   navigateOnHikka,
@@ -26,6 +26,7 @@ import {
 
 import { AnchoredUisFeature } from '../core/base-feature';
 import { HikkaPages } from '../core/core.enums';
+import { teamListQuery } from './team-pages/team-page-query';
 
 /**
  * hikka.io's search (`features/search/search-modal.tsx`) is a cmdk command
@@ -419,21 +420,12 @@ const TeamResults: FC<{ list: HTMLElement }> = ({ list }) => {
     return () => root.removeAttribute(TEAMS_MODE);
   }, [root, alone]);
 
-  const { data } = useQuery({
-    queryKey: ['team-list'],
-    queryFn: () => convex.query(convexApi.fandub.teams, {}),
-    staleTime: 5 * 60_000,
-    retry: false,
-  });
+  const { data } = useQuery(teamListQuery);
   const matches = useMemo(
     () =>
       active
         ? (data ?? [])
-            .filter(
-              (team) =>
-                (team.stats?.anime ?? 0) > 0 &&
-                matchesName(team.title, deferredQuery),
-            )
+            .filter((team) => matchesName(team.title, deferredQuery))
             // With no query yet, the busiest teams first.
             .toSorted(byRelevance(deferredQuery))
         : [],

@@ -10,7 +10,7 @@ import { convexApi } from '@/utils/convex-api';
 import { liveConvex } from '@/utils/convex-client';
 import { useHikkaViewer } from '@/utils/hikka-viewer';
 
-import { BaseFeature, createFeatureUi } from '../core/base-feature';
+import { BaseFeature } from '../core/base-feature';
 import { HikkaPages } from '../core/core.enums';
 import {
   MemberAvatar,
@@ -36,8 +36,7 @@ export default class WatchTogetherInvitesFeature extends BaseFeature {
   readonly pages = [HikkaPages.All];
 
   async init() {
-    this.ui = await createFeatureUi({
-      name: this.id,
+    this.ui = await this.createUi({
       position: 'inline',
       anchor: 'body',
       append: 'last',

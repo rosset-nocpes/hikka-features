@@ -1,10 +1,10 @@
 import MaterialSymbolsSkipNextRounded from '~icons/material-symbols/skip-next-rounded';
 
+import { MediaTooltip } from '@/components/media/controls';
 import { Button } from '@/components/ui/button';
 import { useHikkaContent } from '@/hooks/use-hikka';
 
 import { playNext } from '../player-iframe-effects';
-import ToolbarTooltip from '../player-overlay/toolbar-tooltip';
 import { upNext, useNextEpisode } from './up-next';
 
 /**
@@ -26,7 +26,7 @@ const NextInQueue = () => {
     : `Наступний епізод: ${next.episode}`;
 
   return (
-    <ToolbarTooltip label={label} shortcut="Shift+N">
+    <MediaTooltip label={label} shortcut="Shift+N">
       <Button
         variant="ghost"
         size="icon-sm"
@@ -37,7 +37,7 @@ const NextInQueue = () => {
       >
         <MaterialSymbolsSkipNextRounded className="size-5" />
       </Button>
-    </ToolbarTooltip>
+    </MediaTooltip>
   );
 };
 

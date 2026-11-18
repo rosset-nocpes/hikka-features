@@ -64,3 +64,11 @@ const NavbarAction: FC<Props> = ({
 );
 
 export default NavbarAction;
+
+/** Where a title page's navbar actions go: first in its card, flush right. */
+export const NAVBAR_ACTION_UI = {
+  position: 'inline',
+  append: 'first',
+  anchor: '#navbar-card',
+  hostCss: 'margin-right: -0.5rem !important;',
+} as const;

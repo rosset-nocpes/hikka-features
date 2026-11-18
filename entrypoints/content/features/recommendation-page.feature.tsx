@@ -5,7 +5,7 @@ import ContentCard, {
 } from '@/components/hikka/content-card';
 import VirtualGrid from '@/components/virtual-grid';
 import { RECOMMENDATIONS_TAB } from '@/hooks/use-recommendation';
-import { isRecommendationsPagePath } from '@/utils/hikka-router';
+import { isRecommendationsPagePath, NEW_TAB } from '@/utils/hikka-router';
 
 import { OwnPageFeature } from '../core/base-feature';
 import { HikkaPages } from '../core/core.enums';
@@ -147,8 +147,7 @@ const RecommendationPage: FC<{ container: HTMLElement }> = ({ container }) => {
             {index > 0 && ' і '}
             <a
               href={url}
-              target="_blank"
-              rel="noopener noreferrer"
+              {...NEW_TAB}
               className="hover:text-foreground underline underline-offset-4"
             >
               {name}

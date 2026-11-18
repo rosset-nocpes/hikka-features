@@ -5,6 +5,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { plural } from '@/utils/plural';
 
 import { ContainerContext } from './parts';
 
@@ -26,13 +27,8 @@ const DAYS = [
   { short: 'Нд', name: 'неділя', on: 'у неділю' },
 ];
 
-const plural = new Intl.PluralRules('uk');
-const RELEASE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {
-  one: 'реліз',
-  few: 'релізи',
-};
 const releasesWord = (count: number) =>
-  RELEASE_FORMS[plural.select(count)] ?? 'релізів';
+  plural(count, { one: 'реліз', few: 'релізи', many: 'релізів' });
 
 const since = new Intl.DateTimeFormat('uk', {
   day: 'numeric',

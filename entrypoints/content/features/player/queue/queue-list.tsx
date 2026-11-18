@@ -1,5 +1,6 @@
-import { Reorder, useDragControls } from 'motion/react';
-import { type FC, useRef, useState } from 'react';
+import type { FC } from 'react';
+
+import { Reorder } from 'motion/react';
 import MaterialSymbolsAutoplayRounded from '~icons/material-symbols/autoplay-rounded';
 import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
 import MaterialSymbolsDragIndicator from '~icons/material-symbols/drag-indicator';
@@ -33,6 +34,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
 import { useHikkaContent } from '@/hooks/use-hikka';
+import {
+  HANDLE_KEYS_HINT,
+  useDragHandle,
+  useReorderList,
+} from '@/hooks/use-reorder';
 
 import { followingEpisode, usePlayer } from '../context/player-context';
 import { useWatchTogether } from '../watch-together/use-watch-together';
@@ -78,6 +84,8 @@ const EpisodeSummary: FC<
 
 interface RowProps {
   item: QueueItem;
+  /** The list's `handleOf` the item. */
+  handle: string;
   index: number;
   queue: ActiveQueue;
   /** Moves the episode to `index`, keeping its handle focused. */
@@ -86,12 +94,24 @@ interface RowProps {
 }
 
 /** A sidebar row, like an episode's, with a drag handle where its number is. */
-const QueueRow: FC<RowProps> = ({ item, index, queue, onMove, onDragEnd }) => {
+const QueueRow: FC<RowProps> = ({
+  item,
+  handle,
+  index,
+  queue,
+  onMove,
+  onDragEnd,
+}) => {
   const { data: anime } = useHikkaContent('anime', item.slug);
   const container = usePlayer((state) => state.container);
-  const controls = useDragControls();
-  const [dragging, setDragging] = useState(false);
   const key = queueKey(item);
+  const { dragging, itemProps, handleProps } = useDragHandle({
+    handle,
+    index,
+    count: queue.items.length,
+    onMove,
+    onDragEnd,
+  });
   const loading = useQueue((state) => state.loading === key);
 
   const title = hikkaTitle(anime) ?? item.slug;
@@ -106,13 +126,7 @@ const QueueRow: FC<RowProps> = ({ item, index, queue, onMove, onDragEnd }) => {
   return (
     <Reorder.Item
       value={item}
-      dragListener={false}
-      dragControls={controls}
-      onDragStart={() => setDragging(true)}
-      onDragEnd={() => {
-        setDragging(false);
-        onDragEnd();
-      }}
+      {...itemProps}
       data-sidebar="menu-item"
       className={cn(
         'group/menu-item relative rounded-md',
@@ -159,22 +173,8 @@ const QueueRow: FC<RowProps> = ({ item, index, queue, onMove, onDragEnd }) => {
       </ContextMenu>
       <button
         type="button"
-        data-handle={key}
-        aria-label={`Перемістити ${name}. Стрілки вгору та вниз змінюють позицію, Home і End ставлять першим чи останнім`}
-        onPointerDown={(event) => controls.start(event)}
-        onKeyDown={(event) => {
-          const target = {
-            ArrowUp: index - 1,
-            ArrowDown: index + 1,
-            Home: 0,
-            End: last,
-          }[event.key];
-          if (target === undefined) return;
-          event.preventDefault();
-          if (target >= 0 && target <= last && target !== index) {
-            onMove(target);
-          }
-        }}
+        aria-label={`Перемістити ${name}. ${HANDLE_KEYS_HINT}`}
+        {...handleProps}
         className="text-muted-foreground group-hover/menu-item:text-sidebar-accent-foreground ring-sidebar-ring absolute top-1/2 left-1 grid h-8 w-5 -translate-y-1/2 cursor-grab touch-none place-items-center rounded-md outline-hidden focus-visible:ring-2 active:cursor-grabbing"
       >
         <MaterialSymbolsDragIndicator className="size-4" />
@@ -304,23 +304,20 @@ const QueueList: FC<{ nowPlaying?: boolean }> = ({ nowPlaying }) => {
   const own = useQueue((state) => state.items);
   const error = useWatchTogether((state) => state.room && state.error);
 
-  // While dragging, the order lives here and is saved once on drop: saving
-  // every swap would let the storage listener reload an older order mid-drag.
-  const [draft, setDraft] = useState<QueueItem[]>();
-  const draftRef = useRef<QueueItem[]>(undefined);
-  const listRef = useRef<HTMLUListElement>(null);
-  const items = draft ?? queue.items;
-  const indexOf = (item: QueueItem, list = items) =>
+  const {
+    order: items,
+    listRef,
+    handleOf,
+    onReorder,
+    endDrag,
+    focusHandle,
+  } = useReorderList(queue.items, queueKey);
+  const indexOf = (item: QueueItem, list: QueueItem[]) =>
     list.findIndex((queued) => queueKey(queued) === queueKey(item));
 
   const move = (item: QueueItem, target: number) => {
     queue.move(item, target);
-    // Moving the row in the DOM drops focus; put it back on its handle.
-    requestAnimationFrame(() =>
-      listRef.current
-        ?.querySelector<HTMLElement>(`[data-handle="${queueKey(item)}"]`)
-        ?.focus(),
-    );
+    focusHandle(item);
   };
 
   let content;
@@ -404,10 +401,7 @@ const QueueList: FC<{ nowPlaying?: boolean }> = ({ nowPlaying }) => {
           ref={listRef}
           axis="y"
           values={items}
-          onReorder={(next: QueueItem[]) => {
-            draftRef.current = next;
-            setDraft(next);
-          }}
+          onReorder={onReorder}
           data-sidebar="menu"
           className="flex w-full min-w-0 flex-col gap-1"
         >
@@ -415,19 +409,18 @@ const QueueList: FC<{ nowPlaying?: boolean }> = ({ nowPlaying }) => {
             <QueueRow
               key={queueKey(item)}
               item={item}
+              handle={handleOf(item)}
               index={index}
               queue={queue}
               onMove={(target) => move(item, target)}
-              onDragEnd={() => {
-                const index = draftRef.current
-                  ? indexOf(item, draftRef.current)
-                  : -1;
-                if (index !== -1 && index !== indexOf(item, queue.items)) {
-                  queue.move(item, index);
-                }
-                draftRef.current = undefined;
-                setDraft(undefined);
-              }}
+              onDragEnd={() =>
+                endDrag((order) => {
+                  const index = indexOf(item, order);
+                  if (index !== -1 && index !== indexOf(item, queue.items)) {
+                    queue.move(item, index);
+                  }
+                })
+              }
             />
           ))}
         </Reorder.Group>

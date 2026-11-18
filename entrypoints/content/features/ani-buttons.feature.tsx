@@ -6,9 +6,10 @@ import type { HikkaContent } from '@/hooks/use-hikka';
 import FeatureCard from '@/components/feature-card';
 import { buttonVariants } from '@/components/ui/button';
 import { ButtonGroup } from '@/components/ui/button-group';
+import { NEW_TAB } from '@/utils/hikka-router';
 import { reveal } from '@/utils/motion';
 
-import { BaseFeature, createFeatureUi } from '../core/base-feature';
+import { BaseFeature } from '../core/base-feature';
 import { HikkaPages } from '../core/core.enums';
 
 type SourceContentType = MediaType | InfoType;
@@ -165,8 +166,7 @@ export default class AniButtonsFeature extends BaseFeature {
   async init() {
     const isEdit = () => location.pathname.startsWith('/edit/');
 
-    this.ui = await createFeatureUi({
-      name: this.id,
+    this.ui = await this.createUi({
       position: 'inline',
       append: (anchor, ui) =>
         isEdit() ? anchor.append(ui) : anchor.before(ui),
@@ -176,8 +176,7 @@ export default class AniButtonsFeature extends BaseFeature {
       render: () => <PageSources />,
     });
 
-    this.modalUi = await createFeatureUi({
-      name: this.id,
+    this.modalUi = await this.createUi({
       position: 'inline',
       append: 'first',
       anchor: `${MODAL} [data-slot="dialog-footer"]`,
@@ -259,8 +258,7 @@ const PageSources = () => {
               <a
                 key={link.source}
                 href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
+                {...NEW_TAB}
                 title={linkTitle(link)}
                 className={cn(
                   buttonVariants({ variant: 'outline', size: 'md' }),
@@ -304,8 +302,7 @@ const ModalSources = ({
                 key={link.source}
                 data-slot="button"
                 href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
+                {...NEW_TAB}
                 aria-label={SOURCES[link.source].title}
                 title={linkTitle(link)}
                 className={buttonVariants({

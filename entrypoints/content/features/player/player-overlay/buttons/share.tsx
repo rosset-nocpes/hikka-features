@@ -3,6 +3,7 @@ import MaterialSymbolsCheckRounded from '~icons/material-symbols/check-rounded';
 import MaterialSymbolsContentCopyOutlineRounded from '~icons/material-symbols/content-copy-outline-rounded';
 import MaterialSymbolsShareOutlineRounded from '~icons/material-symbols/share-outline-rounded';
 
+import { MediaTooltip } from '@/components/media/controls';
 import SwapIcon from '@/components/swap-icon';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,11 +13,10 @@ import {
 } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
 import { useCopy } from '@/hooks/use-copy';
+import { formatTime } from '@/utils/time';
 
 import { usePlayer } from '../../context/player-context';
 import { MenuItem, MenuSeparator } from '../../watch-together/menu';
-import { formatTime } from '../time-group';
-import ToolbarTooltip from '../toolbar-tooltip';
 import { useToolbarMenuPosition, useUiLock } from '../use-ui-lock';
 
 /** Reads "1:02:03", "2:03" or "123" as seconds. */
@@ -76,7 +76,7 @@ const Share: FC<Props> = ({ anchor }) => {
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
-      <ToolbarTooltip label="Поділитися" disabled={open}>
+      <MediaTooltip label="Поділитися" disabled={open}>
         <PopoverTrigger
           render={
             <Button variant="ghost" size="icon-sm">
@@ -84,7 +84,7 @@ const Share: FC<Props> = ({ anchor }) => {
             </Button>
           }
         />
-      </ToolbarTooltip>
+      </MediaTooltip>
       <PopoverContent
         className="player-glass player-menu w-56 gap-0 rounded-lg border bg-(--player-glass) p-1 shadow-lg ring-0"
         {...position}

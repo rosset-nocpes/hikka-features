@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 
-import { BaseFeature, createFeatureUi } from '../../core/base-feature';
+import { BaseFeature } from '../../core/base-feature';
 import { HikkaPages } from '../../core/core.enums';
 import ChecksPopover from './checks-popover';
 import { EDIT_FORM } from './edit-fields';
@@ -53,8 +53,7 @@ export default class EditToolbarFeature extends BaseFeature {
   readonly pages = [HikkaPages.EditForm];
 
   async init() {
-    this.ui = await createFeatureUi({
-      name: this.id,
+    this.ui = await this.createUi({
       position: 'inline',
       // The page's main column, which the bar floats over to its end.
       anchor: () => document.querySelector(EDIT_FORM)?.closest('section'),

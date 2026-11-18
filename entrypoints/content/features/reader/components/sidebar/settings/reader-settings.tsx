@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { NEW_TAB } from '@/utils/hikka-router';
 
 import type { SettingKey, UISettingMetadata } from '../../../reader.types';
 
@@ -90,8 +91,7 @@ export const SettingsItems = () => {
       {poweredBy && (
         <a
           href={poweredBy.url}
-          target="_blank"
-          rel="noopener noreferrer"
+          {...NEW_TAB}
           className="text-muted-foreground hover:text-foreground py-1 text-center text-xs font-medium transition-colors"
         >
           {poweredBy.label}

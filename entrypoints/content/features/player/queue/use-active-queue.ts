@@ -3,6 +3,7 @@ import type { WatchRoom } from '@/utils/convex-api';
 import { playQueued } from '../player';
 import { useWatchTogether } from '../watch-together/use-watch-together';
 import {
+  type QueueActions,
   type QueueEpisode,
   type QueueItem,
   queueKey,
@@ -11,20 +12,10 @@ import {
 } from './use-queue';
 
 /** The queue the player shows and plays from, whichever one it is. */
-export interface ActiveQueue {
+export interface ActiveQueue extends QueueActions {
   /** The watch together room's, which every member edits and plays. */
   shared: boolean;
   items: QueueItem[];
-  /** Adds episodes at the end, or with `next` first, moving queued ones up. */
-  add: (items: QueueItem[], next?: boolean) => void;
-  remove: (episode: QueueEpisode) => void;
-  /** Adds the episode, or takes it off when it is queued already. */
-  toggle: (item: QueueItem) => void;
-  /** Puts a queued episode at `index`. */
-  move: (episode: QueueEpisode, index: number) => void;
-  /** Puts `removed` back where they were in `before`. */
-  restore: (before: QueueItem[], removed: QueueItem[]) => void;
-  clear: () => void;
   /** Plays a queued episode now; in a room, for everyone. */
   play: (item: QueueItem) => void;
 }

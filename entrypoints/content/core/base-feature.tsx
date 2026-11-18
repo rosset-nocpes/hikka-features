@@ -134,6 +134,11 @@ export abstract class BaseFeature {
   /** Creates the UI; the manager mounts it once the page fits. */
   abstract init(): Promise<void>;
 
+  /** A UI named after the feature, e.g. for `ui`. */
+  protected createUi(options: DistributiveOmit<FeatureUiOptions, 'name'>) {
+    return createFeatureUi({ ...options, name: this.id } as FeatureUiOptions);
+  }
+
   get isMounted(): boolean {
     return !!this.ui?.mounted;
   }
@@ -177,9 +182,8 @@ export abstract class OwnPageFeature extends BaseFeature {
     ctx.onInvalidated(onHikkaNavigation(this.followNavigation));
 
     let uncover = () => {};
-    this.ui = await createFeatureUi({
+    this.ui = await this.createUi({
       ...options,
-      name: this.id,
       onMount: (container, wrapper, host) => {
         document.documentElement.setAttribute(attribute, '');
         uncover = coverSiteContent(host, (path) => this.matches(path));

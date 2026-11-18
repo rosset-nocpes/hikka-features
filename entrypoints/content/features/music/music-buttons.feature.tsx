@@ -85,8 +85,7 @@ export default class MusicButtonsFeature extends BaseFeature {
       }
       if (this.creating.has(index)) return;
       this.creating.add(index);
-      void createFeatureUi({
-        name: this.id,
+      void this.createUi({
         position: 'inline',
         anchor: () => findCovers()[index],
         append: 'last',

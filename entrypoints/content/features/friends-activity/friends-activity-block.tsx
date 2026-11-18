@@ -22,10 +22,11 @@ import { useSettings } from '@/hooks/use-settings';
 import { account } from '@/utils/account';
 import { convexApi } from '@/utils/convex-api';
 import { useHikkaViewer } from '@/utils/hikka-viewer';
+import { plural } from '@/utils/plural';
+import { formatTimestamp } from '@/utils/time';
 
 import { memberName } from '../player/watch-together/menu';
 import { openRoom } from '../player/watch-together/open-room';
-import { formatTimestamp } from '../release-notifications/feed-layout';
 import { useBlockView } from './home-placement';
 import { BLOCK_TITLE } from './site-layout';
 
@@ -44,17 +45,13 @@ function useMode(): Mode {
 
 const Dot = () => <span aria-hidden>·</span>;
 
-const plural = new Intl.PluralRules('uk');
-
 /** "12 епізодів", as hikka.io words a total; "?" when it isn't known. */
 const UNITS = {
   episode: { one: 'епізод', few: 'епізоди', many: 'епізодів' },
   chapter: { one: 'розділ', few: 'розділи', many: 'розділів' },
 };
-function unitOf(unit: keyof typeof UNITS, total?: number | null) {
-  const form = total ? plural.select(total) : 'many';
-  return UNITS[unit][form === 'one' || form === 'few' ? form : 'many'];
-}
+const unitOf = (unit: keyof typeof UNITS, total?: number | null) =>
+  total ? plural(total, UNITS[unit]) : UNITS[unit].many;
 
 /** Re-renders now and then, so "5 хв тому" keeps up. */
 function useNow() {

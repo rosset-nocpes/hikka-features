@@ -1,34 +1,27 @@
 import { ScrollArea as ScrollAreaPrimitive } from '@base-ui/react/scroll-area';
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
-import {
-  type ReactElement,
-  type ReactNode,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { useEffect, useRef, useState } from 'react';
 import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
 import MaterialSymbolsDragIndicator from '~icons/material-symbols/drag-indicator';
 import MaterialSymbolsLibraryMusicRounded from '~icons/material-symbols/library-music-rounded';
-import MaterialSymbolsPauseOutlineRounded from '~icons/material-symbols/pause-outline-rounded';
-import MaterialSymbolsPlayArrowOutlineRounded from '~icons/material-symbols/play-arrow-outline-rounded';
 import MaterialSymbolsQueueMusicRounded from '~icons/material-symbols/queue-music-rounded';
 import MaterialSymbolsSkipNextOutlineRounded from '~icons/material-symbols/skip-next-outline-rounded';
 import MaterialSymbolsSkipPreviousOutlineRounded from '~icons/material-symbols/skip-previous-outline-rounded';
-import MaterialSymbolsVolumeDownOutlineRounded from '~icons/material-symbols/volume-down-outline-rounded';
-import MaterialSymbolsVolumeOffOutlineRounded from '~icons/material-symbols/volume-off-outline-rounded';
-import MaterialSymbolsVolumeUpOutlineRounded from '~icons/material-symbols/volume-up-outline-rounded';
 
-import SwapIcon from '@/components/swap-icon';
+import {
+  MediaButton,
+  MediaDivider,
+  MediaTooltipProvider,
+  PlayPauseIcon,
+  TimeToggle,
+  VolumeIcon,
+  VolumeSlideOut,
+} from '@/components/media/controls';
+import { SeekBar } from '@/components/media/seek-bar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Spinner } from '@/components/ui/spinner';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import {
   FLOATING_DURATION_MS,
   FLOATING_EASE,
@@ -41,31 +34,27 @@ import { onHikkaLinkClick } from '@/utils/hikka-router';
 import type { MusicTrack } from './animethemes';
 
 import { ModalUi } from '../../core/base-feature';
-import { SeekBar } from '../player/player-overlay/sliders/time';
-import { VolumeSlider } from '../player/player-overlay/sliders/volume';
-import { formatTime } from '../player/player-overlay/time-group';
 import Equalizer from './equalizer';
 import { currentTrack, musicCorner, trackLabel, useMusic } from './use-music';
-
-/** Where the tooltips go: inside the player's shadow root, for its styles. */
-let tooltipContainer: HTMLElement | undefined;
 
 const musicUi = new ModalUi({
   name: 'music-player',
   // Under the video player, whose backdrop covers it while it's full size.
   zIndex: 99,
   onMount(container) {
-    tooltipContainer = container;
     // Only the bar takes the pointer; the page stays usable around it.
     container.classList.add(
       'pointer-events-none',
       '[-webkit-tap-highlight-color:transparent]',
     );
   },
-  render: () => (
+  render: (container) => (
     // Under reduced motion, Motion keeps only the fades.
     <MotionConfig reducedMotion="user">
-      <MusicCard />
+      {/* Tooltips go inside the player's shadow root, for its styles. */}
+      <MediaTooltipProvider value={{ container, sideOffset: 8 }}>
+        <MusicCard />
+      </MediaTooltipProvider>
     </MotionConfig>
   ),
   onRemove: () => useMusic.getState().stop(),
@@ -90,62 +79,6 @@ useMusic.subscribe((state, previous) => {
     if (video.isPlaying) video.pause();
   }
 });
-
-const Divider = () => <div className="bg-border mx-0.5 h-5 w-px shrink-0" />;
-
-/** A tooltip like the video toolbar's. */
-const MusicTooltip = ({
-  label,
-  children,
-}: {
-  label: string;
-  children: ReactElement;
-}) => (
-  <Tooltip
-    onOpenChange={(open, details) => {
-      if (open && details.reason === 'trigger-focus') details.cancel();
-    }}
-  >
-    <TooltipTrigger aria-label={label} render={children} />
-    <TooltipContent
-      className="player-tooltip"
-      side="top"
-      sideOffset={8}
-      collisionPadding={8}
-      container={tooltipContainer}
-    >
-      {label}
-    </TooltipContent>
-  </Tooltip>
-);
-
-/** An icon button of the toolbar, named by its tooltip. */
-const ToolbarButton = ({
-  label,
-  onClick,
-  disabled,
-  pressed,
-  children,
-}: {
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
-  pressed?: boolean;
-  children: ReactNode;
-}) => (
-  <MusicTooltip label={label}>
-    <Button
-      variant="ghost"
-      size="icon-sm"
-      disabled={disabled}
-      aria-pressed={pressed}
-      className={cn(pressed && 'bg-muted text-foreground')}
-      onClick={onClick}
-    >
-      {children}
-    </Button>
-  </MusicTooltip>
-);
 
 const MusicCard = () => {
   const track = useMusic(currentTrack);
@@ -274,48 +207,42 @@ const MusicCard = () => {
       <div className="flex items-center justify-between gap-2 p-2 pt-1">
         <div className="flex min-w-0 items-center gap-1">
           {hasQueue && (
-            <ToolbarButton label="Попередній" onClick={previous}>
+            <MediaButton label="Попередній" onClick={previous}>
               <MaterialSymbolsSkipPreviousOutlineRounded className="size-5" />
-            </ToolbarButton>
+            </MediaButton>
           )}
-          <ToolbarButton
+          <MediaButton
             label={playing ? 'Призупинити' : 'Відтворити'}
             onClick={toggle}
           >
             {loading ? (
               <Spinner className="size-5" aria-label="Завантаження" />
             ) : (
-              <SwapIcon
-                active={playing}
-                on={<MaterialSymbolsPauseOutlineRounded className="size-5" />}
-                off={
-                  <MaterialSymbolsPlayArrowOutlineRounded className="size-5" />
-                }
-              />
+              <PlayPauseIcon playing={playing} />
             )}
-          </ToolbarButton>
+          </MediaButton>
           {hasQueue && (
-            <ToolbarButton
+            <MediaButton
               label="Наступний"
               disabled={index >= queue.length - 1}
               onClick={next}
             >
               <MaterialSymbolsSkipNextOutlineRounded className="size-5" />
-            </ToolbarButton>
+            </MediaButton>
           )}
           <VolumeControl />
-          <Divider />
-          <TimeGroup />
+          <MediaDivider />
+          <TimeToggle currentTime={currentTime} duration={duration} />
         </div>
         {hasQueue && (
           <div className="shrink-0">
-            <ToolbarButton
+            <MediaButton
               label={showQueue ? 'Сховати треки' : 'Треки'}
               pressed={showQueue}
               onClick={() => setShowQueue((shown) => !shown)}
             >
               <MaterialSymbolsQueueMusicRounded className="size-5" />
-            </ToolbarButton>
+            </MediaButton>
           </div>
         )}
       </div>
@@ -340,59 +267,20 @@ const MusicCard = () => {
   );
 };
 
-/** Mute, with the level sliding out on hover or focus, as in the video toolbar. */
+/** Mute, with the level sliding out on hover or focus. */
 const VolumeControl = () => {
   const { volume, muted, setVolume, toggleMute } = useMusic();
   const silent = muted || volume === 0;
 
   return (
-    <div className="group/volume flex items-center">
-      <ToolbarButton
+    <VolumeSlideOut volume={silent ? 0 : volume} onChange={setVolume}>
+      <MediaButton
         label={silent ? 'Увімкнути звук' : 'Вимкнути звук'}
         onClick={toggleMute}
       >
-        <SwapIcon
-          active={silent}
-          on={<MaterialSymbolsVolumeOffOutlineRounded className="size-5" />}
-          off={
-            volume < 0.5 ? (
-              <MaterialSymbolsVolumeDownOutlineRounded className="size-5" />
-            ) : (
-              <MaterialSymbolsVolumeUpOutlineRounded className="size-5" />
-            )
-          }
-        />
-      </ToolbarButton>
-      <div className="w-0 overflow-hidden opacity-0 transition-[width,opacity] duration-200 ease-out group-hover/volume:w-20 group-hover/volume:opacity-100 group-has-focus-visible/volume:w-20 group-has-focus-visible/volume:opacity-100 has-data-dragging:w-20 has-data-dragging:opacity-100 motion-reduce:transition-opacity">
-        <div className="w-20 px-2">
-          <VolumeSlider volume={silent ? 0 : volume} onChange={setVolume} />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-/** The time and length; a click shows what's left instead, as in the video toolbar. */
-const TimeGroup = () => {
-  const { currentTime, duration } = useMusic();
-  const [showRemaining, setShowRemaining] = useState(false);
-
-  return (
-    <MusicTooltip
-      label={showRemaining ? 'Показати поточний час' : 'Показати залишок'}
-    >
-      <button
-        type="button"
-        onClick={() => setShowRemaining(!showRemaining)}
-        className="focus-visible:ring-ring flex h-8 items-center gap-1 rounded-md px-1 text-sm font-medium whitespace-nowrap tabular-nums outline-none focus-visible:ring-1"
-      >
-        {showRemaining
-          ? `−${formatTime(Math.max(0, duration - currentTime))}`
-          : formatTime(currentTime)}
-        <span className="text-muted-foreground">/</span>
-        <span className="text-muted-foreground">{formatTime(duration)}</span>
-      </button>
-    </MusicTooltip>
+        <VolumeIcon silent={silent} volume={volume} />
+      </MediaButton>
+    </VolumeSlideOut>
   );
 };
 

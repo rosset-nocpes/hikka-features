@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
 
-import { BaseFeature, createFeatureUi } from '../../core/base-feature';
+import { BaseFeature } from '../../core/base-feature';
 import { HikkaPages } from '../../core/core.enums';
 import useMediaCover from './hooks/use-media-cover';
 
@@ -10,8 +10,7 @@ export default class MediaCoverFeature extends BaseFeature {
   readonly pages = [HikkaPages.All];
 
   async init() {
-    this.ui = await createFeatureUi({
-      name: this.id,
+    this.ui = await this.createUi({
       position: 'inline',
       append: 'last',
       anchor: 'main',

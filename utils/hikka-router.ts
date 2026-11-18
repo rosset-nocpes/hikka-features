@@ -81,6 +81,19 @@ export function onHikkaLinkClick(event: MouseEvent<HTMLAnchorElement>) {
   navigateOnHikka(href);
 }
 
+/** A link's props for a new tab, for pages off the site. */
+export const NEW_TAB = {
+  target: '_blank',
+  rel: 'noopener noreferrer',
+} as const;
+
+/**
+ * Where a link goes: `to`, a path on hikka.io opened in place, or else
+ * `href` in a new tab.
+ */
+export const linkTo = (to?: string, href?: string) =>
+  to ? { href: to, onClick: onHikkaLinkClick } : { href, ...NEW_TAB };
+
 /** Calls `listener` whenever the site's URL changes. */
 export function onHikkaNavigation(listener: () => void) {
   document.addEventListener(NAVIGATED_EVENT, listener);

@@ -9,6 +9,18 @@ import { queryClient } from '../../core/query-client';
 /** How long a link has to be pointed at before its team page is fetched. */
 const HOVER_MS = 80;
 
+/**
+ * Every team with a page, for the list of teams and the site's search. Teams
+ * the catalogs know of but have no releases for aren't listed.
+ */
+export const teamListQuery = queryOptions({
+  queryKey: ['team-list'],
+  queryFn: () => convex.query(convexApi.fandub.teams, {}),
+  select: (teams) => teams.filter((team) => (team.stats?.anime ?? 0) > 0),
+  staleTime: 5 * 60_000,
+  retry: false,
+});
+
 export const teamPageQuery = (slug: string) =>
   queryOptions({
     queryKey: ['team-page', slug],

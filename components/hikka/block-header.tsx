@@ -2,7 +2,7 @@ import type { FC, ReactNode } from 'react';
 
 import MaterialSymbolsChevronRightRounded from '~icons/material-symbols/chevron-right-rounded';
 
-import { onHikkaLinkClick } from '@/utils/hikka-router';
+import { linkTo } from '@/utils/hikka-router';
 
 interface Props {
   title: ReactNode;
@@ -28,10 +28,7 @@ const BlockHeader: FC<Props> = ({
       <h2 className="flex w-full min-w-0 items-center justify-between gap-2 text-lg leading-7 font-bold">
         {(href || to) && !disabled ? (
           <a
-            href={to ?? href}
-            {...(to
-              ? { onClick: onHikkaLinkClick }
-              : { target: '_blank', rel: 'noopener noreferrer' })}
+            {...linkTo(to, href)}
             className="group/header-title focus-visible:ring-ring/50 -mx-1.5 -my-1.5 inline-flex min-h-10 min-w-0 items-center gap-1 rounded-md px-1.5 py-1.5 outline-none focus-visible:ring-[3px]"
           >
             <span className="underline-offset-4 group-hover/header-title:underline">

@@ -1,11 +1,12 @@
 import type { FC } from 'react';
 
-const nouns = {
-  episode: ['епізоду', 'епізодів'],
-  chapter: ['розділу', 'розділів'],
-} as const;
+import { plural } from '@/utils/plural';
 
-const pluralRules = new Intl.PluralRules('uk');
+/** "Бракує 1 епізоду", "Бракує 3 епізодів". */
+const nouns = {
+  episode: { one: 'епізоду', few: 'епізодів', many: 'епізодів' },
+  chapter: { one: 'розділу', few: 'розділів', many: 'розділів' },
+};
 
 /**
  * Whole numbers skipped between an entry and the one numbered just below it,
@@ -25,8 +26,6 @@ interface Props {
 
 /** Labelled rule placed where a numbered list skips entries. */
 const MissingDivider: FC<Props> = ({ count, noun, className }) => {
-  const [one, other] = nouns[noun];
-
   return (
     <div
       className={cn(
@@ -36,7 +35,7 @@ const MissingDivider: FC<Props> = ({ count, noun, className }) => {
     >
       <span className="bg-muted-foreground/30 h-px flex-1" />
       <span className="shrink-0">
-        Бракує {count} {pluralRules.select(count) === 'one' ? one : other}
+        Бракує {count} {plural(count, nouns[noun])}
       </span>
       <span className="bg-muted-foreground/30 h-px flex-1" />
     </div>

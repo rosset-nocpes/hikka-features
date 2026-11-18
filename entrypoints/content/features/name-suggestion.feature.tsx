@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Kbd } from '@/components/ui/kbd';
 import { fillInput } from '@/utils/edit-form';
 
-import { AnchoredUisFeature, createFeatureUi } from '../core/base-feature';
+import { AnchoredUisFeature } from '../core/base-feature';
 import { HikkaPages } from '../core/core.enums';
 
 export default class NameSuggestionFeature extends AnchoredUisFeature {
@@ -19,8 +19,7 @@ export default class NameSuggestionFeature extends AnchoredUisFeature {
   async init() {
     this.uis = await Promise.all(
       NAME_SUGGESTION_TARGETS.map(async (target) => {
-        const ui = await createFeatureUi({
-          name: this.id,
+        const ui = await this.createUi({
           position: 'overlay',
           alignment: 'bottom-right',
           anchor: () => getNameSuggestionInput(target)?.parentElement,

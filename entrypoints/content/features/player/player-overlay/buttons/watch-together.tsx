@@ -16,6 +16,7 @@ import type {
   WatchRoomListing,
 } from '@/utils/convex-api';
 
+import { MediaTooltip } from '@/components/media/controls';
 import SwapIcon from '@/components/swap-icon';
 import {
   Avatar,
@@ -51,7 +52,6 @@ import {
 import { openRoom, roomInviteUrl } from '../../watch-together/open-room';
 import { useWatchTogether } from '../../watch-together/use-watch-together';
 import MenuPages from '../menu-pages';
-import ToolbarTooltip from '../toolbar-tooltip';
 import { useToolbarMenuPosition, useUiLock } from '../use-ui-lock';
 
 const MotionAvatar = motion.create(Avatar);
@@ -441,7 +441,7 @@ const WatchTogether: FC<Props> = ({
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
-      <ToolbarTooltip
+      <MediaTooltip
         label={joined ? 'Спільний перегляд' : 'Дивитися разом'}
         disabled={open}
       >
@@ -460,7 +460,7 @@ const WatchTogether: FC<Props> = ({
             </Button>
           }
         />
-      </ToolbarTooltip>
+      </MediaTooltip>
       <PopoverContent
         className="player-glass player-menu w-56 gap-0 rounded-lg border bg-(--player-glass) p-1 shadow-lg ring-0"
         {...position}

@@ -64,10 +64,8 @@ export const restoredOrder = (
   return result;
 };
 
-interface QueueState {
-  items: QueueItem[];
-  /** The episode a click asked to play, while its anime loads. */
-  loading?: string;
+/** What can be done to a queue: the user's own, or a watch together room's. */
+export interface QueueActions {
   /** Adds episodes at the end, or with `next` first, moving queued ones up. */
   add: (items: QueueItem[], next?: boolean) => void;
   remove: (episode: QueueEpisode) => void;
@@ -78,6 +76,12 @@ interface QueueState {
   /** Puts `removed` back where they were in `before`. */
   restore: (before: QueueItem[], removed: QueueItem[]) => void;
   clear: () => void;
+}
+
+interface QueueState extends QueueActions {
+  items: QueueItem[];
+  /** The episode a click asked to play, while its anime loads. */
+  loading?: string;
 }
 
 /** The player's queue, kept in the extension's storage across tabs. */

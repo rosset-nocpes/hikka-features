@@ -2,7 +2,7 @@ import type { FC } from 'react';
 
 import { CardMeta, Poster } from '@/components/hikka/poster';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
-import { onHikkaLinkClick } from '@/utils/hikka-router';
+import { NEW_TAB, onHikkaLinkClick } from '@/utils/hikka-router';
 
 import MediaTooltip, {
   MEDIA_TYPES,
@@ -34,9 +34,7 @@ const ContentCard: FC<Props> = ({ item, container, meta, newTab }) => (
   <MediaTooltip item={item} container={container}>
     <a
       href={`/${item.data_type}/${item.slug}`}
-      {...(newTab
-        ? { target: '_blank', rel: 'noopener noreferrer' }
-        : { onClick: onHikkaLinkClick })}
+      {...(newTab ? NEW_TAB : { onClick: onHikkaLinkClick })}
       className="flex flex-col gap-2"
     >
       <Poster image={item.image ?? undefined} />

@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import MaterialSymbolsSubscriptionsOutlineRounded from '~icons/material-symbols/subscriptions-outline-rounded';
 
-import NavbarAction from '@/components/navbar-action';
+import NavbarAction, { NAVBAR_ACTION_UI } from '@/components/navbar-action';
 
-import { BaseFeature, createFeatureUi } from '../../core/base-feature';
+import { BaseFeature } from '../../core/base-feature';
 import { HikkaPages } from '../../core/core.enums';
 import { openPlayer } from './player';
 import QueueMenu from './queue/queue-menu';
@@ -13,12 +13,8 @@ export default class WatchButtonFeature extends BaseFeature {
   readonly pages = [HikkaPages.AnimeContent];
 
   async init() {
-    this.ui = await createFeatureUi({
-      name: this.id,
-      position: 'inline',
-      append: 'first',
-      anchor: '#navbar-card',
-      hostCss: 'margin-right: -0.5rem !important;',
+    this.ui = await this.createUi({
+      ...NAVBAR_ACTION_UI,
       render: (container) => <WatchButton container={container} />,
     });
   }
