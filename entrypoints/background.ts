@@ -58,7 +58,9 @@ export default defineBackground(() => {
       return remoteFetch(request);
     },
     'iframe-player-command': (command, sender) => {
-      void browser.tabs.sendMessage(sender.tab!.id!, command);
+      const tabId = sender.tab?.id;
+      if (tabId === undefined) throw new Error('Not sent from a tab');
+      void browser.tabs.sendMessage(tabId, command);
       return true;
     },
   };

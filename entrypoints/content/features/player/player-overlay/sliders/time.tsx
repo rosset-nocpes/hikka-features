@@ -6,20 +6,32 @@ import { formatTime } from '../time-group';
 
 const useSeeking = (duration: number, seek: (t: number) => void) => {
   const [isSeeking, setIsSeeking] = useState(false);
-  const seekTargetRef = useRef<number | null>(null);
+  /** Where the last seek went, in the episode (told by its duration) it was made on. */
+  const seekTargetRef = useRef<{ time: number; duration: number } | null>(null);
 
   const seekToSliderValue = (sliderValue: number) => {
-    const target = (sliderValue / 100) * duration;
-    seekTargetRef.current = target;
-    seek(target);
+    const time = (sliderValue / 100) * duration;
+    seekTargetRef.current = { time, duration };
+    seek(time);
   };
 
-  const shouldSkipSync = useCallback((currentTime: number): boolean => {
-    if (seekTargetRef.current === null) return false;
-    if (Math.abs(currentTime - seekTargetRef.current) > 1) return true;
-    seekTargetRef.current = null;
-    return false;
-  }, []);
+  /** The player hasn't reached the last seek yet, so the bar stays put. */
+  const shouldSkipSync = useCallback(
+    (currentTime: number, currentDuration: number): boolean => {
+      const target = seekTargetRef.current;
+      if (!target) return false;
+      // A seek made on another episode says nothing about this one.
+      if (
+        target.duration === currentDuration &&
+        Math.abs(currentTime - target.time) > 1
+      ) {
+        return true;
+      }
+      seekTargetRef.current = null;
+      return false;
+    },
+    [],
+  );
 
   return { isSeeking, setIsSeeking, seekToSliderValue, shouldSkipSync };
 };
@@ -176,7 +188,8 @@ export const SeekBar = ({
   overlay = null,
 }: SeekBarProps) => {
   const step = duration > 0 ? (1 / duration) * 100 : 1;
-  const [value, setValue] = useState(0);
+  // Kept with the duration it was set for: a new episode starts at 0.
+  const [value, setValue] = useState({ percent: 0, duration });
 
   const { isSeeking, setIsSeeking, seekToSliderValue, shouldSkipSync } =
     useSeeking(duration, seek);
@@ -192,17 +205,16 @@ export const SeekBar = ({
   } = useSliderTooltip({ isSeeking, duration, step, overlay });
 
   useEffect(() => {
-    if (isSeeking || shouldSkipSync(currentTime)) return;
-    setValue(duration > 0 ? (currentTime / duration) * 100 : 0);
+    if (isSeeking || shouldSkipSync(currentTime, duration)) return;
+    setValue({
+      percent: duration > 0 ? (currentTime / duration) * 100 : 0,
+      duration,
+    });
   }, [currentTime, duration, isSeeking, shouldSkipSync]);
-
-  useEffect(() => {
-    if (duration === 0) setValue(0);
-  }, [duration]);
 
   const handleValueChange = (newValue: number) => {
     setIsSeeking(true);
-    setValue(newValue);
+    setValue({ percent: newValue, duration });
     seekToSliderValue(newValue);
   };
 
@@ -223,7 +235,7 @@ export const SeekBar = ({
           'group relative inline-flex w-full cursor-pointer touch-none pb-1 outline-none select-none',
           trackClassName,
         )}
-        value={value}
+        value={value.duration === duration ? value.percent : 0}
         disabled={duration === 0}
         step={step}
         onValueChange={handleValueChange}

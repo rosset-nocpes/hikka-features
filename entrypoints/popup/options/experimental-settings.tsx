@@ -1,13 +1,10 @@
-import { AnimatePresence, motion } from 'motion/react';
 import { type ReactNode, useEffect, useState } from 'react';
 import MaterialSymbolsCodeRounded from '~icons/material-symbols/code-rounded';
-import MaterialSymbolsExperiment from '~icons/material-symbols/experiment';
 import MaterialSymbolsPetsRounded from '~icons/material-symbols/pets-rounded';
 
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { useCopy } from '@/hooks/use-copy';
-import { useNavigation } from '@/hooks/use-navigation';
 import { version } from '@/package.json';
 import {
   type ExtensionCompatibilityState,
@@ -196,27 +193,5 @@ const DevToolsGroup = () => {
     </SettingsGroup>
   );
 };
-
-export function ExperimentalSettingsIcon() {
-  const { enabled } = useSettings().features.devOptions;
-  const { navigate } = useNavigation();
-
-  return (
-    <AnimatePresence initial={false}>
-      {enabled && (
-        <motion.button
-          type="button"
-          onClick={() => navigate('experimental')}
-          initial={{ opacity: 0, scale: 0.25, filter: 'blur(4px)' }}
-          animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-          exit={{ opacity: 0, scale: 0.25, filter: 'blur(4px)' }}
-          transition={{ type: 'spring', duration: 0.3, bounce: 0 }}
-        >
-          <MaterialSymbolsExperiment />
-        </motion.button>
-      )}
-    </AnimatePresence>
-  );
-}
 
 export default ExperimentalSettingsPage;

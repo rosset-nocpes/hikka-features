@@ -49,7 +49,7 @@ interface PlayerState {
   fullscreen: boolean;
   theatreMode: boolean;
   miniPlayer: boolean;
-  miniPlayerCorner: MiniPlayerCorner;
+  miniPlayerCorner: FloatingCorner;
   videoPiPActive: boolean;
   /** The video's overlay, where gestures land and menus stay inside. */
   overlay: HTMLDivElement | null;
@@ -86,7 +86,7 @@ interface PlayerActions {
   toggleTheatreMode: () => void;
   toggleMiniPlayer: () => void;
   setMiniPlayer: (status: boolean) => void;
-  setMiniPlayerCorner: (corner: MiniPlayerCorner) => void;
+  setMiniPlayerCorner: (corner: FloatingCorner) => void;
   setVideoPiPActive: (status: boolean) => void;
   setSharedStatus: (status: boolean) => void;
   setContainer: (container: HTMLElement) => void;
@@ -364,5 +364,3 @@ const setSpeedOptions = (provider: string) =>
         ? [1, 1.25, 1.5, 2]
         : useIFramePlayer.getInitialState().speedOptions,
   });
-
-export type MiniPlayerCorner = FloatingCorner;
