@@ -129,12 +129,52 @@ interface TimeProps {
   trackClassName?: string;
 }
 
-const Time = ({ className, trackClassName }: TimeProps = {}) => {
+interface SeekBarProps extends TimeProps {
+  currentTime: number;
+  duration: number;
+  bufferedTime: number;
+  seek: (time: number) => void;
+  /** The thin track of the compact layouts. */
+  compact: boolean;
+  /** Keeps the hover time inside it; the viewport otherwise. */
+  overlay?: HTMLElement | null;
+}
+
+/** The video's seek bar, in the player's toolbar or bar. */
+const Time = (props: TimeProps = {}) => {
   const { currentTime, duration, seek, bufferedTime, checkBuffering } =
     useIFramePlayer();
   const overlay = usePlayer((state) => state.overlay);
   const isCompact = usePlayer(compactMode);
 
+  useEffect(() => {
+    checkBuffering();
+  }, [checkBuffering, currentTime]);
+
+  return (
+    <SeekBar
+      {...props}
+      currentTime={currentTime}
+      duration={duration}
+      bufferedTime={bufferedTime}
+      seek={seek}
+      compact={isCompact}
+      overlay={overlay}
+    />
+  );
+};
+
+/** A seek bar with the time under the pointer, for any player. */
+export const SeekBar = ({
+  className,
+  trackClassName,
+  currentTime,
+  duration,
+  bufferedTime,
+  seek,
+  compact: isCompact,
+  overlay = null,
+}: SeekBarProps) => {
   const step = duration > 0 ? (1 / duration) * 100 : 1;
   const [value, setValue] = useState(0);
 
@@ -150,10 +190,6 @@ const Time = ({ className, trackClassName }: TimeProps = {}) => {
     handleMouseMove,
     handleMouseLeave,
   } = useSliderTooltip({ isSeeking, duration, step, overlay });
-
-  useEffect(() => {
-    checkBuffering();
-  }, [checkBuffering, currentTime]);
 
   useEffect(() => {
     if (isSeeking || shouldSkipSync(currentTime)) return;

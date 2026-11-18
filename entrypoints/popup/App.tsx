@@ -11,6 +11,7 @@ import MaterialSymbolsChevronLeftRounded from '~icons/material-symbols/chevron-l
 import MaterialSymbolsExperiment from '~icons/material-symbols/experiment';
 import MaterialSymbolsFactCheckRounded from '~icons/material-symbols/fact-check-rounded';
 import MaterialSymbolsGroupsRounded from '~icons/material-symbols/groups-rounded';
+import MaterialSymbolsLibraryMusicRounded from '~icons/material-symbols/library-music-rounded';
 import MaterialSymbolsLinkRounded from '~icons/material-symbols/link-rounded';
 import MaterialSymbolsMenuBookRounded from '~icons/material-symbols/menu-book-rounded';
 import MaterialSymbolsPersonEditRounded from '~icons/material-symbols/person-edit-rounded';
@@ -142,6 +143,12 @@ function HomePage() {
               icon={<MaterialSymbolsRecommendRounded />}
               label="Блок рекомендацій"
               description="Блок і вкладка тайтлу з контентом, схожим на той, який ви дивитеся"
+            />
+            <FeatureSwitch
+              feature="musicPlayer"
+              icon={<MaterialSymbolsLibraryMusicRounded />}
+              label="Опенінґи та ендінґи"
+              description="Кнопка відтворення в блоці музики тайтлу і плаваючий програвач"
             />
           </SettingsGroup>
         </motion.div>

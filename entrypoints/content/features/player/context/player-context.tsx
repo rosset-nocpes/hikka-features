@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 
+import type { FloatingCorner } from '@/hooks/use-floating-card';
 import type { FavoriteTeam } from '@/hooks/use-settings';
 
 import { playerControls } from '@/hooks/use-iframe-player';
@@ -364,8 +365,4 @@ const setSpeedOptions = (provider: string) =>
         : useIFramePlayer.getInitialState().speedOptions,
   });
 
-export type MiniPlayerCorner =
-  | 'top-left'
-  | 'top-right'
-  | 'bottom-left'
-  | 'bottom-right';
+export type MiniPlayerCorner = FloatingCorner;

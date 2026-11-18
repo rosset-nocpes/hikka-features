@@ -81,6 +81,10 @@ interface AppState {
     recommendationBlock: {
       enabled: boolean;
     };
+    /** Play buttons on an anime's openings and endings, and their player. */
+    musicPlayer: {
+      enabled: boolean;
+    };
     /**
      * Where the "friends' activity" block sits among the homepage's
      * widgets, which hikka.io keeps in the account and can't hold ours.
@@ -148,6 +152,9 @@ export const useSettings = create<AppState>()(
           enabled: true,
         },
         recommendationBlock: {
+          enabled: true,
+        },
+        musicPlayer: {
           enabled: true,
         },
         friendsActivity: {

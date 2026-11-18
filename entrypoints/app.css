@@ -433,3 +433,14 @@
     }
   }
 }
+
+/* The music player's "now playing" bars. */
+@keyframes equalizer {
+  0%,
+  100% {
+    scale: 1 0.3;
+  }
+  50% {
+    scale: 1 1;
+  }
+}

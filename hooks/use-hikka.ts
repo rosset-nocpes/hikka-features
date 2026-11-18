@@ -3,6 +3,16 @@ import ky from 'ky';
 
 export const HIKKA_API = 'https://api.hikka.io';
 
+/** An anime's opening or ending, as its "Музика" block lists it. */
+export interface HikkaOst {
+  /** Its number among the anime's openings or endings, from 1. */
+  index: number;
+  title: string;
+  author?: string | null;
+  spotify?: string | null;
+  ost_type: 'opening' | 'ending';
+}
+
 /**
  * What the extension reads of content from the Hikka API: an anime, manga,
  * novel, character, person or edit, so most fields are on some of them only.
@@ -25,6 +35,8 @@ export interface HikkaContent {
   anime_count?: number;
   manga_count?: number;
   external?: { text: string; url: string }[];
+  /** An anime's openings and endings. */
+  ost?: HikkaOst[] | null;
   /** An edit's number, type and content, which is what it edits. */
   edit_id?: number;
   content_type?: string;

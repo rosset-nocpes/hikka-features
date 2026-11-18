@@ -78,7 +78,10 @@ export function createFeatureUi({
 type ModalUiOptions = Pick<
   FeatureUiOptions,
   'name' | 'render' | 'onMount' | 'onRemove'
->;
+> & {
+  /** Over the page's own layers; the player's is 100. */
+  zIndex?: number;
+};
 
 /**
  * A full-page UI opened on demand, such as the player. It is created on the
@@ -94,13 +97,17 @@ export class ModalUi {
   }
 
   open() {
+    const { zIndex = 100, ...options } = this.options;
     this.ui ??= createFeatureUi({
       position: 'modal',
-      zIndex: 100,
+      zIndex,
       themeVariables: false,
-      ...this.options,
+      ...options,
     });
-    void this.ui.then((ui) => ui.mount());
+    // Two opens before the first one's styles load would mount it twice.
+    void this.ui.then((ui) => {
+      if (!ui.mounted) ui.mount();
+    });
   }
 
   close() {
