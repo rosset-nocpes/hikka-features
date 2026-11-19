@@ -21,9 +21,6 @@ export const compatibilityState = new StoredValue<ExtensionCompatibilityState>(
   'extensionCompatibility',
 );
 
-/** The UTC day and version this install last counted itself on. */
-export const usageReport = new StoredValue<string>('extensionUsageReport');
-
 /** The stored answer, while it is about this build. */
 const forThisBuild = (state: ExtensionCompatibilityState | undefined) =>
   state?.extensionVersion === browser.runtime.getManifest().version

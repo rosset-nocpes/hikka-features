@@ -110,14 +110,6 @@ export const convexApi = {
         protocolSupported: boolean;
       }
     >('compatibility:get'),
-    report: makeFunctionReference<
-      'mutation',
-      {
-        extensionVersion: string;
-        protocol: number;
-      },
-      null
-    >('compatibility:report'),
   },
   editor: {
     suggest: makeFunctionReference<

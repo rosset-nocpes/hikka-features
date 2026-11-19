@@ -97,10 +97,9 @@ until nobody uses the old one:
    at the new names, increment
    `EXTENSION_API_PROTOCOL`, add it to `supportedProtocols` in Convex, and
    publish the extension.
-3. Every install reports its version and protocol once a day
-   (`compatibility:report`, an anonymous count). Once
-   `compatibility:usage` shows no recent installs on the old protocol, delete
-   the old functions and drop the protocol from `supportedProtocols`.
+3. Once the browsers have rolled the new version out to every install (give
+   it a few weeks after publishing), delete the old functions and drop the
+   protocol from `supportedProtocols`.
 
 Additive changes (new functions, optional arguments, extra result fields) need
 none of this: deploy the backend, then publish the extension.

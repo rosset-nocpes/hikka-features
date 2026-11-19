@@ -1,12 +1,9 @@
 import ky from 'ky';
 
 import {
-  EXTENSION_API_PROTOCOL,
   type ExtensionCompatibilityState,
-  usageReport,
   watchCompatibility,
 } from '@/utils/compatibility';
-import { convexApi } from '@/utils/convex-api';
 import { convex } from '@/utils/convex-client';
 import { accountSession } from '@/utils/convex-session';
 import {
@@ -105,22 +102,6 @@ export default defineBackground(() => {
 /** Stored so API calls stop once the backend drops this version. */
 function pollCompatibility() {
   convex.refreshCompatibility().catch(console.error);
-  reportUsage().catch(console.error);
-}
-
-/**
- * Counts this install once a day, so the backend knows when nobody runs an
- * old protocol anymore and its functions can go.
- */
-async function reportUsage() {
-  const extensionVersion = browser.runtime.getManifest().version;
-  const report = `${new Date().toISOString().slice(0, 10)}:${extensionVersion}`;
-  if ((await usageReport.get()) === report) return;
-  await convex.createClient().mutation(convexApi.compatibility.report, {
-    extensionVersion,
-    protocol: EXTENSION_API_PROTOCOL,
-  });
-  await usageReport.set(report);
 }
 
 /**
