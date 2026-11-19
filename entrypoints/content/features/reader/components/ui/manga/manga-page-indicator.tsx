@@ -4,8 +4,9 @@ import useReadChapterData from '../../../hooks/use-read-chapter-data';
 import { useReader } from '../../../hooks/use-reader';
 import { ReaderType } from '../../../reader.enums';
 
-const MangaPageIndicator = () => {
-  const { settings, carouselApi } = useReader();
+/** The manga page shown out of the chapter's, both 0 outside manga. */
+export const useMangaPage = () => {
+  const { carouselApi } = useReader();
   const { data } = useReadChapterData();
   const pageCount = Array.isArray(data) ? data.length : 0;
 
@@ -32,12 +33,19 @@ const MangaPageIndicator = () => {
 
   const currentPage = useSyncExternalStore(subscribe, getSnapshot, () => 0);
 
+  return { currentPage, pageCount };
+};
+
+const MangaPageIndicator = () => {
+  const { settings } = useReader();
+  const { currentPage, pageCount } = useMangaPage();
+
   if (settings.type !== ReaderType.Manga || pageCount === 0) return;
 
   return (
     <div
       className={cn(
-        'bg-sidebar absolute bottom-2 left-2 z-20 flex h-8 cursor-default items-center gap-2 rounded-md px-2 font-medium duration-300',
+        'bg-sidebar absolute bottom-2 left-2 z-20 hidden h-8 cursor-default items-center gap-2 rounded-md px-2 font-medium duration-300 md:flex',
         settings.scrollMode && '-bottom-8',
       )}
     >

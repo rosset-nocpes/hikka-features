@@ -1,6 +1,5 @@
-/** biome-ignore-all lint/correctness/useHookAtTopLevel: . */
 import { WheelGesturesPlugin } from 'embla-carousel-wheel-gestures';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'motion/react';
 import {
   type ComponentPropsWithoutRef,
   useEffect,
@@ -17,8 +16,11 @@ import {
 } from '@/components/ui/carousel';
 import { Spinner } from '@/components/ui/spinner';
 
+import type { MangaSettings } from '../../reader.types';
+
 import useReadChapterData from '../../hooks/use-read-chapter-data';
 import { useReader } from '../../hooks/use-reader';
+import { FADE_BLUR } from '../../reader.constants';
 import { ReaderType } from '../../reader.enums';
 import MangaNextPage from '../ui/manga-next-page';
 import MangaPageIndicator from '../ui/manga/manga-page-indicator';
@@ -36,6 +38,7 @@ type MangaPageImageProps = Omit<
   src: string;
 };
 
+/** A page of the chapter, loaded again a few times if it fails. */
 const MangaPageImage = ({ src, ...props }: MangaPageImageProps) => {
   const [retryCount, setRetryCount] = useState(0);
   const retryTimerRef = useRef<number>(undefined);
@@ -65,67 +68,85 @@ const MangaPageImage = ({ src, ...props }: MangaPageImageProps) => {
     );
   };
 
-  return <img key={retryCount} src={src} onError={handleError} {...props} />;
+  return (
+    <img
+      key={retryCount}
+      src={src}
+      alt="Chapter page"
+      loading="lazy"
+      referrerPolicy="no-referrer"
+      onError={handleError}
+      {...props}
+    />
+  );
 };
 
+/** Only rendered for manga. */
 const MangaRenderer = () => {
   const {
-    settings,
-    setSettings,
+    settings: readerSettings,
     carouselApi,
     setCarouselApi,
     currentChapter,
     nextChapter,
   } = useReader();
-  if (settings.type !== ReaderType.Manga) return;
+  const settings = readerSettings as MangaSettings;
 
-  const { data: chapterImages } = useReadChapterData();
-  const [isLoading, setIsLoading] = useState(true);
+  const { data } = useReadChapterData();
+  const pages = Array.isArray(data) ? data : undefined;
+  // The pages whose first few have loaded; a spinner covers them till then.
+  const [loadedPages, setLoadedPages] = useState<string[]>();
+  const isLoading = !pages || (pages.length > 0 && loadedPages !== pages);
 
   const carouselPlugins = useMemo(() => [WheelGesturesPlugin()], []);
   const prevScaleRef = useRef(settings.scale);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  // Loads the first pages to tell a manhwa's long strips, which read best
+  // in scroll mode.
   useEffect(() => {
-    if (!chapterImages || !Array.isArray(chapterImages)) return;
-    if (chapterImages.length === 0) return;
-    setIsLoading(true);
+    if (!pages?.length) return;
 
     let isManhwaDetected = false;
-    const imagesToLoad = chapterImages.slice(0, 3).map((img_url) => {
-      return new Promise<void>((resolve) => {
-        const img = new Image();
-        img.onload = () => {
-          const aspectRatio = img.naturalHeight / img.naturalWidth;
-          if (aspectRatio > 3.5) {
-            isManhwaDetected = true;
-          }
-          resolve();
-        };
-        img.onerror = () => {
-          console.error('Failed to load image:', img_url);
-          resolve();
-        };
-        img.referrerPolicy = 'no-referrer';
-        img.src = img_url;
-      });
-    });
+    const imagesToLoad = pages.slice(0, 3).map(
+      (url) =>
+        new Promise<void>((resolve) => {
+          const img = new Image();
+          img.onload = () => {
+            if (img.naturalHeight / img.naturalWidth > 3.5) {
+              isManhwaDetected = true;
+            }
+            resolve();
+          };
+          img.onerror = () => {
+            console.error('Failed to load image:', url);
+            resolve();
+          };
+          img.referrerPolicy = 'no-referrer';
+          img.src = url;
+        }),
+    );
 
     let isCurrentChapter = true;
 
-    Promise.all(imagesToLoad).then(() => {
+    void Promise.all(imagesToLoad).then(() => {
       if (!isCurrentChapter) return;
 
-      if (isManhwaDetected && !settings.scrollMode) {
+      const { settings, setSettings } = useReader.getState();
+      if (
+        isManhwaDetected &&
+        settings.type === ReaderType.Manga &&
+        !settings.scrollMode
+      ) {
         setSettings({ scrollMode: true });
       }
-      setIsLoading(false);
+      setLoadedPages(pages);
     });
 
     return () => {
       isCurrentChapter = false;
     };
-  }, [chapterImages]);
+  }, [pages]);
 
   useEffect(() => {
     if (!carouselApi) return;
@@ -147,127 +168,74 @@ const MangaRenderer = () => {
       }
     };
 
-    // const handleScroll = () => {
-    //   if (carouselApi && carouselApi.selectedScrollSnap() !== selectedPageIndex)
-    //     setSelectedPageIndex(carouselApi.selectedScrollSnap());
-    // };
-
     window.addEventListener('keydown', handleKeyDown);
-    // carouselApi.on('scroll', handleScroll);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      // carouselApi.off('scroll', handleScroll);
-    };
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [carouselApi, isLoading]);
 
   useEffect(() => {
     if (!currentChapter || !carouselApi) return;
 
+    // Scrolling past the "next chapter" page opens that chapter.
     const handleScroll = () => {
-      const isTransitionPage = !carouselApi.canScrollNext();
-      const isLastImage =
-        carouselApi.selectedScrollSnap() ===
-        carouselApi.scrollSnapList().length - 2;
-
-      if (isTransitionPage && !isLoading) {
-        nextChapter();
-        carouselApi.scrollTo(0);
-      }
-
-      // if (isLastImage) {
-      //   const current = mangaData.chapters.findIndex(
-      //     (chap) => chap.id === currentChapter.id,
-      //   );
-      //   const lastRead = getRead() - 1;
-
-      //   if (current === -1) return;
-
-      //   if (lastRead - current) {
-      //     (
-      //       document.body.querySelector(
-      //         'div.rounded-lg.border:nth-child(2) button',
-      //       ) as HTMLButtonElement
-      //     )?.click();
-      //   }
-      // }
+      if (!carouselApi.canScrollNext() && !isLoading) nextChapter();
     };
 
     carouselApi.on('scroll', handleScroll);
-
     return () => {
       carouselApi.off('scroll', handleScroll);
     };
-  }, [carouselApi, currentChapter, isLoading]);
+  }, [carouselApi, currentChapter, isLoading, nextChapter]);
 
+  // Zooming the strip keeps the middle of the view in place. A page is
+  // (scale - 0.6) * 1000px wide.
   useLayoutEffect(() => {
     const scrollContainer = scrollContainerRef.current;
-    if (
-      settings.scrollMode &&
-      scrollContainer &&
-      prevScaleRef.current !== settings.scale
-    ) {
-      const oldScale = prevScaleRef.current;
-      const newScale = settings.scale;
-
-      const effOldScale = oldScale - 0.6;
-      const effNewScale = newScale - 0.6;
-
-      if (effOldScale > 0 && effNewScale > 0) {
-        const scaleRatio = effNewScale / effOldScale;
-        const { scrollTop, clientHeight } = scrollContainer;
-        const newScrollTop =
-          (scrollTop + clientHeight / 2) * scaleRatio - clientHeight / 2;
-        scrollContainer.scrollTop = newScrollTop;
-      }
-    }
-
+    const oldScale = prevScaleRef.current;
     prevScaleRef.current = settings.scale;
-  }, [settings.scale, settings.scrollMode]);
+    if (!settings.scrollMode || !scrollContainer) return;
+    if (oldScale === settings.scale) return;
 
-  const layoutAnimation = {
-    initial: { opacity: 0 },
-    animate: { opacity: 1, filter: 'blur(0px)' },
-    exit: { opacity: 0, filter: 'blur(16px)' },
-    transition: { duration: 0.2 },
-  };
+    const oldWidth = oldScale - 0.6;
+    const newWidth = settings.scale - 0.6;
+    if (oldWidth > 0 && newWidth > 0) {
+      const { scrollTop, clientHeight } = scrollContainer;
+      scrollContainer.scrollTop =
+        (scrollTop + clientHeight / 2) * (newWidth / oldWidth) -
+        clientHeight / 2;
+    }
+  }, [settings.scale, settings.scrollMode]);
 
   return (
     <>
       <MangaPageIndicator />
       <MangaScaleIndicator />
       <AnimatePresence>
-        {(!chapterImages || isLoading) && (
+        {isLoading && (
           <motion.div
             key="loading"
             className="bg-card absolute z-10 flex size-full items-center justify-center"
-            {...layoutAnimation}
+            {...FADE_BLUR}
           >
             <Spinner className="size-16" />
           </motion.div>
         )}
       </AnimatePresence>
-      {chapterImages && Array.isArray(chapterImages) && (
+      {pages && (
         <AnimatePresence mode="wait" initial={false}>
           {settings.scrollMode ? (
             <motion.div
               key="scroll"
               ref={scrollContainerRef}
               className="no-scrollbar flex flex-1 flex-col items-center overflow-auto"
-              {...layoutAnimation}
+              {...FADE_BLUR}
             >
-              {chapterImages?.map((img_url, index) => (
+              {pages.map((url, index) => (
                 <MangaPageImage
                   key={`${currentChapter?.id}-${index}`}
-                  src={img_url}
-                  alt="Chapter page"
-                  loading="lazy"
-                  referrerPolicy="no-referrer"
-                  className="max-w-none"
-                  style={{
-                    width: settings.scrollMode
-                      ? `${(settings.scale - 0.6) * 1000}px`
-                      : `auto`,
-                  }}
+                  src={url}
+                  // Phones fit the strip to their width; zoom is a pinch away.
+                  className="max-w-none max-md:w-full!"
+                  style={{ width: `${(settings.scale - 0.6) * 1000}px` }}
                 />
               ))}
             </motion.div>
@@ -278,27 +246,22 @@ const MangaRenderer = () => {
               orientation={settings.orientation}
               setApi={setCarouselApi}
               className="flex h-full"
-              {...layoutAnimation}
+              {...FADE_BLUR}
             >
               <CarouselContent className="m-0! h-full">
-                {chapterImages?.map((img_url, index) => {
-                  return (
-                    <CarouselItem
-                      key={`${currentChapter?.id}-${index}`}
-                      className="h-full"
-                    >
-                      <div className="flex h-full items-center justify-center">
-                        <MangaPageImage
-                          src={img_url}
-                          alt="Chapter page"
-                          loading="lazy"
-                          referrerPolicy="no-referrer"
-                          className="h-full object-contain"
-                        />
-                      </div>
-                    </CarouselItem>
-                  );
-                })}
+                {pages.map((url, index) => (
+                  <CarouselItem
+                    key={`${currentChapter?.id}-${index}`}
+                    className="h-full"
+                  >
+                    <div className="flex h-full items-center justify-center">
+                      <MangaPageImage
+                        src={url}
+                        className="h-full object-contain"
+                      />
+                    </div>
+                  </CarouselItem>
+                ))}
                 <MangaNextPage />
               </CarouselContent>
             </MotionCarousel>

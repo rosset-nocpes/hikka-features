@@ -3,13 +3,16 @@ name: Build and Publish extension
 on:
   push:
     tags:
-      - "v*.*.*"
+      - 'v*.*.*'
   workflow_dispatch:
 
 permissions:
   contents: write
 
 env:
+  # The backend the published extension talks to (.env isn't in git).
+  WXT_CONVEX_URL: https://convex.hikka-features.pp.ua
+  WXT_CONVEX_SITE_URL: https://convex-site.hikka-features.pp.ua
   CHROME_API_VERSION: v2
   CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
   CHROME_PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}

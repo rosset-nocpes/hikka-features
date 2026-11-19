@@ -10,6 +10,28 @@ const isPersistent = env.WXT_PERSIST_BROWSER_DATA
   ? JSON.parse(env.WXT_PERSIST_BROWSER_DATA)
   : false;
 const isWindows = process.platform === 'win32';
+const convexUrls = [env.WXT_CONVEX_URL, env.WXT_CONVEX_SITE_URL];
+const convexUrlsValid = convexUrls.every(
+  (value) => !!value && URL.canParse(value),
+);
+/**
+ * The backend's hosts, without ports: Firefox ignores host permissions that
+ * name one (a local backend's), and the login's credentialed request then
+ * fails CORS. A pattern without a port matches every port.
+ */
+const convexHostPermissions = [
+  ...new Set(
+    convexUrls.flatMap((value) => {
+      if (!value) return [];
+      try {
+        const { protocol, hostname } = new URL(value);
+        return [`${protocol}//${hostname}/*`];
+      } catch {
+        return [];
+      }
+    }),
+  ),
+];
 
 export default defineConfig({
   modules: ['@wxt-dev/auto-icons'],
@@ -27,32 +49,45 @@ export default defineConfig({
       include: ['react', 'react-dom'],
     },
   }),
-  manifest: () => ({
-    name: 'Hikka Features',
-    permissions: ['storage', 'identity'],
-    host_permissions: [
-      'https://api.hikka.io/*',
-      'https://api.hikka-features.pp.ua/*',
-      'https://graphql.anilist.co/*',
-      'https://api.tenrai.org/*',
-      'https://manga.in.ua/*',
-      'https://baka.in.ua/*',
-    ],
-    web_accessible_resources: [
-      {
-        matches: ['https://hikka.io/*', 'https://dev.hikka.io/*'],
-        resources: ['hf-x-cpr.svg', 'hf-x-cpr-dark.svg'],
-      },
-    ],
-    browser_specific_settings: {
-      gecko: {
-        id: 'extension@hikka-features.pp.ua',
-        data_collection_permissions: {
-          required: ['none'],
+  manifest: ({ mode }) => {
+    // Without them every account and player call fails; .env isn't in git.
+    if (
+      mode === 'production' &&
+      !process.argv.includes('prepare') &&
+      !convexUrlsValid
+    ) {
+      throw new Error(
+        'Set WXT_CONVEX_URL and WXT_CONVEX_SITE_URL (see .env.example)',
+      );
+    }
+    return {
+      name: 'Hikka Features',
+      permissions: ['storage', 'alarms'],
+      host_permissions: [
+        'https://api.hikka.io/*',
+        ...convexHostPermissions,
+        'https://graphql.anilist.co/*',
+        'https://api.tenrai.org/*',
+        'https://manga.in.ua/*',
+        'https://baka.in.ua/*',
+      ],
+      web_accessible_resources: [
+        {
+          // Injected into hikka.io's own world for its router.
+          matches: ['https://hikka.io/*', 'https://dev.hikka.io/*'],
+          resources: ['hikka-router.js', 'hf-x-cpr.svg', 'hf-x-cpr-dark.svg'],
+        },
+      ],
+      browser_specific_settings: {
+        gecko: {
+          id: 'extension@hikka-features.pp.ua',
+          data_collection_permissions: {
+            required: ['none'],
+          },
         },
       },
-    },
-  }),
+    };
+  },
   webExt: {
     startUrls: ['https://hikka.io'],
     chromiumArgs:

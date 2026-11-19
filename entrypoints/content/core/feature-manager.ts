@@ -1,4 +1,4 @@
-import { BaseFeature } from './base-feature';
+import type { BaseFeature } from './base-feature';
 
 interface FeatureModule {
   default: new () => BaseFeature;
@@ -7,6 +7,8 @@ interface FeatureModule {
 export class FeatureManager {
   private observer: MutationObserver | null = null;
   private features: BaseFeature[] = [];
+  private frame = 0;
+  private stopped = false;
 
   constructor() {
     const modules = import.meta.glob<FeatureModule>(
@@ -18,64 +20,55 @@ export class FeatureManager {
   }
 
   init() {
-    usePageStore.getState().updateFromUrl(new URL(location.href));
-    for (const f of this.features) f.init();
-
-    // Initial check
+    // UIs load their styles first; place them as soon as they're ready.
+    void Promise.all(this.features.map((feature) => feature.init())).then(
+      this.schedule,
+    );
     this.reconcile();
     this.startObserving();
   }
 
-  async reconcile() {
-    const mountOperations = this.features.map(async (feature) => {
-      const shouldBeVisible = feature.shouldMount;
-      const currentlyVisible = feature.isMounted;
+  /** Mounts the features the page wants and unmounts the rest. */
+  reconcile() {
+    usePageStore.getState().updateFromUrl(new URL(location.href));
 
-      // when opening a new page, it may remove features from dom, so unmount if needed
-      if (
-        shouldBeVisible &&
-        currentlyVisible &&
-        document.body.querySelectorAll(feature.id).length === 0
-      ) {
-        feature.unmount();
+    for (const feature of this.features) {
+      try {
+        if (!feature.shouldMount) {
+          if (feature.isMounted) feature.unmount();
+        } else if (
+          !feature.isMounted ||
+          // Opening another page may take the feature off it.
+          !document.body.querySelector(feature.id)
+        ) {
+          feature.mount();
+        }
+      } catch {
+        // Its anchor isn't on the page yet; the next change tries again.
       }
-
-      if (shouldBeVisible && !currentlyVisible) {
-        feature.mount();
-      } else if (!shouldBeVisible && currentlyVisible) {
-        feature.unmount();
-      }
-    });
-
-    const results = await Promise.allSettled(mountOperations);
-
-    // results.forEach((result, index) => {
-    //   if (result.status === 'rejected') {
-    //     console.error(
-    //       `Failed to mount/unmount feature ${this.features[index].id}:`,
-    //       result.reason,
-    //     );
-    //   }
-    // });
+    }
   }
 
-  /**
-   * Self-healing: Watch the DOM. If features are deleted, re-mount them.
-   */
-  private startObserving() {
-    this.observer = new MutationObserver(() => {
-      usePageStore.getState().updateFromUrl(new URL(location.href));
+  /** Once a frame at most: the page changes a lot while it renders. */
+  private schedule = () => {
+    if (this.stopped) return;
+    this.frame ||= requestAnimationFrame(() => {
+      this.frame = 0;
       this.reconcile();
     });
+  };
 
-    this.observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-    });
+  /** Self-healing: features the page removes are mounted again. */
+  private startObserving() {
+    this.observer = new MutationObserver(this.schedule);
+    this.observer.observe(document.body, { childList: true, subtree: true });
   }
 
   stop() {
+    this.stopped = true;
+    cancelAnimationFrame(this.frame);
+    this.frame = 0;
     this.observer?.disconnect();
-    this.features.forEach((f) => f.unmount());
+    this.features.forEach((feature) => feature.unmount());
   }
 }

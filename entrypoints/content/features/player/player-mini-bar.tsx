@@ -1,80 +1,75 @@
 import type { PointerEvent as ReactPointerEvent } from 'react';
 
 import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
-import MaterialSymbolsDragHandleRounded from '~icons/material-symbols/drag-handle-rounded';
+import MaterialSymbolsDragIndicator from '~icons/material-symbols/drag-indicator';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 
-import { usePlayer } from './context/player-context';
-import { removePlayer } from './player';
-import MiniPlayer from './player-overlay/buttons/mini-player';
-import Mute from './player-overlay/buttons/mute';
-import Play from './player-overlay/buttons/play';
+import { closePlayer } from './player';
+import { MiniPlayer, Mute, Play } from './player-overlay/buttons/toggles';
 import Time from './player-overlay/sliders/time';
+import NextInQueue from './queue/next-in-queue';
+import UpNext from './queue/up-next';
+import { useNowPlaying } from './use-now-playing';
 
 interface Props {
   onDragStart: (event: ReactPointerEvent<HTMLButtonElement>) => void;
 }
 
 const PlayerMiniBar = ({ onDragStart }: Props) => {
-  const { currentEpisode, team } = usePlayer();
-  const { data: animeData } = useHikkaAnime();
-
-  const title =
-    animeData?.title_ua ||
-    animeData?.title_en ||
-    animeData?.title_ja ||
-    animeData?.title_original;
-
-  const subtitle = currentEpisode?.episode
-    ? `Епізод ${currentEpisode.episode}${team?.title ? ` · ${team.title}` : ''}`
-    : team?.title;
+  const { slug, team, teamName, title, subtitle } = useNowPlaying();
 
   return (
     <div className="relative flex w-full flex-col">
-      <div className="flex w-full items-center gap-1 p-2">
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          className="text-muted-foreground/70 shrink-0 cursor-grab active:cursor-grabbing"
-          onPointerDown={onDragStart}
-        >
-          <MaterialSymbolsDragHandleRounded />
-        </Button>
-        <Play />
-        <div className="flex items-center gap-2">
-          <Avatar className="size-7 shrink-0 rounded-md">
-            {team?.logo && <AvatarImage src={team.logo} alt={team.title} />}
-            <AvatarFallback className="text-[10px] font-medium">
-              {team?.title?.[0] ?? '?'}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex min-w-0 flex-1 flex-col justify-center">
-            <span
-              className="line-clamp-1 cursor-pointer truncate text-sm leading-tight font-semibold text-balance hover:underline"
-              onClick={() => {
-                history.pushState({}, '', `/anime/${animeData?.slug}`);
-                window.dispatchEvent(new PopStateEvent('popstate'));
-              }}
-            >
-              {title}
-            </span>
-            <span className="text-muted-foreground truncate text-xs leading-tight tabular-nums">
-              {subtitle}
-            </span>
-          </div>
+      <UpNext inline />
+      <div className="flex w-full items-center gap-2 p-2">
+        <div className="flex shrink-0 gap-1">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Перемістити"
+            className="text-muted-foreground cursor-grab touch-none active:cursor-grabbing"
+            onPointerDown={onDragStart}
+          >
+            <MaterialSymbolsDragIndicator className="size-5" />
+          </Button>
+          <Play />
         </div>
-        <Mute />
-        <MiniPlayer />
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          className="shrink-0"
-          onClick={removePlayer}
-        >
-          <MaterialSymbolsCloseRounded />
-        </Button>
+        <Avatar className="size-8 shrink-0 rounded-md">
+          {team?.logo && <AvatarImage src={team.logo} alt="" />}
+          <AvatarFallback className="rounded-md text-xs font-medium">
+            {teamName?.[0] ?? '?'}
+          </AvatarFallback>
+        </Avatar>
+        <div className="grid min-w-0 flex-1 leading-tight">
+          <button
+            type="button"
+            className="truncate text-left text-sm font-medium hover:underline"
+            onClick={() => {
+              history.pushState({}, '', `/anime/${slug}`);
+              window.dispatchEvent(new PopStateEvent('popstate'));
+            }}
+          >
+            {title}
+          </button>
+          <span className="text-muted-foreground truncate text-xs tabular-nums">
+            {subtitle}
+          </span>
+        </div>
+        <div className="flex shrink-0 gap-1">
+          <NextInQueue />
+          <Mute />
+          <MiniPlayer />
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Закрити програвач"
+            onClick={closePlayer}
+          >
+            <MaterialSymbolsCloseRounded />
+          </Button>
+        </div>
       </div>
       <div className="absolute bottom-0 h-auto w-full">
         <Time trackClassName="pt-0.5 pb-0" />

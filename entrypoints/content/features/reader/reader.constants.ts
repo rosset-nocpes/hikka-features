@@ -1,37 +1,38 @@
 import MaterialSymbolsViewAgendaOutline from '~icons/material-symbols/view-agenda-outline';
 import MaterialSymbolsViewColumn2Outline from '~icons/material-symbols/view-column-2-outline';
 
-import type {
-  BaseKeys,
-  KeysOfUnion,
-  ReaderSettings as ReaderSettingsType,
-  UISettingMetadata,
-} from './reader.types';
+import type { SettingKey, UISettingMetadata } from './reader.types';
 
 import { MangaOrientation, NovelTheme } from './reader.enums';
 
-export const SETTINGS_CONFIG: Partial<
-  Record<Exclude<KeysOfUnion<ReaderSettingsType>, BaseKeys>, UISettingMetadata>
-> = {
+export const SETTINGS_CONFIG: Partial<Record<SettingKey, UISettingMetadata>> = {
   // Manga
   orientation: {
     label: 'Орієнтація',
+    description: 'Напрямок гортання сторінок',
     type: 'tabs',
     options: [
       {
         value: MangaOrientation.Horizontal,
+        label: 'Горизонтально',
         icon: MaterialSymbolsViewColumn2Outline,
       },
       {
         value: MangaOrientation.Vertical,
+        label: 'Вертикально',
         icon: MaterialSymbolsViewAgendaOutline,
       },
     ],
   },
-  scrollMode: { label: 'Режим скролу', type: 'boolean' },
+  scrollMode: {
+    label: 'Режим скролу',
+    description: 'Безперервна стрічка сторінок, як у манхві',
+    type: 'boolean',
+  },
   // Novel
   fontFamily: {
     label: 'Шрифт',
+    description: 'Гарнітура тексту розділу',
     type: 'select',
     options: [
       { value: 'font-sans', label: 'Geist' },
@@ -41,9 +42,15 @@ export const SETTINGS_CONFIG: Partial<
       { value: 'font-ebgaramond', label: 'EB Garamond' },
     ],
   },
-  fontSize: { label: 'Розмір шрифту', type: 'slider', min: 12, max: 24 },
+  fontSize: {
+    label: 'Розмір шрифту',
+    type: 'slider',
+    min: 12,
+    max: 24,
+  },
   theme: {
     label: 'Тема',
+    description: 'Кольори сторінки читалки',
     type: 'select',
     options: [
       { value: NovelTheme.Light, label: 'Світла' },
@@ -58,4 +65,12 @@ export const SETTINGS_CONFIG: Partial<
 export const READER_POWERED_BY = {
   manga: { label: 'Powered by Manga.in.ua', url: 'https://manga.in.ua' },
   novel: { label: 'Powered by Baka.in.ua', url: 'https://baka.in.ua' },
+};
+
+/** How the reader's pages and loading states come and go. */
+export const FADE_BLUR = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1, filter: 'blur(0px)' },
+  exit: { opacity: 0, filter: 'blur(16px)' },
+  transition: { duration: 0.2 },
 };

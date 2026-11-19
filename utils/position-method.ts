@@ -1,5 +1,9 @@
 import type React from 'react';
 
+/**
+ * How a popup portalled into `container` positions itself: fixed inside a
+ * feature's shadow root, absolute elsewhere, unless the caller says.
+ */
 export function resolvePositionMethod(
   container?:
     | HTMLElement
@@ -9,7 +13,8 @@ export function resolvePositionMethod(
   explicit?: 'absolute' | 'fixed',
 ): 'absolute' | 'fixed' {
   if (explicit) return explicit;
-  const el = container instanceof HTMLElement ? container : null;
-  if (el?.getRootNode() instanceof ShadowRoot) return 'fixed';
-  return 'absolute';
+  return container instanceof HTMLElement &&
+    container.getRootNode() instanceof ShadowRoot
+    ? 'fixed'
+    : 'absolute';
 }

@@ -1,69 +1,25 @@
-'use client';
+import { AnimatePresence, motion } from 'motion/react';
 
-import {
-  AnimatePresence,
-  type HTMLMotionProps,
-  motion,
-  type Transition,
-} from 'motion/react';
-import { useEffect, useState } from 'react';
-
-type RotatingTextProps = {
-  text: string | string[];
-  initial?: boolean;
-  duration?: number;
-  transition?: Transition;
-  y?: number;
-  containerClassName?: string;
-} & HTMLMotionProps<'div'>;
-
-function RotatingText({
-  text,
-  initial = false,
-  y = -50,
-  duration = 2000,
-  transition = { duration: 0.2, ease: 'easeInOut', type: 'spring' },
-  containerClassName,
-  ...props
-}: RotatingTextProps) {
-  const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    if (!Array.isArray(text)) return;
-    const interval = setInterval(() => {
-      setIndex((prevIndex) => (prevIndex + 1) % text.length);
-    }, duration);
-    return () => clearInterval(interval);
-  }, [text, duration]);
-
-  const currentText = Array.isArray(text) ? text[index] : text;
-
+/** Text that slides up and out as the next `text` slides in. */
+export function RotatingText({ text }: { text: string }) {
   return (
     <div className="relative">
-      <div
-        className={cn(
-          'absolute top-1/2 -translate-y-1/2 overflow-hidden py-1',
-          containerClassName,
-        )}
-      >
-        <AnimatePresence mode="wait" initial={initial}>
+      <div className="absolute top-1/2 -translate-y-1/2 overflow-hidden py-1">
+        <AnimatePresence mode="wait" initial={false}>
           <motion.div
-            key={currentText}
-            transition={transition}
-            initial={{ opacity: 0, y: -y }}
+            key={text}
+            transition={{ duration: 0.2, ease: 'easeInOut', type: 'spring' }}
+            initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y }}
-            {...props}
+            exit={{ opacity: 0, y: -50 }}
           >
-            {currentText}
+            {text}
           </motion.div>
         </AnimatePresence>
       </div>
       <span className="invisible opacity-0" aria-hidden>
-        {currentText}
+        {text}
       </span>
     </div>
   );
 }
-
-export { RotatingText, type RotatingTextProps };
