@@ -42,6 +42,14 @@ export type TeamPriority = NonNullable<Returns<'teamPriority', 'get'>>;
 /** The version a user wants from their favorite teams. */
 export type PreferredTranslation = TeamPriority['translationType'];
 
+/**
+ * Where a team's episode has an opening or ending to skip: each provider's
+ * copy the backend read, and the reads still to come or given up on.
+ */
+export type SkipAnswer = Returns<'skip', 'segments'>;
+/** An opening or ending, in seconds into the episode. */
+export type SkipSegment = SkipAnswer['results'][number]['segments'][number];
+
 export type ReleaseNotificationMenu = Returns<'notifications', 'menu'>;
 export type ReleaseNotification =
   ReleaseNotificationMenu['notifications'][number];
