@@ -94,6 +94,16 @@ class Convex {
       .catch((error) => this.explainFailure(error));
   }
 
+  async mutation<Mutation extends FunctionReference<'mutation'>>(
+    mutation: Mutation,
+    args: Mutation['_args'],
+  ): Promise<FunctionReturnType<Mutation>> {
+    await this.assertCompatible();
+    return await this.public()
+      .mutation(mutation, args)
+      .catch((error) => this.explainFailure(error));
+  }
+
   async action<Action extends FunctionReference<'action'>>(
     action: Action,
     args: Action['_args'],

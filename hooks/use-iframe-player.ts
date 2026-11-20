@@ -2,11 +2,6 @@ import { create } from 'zustand';
 
 import { usePlayer } from '@/entrypoints/content/features/player/context/player-context';
 import {
-  requestSkipSegments,
-  type SkipSegment,
-  skipSegmentsOf,
-} from '@/integrations/iframe-player/moon';
-import {
   type IFramePlayerEvent,
   isIFramePlayerEvent,
   sendIFramePlayerCommand,
@@ -32,8 +27,6 @@ interface IFramePlayerState {
   /** Prevents auto-hiding the overlay UI (e.g. while a menu is open) */
   uiLocked: boolean;
   endedCount: number;
-  /** The openings, endings and recaps the player marks, if it does. */
-  skipSegments: SkipSegment[];
 }
 
 interface IFramePlayerActions {
@@ -119,7 +112,6 @@ const initialPlayback: Omit<IFramePlayerState, 'speedOptions'> = {
   uiShown: true,
   uiLocked: false,
   endedCount: 0,
-  skipSegments: [],
 };
 
 export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
@@ -235,13 +227,10 @@ const askAgain = (action: keyof typeof qualityRetries) => {
 
 /** How the store follows each event the episode's player reports. */
 const PLAYER_EVENTS: Record<string, (event: IFramePlayerEvent) => void> = {
-  // Each episode's player says so once, so the last one's segments go.
-  inited: () => set({ isReady: true, skipSegments: [] }),
+  inited: () => set({ isReady: true }),
   start: () => {
     qualityRetries['get-quality'] = 0;
     qualityRetries['get-qualities'] = 0;
-    const iframe = getCurrentPlayerIFrame();
-    if (iframe) requestSkipSegments(iframe);
     sendIFramePlayerCommand({ action: 'get-quality' });
     sendIFramePlayerCommand({ action: 'get-qualities' });
     sendIFramePlayerCommand({ action: 'get-subtitles' });
@@ -301,15 +290,9 @@ const PLAYER_EVENTS: Record<string, (event: IFramePlayerEvent) => void> = {
 };
 
 window.addEventListener('message', (event: MessageEvent) => {
-  const skipSegments = skipSegmentsOf(event.data);
-  if (!skipSegments && !isIFramePlayerEvent(event.data)) return;
+  if (!isIFramePlayerEvent(event.data)) return;
   const iframeWindow = getCurrentPlayerIFrame()?.contentWindow;
   if (!iframeWindow || event.source !== iframeWindow) return;
-  if (skipSegments) {
-    set({ skipSegments });
-    return;
-  }
-  if (!isIFramePlayerEvent(event.data)) return;
   if (event.data.event !== 'inited' && !useIFramePlayer.getState().isReady) {
     return;
   }

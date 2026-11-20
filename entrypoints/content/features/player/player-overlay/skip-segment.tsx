@@ -1,45 +1,40 @@
 import { AnimatePresence, motion } from 'motion/react';
 import MaterialSymbolsFastForwardRounded from '~icons/material-symbols/fast-forward-rounded';
 
-import type { SkipSegment as Segment } from '@/integrations/iframe-player/moon';
+import type { SkipSegment as Segment } from '@/utils/convex-api';
 
 import { Button } from '@/components/ui/button';
 import { useIFramePlayer } from '@/hooks/use-iframe-player';
 
 import { compactMode, usePlayer } from '../context/player-context';
+import { useSkipSegments } from './use-skip-segments';
 
 /** While the controls are hidden, the button still shows this long. */
 const SHOWN_ALONE_S = 8;
 
-const LABELS: Record<string, string> = {
+const LABELS: Record<Segment['type'], string> = {
   opening: 'Пропустити опенінг',
   ending: 'Пропустити ендінг',
-  recap: 'Пропустити рекап',
 };
-
-/** Moon's `mixed_opening` and `mixed_ending` read as the plain ones. */
-const labelOf = ({ type }: Segment) =>
-  LABELS[type.replace(/^mixed_/, '')] ?? 'Пропустити';
 
 /** The segment playing now, until its last second. */
 const segmentAt = (segments: Segment[], time: number) =>
   segments.find(({ start, end }) => time >= start && time < end - 1);
 
 /**
- * Offers to skip the opening, ending or recap that's playing, never skipping
- * by itself: it shows as one starts and with the controls after that.
+ * Offers to skip the opening or ending that's playing, never skipping by
+ * itself: it shows as one starts and with the controls after that.
  */
 const SkipSegment = () => {
+  const segments = useSkipSegments();
   const segment = useIFramePlayer((state) =>
-    segmentAt(state.skipSegments, state.currentTime),
+    segmentAt(segments, state.currentTime),
   );
-  const shown = useIFramePlayer((state) => {
-    const playing = segmentAt(state.skipSegments, state.currentTime);
-    return (
-      !!playing &&
-      (state.uiShown || state.currentTime < playing.start + SHOWN_ALONE_S)
-    );
-  });
+  const shown = useIFramePlayer(
+    (state) =>
+      !!segment &&
+      (state.uiShown || state.currentTime < segment.start + SHOWN_ALONE_S),
+  );
   const isCompact = usePlayer(compactMode);
 
   const skip = () => {
@@ -74,7 +69,7 @@ const SkipSegment = () => {
               onClick={skip}
             >
               <MaterialSymbolsFastForwardRounded className="size-5" />
-              {labelOf(segment)}
+              {LABELS[segment.type]}
             </Button>
           </motion.div>
         )}
