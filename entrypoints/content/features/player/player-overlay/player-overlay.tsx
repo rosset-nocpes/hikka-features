@@ -63,38 +63,41 @@ const PlayerOverlay = () => {
         <ActionPopup />
         <BufferingIndicator />
         <UpNext corner={!isCompactMode && !stacked} />
-        <SkipSegment />
-        <div
-          data-player-controls
-          onPointerDownCapture={handlePointerDownCapture}
-          onClickCapture={handleClickCapture}
-          className={cn(
-            'relative isolate flex flex-col opacity-100 transition-opacity duration-300',
-            !uiShown && 'opacity-0',
-          )}
-        >
-          <TooltipProvider>
-            {!videoPiPActive && (
+        {/* The skip button sits over the controls' box (see SkipSegment). */}
+        <div className="relative">
+          <SkipSegment />
+          <div
+            data-player-controls
+            onPointerDownCapture={handlePointerDownCapture}
+            onClickCapture={handleClickCapture}
+            className={cn(
+              'relative isolate flex flex-col opacity-100 transition-opacity duration-300',
+              !uiShown && 'opacity-0',
+            )}
+          >
+            <TooltipProvider>
+              {!videoPiPActive && (
+                <div
+                  className={cn(
+                    'flex w-full items-center',
+                    isCompactMode ? 'px-2' : 'px-3 md:px-2',
+                  )}
+                >
+                  <Time />
+                </div>
+              )}
               <div
                 className={cn(
                   'flex w-full items-center',
-                  isCompactMode ? 'px-2' : 'px-3 md:px-2',
+                  isCompactMode
+                    ? 'justify-between p-2 pt-1'
+                    : 'justify-between p-3 pt-1 md:p-2',
                 )}
               >
-                <Time />
+                <VideoToolbar />
               </div>
-            )}
-            <div
-              className={cn(
-                'flex w-full items-center',
-                isCompactMode
-                  ? 'justify-between p-2 pt-1'
-                  : 'justify-between p-3 pt-1 md:p-2',
-              )}
-            >
-              <VideoToolbar />
-            </div>
-          </TooltipProvider>
+            </TooltipProvider>
+          </div>
         </div>
       </div>
       {!isCompactMode && !isMobile && <PlayerSidebar />}
