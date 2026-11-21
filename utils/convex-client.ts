@@ -94,6 +94,18 @@ class Convex {
       .catch((error) => this.explainFailure(error));
   }
 
+  /** `skipQueue`: not behind this tab's other mutations, which may be stuck. */
+  async mutation<Mutation extends FunctionReference<'mutation'>>(
+    mutation: Mutation,
+    args: Mutation['_args'],
+    options?: { skipQueue: boolean },
+  ): Promise<FunctionReturnType<Mutation>> {
+    await this.assertCompatible();
+    return await this.public()
+      .mutation(mutation, args, options)
+      .catch((error) => this.explainFailure(error));
+  }
+
   async action<Action extends FunctionReference<'action'>>(
     action: Action,
     args: Action['_args'],

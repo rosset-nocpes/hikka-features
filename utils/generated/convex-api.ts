@@ -322,6 +322,60 @@ export const convexApi = {
       }
     >('notifications:menu'),
   },
+  skip: {
+    queue: makeFunctionReference<
+      'query',
+      {
+        token: string;
+      },
+      {
+        playing: number | null;
+        ahead: number | null;
+      }
+    >('skip:queue'),
+    request: makeFunctionReference<
+      'mutation',
+      {
+        slug: string;
+        teamKey: string;
+        episode: number;
+        source: string;
+        duration?: number;
+        ahead?: boolean;
+      },
+      {
+        jobId: string;
+        full: boolean;
+      } | null
+    >('skip:request'),
+    segments: makeFunctionReference<
+      'query',
+      {
+        slug: string;
+        teamKey: string;
+        episode: number;
+      },
+      {
+        results: {
+          provider: string;
+          source: string;
+          duration: number;
+          segments: {
+            type: 'opening' | 'ending';
+            start: number;
+            end: number;
+          }[];
+          incomplete: boolean;
+          analyzedAt: number;
+        }[];
+        jobs: {
+          id: string;
+          source: string;
+          state: 'pending' | 'failed';
+        }[];
+      }
+    >('skip:segments'),
+  },
   teamPriority: {
     get: makeFunctionReference<
       'query',
