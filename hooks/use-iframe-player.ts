@@ -2,6 +2,11 @@ import { create } from 'zustand';
 
 import { usePlayer } from '@/entrypoints/content/features/player/context/player-context';
 import {
+  type Recap,
+  recapsOf,
+  requestRecaps,
+} from '@/integrations/iframe-player/moon';
+import {
   type IFramePlayerEvent,
   isIFramePlayerEvent,
   sendIFramePlayerCommand,
@@ -27,6 +32,8 @@ interface IFramePlayerState {
   /** Prevents auto-hiding the overlay UI (e.g. while a menu is open) */
   uiLocked: boolean;
   endedCount: number;
+  /** The recaps the player marks, if it does (Moon's). */
+  recaps: Recap[];
 }
 
 interface IFramePlayerActions {
@@ -112,6 +119,7 @@ const initialPlayback: Omit<IFramePlayerState, 'speedOptions'> = {
   uiShown: true,
   uiLocked: false,
   endedCount: 0,
+  recaps: [],
 };
 
 export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
@@ -227,10 +235,13 @@ const askAgain = (action: keyof typeof qualityRetries) => {
 
 /** How the store follows each event the episode's player reports. */
 const PLAYER_EVENTS: Record<string, (event: IFramePlayerEvent) => void> = {
-  inited: () => set({ isReady: true }),
+  // Each episode's player says so once, so the last one's recaps go.
+  inited: () => set({ isReady: true, recaps: [] }),
   start: () => {
     qualityRetries['get-quality'] = 0;
     qualityRetries['get-qualities'] = 0;
+    const iframe = getCurrentPlayerIFrame();
+    if (iframe) requestRecaps(iframe);
     sendIFramePlayerCommand({ action: 'get-quality' });
     sendIFramePlayerCommand({ action: 'get-qualities' });
     sendIFramePlayerCommand({ action: 'get-subtitles' });
@@ -299,9 +310,15 @@ window.addEventListener('message', (event: MessageEvent) => {
     return;
   }
 
-  if (!isIFramePlayerEvent(event.data)) return;
+  const recaps = recapsOf(event.data);
+  if (!recaps && !isIFramePlayerEvent(event.data)) return;
   const iframeWindow = getCurrentPlayerIFrame()?.contentWindow;
   if (!iframeWindow || event.source !== iframeWindow) return;
+  if (recaps) {
+    set({ recaps });
+    return;
+  }
+  if (!isIFramePlayerEvent(event.data)) return;
   if (event.data.event !== 'inited' && !useIFramePlayer.getState().isReady) {
     return;
   }
