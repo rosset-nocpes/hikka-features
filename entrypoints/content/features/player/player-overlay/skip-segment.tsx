@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from 'motion/react';
 import MaterialSymbolsFastForwardRounded from '~icons/material-symbols/fast-forward-rounded';
 
-import type { SkipSegment as Segment } from '@/utils/convex-api';
+import type { Recap } from '@/integrations/iframe-player/moon';
+import type { SkipSegment as Found } from '@/utils/convex-api';
 
 import { Button } from '@/components/ui/button';
 import { useIFramePlayer } from '@/hooks/use-iframe-player';
@@ -12,9 +13,12 @@ import { useSkipSegments } from './use-skip-segments';
 /** While the controls are hidden, the button still shows this long. */
 const SHOWN_ALONE_S = 8;
 
+type Segment = Found | (Recap & { type: 'recap' });
+
 const LABELS: Record<Segment['type'], string> = {
   opening: 'Пропустити опенінг',
   ending: 'Пропустити ендінг',
+  recap: 'Пропустити рекап',
 };
 
 /** The segment playing now, until its last second. */
@@ -22,11 +26,17 @@ const segmentAt = (segments: Segment[], time: number) =>
   segments.find(({ start, end }) => time >= start && time < end - 1);
 
 /**
- * Offers to skip the opening or ending that's playing, never skipping by
- * itself: it shows as one starts and with the controls after that.
+ * Offers to skip the opening, ending or recap that's playing, never
+ * skipping by itself: it shows as one starts and with the controls after
+ * that. Openings and endings come from the backend, recaps from the player.
  */
 const SkipSegment = () => {
-  const segments = useSkipSegments();
+  const found = useSkipSegments();
+  const recaps = useIFramePlayer((state) => state.recaps);
+  const segments: Segment[] = [
+    ...found,
+    ...recaps.map((recap) => ({ ...recap, type: 'recap' as const })),
+  ];
   const segment = useIFramePlayer((state) =>
     segmentAt(segments, state.currentTime),
   );

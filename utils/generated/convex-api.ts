@@ -339,11 +339,14 @@ export const convexApi = {
         slug: string;
         teamKey: string;
         episode: number;
-        provider: string;
+        source: string;
         duration?: number;
         ahead?: boolean;
       },
-      null
+      {
+        jobId: string;
+        full: boolean;
+      } | null
     >('skip:request'),
     segments: makeFunctionReference<
       'query',
@@ -355,15 +358,19 @@ export const convexApi = {
       {
         results: {
           provider: string;
+          source: string;
           duration: number;
           segments: {
             type: 'opening' | 'ending';
             start: number;
             end: number;
           }[];
+          incomplete: boolean;
+          analyzedAt: number;
         }[];
         jobs: {
-          provider: string;
+          id: string;
+          source: string;
           state: 'pending' | 'failed';
         }[];
       }
