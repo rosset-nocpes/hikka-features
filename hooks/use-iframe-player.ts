@@ -155,8 +155,10 @@ export const useIFramePlayer = create<IFramePlayerState & IFramePlayerActions>(
 
 const getCurrentPlayerIFrameWindow = () => {
   const container = usePlayer.getState().container;
-  const iframe = (container?.querySelector('#player-iframe') ??
-    document.getElementById('player-iframe')) as HTMLIFrameElement | null;
+  const iframe = (container?.querySelector('#hikka-features-player') ??
+    document.getElementById(
+      'hikka-features-player',
+    )) as HTMLIFrameElement | null;
 
   return iframe?.contentWindow;
 };
@@ -168,6 +170,12 @@ const shouldHandlePlayerMessage = (event: MessageEvent) => {
 };
 
 window.addEventListener('message', (event: MessageEvent) => {
+  if (event.data === 'hikka-features-player-check') {
+    event.ports[0]?.postMessage(shouldHandlePlayerMessage(event));
+    event.ports[0]?.close();
+    return;
+  }
+
   if (isIFramePlayerEvent(event.data)) {
     if (!shouldHandlePlayerMessage(event)) return;
     if (event.data.event !== 'inited' && !useIFramePlayer.getState().isReady) {
