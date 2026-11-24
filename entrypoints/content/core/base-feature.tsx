@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { QueryClientProvider } from '@tanstack/react-query';
+import { flushSync } from 'react-dom';
 import { createRoot, type Root } from 'react-dom/client';
 
 import {
@@ -330,7 +331,9 @@ export abstract class AnchoredUisFeature extends BaseFeature {
         append,
         onMount(wrapper) {
           wrapper.style.display = 'contents';
-          return renderApp(wrapper, render(wrapper.parentElement!));
+          return flushSync(() =>
+            renderApp(wrapper, render(wrapper.parentElement!)),
+          );
         },
         onRemove: (root) => root?.unmount(),
       });
