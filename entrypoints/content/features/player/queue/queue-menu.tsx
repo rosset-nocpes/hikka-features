@@ -103,6 +103,9 @@ const QueueMenu: FC<Props> = ({ data, slug, container }) => {
   const queue = useActiveQueue();
   const { items } = queue;
   const [open, setOpen] = useState(false);
+  // Counts openings. The menu keeps the last one's contents while it closes,
+  // or its exit animation would play on an empty popup.
+  const [opened, setOpened] = useState(0);
   const [teamsOpen, setTeamsOpen] = useState(false);
   const [chosen, setChosen] = useState<{ slug: string; key: string }>();
   // The episode ticked last, where a shift-click's range starts.
@@ -120,7 +123,7 @@ const QueueMenu: FC<Props> = ({ data, slug, container }) => {
 
   // Picked on opening, by the settings and the tracker of that moment.
   const menu = useMemo(() => {
-    if (!open) return undefined;
+    if (!opened) return undefined;
     const teams = teamsOf(data, usePlayer.getState().pinnedProvider);
     const preferredKey = preferredTeam(teams, slug).key;
     // The player's pick first, then the rest by name.
@@ -135,7 +138,7 @@ const QueueMenu: FC<Props> = ({ data, slug, container }) => {
       // Touch has no shift to hint at.
       finePointer: matchMedia('(pointer: fine)').matches,
     };
-  }, [open, data, slug]);
+  }, [opened, data, slug]);
 
   const team =
     menu &&
@@ -229,6 +232,9 @@ const QueueMenu: FC<Props> = ({ data, slug, container }) => {
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
+        // Reset on opening, not closing, so nothing changes mid-animation.
+        if (!next) return;
+        setOpened((count) => count + 1);
         setUndo(undefined);
         setStarting(undefined);
       }}
