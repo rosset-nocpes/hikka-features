@@ -217,10 +217,9 @@ const PlayerFrame = () => {
         isCompactMode && 'pointer-events-none',
       )}
     >
-      {/* Fades out (then stops rendering) rather than vanishing with the mini player. */}
       <div
         className={cn(
-          'fixed inset-0 z-0 bg-black/60 backdrop-blur-xs transition-[opacity,visibility] duration-300',
+          'fixed inset-0 z-0 bg-black/70 transition-[opacity,visibility] duration-300',
           isCompactMode && 'invisible opacity-0',
         )}
         onClick={closePlayer}
