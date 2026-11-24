@@ -45,15 +45,15 @@ import { useWatchTogether } from '../watch-together/use-watch-together';
 import QueueNotice, { offerUndo } from './queue-notice';
 import { Poster } from './up-next';
 import { type ActiveQueue, useActiveQueue } from './use-active-queue';
+import { useEpisodeInfo } from './use-episode-info';
 import { type QueueItem, queueKey, useQueue } from './use-queue';
-import { useTeamName } from './use-team-name';
 
 /** A row's poster, anime and episode. */
 const EpisodeSummary: FC<
   Pick<QueueItem, 'slug' | 'episode' | 'team'> & { loading?: boolean }
 > = ({ slug, episode, team, loading }) => {
   const { data: anime, isLoading } = useHikkaContent('anime', slug);
-  const teamName = useTeamName(slug, team);
+  const { teamName, title } = useEpisodeInfo(slug, team, episode);
 
   return (
     <>
@@ -73,9 +73,11 @@ const EpisodeSummary: FC<
             {hikkaTitle(anime) ?? slug}
           </span>
         )}
+        {/* The episode's title says more than the team, which the row's
+            tooltip names instead. */}
         <span className="text-muted-foreground truncate text-xs">
           Епізод {episode}
-          {teamName && ` · ${teamName}`}
+          {(title ?? teamName) && ` · ${title ?? teamName}`}
         </span>
       </div>
     </>
@@ -113,6 +115,7 @@ const QueueRow: FC<RowProps> = ({
     onDragEnd,
   });
   const loading = useQueue((state) => state.loading === key);
+  const { teamName } = useEpisodeInfo(item.slug, item.team);
 
   const title = hikkaTitle(anime) ?? item.slug;
   const name = `«${title}», епізод ${item.episode}`;
@@ -138,7 +141,7 @@ const QueueRow: FC<RowProps> = ({
           render={
             <SidebarMenuButton
               size="lg"
-              title={`${title}, епізод ${item.episode}`}
+              title={`${title}, епізод ${item.episode}${teamName ? ` · ${teamName}` : ''}`}
               aria-busy={loading || undefined}
               // The handle covers the left padding, and hovering it is the row's.
               className="group-hover/menu-item:bg-sidebar-accent py-1 pl-7"

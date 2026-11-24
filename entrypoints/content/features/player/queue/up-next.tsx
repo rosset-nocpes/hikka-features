@@ -13,7 +13,7 @@ import { followingEpisode, usePlayer } from '../context/player-context';
 import { playNext } from '../player-iframe-effects';
 import { UP_NEXT_COUNTDOWN_MS } from '../player.constants';
 import { activeQueue, useActiveQueue } from './use-active-queue';
-import { useTeamName } from './use-team-name';
+import { useEpisodeInfo } from './use-episode-info';
 
 /** What plays next: the queue's first episode, else the anime's next one. */
 interface NextEpisode {
@@ -179,7 +179,7 @@ const UpNext: FC<Props> = ({ inline, corner }) => {
   const { status, playsAt } = useUpNext();
   const next = useNextEpisode();
   const { data: anime } = useHikkaContent('anime', next?.slug);
-  const teamName = useTeamName(next?.slug, next?.team);
+  const { teamName } = useEpisodeInfo(next?.slug, next?.team);
   const seconds = useSecondsLeft(playsAt);
   const shown = status !== 'idle' && !!next;
 

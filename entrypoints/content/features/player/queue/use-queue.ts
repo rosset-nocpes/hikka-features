@@ -4,73 +4,33 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { STORAGE_KEYS } from '@/constants/storage';
 import { extensionStorage, followStoredChanges } from '@/hooks/use-settings';
 
-/** An episode to play after the current one, of any anime. */
-export interface QueueItem {
-  slug: string;
-  episode: number;
-  /** The source it was queued from, tried first when it plays. */
-  provider: string;
-  /** The team's key in the watch data. */
-  team: string;
-}
+import {
+  distinct,
+  insertedInOrder,
+  type QueueEpisode,
+  type QueueItem,
+  queuedFirst,
+  queueKey,
+  restoredOrder,
+  without,
+} from './queue-order';
 
-export type QueueEpisode = Pick<QueueItem, 'slug' | 'episode'>;
-
-/** An anime's episode is queued once, whatever its source. */
-export const queueKey = ({ slug, episode }: QueueEpisode) =>
-  `${slug}:${episode}`;
-
-const without = (items: QueueItem[], episodes: QueueEpisode[]) => {
-  const keys = new Set(episodes.map(queueKey));
-  return items.filter((item) => !keys.has(queueKey(item)));
-};
-
-/** The episodes once each, the first time they appear. */
-const distinct = (items: QueueItem[]) => [
-  ...new Map(items.map((item) => [queueKey(item), item] as const)).values(),
-];
-
-/** `items` put first, moving those queued already up. */
-const queuedFirst = (queue: QueueItem[], items: QueueItem[]) => [
-  ...distinct(items),
-  ...without(queue, items),
-];
-
-/**
- * `queue` with `removed` back where they were in `before`: each right after
- * the closest episode before it that is still queued. Episodes added or
- * moved since keep their place.
- */
-export const restoredOrder = (
-  before: QueueItem[],
-  queue: QueueItem[],
-  removed: QueueItem[],
-) => {
-  const restoring = new Set(removed.map(queueKey));
-  const result = without(queue, removed);
-  // In their old order, so each finds the ones restored before it.
-  for (const [index, item] of before.entries()) {
-    if (!restoring.has(queueKey(item))) continue;
-    let at = 0;
-    for (let earlier = index - 1; earlier >= 0; earlier -= 1) {
-      const key = queueKey(before[earlier]!);
-      const position = result.findIndex((queued) => queueKey(queued) === key);
-      if (position !== -1) {
-        at = position + 1;
-        break;
-      }
-    }
-    result.splice(at, 0, item);
-  }
-  return result;
-};
+export {
+  insertedInOrder,
+  type QueueEpisode,
+  type QueueItem,
+  queueKey,
+  restoredOrder,
+} from './queue-order';
 
 /** What can be done to a queue: the user's own, or a watch together room's. */
 export interface QueueActions {
   /** Adds episodes at the end, or with `next` first, moving queued ones up. */
   add: (items: QueueItem[], next?: boolean) => void;
-  remove: (episode: QueueEpisode) => void;
-  /** Adds the episode, or takes it off when it is queued already. */
+  /** Adds episodes among their anime's queued ones, in order. */
+  insert: (items: QueueItem[]) => void;
+  remove: (episodes: QueueEpisode | QueueEpisode[]) => void;
+  /** Inserts the episode, or takes it off when it is queued already. */
   toggle: (item: QueueItem) => void;
   /** Puts a queued episode at `index`. */
   move: (episode: QueueEpisode, index: number) => void;
@@ -98,14 +58,19 @@ export const useQueue = create<QueueState>()(
         }
         set({ items: distinct([...queue, ...items]) });
       },
-      remove: (episode) => {
-        const items = without(get().items, [episode]);
+      insert: (items) => set({ items: insertedInOrder(get().items, items) }),
+      remove: (episodes) => {
+        const items = without(get().items, [episodes].flat());
         if (items.length !== get().items.length) set({ items });
       },
       toggle: (item) => {
-        const items = without(get().items, [item]);
+        const queue = get().items;
+        const items = without(queue, [item]);
         set({
-          items: items.length === get().items.length ? [...items, item] : items,
+          items:
+            items.length === queue.length
+              ? insertedInOrder(queue, [item])
+              : items,
         });
       },
       move: (episode, index) => {

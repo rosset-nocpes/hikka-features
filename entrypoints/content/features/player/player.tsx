@@ -25,6 +25,7 @@ import PlayerIFrameEffects from './player-iframe-effects';
 import PlayerMiniBar from './player-mini-bar';
 import PlayerNavbar from './player-navbar';
 import PlayerOverlay from './player-overlay/player-overlay';
+import { setPanelTab } from './queue/panel-tabs';
 import { notifyQueue } from './queue/queue-notice';
 import { type QueueItem, queueKey, useQueue } from './queue/use-queue';
 import { useWatchTogether } from './watch-together/use-watch-together';
@@ -61,6 +62,7 @@ const playerUi = new ModalUi({
     document.body.classList.remove('h-full', 'overflow-hidden');
 
     useIFramePlayer.getState().reset();
+    setPanelTab('episodes');
   },
 });
 
@@ -121,8 +123,12 @@ export const playQueued = async (item: QueueItem) => {
 
   useQueue.getState().remove(item);
   const { slug, currentEpisode, initialize } = usePlayer.getState();
-  // Already playing.
-  if (slug === item.slug && currentEpisode?.episode === item.episode) {
+  // Already playing; a closed player's last episode isn't.
+  if (
+    playerUi.isOpen &&
+    slug === item.slug &&
+    currentEpisode?.episode === item.episode
+  ) {
     return false;
   }
   if (initialize(data, item.slug, item)) return true;
@@ -149,6 +155,29 @@ export const playNextQueued = async () => {
     item = next;
   }
   return false;
+};
+
+/**
+ * Starts the user's own queue from its first episode still available,
+ * opening the player when it is closed. Mini mode stays as it is, so
+ * browsing goes on.
+ */
+export const playQueue = async () => {
+  if (!(await playNextQueued())) return false;
+  if (!playerUi.isOpen) playerUi.open();
+  return true;
+};
+
+/**
+ * Brings the open player out of mini mode, its panel on the queue. Leaving
+ * mini mode opens the sidebar too; a phone on its side keeps the panel in a
+ * drawer, left for the user to open on the queue.
+ */
+export const showQueue = () => {
+  const { setMiniPlayer, setVideoPiPActive } = usePlayer.getState();
+  setPanelTab('queue');
+  setMiniPlayer(false);
+  setVideoPiPActive(false);
 };
 
 export const closePlayer = () => {

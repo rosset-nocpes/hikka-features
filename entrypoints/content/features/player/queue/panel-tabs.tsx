@@ -2,6 +2,7 @@ import { ScrollArea } from '@base-ui/react/scroll-area';
 import { Tabs } from '@base-ui/react/tabs';
 import { motion } from 'motion/react';
 import { type FC, useLayoutEffect, useRef, useState } from 'react';
+import { create } from 'zustand';
 import MaterialSymbolsPlaylistPlayRounded from '~icons/material-symbols/playlist-play-rounded';
 import MaterialSymbolsViewListRounded from '~icons/material-symbols/view-list-rounded';
 
@@ -10,6 +11,16 @@ import QueueList from './queue-list';
 import { useActiveQueue } from './use-active-queue';
 
 export type PanelTab = 'episodes' | 'queue';
+
+/**
+ * The panel's tab, shared by the sidebar and the phone panel so the queue
+ * can be shown from outside the player, e.g. from an anime page's navbar.
+ */
+export const usePanelTab = create<{ tab: PanelTab }>(() => ({
+  tab: 'episodes',
+}));
+
+export const setPanelTab = (tab: PanelTab) => usePanelTab.setState({ tab });
 
 const TAB =
   'text-muted-foreground hover:text-foreground data-active:text-sidebar-accent-foreground focus-visible:ring-sidebar-ring relative z-10 flex h-8 items-center gap-1.5 rounded-md px-2 text-sm font-medium outline-none transition-colors focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0';
