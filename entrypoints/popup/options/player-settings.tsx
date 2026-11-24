@@ -1,3 +1,11 @@
+import MaterialSymbolsAutoplayRounded from '~icons/material-symbols/autoplay-rounded';
+import MaterialSymbolsBlurOffRounded from '~icons/material-symbols/blur-off-rounded';
+import MaterialSymbolsFastForwardRounded from '~icons/material-symbols/fast-forward-rounded';
+import MaterialSymbolsFormatListNumberedRounded from '~icons/material-symbols/format-list-numbered-rounded';
+import MaterialSymbolsPictureInPictureAltRounded from '~icons/material-symbols/picture-in-picture-alt-rounded';
+import MaterialSymbolsPlayCircleRounded from '~icons/material-symbols/play-circle-rounded';
+import MaterialSymbolsSmartDisplayRounded from '~icons/material-symbols/smart-display-rounded';
+
 import { PROVIDERS } from '@/constants/providers';
 import { useNavigation } from '@/hooks/use-navigation';
 
@@ -9,20 +17,28 @@ import SettingsGroup from '../_base/settings-group';
 import SettingsPage from '../_base/settings-page';
 
 const MINI_MODE_OPTIONS = [
-  { value: 'custom', label: 'Кастомний' },
-  { value: 'video-native', label: 'Нативний' },
+  { value: 'custom', label: 'На сторінці' },
+  { value: 'video-native', label: 'Картинка в картинці' },
+] as const;
+
+const SKIP_OPTIONS = [
+  { value: 'off', label: 'Вимк.' },
+  { value: 'button', label: 'Кнопкою' },
+  { value: 'auto', label: 'Авто' },
 ] as const;
 
 const PROVIDER_OPTIONS = PROVIDERS.map((value) => ({
   value,
-  label: value.toUpperCase(),
+  label: value[0]!.toUpperCase() + value.slice(1),
 }));
 
 const PlayerSettings = () => {
   const { features, updateFeatureSettings } = useSettings();
   const {
+    enabled,
     defaultProvider,
     miniModeType,
+    skipSegments,
     teamPriority,
     teamPriorityTranslation,
   } = features.player;
@@ -30,9 +46,16 @@ const PlayerSettings = () => {
 
   return (
     <SettingsPage>
-      <SettingsGroup>
+      <SettingsGroup
+        footer={
+          enabled
+            ? undefined
+            : 'Налаштування нижче почнуть діяти, щойно кнопку буде увімкнено.'
+        }
+      >
         <FeatureSwitch
           feature="player"
+          icon={<MaterialSymbolsPlayCircleRounded />}
           label="Кнопка перегляду"
           description="Відкриває програвач на сторінці аніме"
         />
@@ -40,7 +63,9 @@ const PlayerSettings = () => {
 
       <SettingsGroup title="Джерело">
         <SegmentedOption
-          label="Спершу"
+          icon={<MaterialSymbolsSmartDisplayRounded />}
+          stacked
+          label="Типове джерело"
           description="Коли серія є в кількох джерелах"
           value={defaultProvider}
           options={PROVIDER_OPTIONS}
@@ -49,6 +74,8 @@ const PlayerSettings = () => {
           }
         />
         <NavigationRow
+          icon={<MaterialSymbolsFormatListNumberedRounded />}
+          active={teamPriority.length > 0}
           label="Пріоритет команд"
           description={
             teamPriority.length ? (
@@ -71,22 +98,39 @@ const PlayerSettings = () => {
         <FeatureSwitch
           feature="player"
           option="autoplayNext"
+          icon={<MaterialSymbolsAutoplayRounded />}
           label="Автопрогравання"
           description="Наступний епізод із черги вмикається сам, коли поточний закінчиться"
         />
-        <FeatureSwitch
-          feature="player"
-          option="disableBlur"
-          label="Вимкнути блюр"
-          description="Прибирає розмиття фону в програвачі"
+        <SegmentedOption
+          icon={<MaterialSymbolsFastForwardRounded />}
+          active={skipSegments !== 'off'}
+          stacked
+          label="Пропуск заставок"
+          description="Опенінги, ендінги й рекапи; у спільному перегляді — лише кнопкою"
+          value={skipSegments}
+          options={SKIP_OPTIONS}
+          onChange={(value) =>
+            updateFeatureSettings('player', { skipSegments: value })
+          }
         />
         <SegmentedOption
+          icon={<MaterialSymbolsPictureInPictureAltRounded />}
+          stacked
           label="Мінірежим"
+          description="Куди згортається програвач"
           value={miniModeType}
           options={MINI_MODE_OPTIONS}
           onChange={(value) =>
             updateFeatureSettings('player', { miniModeType: value })
           }
+        />
+        <FeatureSwitch
+          feature="player"
+          option="disableBlur"
+          icon={<MaterialSymbolsBlurOffRounded />}
+          label="Вимкнути блюр"
+          description="Прибирає розмиття фону у відео- та музичному програвачі"
         />
       </SettingsGroup>
     </SettingsPage>

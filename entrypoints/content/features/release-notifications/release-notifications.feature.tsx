@@ -53,6 +53,13 @@ export default class ReleaseNotificationsFeature extends AnchoredUisFeature {
   readonly id = 'release-notifications';
   readonly pages = [HikkaPages.All];
 
+  override get shouldMount(): boolean {
+    return (
+      super.shouldMount &&
+      useSettings.getState().features.releaseNotifications.enabled
+    );
+  }
+
   async init() {
     this.integrate(TARGETS);
   }

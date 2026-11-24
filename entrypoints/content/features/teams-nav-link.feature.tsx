@@ -82,6 +82,12 @@ export default class TeamsNavLinkFeature extends AnchoredUisFeature {
   readonly id = 'teams-nav-link';
   readonly pages = [HikkaPages.All];
 
+  override get shouldMount(): boolean {
+    return (
+      super.shouldMount && useSettings.getState().features.teamLinks.enabled
+    );
+  }
+
   async init() {
     this.integrate(TARGETS);
   }

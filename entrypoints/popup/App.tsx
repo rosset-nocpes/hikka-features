@@ -8,15 +8,20 @@ import {
 import { type FC, lazy, Suspense, useEffect, useRef } from 'react';
 import MaterialSymbolsAutoAwesomeRounded from '~icons/material-symbols/auto-awesome-rounded';
 import MaterialSymbolsChevronLeftRounded from '~icons/material-symbols/chevron-left-rounded';
+import MaterialSymbolsCoPresentRounded from '~icons/material-symbols/co-present-rounded';
+import MaterialSymbolsDiversity3Rounded from '~icons/material-symbols/diversity-3-rounded';
 import MaterialSymbolsExperiment from '~icons/material-symbols/experiment';
 import MaterialSymbolsFactCheckRounded from '~icons/material-symbols/fact-check-rounded';
+import MaterialSymbolsGroups3Rounded from '~icons/material-symbols/groups-3-rounded';
 import MaterialSymbolsGroupsRounded from '~icons/material-symbols/groups-rounded';
 import MaterialSymbolsLibraryMusicRounded from '~icons/material-symbols/library-music-rounded';
 import MaterialSymbolsLinkRounded from '~icons/material-symbols/link-rounded';
 import MaterialSymbolsMenuBookRounded from '~icons/material-symbols/menu-book-rounded';
+import MaterialSymbolsNotificationsActiveRounded from '~icons/material-symbols/notifications-active-rounded';
 import MaterialSymbolsPersonEditRounded from '~icons/material-symbols/person-edit-rounded';
 import MaterialSymbolsPlayCircleRounded from '~icons/material-symbols/play-circle-rounded';
 import MaterialSymbolsRecommendRounded from '~icons/material-symbols/recommend-rounded';
+import MaterialSymbolsSettingsBackupRestoreRounded from '~icons/material-symbols/settings-backup-restore-rounded';
 import MaterialSymbolsTranslateRounded from '~icons/material-symbols/translate-rounded';
 import MaterialSymbolsWallpaperRounded from '~icons/material-symbols/wallpaper-rounded';
 import MdiGithub from '~icons/mdi/github';
@@ -30,8 +35,11 @@ import { type Page, useNavigation } from '@/hooks/use-navigation';
 import { version } from '@/package.json';
 import { NEW_TAB } from '@/utils/hikka-router';
 
+import ActionRow from './_base/action-row';
+import ConfirmButton from './_base/confirm-button';
 import FeatureSwitch from './_base/feature-switch';
 import NavigationRow from './_base/navigation-row';
+import { resetPreferences } from './_base/reset-settings';
 import SettingsGroup from './_base/settings-group';
 import UpdateBanner from './_base/update-banner';
 import ActivitySettings from './options/activity-settings';
@@ -61,6 +69,9 @@ function HomePage() {
   const reduceMotion = useReducedMotion();
   const signedIn = useSettings((state) => Boolean(state.convexSession));
   const playerEnabled = useSettings((state) => state.features.player.enabled);
+  const posterEnabled = useSettings(
+    (state) => state.features.localizedPoster.enabled,
+  );
 
   return (
     <ScrollArea className="h-full" scrollFade>
@@ -73,7 +84,43 @@ function HomePage() {
         <motion.div variants={groupVariants}>
           <SettingsGroup>
             <UserOptions />
+          </SettingsGroup>
+        </motion.div>
+
+        <motion.div variants={groupVariants}>
+          <SettingsGroup
+            title="Спільнота"
+            footer={
+              signedIn
+                ? undefined
+                : 'Увійдіть, щоб ділитися активністю, дивитися разом із друзями й отримувати сповіщення про нові серії.'
+            }
+          >
             {signedIn && <ActivitySettings />}
+            <FeatureSwitch
+              feature="friendsActivity"
+              option="hidden"
+              inverted
+              icon={<MaterialSymbolsDiversity3Rounded />}
+              label="Активність друзів"
+              description="Блок на головній hikka.io з тим, що друзі дивляться й читають"
+            />
+            {signedIn && (
+              <FeatureSwitch
+                feature="watchTogetherInvites"
+                icon={<MaterialSymbolsCoPresentRounded />}
+                label="Запрошення до перегляду"
+                description="З’являються, коли друзі запрошують дивитися разом"
+              />
+            )}
+            {signedIn && (
+              <FeatureSwitch
+                feature="releaseNotifications"
+                icon={<MaterialSymbolsNotificationsActiveRounded />}
+                label="Нові серії від команд"
+                description="У сповіщеннях hikka.io, від команд із вашого пріоритету"
+              />
+            )}
           </SettingsGroup>
         </motion.div>
 
@@ -85,7 +132,7 @@ function HomePage() {
               label="Програвач"
               description={
                 playerEnabled
-                  ? 'Джерело, мінірежим і пріоритет команд'
+                  ? 'Джерело, пропуск заставок і пріоритет команд'
                   : 'Кнопку перегляду вимкнено'
               }
               onClick={() => navigate('player')}
@@ -95,6 +142,12 @@ function HomePage() {
               icon={<MaterialSymbolsMenuBookRounded />}
               label="Читалка"
               description="Кнопка «Читати» на сторінках манґи й ранобе"
+            />
+            <FeatureSwitch
+              feature="musicPlayer"
+              icon={<MaterialSymbolsLibraryMusicRounded />}
+              label="Опенінги та ендінги"
+              description="Кнопка відтворення в блоці музики тайтлу і плаваючий програвач"
             />
           </SettingsGroup>
         </motion.div>
@@ -116,9 +169,14 @@ function HomePage() {
             <FeatureSwitch
               feature="localizedPoster"
               option="autoShow"
+              disabled={!posterEnabled}
               icon={<MaterialSymbolsAutoAwesomeRounded />}
               label="Автолокалізація постера"
-              description="Одразу замінює постер локалізованою версією"
+              description={
+                posterEnabled
+                  ? 'Одразу замінює постер локалізованою версією'
+                  : 'Спершу увімкніть локалізовані постери'
+              }
             />
           </SettingsGroup>
         </motion.div>
@@ -138,16 +196,16 @@ function HomePage() {
               description="Команди, що озвучили чи перекладали тайтл, з їхніми сторінками"
             />
             <FeatureSwitch
+              feature="teamLinks"
+              icon={<MaterialSymbolsGroups3Rounded />}
+              label="Команди в меню й пошуку"
+              description="Пункт «Команди» в розділі «Спільнота» і команди в пошуку hikka.io"
+            />
+            <FeatureSwitch
               feature="recommendationBlock"
               icon={<MaterialSymbolsRecommendRounded />}
               label="Блок рекомендацій"
               description="Блок і вкладка тайтлу з контентом, схожим на той, який ви дивитеся"
-            />
-            <FeatureSwitch
-              feature="musicPlayer"
-              icon={<MaterialSymbolsLibraryMusicRounded />}
-              label="Опенінґи та ендінґи"
-              description="Кнопка відтворення в блоці музики тайтлу і плаваючий програвач"
             />
           </SettingsGroup>
         </motion.div>
@@ -168,6 +226,23 @@ function HomePage() {
               description="Перевірка правки за правилами, підпис джерела й перехід між правками на розгляді"
               beta
             />
+          </SettingsGroup>
+        </motion.div>
+
+        <motion.div variants={groupVariants}>
+          <SettingsGroup>
+            <ActionRow
+              icon={<MaterialSymbolsSettingsBackupRestoreRounded />}
+              label="Скинути налаштування"
+              description="Улюблені команди й пріоритет залишаться"
+            >
+              <ConfirmButton
+                label="Скинути налаштування"
+                onConfirm={resetPreferences}
+              >
+                Скинути
+              </ConfirmButton>
+            </ActionRow>
           </SettingsGroup>
         </motion.div>
       </motion.div>

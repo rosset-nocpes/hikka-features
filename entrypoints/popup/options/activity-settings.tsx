@@ -11,7 +11,8 @@ const ActivitySettings = () => {
   return (
     <SwitchOption
       checked={shared ?? false}
-      disabled={shared === undefined}
+      disabled={Boolean(error)}
+      pending={!error && (shared === undefined || pending)}
       icon={<MaterialSymbolsGroupRounded />}
       label="Ділитися активністю"
       description={
@@ -23,9 +24,7 @@ const ActivitySettings = () => {
           'Взаємні друзі бачать, що ви дивитеся й читаєте'
         )
       }
-      onClick={() => {
-        if (!pending) setShared(!shared);
-      }}
+      onClick={() => setShared(!shared)}
     />
   );
 };

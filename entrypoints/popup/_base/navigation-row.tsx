@@ -24,7 +24,7 @@ const NavigationRow = ({
   <button
     type="button"
     onClick={onClick}
-    className="group/row hover:bg-accent/40 focus-visible:bg-accent/40 flex min-h-14 w-full items-center gap-3 px-4 py-3 text-left transition-[background-color] outline-none"
+    className="group/row hover:bg-accent/40 focus-visible:bg-accent/40 flex min-h-14 w-full cursor-pointer items-center gap-3 px-4 py-3 text-left transition-[background-color] outline-none"
   >
     {icon && <RowIcon active={active}>{icon}</RowIcon>}
     <RowLabel label={label} description={description} />

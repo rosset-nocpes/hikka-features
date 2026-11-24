@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import MaterialSymbolsCodeRounded from '~icons/material-symbols/code-rounded';
 import MaterialSymbolsPetsRounded from '~icons/material-symbols/pets-rounded';
 
@@ -12,7 +12,10 @@ import {
 } from '@/utils/compatibility';
 import { convex } from '@/utils/convex-client';
 
+import ActionRow from '../_base/action-row';
+import ConfirmButton from '../_base/confirm-button';
 import FeatureSwitch from '../_base/feature-switch';
+import { resetSettings } from '../_base/reset-settings';
 import RowDescription from '../_base/row-description';
 import SettingsGroup from '../_base/settings-group';
 import SettingsPage from '../_base/settings-page';
@@ -70,40 +73,13 @@ const dumpStorage = async () => {
   );
 };
 
-/**
- * Resets every feature's settings, except these developer options. The team
- * priority syncs as if for the first time, which keeps the account's order
- * rather than pushing the empty default over it.
- */
-const resetSettings = () => {
-  const { features } = useSettings.getState();
-  useSettings.setState({
-    teamPrioritySyncedAt: 0,
-    features: {
-      ...useSettings.getInitialState().features,
-      devOptions: features.devOptions,
-    },
-  });
-};
-
-interface ActionRowProps {
-  label: string;
-  description?: ReactNode;
-  children: ReactNode;
-}
-
-const ActionRow = ({ label, description, children }: ActionRowProps) => (
-  <div className="flex items-center justify-between gap-3 px-4 py-3">
-    <div className="flex min-w-0 flex-col gap-1">
-      <span className="text-sm leading-none font-medium">{label}</span>
-      {description && (
-        <RowDescription>
-          <span className="block truncate">{description}</span>
-        </RowDescription>
-      )}
-    </div>
-    {children}
-  </div>
+/** A long value on one line, cut short. */
+const Value = ({ children }: { children: string }) => (
+  <RowDescription>
+    <span className="block truncate" title={children}>
+      {children}
+    </span>
+  </RowDescription>
 );
 
 /** What a developer checks and resets, shown in developer mode. */
@@ -113,7 +89,6 @@ const DevToolsGroup = () => {
   const [compatibility, setCompatibility] =
     useState<ExtensionCompatibilityState>();
   const [checking, setChecking] = useState(false);
-  const [confirmReset, setConfirmReset] = useState(false);
   useEffect(() => watchCompatibility(setCompatibility), []);
 
   if (!devTools) return null;
@@ -142,21 +117,25 @@ const DevToolsGroup = () => {
 
   return (
     <SettingsGroup title="Розробка">
-      <ActionRow label="Збірка" description={BUILD}>
+      <ActionRow label="Збірка" description={<Value>{BUILD}</Value>}>
         {copyButton('build', () => BUILD)}
       </ActionRow>
       <ActionRow
         label="Сервер"
-        description={import.meta.env.WXT_CONVEX_URL || 'Не налаштований'}
+        description={
+          <Value>{import.meta.env.WXT_CONVEX_URL || 'Не налаштований'}</Value>
+        }
       >
         {copyButton('server', () => import.meta.env.WXT_CONVEX_URL ?? '')}
       </ActionRow>
       <ActionRow
         label="Сумісність"
         description={
-          compatibility
-            ? `${COMPATIBILITY_LABELS[compatibility.status]} · ${compatibility.latestVersion} (мін. ${compatibility.minimumVersion})`
-            : 'Ще не перевірялась'
+          <Value>
+            {compatibility
+              ? `${COMPATIBILITY_LABELS[compatibility.status]} · ${compatibility.latestVersion} (мін. ${compatibility.minimumVersion})`
+              : 'Ще не перевірялась'}
+          </Value>
         }
       >
         <Button
@@ -173,25 +152,15 @@ const DevToolsGroup = () => {
         {copyButton('storage', dumpStorage)}
       </ActionRow>
       <ActionRow
-        label="Налаштування"
-        description="Типові значення всіх функцій"
+        label="Усі налаштування"
+        description="Усе, крім режиму розробника, разом з улюбленими командами"
       >
-        <Button
-          variant={confirmReset ? 'destructive' : 'ghost'}
-          size="sm"
-          className={cn(
-            'min-w-24 shrink-0',
-            !confirmReset && 'text-muted-foreground',
-          )}
-          onBlur={() => setConfirmReset(false)}
-          onClick={() => {
-            if (!confirmReset) return setConfirmReset(true);
-            setConfirmReset(false);
-            resetSettings();
-          }}
+        <ConfirmButton
+          label="Скинути всі налаштування"
+          onConfirm={resetSettings}
         >
-          {confirmReset ? 'Точно?' : 'Скинути'}
-        </Button>
+          Скинути
+        </ConfirmButton>
       </ActionRow>
     </SettingsGroup>
   );

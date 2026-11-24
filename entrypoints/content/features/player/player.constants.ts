@@ -26,6 +26,12 @@ export const SKIP_SHOWN_ALONE_S = 8;
 /** The fade's length, as the controls' (`duration-300`). */
 export const SKIP_FADE_MS = 300;
 
+/**
+ * How long the button stays hidden for a segment skipped by itself: should
+ * the player not have taken the seek, it shows by then.
+ */
+export const AUTO_SKIP_HIDE_MS = 2_000;
+
 // Overlay
 
 /** How long a play, pause or seek popup stays up. */

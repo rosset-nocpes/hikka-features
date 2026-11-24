@@ -11,6 +11,7 @@ export class FeatureManager {
   private features: BaseFeature[] = [];
   private frame = 0;
   private stopped = false;
+  private unfollowSettings?: () => void;
 
   constructor() {
     const modules = import.meta.glob<FeatureModule>(
@@ -35,6 +36,11 @@ export class FeatureManager {
     );
     this.reconcile();
     this.startObserving();
+    // Features turned on or off in the popup come and go without a change
+    // on the page.
+    this.unfollowSettings = useSettings.subscribe((state, previous) => {
+      if (state.features !== previous.features) this.schedule();
+    });
   }
 
   /** Mounts the features the page wants and unmounts the rest. */
@@ -78,6 +84,7 @@ export class FeatureManager {
     cancelAnimationFrame(this.frame);
     this.frame = 0;
     this.observer?.disconnect();
+    this.unfollowSettings?.();
     this.features.forEach((feature) => feature.unmount());
   }
 }

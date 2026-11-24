@@ -718,6 +718,12 @@ export default class TeamSearchFeature extends AnchoredUisFeature {
   readonly id = 'team-search';
   readonly pages = [HikkaPages.All];
 
+  override get shouldMount(): boolean {
+    return (
+      super.shouldMount && useSettings.getState().features.teamLinks.enabled
+    );
+  }
+
   async init() {
     const { ctx } = usePageStore.getState();
     const style = document.createElement('style');

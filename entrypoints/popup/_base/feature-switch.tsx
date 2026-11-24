@@ -12,31 +12,33 @@ interface Props<F extends keyof Features> {
   feature: F;
   /** The setting it toggles; `enabled` by default. */
   option?: BooleanKey<Features[F]>;
+  /** The switch is on while the setting is off, e.g. for `hidden`. */
+  inverted?: boolean;
   label: string;
-  description?: string;
+  description?: ReactNode;
   icon?: ReactNode;
   beta?: boolean;
+  disabled?: boolean;
 }
 
 /** A switch for one of a feature's settings. */
 function FeatureSwitch<F extends keyof Features>({
   feature,
   option,
+  inverted = false,
   ...props
 }: Props<F>) {
   const key = (option ?? 'enabled') as BooleanKey<Features[F]>;
-  const checked = useSettings(
-    (state) => state.features[feature][key] as boolean,
-  );
+  const value = useSettings((state) => state.features[feature][key] as boolean);
 
   return (
     <SwitchOption
       {...props}
-      checked={checked}
+      checked={value !== inverted}
       onClick={() =>
         useSettings
           .getState()
-          .updateFeatureSettings(feature, { [key]: !checked } as Partial<
+          .updateFeatureSettings(feature, { [key]: !value } as Partial<
             Features[F]
           >)
       }

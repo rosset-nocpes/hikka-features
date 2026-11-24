@@ -298,6 +298,9 @@ export abstract class AnchoredUisFeature extends BaseFeature {
   protected uis: AnchoredUi[] = [];
 
   override get isMounted(): boolean {
+    // Turned off, any UI still mounted counts, anchor or not: a menu closed
+    // since keeps the one in it.
+    if (!this.shouldMount) return this.uis.some(({ ui }) => ui.mounted);
     const present = this.uis.filter((entry) => entry.present());
     return (
       present.length > 0 &&

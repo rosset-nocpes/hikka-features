@@ -70,6 +70,11 @@ interface AppState {
       teamPriorityTranslation: PreferredTranslation;
       /** What follows an episode starts by itself after a short countdown. */
       autoplayNext: boolean;
+      /**
+       * Openings, endings and recaps: no button, a button to skip them, or
+       * skipped as they start (once each, so seeking back plays them).
+       */
+      skipSegments: 'off' | 'button' | 'auto';
     };
     reader: {
       enabled: boolean;
@@ -85,6 +90,18 @@ interface AppState {
     };
     /** Play buttons on an anime's openings and endings, and their player. */
     musicPlayer: {
+      enabled: boolean;
+    };
+    /** "Команди" in hikka.io's navbar and a teams group in its search. */
+    teamLinks: {
+      enabled: boolean;
+    };
+    /** New episodes from the priority teams, among hikka.io's notifications. */
+    releaseNotifications: {
+      enabled: boolean;
+    };
+    /** Friends' watch together invites, shown as they arrive. */
+    watchTogetherInvites: {
       enabled: boolean;
     };
     /**
@@ -143,6 +160,7 @@ export const useSettings = create<AppState>()(
           teamPriority: [],
           teamPriorityTranslation: 'dub',
           autoplayNext: true,
+          skipSegments: 'button',
         },
         reader: {
           enabled: true,
@@ -157,6 +175,15 @@ export const useSettings = create<AppState>()(
           enabled: true,
         },
         musicPlayer: {
+          enabled: true,
+        },
+        teamLinks: {
+          enabled: true,
+        },
+        releaseNotifications: {
+          enabled: true,
+        },
+        watchTogetherInvites: {
           enabled: true,
         },
         friendsActivity: {

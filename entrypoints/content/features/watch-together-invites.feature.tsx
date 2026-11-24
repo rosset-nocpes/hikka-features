@@ -35,6 +35,13 @@ export default class WatchTogetherInvitesFeature extends BaseFeature {
   readonly id = 'watch-together-invites';
   readonly pages = [HikkaPages.All];
 
+  override get shouldMount(): boolean {
+    return (
+      super.shouldMount &&
+      useSettings.getState().features.watchTogetherInvites.enabled
+    );
+  }
+
   async init() {
     this.ui = await this.createUi({
       position: 'inline',

@@ -21,7 +21,7 @@ const UpdateBanner = () => {
   return (
     <div
       role="alert"
-      className="border-destructive/40 bg-destructive/10 flex items-center gap-3 rounded-lg border px-4 py-3"
+      className="border-destructive/40 bg-destructive/10 flex items-center gap-3 rounded-xl border px-4 py-3"
     >
       <MaterialSymbolsUpgradeRounded className="text-destructive size-5 shrink-0" />
       <div className="flex min-w-0 flex-1 flex-col">
