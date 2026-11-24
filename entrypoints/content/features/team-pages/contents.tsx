@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/popover';
 
 import { ContainerContext } from './parts';
+import { CONTENTS_JUMP_MS } from './team-pages.constants';
 
 /** A part of the page listed in its contents. */
 export interface ContentsEntry {
@@ -25,9 +26,6 @@ export interface ContentsEntry {
   title: string;
   count?: number;
 }
-
-/** How long a jump to a section scrolls for. */
-const JUMP_MS = 500;
 
 const easeInOut = (t: number) =>
   t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2;
@@ -113,7 +111,9 @@ function useActiveSection(entries: ContentsEntry[]) {
       const step = (now: number) => {
         // Scrolling, clicking or typing takes over.
         if (pinned.current !== id) return;
-        const progress = reduced ? 1 : Math.min((now - started) / JUMP_MS, 1);
+        const progress = reduced
+          ? 1
+          : Math.min((now - started) / CONTENTS_JUMP_MS, 1);
         const top = from + (target() - from) * easeInOut(progress);
         window.scrollTo({ top, behavior: 'instant' });
         if (progress < 1) jumpFrame.current = requestAnimationFrame(step);

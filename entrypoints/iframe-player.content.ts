@@ -1,5 +1,6 @@
 import type { IFramePlayerBridgeClass } from '@/integrations/iframe-player/bridge';
 
+import { isHikkaUrl } from '@/constants/hikka';
 import {
   findIFramePlayerBridge,
   IFRAME_PLAYER_MATCHES,
@@ -15,9 +16,7 @@ export default defineContentScript({
   async main(ctx) {
     if (window.parent === window) return;
 
-    const fromHikka = ['https://hikka.io/', 'https://dev.hikka.io/'].some(
-      (origin) => document.referrer.startsWith(origin),
-    );
+    const fromHikka = isHikkaUrl(document.referrer);
 
     if (!fromHikka && !(await isHikkaContentLoaded())) return;
     if (!(await isPlayerIFrame(ctx))) return;

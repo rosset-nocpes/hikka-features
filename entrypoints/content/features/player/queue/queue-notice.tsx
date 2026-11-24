@@ -8,10 +8,8 @@ import { plural } from '@/utils/plural';
 
 import type { QueueItem } from './use-queue';
 
+import { QUEUE_NOTICE_MS } from '../player.constants';
 import { type ActiveQueue, activeQueue } from './use-active-queue';
-
-/** Long enough to notice and react; hovering or focusing it pauses it. */
-const NOTICE_MS = 8_000;
 
 interface Notice {
   id: number;
@@ -47,7 +45,7 @@ const episodeCount = (count: number) => `${count} ${plural(count, EPISODES)}`;
 
 const hideLater = () => {
   clearTimeout(timer);
-  timer = setTimeout(dismissQueueNotice, NOTICE_MS);
+  timer = setTimeout(dismissQueueNotice, QUEUE_NOTICE_MS);
 };
 
 const show = (notice: Omit<Notice, 'id'>) => {

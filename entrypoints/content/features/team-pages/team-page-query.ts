@@ -5,9 +5,7 @@ import { convex } from '@/utils/convex-client';
 import { TEAM_PAGE_PATH } from '@/utils/hikka-router';
 
 import { queryClient } from '../../core/query-client';
-
-/** How long a link has to be pointed at before its team page is fetched. */
-const HOVER_MS = 80;
+import { PREFETCH_HOVER_MS } from './team-pages.constants';
 
 /**
  * Every team with a page, for the list of teams and the site's search. Teams
@@ -56,7 +54,8 @@ export function prefetchTeamPagesOnIntent() {
   const onPointerOver = (event: Event) => {
     clearTimeout(timer);
     const path = linkPath(event);
-    if (path) timer = window.setTimeout(prefetchTeamPage, HOVER_MS, path);
+    if (path)
+      timer = window.setTimeout(prefetchTeamPage, PREFETCH_HOVER_MS, path);
   };
   const onFocusIn = (event: Event) => {
     const path = linkPath(event);

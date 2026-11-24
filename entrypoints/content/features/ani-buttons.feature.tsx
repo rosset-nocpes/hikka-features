@@ -6,6 +6,15 @@ import type { HikkaContent } from '@/hooks/use-hikka';
 import FeatureCard from '@/components/feature-card';
 import { buttonVariants } from '@/components/ui/button';
 import { ButtonGroup } from '@/components/ui/button-group';
+import {
+  ANIDB_URL,
+  ANILIST_URL,
+  ANN_URL,
+  FAVICON_URL,
+  MAL_URL,
+  MANGAUPDATES_URL,
+  WIKIPEDIA_URL,
+} from '@/constants/links';
 import { NEW_TAB } from '@/utils/hikka-router';
 import { reveal } from '@/utils/motion';
 
@@ -39,8 +48,7 @@ const SOURCES: Record<
 };
 
 const iconOf = (source: SourcesType) =>
-  SOURCES[source].icon ??
-  `https://www.google.com/s2/favicons?domain=${SOURCES[source].host}&sz=64`;
+  SOURCES[source].icon ?? `${FAVICON_URL}?domain=${SOURCES[source].host}&sz=64`;
 
 /** A source's path for the content type, where it isn't the type itself. */
 const SOURCE_PATHS: Partial<
@@ -103,11 +111,11 @@ const sourceLink = (
   switch (source) {
     case 'mal':
       return data.mal_id
-        ? direct(`https://myanimelist.net/${path}/${data.mal_id}`)
-        : search(`https://myanimelist.net/${path}.php?q=${q}`);
+        ? direct(`${MAL_URL}/${path}/${data.mal_id}`)
+        : search(`${MAL_URL}/${path}.php?q=${q}`);
     case 'anilist':
       return search(
-        `https://anilist.co/search/${path}?search=${q}&sort=SEARCH_MATCH`,
+        `${ANILIST_URL}/search/${path}?search=${q}&sort=SEARCH_MATCH`,
       );
     case 'anidb': {
       // AniDB expects "Surname GivenName" for people/characters.
@@ -120,24 +128,19 @@ const sourceLink = (
       return (
         direct(external()) ??
         search(
-          `https://anidb.net/${path}/?adb.search=${encodeURIComponent(swapped)}&do.search=1`,
+          `${ANIDB_URL}/${path}/?adb.search=${encodeURIComponent(swapped)}&do.search=1`,
         )
       );
     }
     case 'ann':
-      return (
-        direct(external()) ??
-        search(`https://www.animenewsnetwork.com/search?q=${q}`)
-      );
+      return direct(external()) ?? search(`${ANN_URL}/search?q=${q}`);
     case 'wiki':
       return contentType === 'character'
         ? undefined
         : (direct(external()) ??
-            search(`https://en.wikipedia.org/w/index.php?search=${q}`));
+            search(`${WIKIPEDIA_URL}/w/index.php?search=${q}`));
     case 'mu':
-      return search(
-        `https://www.mangaupdates.com/series?search=${q}&perpage=25`,
-      );
+      return search(`${MANGAUPDATES_URL}/series?search=${q}&perpage=25`);
   }
 };
 

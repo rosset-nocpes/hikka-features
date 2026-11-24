@@ -9,17 +9,10 @@ import { queryClient } from '../../core/query-client';
 import { followingEpisode, usePlayer } from './context/player-context';
 import { onAnimePage, progressOf } from './context/sources';
 import { isPlayerOpen, playNextQueued } from './player';
+import { WATCHED_SHARE, PRELOAD_SHARE } from './player.constants';
 import { nextEpisode, upNext } from './queue/up-next';
 import { useQueue } from './queue/use-queue';
 import { useWatchTogether } from './watch-together/use-watch-together';
-
-/** Share of an episode after which it counts as watched on hikka.io. */
-const WATCHED_SHARE = 0.88;
-/**
- * Share of an episode after which the next one's anime loads, so it starts
- * at once even when it is another anime's.
- */
-const PRELOAD_SHARE = 0.8;
 
 const getEpisodeKey = (episode: API.EpisodeData) =>
   `${episode.episode}:${episode.video_url}`;

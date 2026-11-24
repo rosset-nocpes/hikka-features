@@ -1,6 +1,6 @@
 import { queryOptions, useQuery } from '@tanstack/react-query';
 
-import { HIKKA_API } from '@/hooks/use-hikka';
+import { HIKKA_API_URL } from '@/constants/hikka';
 import { useSettings } from '@/hooks/use-settings';
 
 /**
@@ -9,7 +9,7 @@ import { useSettings } from '@/hooks/use-settings';
  * couldn't tell.
  */
 export async function getHikkaViewerId() {
-  const response = await fetch(`${HIKKA_API}/user/me`, {
+  const response = await fetch(`${HIKKA_API_URL}/user/me`, {
     cache: 'no-store',
     credentials: 'include',
     headers: { accept: 'application/json' },

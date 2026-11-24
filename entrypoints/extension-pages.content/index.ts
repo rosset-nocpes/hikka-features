@@ -1,6 +1,6 @@
 import './style.css';
+import { HIKKA_ORIGINS } from '@/constants/hikka';
 
-const HOSTS = ['hikka.io', 'dev.hikka.io'];
 const PATHS = [
   '/teams*',
   '/anime/*/recommendations*',
@@ -14,8 +14,8 @@ const PATHS = [
  * `entrypoints/hikka-router.ts`); this keeps that page from flashing.
  */
 export default defineContentScript({
-  matches: HOSTS.flatMap((host) =>
-    PATHS.map((path) => `https://${host}${path}`),
+  matches: HIKKA_ORIGINS.flatMap((origin) =>
+    PATHS.map((path) => `${origin}${path}`),
   ),
   runAt: 'document_start',
   main() {},

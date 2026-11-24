@@ -15,12 +15,8 @@ import { Button } from '@/components/ui/button';
 import { useIFramePlayer } from '@/hooks/use-iframe-player';
 
 import { compactMode, usePlayer } from '../context/player-context';
+import { SKIP_SHOWN_ALONE_S, SKIP_FADE_MS } from '../player.constants';
 import { useSkipSegments } from './use-skip-segments';
-
-/** While the controls are hidden, the button still shows this long. */
-const SHOWN_ALONE_S = 8;
-/** The fade's length, as the controls' (`duration-300`). */
-const FADE_MS = 300;
 /** Between above the controls and the bottom edge, while it shows. */
 const SLIDE = { duration: 0.3, ease: 'easeOut' } as const;
 
@@ -60,7 +56,7 @@ const SkipSegment = () => {
   const shown = useIFramePlayer(
     (state) =>
       !!segment &&
-      (state.uiShown || state.currentTime < segment.start + SHOWN_ALONE_S),
+      (state.uiShown || state.currentTime < segment.start + SKIP_SHOWN_ALONE_S),
   );
   const uiShown = useIFramePlayer((state) => state.uiShown);
   const isCompact = usePlayer(compactMode);
@@ -126,7 +122,7 @@ const SkipSegment = () => {
     // Faded in (by its time, whether or not a transition ran): it slides
     // from then on.
     if (!settled) {
-      const settle = setTimeout(() => setSettled(true), FADE_MS);
+      const settle = setTimeout(() => setSettled(true), SKIP_FADE_MS);
       return () => clearTimeout(settle);
     }
     if (reduceMotion) {

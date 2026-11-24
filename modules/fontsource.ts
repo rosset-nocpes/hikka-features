@@ -3,6 +3,8 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { addAlias, addPublicAssets, defineWxtModule } from 'wxt/modules';
 
+import { HIKKA_MATCHES } from '../constants/hikka';
+
 const require = createRequire(import.meta.url);
 
 const FONT_FACE_RE = /\/\*[^*]*\*\/\s*@font-face\s*{[^}]*}/g;
@@ -127,7 +129,7 @@ export function injectAllFonts() {
       } else {
         manifest.web_accessible_resources ??= [];
         manifest.web_accessible_resources.push({
-          matches: ['https://hikka.io/*', 'https://dev.hikka.io/*'],
+          matches: HIKKA_MATCHES,
           resources: ['fonts/**/*'],
         });
       }

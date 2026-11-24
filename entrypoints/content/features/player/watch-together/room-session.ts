@@ -22,6 +22,19 @@ import { followingEpisode, usePlayer } from '../context/player-context';
 import { followRoom } from '../player';
 import { dispatchPlayerOverlayAction } from '../player-overlay/action-popup';
 import {
+  ROOM_HEARTBEAT_MS,
+  ROOM_RECONCILE_MS,
+  PLAYING_TOLERANCE,
+  PAUSED_TOLERANCE,
+  SEEK_COOLDOWN_MS,
+  MAX_SEEK_COOLDOWN_MS,
+  COMMAND_RETRY_MS,
+  END_MARGIN,
+  ROOM_LEAVE_TIMEOUT_MS,
+  REPORT_SETTLE_MS,
+  REPORT_END_MARGIN,
+} from '../player.constants';
+import {
   applyQueueEdit,
   errorMessage,
   finite,
@@ -34,33 +47,6 @@ import {
   selectionKey,
   selectionOf,
 } from './room';
-
-const HEARTBEAT_MS = 30_000;
-const RECONCILE_MS = 1_000;
-/**
- * Seconds a playing player may drift before it is moved. Players report their
- * time a few times a second.
- */
-const PLAYING_TOLERANCE = 1.5;
-const PAUSED_TOLERANCE = 0.5;
-/**
- * Pause after moving the player, doubled while it keeps falling behind, so a
- * slow connection plays instead of rebuffering after every correction.
- */
-const SEEK_COOLDOWN_MS = 3_000;
-const MAX_SEEK_COOLDOWN_MS = 24_000;
-/** Players take a moment to report a play, pause or speed change. */
-const COMMAND_RETRY_MS = 2_000;
-/** Seconds before the end where players stop on their own. */
-const END_MARGIN = 0.5;
-const LEAVE_TIMEOUT_MS = 3_000;
-/**
- * How long a play or pause from outside the overlay must hold before the
- * room follows it; ads and slow players toggle briefly.
- */
-const REPORT_SETTLE_MS = 1_000;
-/** Seconds before the end where a pause is the player stopping. */
-const REPORT_END_MARGIN = 2;
 
 type PlayerStore = ReturnType<typeof usePlayer.getState>;
 type IFramePlayerStore = ReturnType<typeof useIFramePlayer.getState>;
@@ -165,8 +151,8 @@ export class RoomSession {
     const { isPlaying, currentTime } = useIFramePlayer.getState();
     this.playedSinceReady = isPlaying || currentTime > 0;
     onPlaybackIntent(this.handleIntent);
-    const heartbeat = setInterval(this.keepAlive, HEARTBEAT_MS);
-    const reconcile = setInterval(this.reconcile, RECONCILE_MS);
+    const heartbeat = setInterval(this.keepAlive, ROOM_HEARTBEAT_MS);
+    const reconcile = setInterval(this.reconcile, ROOM_RECONCILE_MS);
     const leave = () => this.onEnd(undefined);
     window.addEventListener('pagehide', leave);
     this.cleanups.push(
@@ -198,7 +184,7 @@ export class RoomSession {
     // An offline client can't leave; the room drops it once it goes quiet.
     void Promise.race([
       left,
-      new Promise((resolve) => setTimeout(resolve, LEAVE_TIMEOUT_MS)),
+      new Promise((resolve) => setTimeout(resolve, ROOM_LEAVE_TIMEOUT_MS)),
     ])
       .catch(() => undefined)
       .finally(release);

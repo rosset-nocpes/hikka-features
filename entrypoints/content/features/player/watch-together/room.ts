@@ -8,8 +8,7 @@ import type {
   WatchRoomSelection,
 } from '@/utils/convex-api';
 
-/** Episodes a room's queue holds, as on the backend. */
-const MAX_QUEUE = 100;
+import { MAX_ROOM_QUEUE } from '../player.constants';
 
 const ERROR_MESSAGES: Record<string, string> = {
   ROOM_NOT_FOUND: 'Кімнату не знайдено',
@@ -116,7 +115,7 @@ export const applyQueueEdit = (
         edit.items.map((item) => [queueKey(item), item] as const),
       );
       queue.forEach((item) => added.delete(queueKey(item)));
-      return [...queue, ...added.values()].slice(0, MAX_QUEUE);
+      return [...queue, ...added.values()].slice(0, MAX_ROOM_QUEUE);
     }
     case 'dequeue':
       return without(edit.items);

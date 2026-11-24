@@ -35,12 +35,10 @@ import {
 import { TextExpand, type TypeFilter, TypeFilterButtons } from './parts';
 import ReleaseDays from './release-days';
 import { teamPageQuery } from './team-page-query';
+import { ONGOING_MS } from './team-pages.constants';
 
 type Team = TeamPageData['team'];
 type AnimeReleases = TeamPageData['releases'][number];
-
-/** Releases still coming out, if the team posted one this long ago. */
-const ONGOING_MS = 90 * 24 * 60 * 60 * 1_000;
 
 const TikTokIcon: FC<{ className?: string }> = ({ className }) => (
   <svg viewBox="0 0 24 24" className={className} aria-hidden>

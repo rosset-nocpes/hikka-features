@@ -49,7 +49,10 @@ const COMPATIBILITY_LABELS: Record<
 
 const BUILD = `v${version} · ${import.meta.env.MODE} · ${import.meta.env.BROWSER}`;
 
-/** Everything in `storage.local`, with stores parsed and the session hidden. */
+/** Values a dump leaves out: the session's token and a login's verifier. */
+const SECRET_KEYS = new Set(['refreshToken', 'verifier']);
+
+/** Everything in `storage.local`, with stores parsed and secrets hidden. */
 const dumpStorage = async () => {
   const stored: Record<string, unknown> = await browser.storage.local.get();
   const entries = Object.entries(stored).map(([key, value]) => {
@@ -62,7 +65,7 @@ const dumpStorage = async () => {
   });
   return JSON.stringify(
     Object.fromEntries(entries),
-    (key, value) => (key === 'refreshToken' ? '[hidden]' : value),
+    (key, value) => (SECRET_KEYS.has(key) ? '[hidden]' : value),
     2,
   );
 };

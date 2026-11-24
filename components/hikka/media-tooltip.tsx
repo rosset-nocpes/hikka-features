@@ -8,6 +8,7 @@ import {
   HoverCardTrigger,
 } from '@/components/ui/hover-card';
 import { Separator } from '@/components/ui/separator';
+import { HIKKA_URL } from '@/constants/hikka';
 import { NEW_TAB } from '@/utils/hikka-router';
 
 /** The parts of a Hikka anime, manga or novel that its card shows. */
@@ -261,7 +262,7 @@ const MediaTooltipBody: FC<{ item: MediaTooltipItem }> = ({ item }) => {
           {item.genres.map((genre, index) => (
             <span key={genre.slug}>
               <a
-                href={`https://hikka.io/${item.data_type}?genres=${encodeURIComponent(JSON.stringify([genre.slug]))}`}
+                href={`${HIKKA_URL}/${item.data_type}?genres=${encodeURIComponent(JSON.stringify([genre.slug]))}`}
                 {...NEW_TAB}
                 className="decoration-primary hover:bg-primary/15 hover:text-primary text-sm underline decoration-dashed transition-colors duration-100"
               >

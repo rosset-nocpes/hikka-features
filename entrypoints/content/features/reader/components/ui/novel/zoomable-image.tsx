@@ -22,11 +22,9 @@ import { Button } from '@/components/ui/button';
 import { NEW_TAB } from '@/utils/hikka-router';
 
 import { useReader } from '../../../hooks/use-reader';
+import { ZOOM_STEP, DOUBLE_TAP_SCALE } from '../../../reader.constants';
 import { ReaderType } from '../../../reader.enums';
 import { type Box, getFittedBox, spring, usePanZoom } from './pan-zoom';
-
-const ZOOM_STEP = 1.5;
-const DOUBLE_TAP_SCALE = 2.5;
 
 const OPEN_RADIUS = 8;
 const OPEN_BORDER = 1;

@@ -1,6 +1,8 @@
-/** A playback time, "4:05" or "1:02:03". */
+/** A playback time, "4:05" or "1:02:03"; "0:00" for an unknown one. */
 export function formatTime(totalSeconds: number) {
-  const total = Math.floor(totalSeconds);
+  const total = Number.isFinite(totalSeconds)
+    ? Math.max(0, Math.floor(totalSeconds))
+    : 0;
   const hours = Math.floor(total / 3600);
   const minutes = Math.floor((total % 3600) / 60);
   const pad = (value: number) => String(value).padStart(2, '0');

@@ -2,9 +2,20 @@ import { create } from 'zustand';
 
 import type { CornerStore, FloatingCorner } from '@/hooks/use-floating-card';
 
+import { STORAGE_KEYS } from '@/constants/storage';
 import { StoredValue } from '@/utils/stored-value';
 
 import { type MusicTrack, OST_LABEL } from './animethemes';
+import {
+  RESTART_AFTER_S,
+  SETTLE_S,
+  CROSSFADE_MS,
+  FADE_IN_MS,
+  STEP_MS,
+  TWIN_DEADLINE_MS,
+  REPEAT_MS,
+  REPEAT_S,
+} from './music.constants';
 
 interface MusicState {
   /** What plays, in order; empty while the player is closed. */
@@ -39,9 +50,6 @@ interface MusicActions {
   toggleMute: () => void;
 }
 
-/** Past this, "previous" restarts the track instead. */
-const RESTART_AFTER_S = 3;
-
 const idle = {
   queue: [] as MusicTrack[],
   index: 0,
@@ -56,29 +64,8 @@ const idle = {
 /** The element that is heard; others only ever play muted. */
 let element: HTMLAudioElement | undefined;
 
-const storedVolume = new StoredValue<number>('music-volume');
+const storedVolume = new StoredValue<number>(STORAGE_KEYS.musicVolume);
 let saveVolume = 0;
-
-/*
- * AnimeThemes' audio is Ogg Opus without a seek index. Right after a seek,
- * Chrome's demuxer lets a moment of other audio through, often the song's
- * last second, and a volume change takes as long to reach the speakers as
- * the seek, so fading out can't reliably cover it. Instead a muted twin of
- * the element seeks and starts playing; once it has played cleanly from the
- * new time it crossfades in, so the leak is never heard and the music never
- * stops. A seek while paused mutes the element until it plays cleanly again.
- */
-/** How far past its target a seek has to play before it is heard. */
-const SETTLE_S = 0.12;
-const CROSSFADE_MS = 120;
-/** Fades in a paused seek once it plays. */
-const FADE_IN_MS = 150;
-const STEP_MS = 10;
-/** A twin that hasn't settled by then (a stalled load) gives way. */
-const TWIN_DEADLINE_MS = 4000;
-/** A seek to where the last one went, this soon, is the same seek again. */
-const REPEAT_MS = 1000;
-const REPEAT_S = 0.05;
 
 /** A seek that plays muted until it settles. */
 let twin:

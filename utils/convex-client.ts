@@ -6,6 +6,12 @@ import {
 } from 'convex/server';
 import { ConvexError } from 'convex/values';
 
+import {
+  RECHECK_INTERVAL,
+  TOKEN_TIMEOUT,
+  SUSPECT_RETRIES,
+  REAUTH_DELAYS,
+} from '@/constants/account';
 import { useSettings } from '@/hooks/use-settings';
 import {
   compatibilityState,
@@ -22,9 +28,6 @@ const requireConvexUrl = () => {
   if (!CONVEX_URL) throw new Error('WXT_CONVEX_URL is not configured');
   return CONVEX_URL;
 };
-
-/** How soon a failed call may ask about compatibility again. */
-const RECHECK_INTERVAL = 60_000;
 
 /**
  * The backend over HTTP. Public calls go straight to it; account calls go
@@ -144,13 +147,6 @@ class Convex {
 }
 
 export const convex = new Convex();
-
-/** How long a tab waits for the background to lend a token. */
-const TOKEN_TIMEOUT = 20_000;
-/** Failed reconnects in a row after which the token is suspected. */
-const SUSPECT_RETRIES = 2;
-/** Waits before signing in again with a fresh token, one per failure. */
-const REAUTH_DELAYS = [1_000, 10_000, 60_000, 300_000];
 
 /** Who the extension is signed in as, or undefined when signed out. */
 const accountOf = (state: ReturnType<typeof useSettings.getState>) =>

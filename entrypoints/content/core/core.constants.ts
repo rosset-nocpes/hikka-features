@@ -37,3 +37,11 @@ export const HIKKA_PAGE_CHECKERS: Record<
   [HikkaPages.EditCreatePerson]: (p) => isNewEdit(p, 'person'),
   [HikkaPages.EditForm]: (p) => EDIT_FORM_PATH.test(p),
 };
+
+// Activity reports (activity-reporter.ts)
+
+/** The server forgets activity three minutes after the last report. */
+export const REPORT_INTERVAL_MS = 60_000;
+
+/** Lets a burst of changes, like switching episodes, settle into one report. */
+export const REPORT_DELAY_MS = 1_500;

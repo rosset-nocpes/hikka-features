@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import ky from 'ky';
 
-export const HIKKA_API = 'https://api.hikka.io';
+import { HIKKA_API_URL } from '@/constants/hikka';
 
 /** An anime's opening or ending, as its "Музика" block lists it. */
 export interface HikkaOst {
@@ -63,7 +63,7 @@ export const hikkaApiPath = (contentType: string) =>
   API_PATHS[contentType] ?? contentType;
 
 export const fetchHikka = <T>(path: string) =>
-  ky.get(`${HIKKA_API}/${path}`).json<T>();
+  ky.get(`${HIKKA_API_URL}/${path}`).json<T>();
 
 /** Content from the Hikka API (an anime, a character, an edit…), kept for the page's life. */
 export const useHikkaContent = (

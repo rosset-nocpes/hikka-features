@@ -1,5 +1,7 @@
 import * as cheerio from 'cheerio';
 
+import { MANGA_IN_UA_URL } from '@/constants/links';
+
 import type { Chapter, ReaderContent, TitleInfo } from '../reader.types';
 
 import { ReaderContentMode } from '../reader.enums';
@@ -13,7 +15,7 @@ const ENDPOINTS = {
 
 class MIUScraper extends BaseScraper {
   constructor() {
-    super('MIUScraper', 'https://manga.in.ua');
+    super('MIUScraper', MANGA_IN_UA_URL);
   }
 
   /** The session hash the site's AJAX endpoints want. */

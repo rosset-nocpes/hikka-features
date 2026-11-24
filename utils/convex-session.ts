@@ -9,6 +9,11 @@ import {
   makeFunctionReference,
 } from 'convex/server';
 
+import {
+  TOKEN_EXPIRY_MARGIN_S,
+  LOGIN_TTL_MS,
+  AUTH_REQUEST_TIMEOUT,
+} from '@/constants/account';
 import { type FavoriteTeam, useSettings } from '@/hooks/use-settings';
 
 import type { ConvexWatchTeam } from './convex-api';
@@ -29,9 +34,6 @@ const teamRef = ({ key, team, translationType }: ConvexWatchTeam) => ({
   title: team.title,
   translationType,
 });
-
-/** As long as the backend's login cookie lives. */
-const LOGIN_TTL_MS = 15 * 60 * 1_000;
 /** Where the backend ends the login tab, with `?error=` when it failed. */
 const LOGIN_DONE_URL = `${CONVEX_SITE_URL}/auth/hikka/done`;
 
@@ -79,12 +81,6 @@ function siteUrl(path: string) {
   }
   return `${CONVEX_SITE_URL}${path}`;
 }
-
-/**
- * A refresh that never answers would hold every token request behind it,
- * so auth requests give up after this long.
- */
-const AUTH_REQUEST_TIMEOUT = 15_000;
 
 async function authRequest(
   path: string,
@@ -472,22 +468,42 @@ class AccountSession {
   private async refresh() {
     const session = (await loadedSettings()).convexSession;
     if (!session) throw new Error('Not authenticated');
+    /** Whether the session refreshed is still the one signed in. */
+    const current = () =>
+      useSettings.getState().convexSession?.refreshToken ===
+      session.refreshToken;
+
+    let auth: AuthResponse;
     try {
       const response = await authRequest('/auth/session/refresh', {
         refreshToken: session.refreshToken,
       });
-      return this.store((await response.json()) as AuthResponse);
+      auth = (await response.json()) as AuthResponse;
     } catch (error) {
       // Only a rejected session logs out; network errors keep it for a retry.
-      if (error instanceof AuthError && error.status === 401) this.clear();
+      // A logout or another login meanwhile isn't undone.
+      if (error instanceof AuthError && error.status === 401 && current()) {
+        this.clear();
+      }
       throw error;
     }
+    // Signed out or in again while this ran: storing it would sign back in.
+    if (!current()) {
+      await authRequest('/auth/session/revoke', {
+        refreshToken: auth.refreshToken,
+      }).catch(() => undefined);
+      throw new Error('Not authenticated');
+    }
+    return this.store(auth);
   }
 
   private store(auth: AuthResponse) {
     this.accessToken = {
       value: auth.accessToken,
-      expiresAt: Date.now() + (auth.accessTokenExpiresIn - 30) * 1_000,
+      // Refreshed a little early, so a call never carries an expired one.
+      expiresAt:
+        Date.now() +
+        Math.max(0, auth.accessTokenExpiresIn - TOKEN_EXPIRY_MARGIN_S) * 1_000,
     };
     useSettings.getState().setSettings({
       convexSession: { refreshToken: auth.refreshToken },

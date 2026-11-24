@@ -9,13 +9,9 @@ import MaterialSymbolsOpenInNewRounded from '~icons/material-symbols/open-in-new
 
 import SwapIcon from '@/components/swap-icon';
 import { Button } from '@/components/ui/button';
+import { HIKKA_API_URL } from '@/constants/hikka';
 import { useCopy } from '@/hooks/use-copy';
-import {
-  fetchHikka,
-  HIKKA_API,
-  type HikkaContent,
-  hikkaApiPath,
-} from '@/hooks/use-hikka';
+import { fetchHikka, type HikkaContent, hikkaApiPath } from '@/hooks/use-hikka';
 import { NEW_TAB } from '@/utils/hikka-router';
 import { reveal } from '@/utils/motion';
 
@@ -92,7 +88,7 @@ const json = (data: unknown): Copy => ({
 
 const apiLink = (path: string): Link => ({
   label: 'API',
-  href: `${HIKKA_API}/${path}`,
+  href: `${HIKKA_API_URL}/${path}`,
 });
 
 /** What a page of content (an anime, a character, an edit…) offers. */
@@ -115,7 +111,7 @@ const contentTools = (
           ? [
               {
                 label: 'API контенту',
-                href: `${HIKKA_API}/${hikkaApiPath(type)}/${content.slug}`,
+                href: `${HIKKA_API_URL}/${hikkaApiPath(type)}/${content.slug}`,
               },
             ]
           : []),

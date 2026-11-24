@@ -21,6 +21,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { HIKKA_URL } from '@/constants/hikka';
+import { MAL_URL } from '@/constants/links';
 import useEditorContent from '@/hooks/use-editor-content';
 import { fillInput } from '@/utils/edit-form';
 import { navigateOnHikka } from '@/utils/hikka-router';
@@ -99,12 +101,12 @@ export const SourceMenu: FC<{ container: HTMLElement }> = ({ container }) => {
     content?.mal_id &&
       malPath && {
         title: 'MyAnimeList',
-        href: `https://myanimelist.net/${malPath}/${content.mal_id}`,
+        href: `${MAL_URL}/${malPath}/${content.mal_id}`,
         note: 'Опис звідти',
       },
     username && {
       title: `@${username}`,
-      href: `https://hikka.io/u/${username}`,
+      href: `${HIKKA_URL}/u/${encodeURIComponent(username)}`,
       note: 'Свій опис',
     },
   ].filter((source) => !!source);

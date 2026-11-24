@@ -2,10 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import ky from 'ky';
 import { useEffect, useState } from 'react';
 
-import useHikka, { HIKKA_API } from '@/hooks/use-hikka';
+import { HIKKA_API_URL } from '@/constants/hikka';
+import useHikka from '@/hooks/use-hikka';
 import useLocationPath from '@/hooks/use-location-path';
 
-import { EDIT_FORM_PATH } from '../../core/core.constant';
+import { EDIT_FORM_PATH } from '../../core/core.constants';
 import { queryClient } from '../../core/query-client';
 import { checkField, type FieldIssue } from './edit-checks';
 import { type EditField, readEditFields } from './edit-fields';
@@ -85,7 +86,7 @@ export const useHikkaUsername = () =>
     queryKey: ['hikka-viewer-username'],
     queryFn: () =>
       ky
-        .get(`${HIKKA_API}/user/me`, { credentials: 'include', retry: 0 })
+        .get(`${HIKKA_API_URL}/user/me`, { credentials: 'include', retry: 0 })
         .json<{ username?: string }>()
         .then(({ username }) => username ?? null),
     retry: false,
@@ -103,7 +104,7 @@ const pendingPage = (page: number) =>
     queryKey: ['pending-edits', page],
     queryFn: () =>
       ky
-        .post(`${HIKKA_API}/edit/list`, {
+        .post(`${HIKKA_API_URL}/edit/list`, {
           searchParams: { page, size: PENDING_PAGE_SIZE },
           json: { status: 'pending', sort: ['edit_id:desc'] },
         })

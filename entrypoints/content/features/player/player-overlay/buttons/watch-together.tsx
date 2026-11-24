@@ -41,6 +41,11 @@ import { convexApi } from '@/utils/convex-api';
 
 import { usePlayer } from '../../context/player-context';
 import {
+  TRIGGER_AVATARS,
+  COMPACT_TRIGGER_AVATARS,
+  AVATAR_OVERLAP,
+} from '../../player.constants';
+import {
   MemberAvatar,
   MenuError,
   MenuItem,
@@ -57,13 +62,6 @@ import { useToolbarMenuPosition, useUiLock } from '../use-ui-lock';
 const MotionAvatar = motion.create(Avatar);
 const MotionAvatarGroup = motion.create(AvatarGroup);
 const MotionAvatarGroupCount = motion.create(AvatarGroupCount);
-
-/** Avatars the toolbar button fits; more collapse into a count. */
-const TRIGGER_AVATARS = 3;
-/** The top bar on phones keeps its chips small. */
-const COMPACT_TRIGGER_AVATARS = 2;
-/** How far each avatar tucks under the next (`-space-x-1.5`). */
-const AVATAR_OVERLAP = 6;
 const spring = { type: 'spring', stiffness: 500, damping: 36 } as const;
 const pop = {
   initial: { scale: 0.4, opacity: 0 },

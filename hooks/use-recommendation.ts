@@ -3,11 +3,13 @@ import ky from 'ky';
 
 import type { ContentCardItem } from '@/components/hikka/content-card';
 
+import { HIKKA_API_URL } from '@/constants/hikka';
+import { MAL_URL, TENRAI_API_URL } from '@/constants/links';
 import { queryAniList } from '@/utils/anilist';
 
 import type { ContentType } from './use-page-store';
 
-import { fetchHikka, HIKKA_API } from './use-hikka';
+import { fetchHikka } from './use-hikka';
 
 /**
  * What the recommendations page and its tab are called. hikka.io's tabs
@@ -45,11 +47,11 @@ const fetchMal = async (
 ): Promise<Source> => {
   const type = malType(contentType);
   const { data } = await ky
-    .get(`https://api.tenrai.org/v1/${type}/${malId}/recommendations`)
+    .get(`${TENRAI_API_URL}/${type}/${malId}/recommendations`)
     .json<{ data: Array<{ entry: { mal_id: number }; votes: number }> }>();
   return {
     name: 'MyAnimeList',
-    url: `https://myanimelist.net/${type}/${malId}/_/userrecs`,
+    url: `${MAL_URL}/${type}/${malId}/_/userrecs`,
     votes: new Map(data.map(({ entry, votes }) => [entry.mal_id, votes])),
     links: [],
   };
@@ -238,7 +240,7 @@ const findOnHikka = async (contentType: ContentType, malIds: number[]) => {
     const missing = malIds.filter((id) => !found.has(id));
     if (missing.length === 0) break;
     const entries = await ky
-      .post(`${HIKKA_API}/integrations/mal/${type}`, {
+      .post(`${HIKKA_API_URL}/integrations/mal/${type}`, {
         json: { mal_ids: missing },
       })
       .json<(Recommendation | null)[]>();

@@ -9,19 +9,14 @@ import {
 import { convex, liveConvex } from '@/utils/convex-client';
 
 import { followingEpisode, usePlayer } from '../context/player-context';
-
-/** How often to look again while the episode is read, without a live connection. */
-const POLL_MS = 3_000;
-/** How often to look anyway with one: it may have dropped without a word. */
-const BACKUP_POLL_MS = 15_000;
-/** A live connection silent this long after starting isn't there (blocked WebSockets). */
-const LIVE_WAIT_MS = 5_000;
-/** A request unanswered this long is asked again (another may be stuck). */
-const REQUEST_WAIT_MS = 15_000;
-/** A read that takes longer than this has failed; stop waiting. */
-const WAIT_FOR_MS = 10 * 60_000;
-/** Seconds two copies may differ by and still be one cut (as the backend). */
-const DURATION_TOLERANCE = 3;
+import {
+  SKIP_POLL_MS,
+  SKIP_BACKUP_POLL_MS,
+  SKIP_LIVE_WAIT_MS,
+  SKIP_REQUEST_WAIT_MS,
+  SKIP_WAIT_FOR_MS,
+  DURATION_TOLERANCE,
+} from '../player.constants';
 
 const NONE: SkipSegment[] = [];
 
@@ -92,7 +87,7 @@ export function useSkipSegments(): SkipSegment[] {
       stopFollowing();
     };
     // A read that takes longer has failed, whatever the connection says.
-    const deadline = setTimeout(finish, WAIT_FOR_MS);
+    const deadline = setTimeout(finish, SKIP_WAIT_FOR_MS);
 
     /**
      * Asks for the upload to be read, without holding anything up: looking
@@ -106,7 +101,7 @@ export function useSkipSegments(): SkipSegment[] {
         if (!settled && !finished) request = 'unsent';
         settled = true;
       };
-      setTimeout(again, REQUEST_WAIT_MS);
+      setTimeout(again, SKIP_REQUEST_WAIT_MS);
       convex
         .mutation(
           convexApi.skip.request,
@@ -216,7 +211,7 @@ export function useSkipSegments(): SkipSegment[] {
         };
         liveTimer = setTimeout(() => {
           if (!heard) stopFollowing();
-        }, LIVE_WAIT_MS);
+        }, SKIP_LIVE_WAIT_MS);
       } catch {
         // Polling goes on alone.
       }
@@ -235,7 +230,10 @@ export function useSkipSegments(): SkipSegment[] {
           void follow();
         }
       }
-      pollTimer = setTimeout(poll, unfollow ? BACKUP_POLL_MS : POLL_MS);
+      pollTimer = setTimeout(
+        poll,
+        unfollow ? SKIP_BACKUP_POLL_MS : SKIP_POLL_MS,
+      );
     };
 
     void poll();

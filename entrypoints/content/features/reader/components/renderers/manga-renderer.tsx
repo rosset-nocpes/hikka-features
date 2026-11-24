@@ -21,15 +21,16 @@ import type { MangaSettings } from '../../reader.types';
 import useReadChapterData from '../../hooks/use-read-chapter-data';
 import { useReader } from '../../hooks/use-reader';
 import { FADE_BLUR } from '../../reader.constants';
+import {
+  MAX_IMAGE_RETRIES,
+  IMAGE_RETRY_DELAY_MS,
+} from '../../reader.constants';
 import { ReaderType } from '../../reader.enums';
 import MangaNextPage from '../ui/manga-next-page';
 import MangaPageIndicator from '../ui/manga/manga-page-indicator';
 import MangaScaleIndicator from '../ui/manga/manga-scale-indicator';
 
 const MotionCarousel = motion.create(Carousel);
-
-const MAX_IMAGE_RETRIES = 3;
-const IMAGE_RETRY_DELAY_MS = 1_000;
 
 type MangaPageImageProps = Omit<
   ComponentPropsWithoutRef<'img'>,

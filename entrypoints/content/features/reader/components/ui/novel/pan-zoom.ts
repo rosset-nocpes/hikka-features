@@ -7,12 +7,12 @@ import {
   useState,
 } from 'react';
 
-const MIN_SCALE = 1;
-const MAX_SCALE = 8;
-/** How far a pointer moves before a tap becomes a drag. */
-const DRAG_THRESHOLD = 4;
-/** How much of the viewport an opened image fills at most. */
-const VIEWPORT_FILL = 0.9;
+import {
+  MIN_SCALE,
+  MAX_SCALE,
+  PAN_DRAG_THRESHOLD,
+  VIEWPORT_FILL,
+} from '../../../reader.constants';
 
 export const spring = { type: 'spring', stiffness: 400, damping: 40 } as const;
 
@@ -97,7 +97,7 @@ class PointerGesture {
     if (
       !this.moved &&
       Math.hypot(point.x - this.start.x, point.y - this.start.y) <
-        DRAG_THRESHOLD
+        PAN_DRAG_THRESHOLD
     ) {
       return undefined;
     }

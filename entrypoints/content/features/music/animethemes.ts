@@ -2,11 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 
 import type { HikkaContent, HikkaOst } from '@/hooks/use-hikka';
 
-/**
- * AnimeThemes' API. Its REST one has been down (503) since at least
- * 2026-11-18, while this one answers any origin.
- */
-const ENDPOINT = 'https://graphql.animethemes.moe/';
+import { ANIMETHEMES_GRAPHQL_URL } from '@/constants/links';
+
+const ENDPOINT = ANIMETHEMES_GRAPHQL_URL;
 
 const QUERY = `query ($id: [Int!]) {
   findAnimeByExternalSite(site: MAL, id: $id) {

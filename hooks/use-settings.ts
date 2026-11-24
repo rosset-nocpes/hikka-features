@@ -11,6 +11,8 @@ import type {
   TranslationType,
 } from '@/utils/convex-api';
 
+import { DEFAULT_PROVIDER } from '@/constants/providers';
+import { LEGACY_SETTING_KEYS, STORAGE_KEYS } from '@/constants/storage';
 import { StoredValue } from '@/utils/stored-value';
 
 /** For zustand's `persist`: each store is one JSON string in `storage.local`. */
@@ -134,7 +136,7 @@ export const useSettings = create<AppState>()(
         },
         player: {
           enabled: true,
-          defaultProvider: 'moon',
+          defaultProvider: DEFAULT_PROVIDER,
           disableBlur: false,
           miniModeType: 'custom',
           favoriteTeams: {},
@@ -187,7 +189,7 @@ export const useSettings = create<AppState>()(
         })),
     }),
     {
-      name: 'settings',
+      name: STORAGE_KEYS.settings,
       storage: createJSONStorage(() => extensionStorage),
       partialize: (state) => ({
         features: state.features,
@@ -227,14 +229,26 @@ export const useSettings = create<AppState>()(
   ),
 );
 
-followStoredChanges(useSettings, 'settings');
+followStoredChanges(useSettings, STORAGE_KEYS.settings);
 
-/** Moves settings kept as separate keys, before `settings`, into it. */
+/**
+ * Moves settings kept as separate keys, before `settings`, into it. Only
+ * their keys go: a fresh install's other values (a login in progress, the
+ * queue) stay.
+ */
 const migrateFromOldStorage = async () => {
-  const old: Record<string, any> = await browser.storage.local.get();
-  if (old.settings !== undefined) return;
+  const old: Record<string, any> = await browser.storage.local.get([
+    STORAGE_KEYS.settings,
+    ...LEGACY_SETTING_KEYS,
+  ]);
+  if (
+    old[STORAGE_KEYS.settings] !== undefined ||
+    !LEGACY_SETTING_KEYS.some((key) => old[key] !== undefined)
+  ) {
+    return;
+  }
 
-  await browser.storage.local.clear();
+  await browser.storage.local.remove([...LEGACY_SETTING_KEYS]);
   const { features, userData } = useSettings.getState();
   useSettings.setState({
     userData: old.userData || userData,

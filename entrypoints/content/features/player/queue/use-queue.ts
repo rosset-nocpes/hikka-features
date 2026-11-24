@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
+import { STORAGE_KEYS } from '@/constants/storage';
 import { extensionStorage, followStoredChanges } from '@/hooks/use-settings';
 
 /** An episode to play after the current one, of any anime. */
@@ -120,11 +121,11 @@ export const useQueue = create<QueueState>()(
       clear: () => set({ items: [] }),
     }),
     {
-      name: 'player-queue',
+      name: STORAGE_KEYS.playerQueue,
       storage: createJSONStorage(() => extensionStorage),
       partialize: ({ items }) => ({ items }),
     },
   ),
 );
 
-followStoredChanges(useQueue, 'player-queue');
+followStoredChanges(useQueue, STORAGE_KEYS.playerQueue);

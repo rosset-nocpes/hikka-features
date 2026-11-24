@@ -11,11 +11,9 @@ import type { QueueItem } from './use-queue';
 
 import { followingEpisode, usePlayer } from '../context/player-context';
 import { playNext } from '../player-iframe-effects';
+import { UP_NEXT_COUNTDOWN_MS } from '../player.constants';
 import { activeQueue, useActiveQueue } from './use-active-queue';
 import { useTeamName } from './use-team-name';
-
-/** How long the next episode waits, so the user can stop it. */
-const COUNTDOWN_MS = 8_000;
 
 /** What plays next: the queue's first episode, else the anime's next one. */
 interface NextEpisode {
@@ -81,9 +79,9 @@ export const upNext = {
     }
     useUpNext.setState({
       status: 'counting',
-      playsAt: Date.now() + COUNTDOWN_MS,
+      playsAt: Date.now() + UP_NEXT_COUNTDOWN_MS,
     });
-    timer = setTimeout(upNext.play, COUNTDOWN_MS);
+    timer = setTimeout(upNext.play, UP_NEXT_COUNTDOWN_MS);
   },
   cancel: () => {
     clearTimeout(timer);
@@ -107,7 +105,7 @@ const useSecondsLeft = (at?: number) => {
     return () => clearInterval(interval);
   }, [at]);
   // Until the first tick, `now` may be from long before the countdown.
-  const left = Math.min(at ? at - now : 0, COUNTDOWN_MS);
+  const left = Math.min(at ? at - now : 0, UP_NEXT_COUNTDOWN_MS);
   return Math.max(0, Math.ceil(left / 1000));
 };
 
@@ -152,7 +150,7 @@ const PlayNow: FC<{ playsAt?: number; size: 'sm' | 'icon-sm' }> = ({
         <motion.span
           aria-hidden
           className="bg-foreground/10 absolute inset-0 -z-10 origin-left"
-          initial={{ scaleX: 1 - left / COUNTDOWN_MS }}
+          initial={{ scaleX: 1 - left / UP_NEXT_COUNTDOWN_MS }}
           animate={{ scaleX: 1 }}
           transition={{ duration: left / 1000, ease: 'linear' }}
         />
@@ -198,7 +196,7 @@ const UpNext: FC<Props> = ({ inline, corner }) => {
   const announcement = (
     <p role="status" className="sr-only">
       {shown &&
-        `Далі: ${title}, епізод ${next.episode}.${playsAt ? ` Почнеться за ${COUNTDOWN_MS / 1000} секунд.` : ''}`}
+        `Далі: ${title}, епізод ${next.episode}.${playsAt ? ` Почнеться за ${UP_NEXT_COUNTDOWN_MS / 1000} секунд.` : ''}`}
     </p>
   );
 

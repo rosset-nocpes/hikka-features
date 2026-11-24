@@ -1,5 +1,7 @@
 import type { FunctionReturnType } from 'convex/server';
 
+import { STORAGE_KEYS } from '@/constants/storage';
+
 import type { convexApi } from './convex-api';
 
 import { StoredValue } from './stored-value';
@@ -18,7 +20,7 @@ export interface ExtensionCompatibilityState extends CompatibilityResponse {
 
 /** The backend's last answer on whether it serves this install's build. */
 export const compatibilityState = new StoredValue<ExtensionCompatibilityState>(
-  'extensionCompatibility',
+  STORAGE_KEYS.compatibility,
 );
 
 /** The stored answer, while it is about this build. */

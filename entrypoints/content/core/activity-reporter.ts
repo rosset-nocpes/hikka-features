@@ -2,10 +2,7 @@ import { account } from '@/utils/account';
 import { convexApi } from '@/utils/convex-api';
 import { convex } from '@/utils/convex-client';
 
-/** The server forgets activity three minutes after the last report. */
-const REPORT_INTERVAL_MS = 60_000;
-/** Lets a burst of changes, like switching episodes, settle into one report. */
-const REPORT_DELAY_MS = 1_500;
+import { REPORT_INTERVAL_MS, REPORT_DELAY_MS } from './core.constants';
 
 interface ActivitySource<Report> {
   /** What the open player or reader shows; undefined while it has nothing. */

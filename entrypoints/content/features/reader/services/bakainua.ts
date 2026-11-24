@@ -1,5 +1,7 @@
 import type { Cheerio, CheerioAPI } from 'cheerio';
 
+import { BAKA_IN_UA_URL } from '@/constants/links';
+
 import type {
   Chapter,
   ReaderContent,
@@ -47,7 +49,7 @@ const titleScore = (candidates: string[], titles: string[]) => {
 
 class BIUScraper extends BaseScraper {
   constructor() {
-    super('BIUScraper', 'https://baka.in.ua');
+    super('BIUScraper', BAKA_IN_UA_URL);
   }
 
   async search(data: TitleInfo) {

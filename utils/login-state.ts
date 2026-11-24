@@ -1,3 +1,5 @@
+import { STORAGE_KEYS } from '@/constants/storage';
+
 import { StoredValue } from './stored-value';
 
 type LoginState =
@@ -17,7 +19,9 @@ type LoginState =
  * succeeded. It lives in `storage.local` so it outlasts Chrome restarting
  * the background's worker, and so every context can wait for the login.
  */
-export const loginState = new StoredValue<LoginState>('account-login');
+export const loginState = new StoredValue<LoginState>(
+  STORAGE_KEYS.accountLogin,
+);
 
 /**
  * Runs `start`, which asks the background to log in, and settles once that

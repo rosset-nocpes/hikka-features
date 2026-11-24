@@ -1,3 +1,4 @@
+import { PROVIDERS } from '@/constants/providers';
 import { useNavigation } from '@/hooks/use-navigation';
 
 import FeatureSwitch from '../_base/feature-switch';
@@ -12,7 +13,7 @@ const MINI_MODE_OPTIONS = [
   { value: 'video-native', label: 'Нативний' },
 ] as const;
 
-const PROVIDER_OPTIONS = ['moon', 'ashdi', 'tortuga'].map((value) => ({
+const PROVIDER_OPTIONS = PROVIDERS.map((value) => ({
   value,
   label: value.toUpperCase(),
 }));

@@ -10,7 +10,7 @@ import {
 } from '@/utils/hikka-router';
 import { hikkaTheme } from '@/utils/hikka-theme';
 
-import { HIKKA_PAGE_CHECKERS } from './core.constant';
+import { HIKKA_PAGE_CHECKERS } from './core.constants';
 import { HikkaPages } from './core.enums';
 import { queryClient } from './query-client';
 

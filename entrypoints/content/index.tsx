@@ -1,4 +1,5 @@
 import '../app.css';
+import { HIKKA_MATCHES } from '@/constants/hikka';
 import { PAGE_READY_ATTRIBUTE } from '@/utils/hikka-router';
 import { hikkaViewerQuery } from '@/utils/hikka-viewer';
 import { sendToBackground } from '@/utils/messaging';
@@ -14,7 +15,7 @@ const followHikkaSession = () =>
     .catch(() => undefined);
 
 export default defineContentScript({
-  matches: ['https://hikka.io/*', 'https://dev.hikka.io/*'],
+  matches: HIKKA_MATCHES,
   cssInjectionMode: 'ui',
   async main(ctx) {
     void sendToBackground('hikka-content-loaded').catch(() => undefined);

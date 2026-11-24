@@ -8,13 +8,11 @@ import {
 import { plural } from '@/utils/plural';
 
 import { ContainerContext } from './parts';
-
-/** Fewer posts than this say nothing about a team's habits. */
-const MIN_RELEASES = 10;
-/** The backend's cap on the release times it sends. */
-const MAX_RELEASES = 500;
-/** A day this far above an even share is the team's day. */
-const PEAK_SHARE = 1.4;
+import {
+  RELEASE_DAYS_MIN_RELEASES,
+  RELEASE_DAYS_MAX_RELEASES,
+  RELEASE_DAYS_PEAK_SHARE,
+} from './team-pages.constants';
 
 /** Monday first, as in Ukraine. */
 const DAYS = [
@@ -51,7 +49,9 @@ function countDays(times: number[]) {
   }
   const max = Math.max(...days);
   const peaks = days.flatMap((count, day) =>
-    count === max && count >= (times.length / 7) * PEAK_SHARE ? [day] : [],
+    count === max && count >= (times.length / 7) * RELEASE_DAYS_PEAK_SHARE
+      ? [day]
+      : [],
   );
   const usualHour = hours.indexOf(Math.max(...hours));
   return { days, max, peaks, usualHour };
@@ -75,12 +75,12 @@ const ReleaseDays: FC<{ times: number[] }> = ({ times }) => {
     () => countDays(times),
     [times],
   );
-  if (times.length < MIN_RELEASES) return null;
+  if (times.length < RELEASE_DAYS_MIN_RELEASES) return null;
 
   const oldest = new Date(Math.min(...times));
   const usual = new Date(oldest);
   usual.setHours(usualHour, 0, 0, 0);
-  const period = `${times.length >= MAX_RELEASES ? 'останні' : 'усі'} ${times.length} ${releasesWord(times.length)} з ${since.format(oldest)}`;
+  const period = `${times.length >= RELEASE_DAYS_MAX_RELEASES ? 'останні' : 'усі'} ${times.length} ${releasesWord(times.length)} з ${since.format(oldest)}`;
 
   return (
     <div className="surface border-border flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-center sm:gap-6">

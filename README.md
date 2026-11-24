@@ -21,6 +21,12 @@ Hikka application. Configure the values returned by
 `browser.identity.getRedirectURL()` as `CHROME_EXTENSION_REDIRECT_URI` and
 `FIREFOX_EXTENSION_REDIRECT_URI` on the backend.
 
+Shared constants live in `constants/`: hikka.io's hosts and API
+(`hikka.ts`), other sites and APIs (`links.ts`), `storage.local` keys
+(`storage.ts`), players (`providers.ts`) and account timings (`account.ts`).
+A feature's own tuning sits beside it in `<feature>.constants.ts` (`player`,
+`reader`, `music`, `team-pages`, and `core` for the content script).
+
 The background worker owns the account session (`utils/convex-session.ts`).
 Refresh tokens rotate on every use, so content scripts and the popup never
 refresh on their own: they call `accountQuery`/`accountMutation`, which forward

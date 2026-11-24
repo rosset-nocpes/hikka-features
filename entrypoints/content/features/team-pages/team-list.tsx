@@ -38,11 +38,7 @@ import {
   TypeFilterButtons,
 } from './parts';
 import { teamListQuery } from './team-page-query';
-
-/** Teams a part shows at first and adds by each "show more". */
-const PAGE_SIZE = 6;
-/** Posters before the tile that opens the team. */
-const POSTERS = 4;
+import { TEAM_LIST_PAGE_SIZE, TEAM_LIST_POSTERS } from './team-pages.constants';
 
 type Sort = 'releases' | 'title';
 
@@ -105,7 +101,7 @@ const MoreTile: FC<{ href: string; image?: string; count: number }> = ({
 const TeamRow: FC<{ team: TeamListing }> = ({ team }) => {
   const href = teamPagePath(team.slug);
   const count = team.stats?.anime ?? 0;
-  const posters = team.covers.slice(0, POSTERS);
+  const posters = team.covers.slice(0, TEAM_LIST_POSTERS);
   return (
     <article className="flex flex-col gap-4 py-6 first:pt-0">
       <div className="flex items-center gap-3">
@@ -137,13 +133,17 @@ const TeamRow: FC<{ team: TeamListing }> = ({ team }) => {
             href={href}
             onClick={onHikkaLinkClick}
             tabIndex={-1}
-            className={cn(index === POSTERS - 1 && 'max-sm:hidden')}
+            className={cn(index === TEAM_LIST_POSTERS - 1 && 'max-sm:hidden')}
           >
             <Poster image={cover} />
           </a>
         ))}
         {count > posters.length && (
-          <MoreTile href={href} image={team.covers[POSTERS]} count={count} />
+          <MoreTile
+            href={href}
+            image={team.covers[TEAM_LIST_POSTERS]}
+            count={count}
+          />
         )}
       </div>
     </article>
@@ -178,7 +178,7 @@ const TeamGroup: FC<ContentsEntry & { teams: TeamListing[] }> = ({
   teams,
   ...entry
 }) => {
-  const [shown, setShown] = useState(PAGE_SIZE);
+  const [shown, setShown] = useState(TEAM_LIST_PAGE_SIZE);
   return (
     <ContentsSection {...entry}>
       <div className="divide-border flex flex-col divide-y">
@@ -187,7 +187,9 @@ const TeamGroup: FC<ContentsEntry & { teams: TeamListing[] }> = ({
         ))}
       </div>
       {teams.length > shown && (
-        <LoadMoreButton onClick={() => setShown(shown + PAGE_SIZE * 2)} />
+        <LoadMoreButton
+          onClick={() => setShown(shown + TEAM_LIST_PAGE_SIZE * 2)}
+        />
       )}
     </ContentsSection>
   );

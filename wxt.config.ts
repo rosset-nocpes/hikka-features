@@ -5,6 +5,17 @@ import Icons from 'unplugin-icons/vite';
 import { loadEnv } from 'vite';
 import { defineConfig } from 'wxt';
 
+import { HIKKA_API_URL, HIKKA_MATCHES, HIKKA_URL } from './constants/hikka';
+import {
+  ANILIST_GRAPHQL_URL,
+  BAKA_IN_UA_URL,
+  MANGA_IN_UA_URL,
+  TENRAI_API_URL,
+} from './constants/links';
+
+/** A host permission for every path under `url`'s origin. */
+const originPattern = (url: string) => `${new URL(url).origin}/*`;
+
 const env = loadEnv('', process.cwd(), '');
 const isPersistent = env.WXT_PERSIST_BROWSER_DATA
   ? JSON.parse(env.WXT_PERSIST_BROWSER_DATA)
@@ -64,17 +75,19 @@ export default defineConfig({
       name: 'Hikka Features',
       permissions: ['storage', 'alarms'],
       host_permissions: [
-        'https://api.hikka.io/*',
+        originPattern(HIKKA_API_URL),
         ...convexHostPermissions,
-        'https://graphql.anilist.co/*',
-        'https://api.tenrai.org/*',
-        'https://manga.in.ua/*',
-        'https://baka.in.ua/*',
+        ...[
+          ANILIST_GRAPHQL_URL,
+          TENRAI_API_URL,
+          MANGA_IN_UA_URL,
+          BAKA_IN_UA_URL,
+        ].map(originPattern),
       ],
       web_accessible_resources: [
         {
           // Injected into hikka.io's own world for its router.
-          matches: ['https://hikka.io/*', 'https://dev.hikka.io/*'],
+          matches: HIKKA_MATCHES,
           resources: ['hikka-router.js', 'hf-x-cpr.svg', 'hf-x-cpr-dark.svg'],
         },
       ],
@@ -89,7 +102,7 @@ export default defineConfig({
     };
   },
   webExt: {
-    startUrls: ['https://hikka.io'],
+    startUrls: [HIKKA_URL],
     chromiumArgs:
       !isWindows && isPersistent ? ['--user-data-dir=./.wxt/chrome-data'] : [],
     chromiumProfile: isWindows && isPersistent && resolve('.wxt/chrome-data'),

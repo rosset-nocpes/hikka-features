@@ -9,6 +9,7 @@ import MaterialSymbolsVolumeOffOutlineRounded from '~icons/material-symbols/volu
 import MaterialSymbolsVolumeUpOutlineRounded from '~icons/material-symbols/volume-up-outline-rounded';
 
 import { usePlayer } from '../context/player-context';
+import { ACTION_POPUP_HIDE_MS } from '../player.constants';
 
 const PLAYER_OVERLAY_ACTION_EVENT = 'playeroverlayaction';
 
@@ -47,8 +48,6 @@ export const dispatchPlayerOverlayAction = (
     }),
   );
 };
-
-const HIDE_DELAY = 750;
 
 /** Where the popup sits; actions in the same slot replace each other in place. */
 const getSlot = (action: PopupAction) => {
@@ -209,7 +208,7 @@ const ActionPopup = () => {
 
       clearTimeout(hideTimer);
       setFlash(action);
-      hideTimer = setTimeout(() => setFlash(null), HIDE_DELAY);
+      hideTimer = setTimeout(() => setFlash(null), ACTION_POPUP_HIDE_MS);
     };
 
     overlay.addEventListener(PLAYER_OVERLAY_ACTION_EVENT, handleAction);

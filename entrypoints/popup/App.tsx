@@ -25,6 +25,7 @@ import MdiTelegram from '~icons/mdi/telegram';
 import ExtensionLogo from '@/assets/icon.png';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { GITHUB_REPO_URL, TELEGRAM_CHANNEL_URL } from '@/constants/links';
 import { type Page, useNavigation } from '@/hooks/use-navigation';
 import { version } from '@/package.json';
 import { NEW_TAB } from '@/utils/hikka-router';
@@ -282,7 +283,7 @@ function HomeHeader() {
           )}
         </AnimatePresence>
         <a
-          href="https://github.com/rosset-nocpes/hikka-features"
+          href={GITHUB_REPO_URL}
           {...NEW_TAB}
           aria-label="GitHub"
           title="GitHub"
@@ -291,7 +292,7 @@ function HomeHeader() {
           <MdiGithub />
         </a>
         <a
-          href="https://t.me/hikka_features"
+          href={TELEGRAM_CHANNEL_URL}
           {...NEW_TAB}
           aria-label="Telegram-канал"
           title="Telegram-канал"

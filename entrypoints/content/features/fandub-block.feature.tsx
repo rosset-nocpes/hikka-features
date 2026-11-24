@@ -7,7 +7,8 @@ import ShowMoreList from '@/components/hikka/show-more-list';
 import TeamLogo from '@/components/hikka/team-logo';
 import EmptyState from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
-import { teamPagePath } from '@/utils/hikka-router';
+import { CPR_CATALOG_URL } from '@/constants/links';
+import { NEW_TAB, teamPagePath } from '@/utils/hikka-router';
 import { describeReleases } from '@/utils/team-releases';
 
 import { BaseFeature } from '../core/base-feature';
@@ -57,11 +58,7 @@ const FandubBlock = () => {
           title="Від команд"
           to={teamPagePath()}
           badge={
-            <a
-              href="https://drbryanman.github.io/CPRcatalog/#/"
-              target="_blank"
-              rel="noopener"
-            >
+            <a href={CPR_CATALOG_URL} {...NEW_TAB}>
               <img
                 src={browser.runtime.getURL(
                   hikkaTheme.isDark ? '/hf-x-cpr.svg' : '/hf-x-cpr-dark.svg',

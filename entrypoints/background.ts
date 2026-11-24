@@ -1,5 +1,7 @@
 import ky from 'ky';
 
+import { isHikkaUrl } from '@/constants/hikka';
+import { BAKA_IN_UA_URL, MANGA_IN_UA_URL } from '@/constants/links';
 import {
   type ExtensionCompatibilityState,
   watchCompatibility,
@@ -20,8 +22,8 @@ const REMOTE_FETCH_ORIGINS = new Map<
   string,
   Set<BackgroundMessage<'remote-fetch'>['method']>
 >([
-  ['https://manga.in.ua', new Set(['GET', 'POST'])],
-  ['https://baka.in.ua', new Set(['GET'])],
+  [MANGA_IN_UA_URL, new Set(['GET', 'POST'])],
+  [BAKA_IN_UA_URL, new Set(['GET'])],
 ]);
 
 export default defineBackground(() => {
@@ -139,8 +141,7 @@ function fromExtensionPage(sender: Browser.runtime.MessageSender) {
 /** Whether the message comes from hikka.io's page, not one of its frames. */
 function fromHikkaPage(sender: Browser.runtime.MessageSender) {
   if (sender.frameId !== 0 || !sender.url) return false;
-  const { origin } = new URL(sender.url);
-  return origin === 'https://hikka.io' || origin === 'https://dev.hikka.io';
+  return isHikkaUrl(sender.url);
 }
 
 async function remoteFetch(
@@ -157,7 +158,7 @@ async function remoteFetch(
   }
 
   const headers = new Headers();
-  if (url.origin === 'https://manga.in.ua') {
+  if (url.origin === MANGA_IN_UA_URL) {
     headers.set('X-Requested-With', 'XMLHttpRequest');
   }
   if (request.method === 'POST') {
