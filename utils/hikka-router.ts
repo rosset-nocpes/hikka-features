@@ -49,6 +49,33 @@ export const NAVIGATED_EVENT = 'hikka-features:navigated';
 export const ROUTER_READY_ATTRIBUTE = 'data-hikka-features-router';
 /** Set on `<html>` once a page of the extension's loaded directly is in the site's layout. */
 export const PAGE_READY_ATTRIBUTE = 'data-hikka-features-ready';
+/**
+ * Set on `<html>` once React has hydrated the site's server HTML. Changing
+ * its DOM before then fails hydration, and React throws the page away and
+ * renders it again from scratch.
+ */
+export const HYDRATED_ATTRIBUTE = 'data-hikka-features-hydrated';
+/** How long to wait for hydration before going ahead anyway. */
+export const HYDRATION_TIMEOUT_MS = 10_000;
+
+/** Resolves once the site has hydrated (`HYDRATED_ATTRIBUTE`), or gave up waiting. */
+export function whenHydrated() {
+  const root = document.documentElement;
+  if (root.hasAttribute(HYDRATED_ATTRIBUTE)) return Promise.resolve();
+  return new Promise<void>((resolve) => {
+    const done = () => {
+      observer.disconnect();
+      clearTimeout(timer);
+      resolve();
+    };
+    const observer = new MutationObserver(() => {
+      if (root.hasAttribute(HYDRATED_ATTRIBUTE)) done();
+    });
+    observer.observe(root, { attributeFilter: [HYDRATED_ATTRIBUTE] });
+    // The page's script never answering must not keep the features off.
+    const timer = setTimeout(done, HYDRATION_TIMEOUT_MS + 2_000);
+  });
+}
 
 /** Opens a hikka.io path in place, or loads it when the router can't. */
 export function navigateOnHikka(href: string, { replace = false } = {}) {

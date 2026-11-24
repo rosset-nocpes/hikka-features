@@ -35,14 +35,14 @@ const toInput = (
  * local one, and local edits are pushed while the account still holds what
  * this device last synced.
  */
-export async function syncTeamPriority(account: TeamPriorityAccount) {
+export async function syncTeamPriority(store: TeamPriorityAccount) {
   const { convexSession, teamPrioritySyncedAt, features } =
     useSettings.getState();
   if (!convexSession) return;
 
   const local = features.player.teamPriority;
   const localTranslation = features.player.teamPriorityTranslation;
-  const remote = await account.get();
+  const remote = await store.get();
 
   let push: TeamPriorityInput | undefined;
   if (!remote) {
@@ -66,7 +66,7 @@ export async function syncTeamPriority(account: TeamPriorityAccount) {
     push = toInput(local, localTranslation);
   }
 
-  const saved = push ? await account.set(push) : remote;
+  const saved = push ? await store.set(push) : remote;
   if (!saved) return;
 
   // An edit made while this ran is kept; the next sync pushes it.

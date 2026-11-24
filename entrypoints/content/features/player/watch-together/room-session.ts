@@ -16,7 +16,7 @@ import {
   type WatchRoomQueueEpisode,
   type WatchRoomQueueItem,
 } from '@/utils/convex-api';
-import { liveConvex } from '@/utils/convex-client';
+import { liveConvex } from '@/utils/live-convex';
 
 import { followingEpisode, usePlayer } from '../context/player-context';
 import { followRoom } from '../player';

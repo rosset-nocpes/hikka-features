@@ -40,7 +40,7 @@ test('unchanged routes do not notify subscribers or replace the path', () => {
   assert.equal(store.getState().slug, undefined);
 });
 
-function managerHarness() {
+function managerHarness(hydrated = Promise.resolve()) {
   let mutate;
   let scans = 0;
   let mounts = 0;
@@ -65,10 +65,13 @@ function managerHarness() {
     read('entrypoints/content/core/feature-manager.ts'),
   )
     .replace(/import .* from '.\/base-feature';/, '')
+    .replace('void preloadContentCss();', '')
+    .replace(/import .* from '@\/utils\/hikka-router';/, '')
     .replace('export class FeatureManager', 'class FeatureManager')
     .replace(/import\.meta\.glob\s*\([\s\S]*?\);/, '({});');
   const manager = runInNewContext(`${source}\nnew FeatureManager();`, {
     usePageStore: pageStore(),
+    whenHydrated: () => hydrated,
     URL,
     location: { href: 'https://hikka.io/anime/test' },
     document: {
@@ -95,8 +98,9 @@ function managerHarness() {
     },
   });
   manager.features = [feature];
-  manager.init();
+  const started = manager.init();
   return {
+    started,
     manager,
     feature,
     frames,
@@ -114,8 +118,29 @@ function managerHarness() {
   };
 }
 
-test('mutation bursts share one scan and detached features remount in that scan', () => {
+test('nothing goes on the page until the site has hydrated', async () => {
+  let hydrate;
+  const h = managerHarness(new Promise((resolve) => (hydrate = resolve)));
+  await Promise.resolve();
+  assert.equal(h.scans(), 0);
+  assert.equal(h.mounts(), 0);
+  hydrate();
+  await h.started;
+  assert.equal(h.scans(), 1);
+});
+
+test('stopping before hydration keeps the features off', async () => {
+  let hydrate;
+  const h = managerHarness(new Promise((resolve) => (hydrate = resolve)));
+  h.manager.stop();
+  hydrate();
+  await h.started;
+  assert.equal(h.scans(), 0);
+});
+
+test('mutation bursts share one scan and detached features remount in that scan', async () => {
   const h = managerHarness();
+  await h.started;
   assert.equal(h.scans(), 1);
   h.detach();
   for (let i = 0; i < 1000; i++) h.mutate();
@@ -129,6 +154,7 @@ test('mutation bursts share one scan and detached features remount in that scan'
 
 test('stopping cancels pending work and leaving a supported route unmounts', async () => {
   const h = managerHarness();
+  await h.started;
   h.feature.shouldMount = false;
   await h.manager.reconcile();
   assert.equal(h.feature.isMounted, false);

@@ -1,11 +1,9 @@
-import * as cheerio from 'cheerio';
-
 import { MANGA_IN_UA_URL } from '@/constants/links';
 
 import type { Chapter, ReaderContent, TitleInfo } from '../reader.types';
 
 import { ReaderContentMode } from '../reader.enums';
-import BaseScraper from './_scraper';
+import BaseScraper, { parseHtml } from './_scraper';
 
 const ENDPOINTS = {
   search: 'index.php?do=search',
@@ -61,17 +59,18 @@ class MIUScraper extends BaseScraper {
         search_start: '1',
       });
 
-      let $search = await this.load(ENDPOINTS.search, 'POST', searchData);
+      let results = await this.load(ENDPOINTS.search, 'POST', searchData);
 
       // Nothing found with the year; try the title alone.
-      if ($search('.berrors').length) {
+      if (results.querySelector('.berrors')) {
         searchData.set('story', title);
-        $search = await this.load(ENDPOINTS.search, 'POST', searchData);
+        results = await this.load(ENDPOINTS.search, 'POST', searchData);
       }
 
-      mangaUrl = $search('main.main article.item h3.card__title a')
-        .first()
-        .attr('href');
+      mangaUrl =
+        results
+          .querySelector('main.main article.item h3.card__title a')
+          ?.getAttribute('href') ?? undefined;
     }
     if (!mangaUrl) throw new Error(`Manga "${title}" not found.`);
 
@@ -80,42 +79,40 @@ class MIUScraper extends BaseScraper {
 
   async getChapterList(url: string): Promise<ReaderContent> {
     const pageHtml = await this.request(url);
-    const $page = cheerio.load(pageHtml);
-    const container = $page('div#linkstocomics');
+    const container = parseHtml(pageHtml).querySelector('div#linkstocomics');
 
     const params = new URLSearchParams({
       action: 'show',
-      news_id: container.attr('data-news_id') || '',
-      news_category: container.attr('data-news_category') || '',
-      this_link: container.attr('data-this_link') || '',
+      news_id: container?.getAttribute('data-news_id') || '',
+      news_category: container?.getAttribute('data-news_category') || '',
+      this_link: container?.getAttribute('data-this_link') || '',
       [this.extractQueryKey(pageHtml, ENDPOINTS.loadChapters)]:
         this.extractUserHash(pageHtml),
     });
 
-    const $list = await this.load(ENDPOINTS.loadChapters, 'POST', params);
+    const list = await this.load(ENDPOINTS.loadChapters, 'POST', params);
     const chapters: Chapter[] = [];
 
-    $list('div.ltcitems').each((_, el) => {
-      const $el = $list(el);
-      const $link = $el.find('a').first();
-      const href = $link.attr('href') || '';
-      const text = $link.text().trim();
+    for (const item of list.querySelectorAll('div.ltcitems')) {
+      const link = item.querySelector('a');
+      const href = link?.getAttribute('href') || '';
+      const text = link?.textContent?.trim() ?? '';
 
-      if (text.includes('Альтернативний')) return;
+      if (text.includes('Альтернативний')) continue;
 
       chapters.push({
         id:
           href.split('/').pop()?.split('-')[0] ||
-          $el.attr('manga-chappter') ||
+          item.getAttribute('manga-chappter') ||
           '0',
-        translator: $el.attr('translate') || '',
-        date_upload: $el.children().first().text().trim(),
-        volume: Number($el.attr('manga-tom') || 0),
-        chapter: Number($el.attr('manga-chappter') || 0),
+        translator: item.getAttribute('translate') || '',
+        date_upload: item.firstElementChild?.textContent?.trim() ?? '',
+        volume: Number(item.getAttribute('manga-tom') || 0),
+        chapter: Number(item.getAttribute('manga-chappter') || 0),
         title: text.split('-')[1]?.trim() ?? '',
         url: href,
       });
-    });
+    }
 
     return { displayMode: ReaderContentMode.Chapters, chapters };
   }
@@ -123,19 +120,21 @@ class MIUScraper extends BaseScraper {
   /** The chapter's page images. */
   async getChapter(url: string) {
     const html = await this.request(url);
-    const $ = cheerio.load(html);
 
     const params = new URLSearchParams({
-      news_id: $('div#comics').attr('data-news_id') || '',
+      news_id:
+        parseHtml(html)
+          .querySelector('div#comics')
+          ?.getAttribute('data-news_id') || '',
       action: 'show',
       [this.extractQueryKey(html, ENDPOINTS.loadImages)]:
         this.extractUserHash(html),
     });
 
-    const $images = await this.load(`${ENDPOINTS.loadImages}&${params}`);
-    return $images('img')
-      .toArray()
-      .flatMap((img) => $images(img).attr('data-src') || []);
+    const images = await this.load(`${ENDPOINTS.loadImages}&${params}`);
+    return [...images.querySelectorAll('img')].flatMap(
+      (img) => img.getAttribute('data-src') || [],
+    );
   }
 }
 

@@ -1,6 +1,6 @@
 import '../app.css';
 import { HIKKA_MATCHES } from '@/constants/hikka';
-import { PAGE_READY_ATTRIBUTE } from '@/utils/hikka-router';
+import { HYDRATED_ATTRIBUTE, PAGE_READY_ATTRIBUTE } from '@/utils/hikka-router';
 import { hikkaViewerQuery } from '@/utils/hikka-viewer';
 import { sendToBackground } from '@/utils/messaging';
 
@@ -31,10 +31,11 @@ export default defineContentScript({
     // The site's router, for the extension's pages and in-place navigation.
     void injectScript('/hikka-router.js').catch(() => {
       document.documentElement.setAttribute(PAGE_READY_ATTRIBUTE, '');
+      document.documentElement.setAttribute(HYDRATED_ATTRIBUTE, '');
     });
 
     const manager = new FeatureManager();
-    manager.init();
+    void manager.init();
 
     ctx.onInvalidated(() => {
       void sendToBackground('hikka-content-unloaded').catch(() => undefined);

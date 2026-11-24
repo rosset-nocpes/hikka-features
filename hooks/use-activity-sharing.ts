@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { useLiveQuery } from '@/hooks/use-live-query';
 import { convexApi } from '@/utils/convex-api';
-import { liveConvex } from '@/utils/convex-client';
+import { liveConvex } from '@/utils/live-convex';
 
 /**
  * Whether the account shares its activity with friends, followed live, so a

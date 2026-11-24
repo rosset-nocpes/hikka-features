@@ -6,7 +6,8 @@ import {
   type SkipAnswer,
   type SkipSegment,
 } from '@/utils/convex-api';
-import { convex, liveConvex } from '@/utils/convex-client';
+import { convex } from '@/utils/convex-client';
+import { liveConvex } from '@/utils/live-convex';
 
 import { followingEpisode, usePlayer } from '../context/player-context';
 import {

@@ -1,4 +1,6 @@
 import {
+  HYDRATED_ATTRIBUTE,
+  HYDRATION_TIMEOUT_MS,
   NAVIGATE_EVENT,
   NAVIGATED_EVENT,
   ownPageRoute,
@@ -24,6 +26,56 @@ const findRouter = async () => {
   return undefined;
 };
 
+/** How often to look whether the site has hydrated. */
+const HYDRATION_POLL_MS = 25;
+
+/**
+ * Whether React has hydrated the site's server HTML: the root, and every
+ * Suspense boundary (route content streams in behind them). Read from
+ * React's internals, which only this world sees; undefined once they don't
+ * look as expected, so the caller stops waiting.
+ */
+function hydrationPending(): boolean | undefined {
+  const key = Object.keys(document).find((name) =>
+    name.startsWith('__reactContainer$'),
+  );
+  if (!key) return true;
+  type Fiber = {
+    child?: Fiber | null;
+    sibling?: Fiber | null;
+    memoizedState?: { isDehydrated?: boolean; dehydrated?: unknown } | null;
+  };
+  const current = (
+    document as unknown as Record<string, { stateNode?: { current?: Fiber } }>
+  )[key]?.stateNode?.current;
+  if (!current) return undefined;
+  if (current.memoizedState?.isDehydrated !== false) return true;
+  const stack: Fiber[] = [current];
+  while (stack.length) {
+    const fiber = stack.pop()!;
+    if (fiber.memoizedState?.dehydrated) return true;
+    if (fiber.sibling) stack.push(fiber.sibling);
+    if (fiber.child) stack.push(fiber.child);
+  }
+  return false;
+}
+
+/** Marks `<html>` once the site has hydrated, or after a while regardless. */
+function markHydrated(root: HTMLElement) {
+  const started = Date.now();
+  const check = () => {
+    if (
+      hydrationPending() === true &&
+      Date.now() - started < HYDRATION_TIMEOUT_MS
+    ) {
+      setTimeout(check, HYDRATION_POLL_MS);
+      return;
+    }
+    root.setAttribute(HYDRATED_ATTRIBUTE, '');
+  };
+  check();
+}
+
 /**
  * Runs in hikka.io's own JavaScript world, injected by the content script.
  * hikka.io answers paths it doesn't know, like the extension's pages, with a
@@ -33,6 +85,7 @@ const findRouter = async () => {
  */
 export default defineUnlistedScript(async () => {
   const root = document.documentElement;
+  markHydrated(root);
   const router = await findRouter();
   if (!router) {
     root.setAttribute(PAGE_READY_ATTRIBUTE, '');

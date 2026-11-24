@@ -5,7 +5,7 @@ import {
   useReducedMotion,
   type Variants,
 } from 'motion/react';
-import { type FC, useRef } from 'react';
+import { type FC, lazy, Suspense, useEffect, useRef } from 'react';
 import MaterialSymbolsAutoAwesomeRounded from '~icons/material-symbols/auto-awesome-rounded';
 import MaterialSymbolsChevronLeftRounded from '~icons/material-symbols/chevron-left-rounded';
 import MaterialSymbolsExperiment from '~icons/material-symbols/experiment';
@@ -35,9 +35,6 @@ import NavigationRow from './_base/navigation-row';
 import SettingsGroup from './_base/settings-group';
 import UpdateBanner from './_base/update-banner';
 import ActivitySettings from './options/activity-settings';
-import ExperimentalSettingsPage from './options/experimental-settings';
-import PlayerSettings from './options/player-settings';
-import TeamPrioritySettings from './options/team-priority-settings';
 import UserOptions from './options/user-options';
 
 const EASE_SMOOTH_OUT = [0.22, 1, 0.36, 1] as const;
@@ -178,6 +175,29 @@ function HomePage() {
   );
 }
 
+/**
+ * The sub-pages, loaded apart from the home page so the popup opens sooner,
+ * and fetched while it idles so going to one never waits.
+ */
+const loadPlayerSettings = () => import('./options/player-settings');
+const loadTeamPrioritySettings = () =>
+  import('./options/team-priority-settings');
+const loadExperimentalSettings = () =>
+  import('./options/experimental-settings');
+const PlayerSettings = lazy(loadPlayerSettings);
+const TeamPrioritySettings = lazy(loadTeamPrioritySettings);
+const ExperimentalSettingsPage = lazy(loadExperimentalSettings);
+
+const prefetchPages = () => {
+  for (const load of [
+    loadPlayerSettings,
+    loadTeamPrioritySettings,
+    loadExperimentalSettings,
+  ]) {
+    void load().catch(() => undefined);
+  }
+};
+
 const PAGES: Record<Page, { title: string; Content: FC }> = {
   home: { title: 'Hikka Features', Content: HomePage },
   player: { title: 'Програвач', Content: PlayerSettings },
@@ -313,6 +333,16 @@ function App() {
   const reduceMotion = useReducedMotion();
   const { title, Content } = PAGES[currentPage];
 
+  useEffect(() => {
+    // After the first paint; Safari has no requestIdleCallback.
+    if (typeof requestIdleCallback === 'function') {
+      const id = requestIdleCallback(prefetchPages, { timeout: 1_000 });
+      return () => cancelIdleCallback(id);
+    }
+    const id = setTimeout(prefetchPages, 200);
+    return () => clearTimeout(id);
+  }, []);
+
   return (
     <div
       className={cn(
@@ -382,7 +412,9 @@ function App() {
             }
             className="absolute inset-0"
           >
-            <Content />
+            <Suspense fallback={null}>
+              <Content />
+            </Suspense>
           </motion.div>
         </AnimatePresence>
       </div>

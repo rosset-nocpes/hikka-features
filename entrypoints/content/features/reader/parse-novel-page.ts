@@ -1,4 +1,3 @@
-import * as cheerio from 'cheerio';
 import DOMPurify from 'dompurify';
 
 /** Superscript digits, each at its value. */
@@ -15,65 +14,90 @@ const escapeHtml = (value: string, attribute = false) => {
 const superscriptNumber = (superscripts: string) =>
   Number([...superscripts].map((d) => SUPERSCRIPT_DIGITS.indexOf(d)).join(''));
 
-export const parseNovelPage = (html: string) => {
-  const sanitizedHtml = DOMPurify.sanitize(html, {
-    FORBID_ATTR: ['class', 'style'],
-  });
+/** The elements after `element` among its siblings. */
+const followingSiblings = (element: Element) => {
+  const siblings: Element[] = [];
+  for (let next = element.nextElementSibling; next;) {
+    siblings.push(next);
+    next = next.nextElementSibling;
+  }
+  return siblings;
+};
 
-  const $ = cheerio.load(sanitizedHtml);
-  $('p span').each(function () {
-    $(this).replaceWith($(this).contents());
-  });
+const directTextNodes = (element: Element) =>
+  [...element.childNodes].filter(
+    (node): node is Text => node.nodeType === Node.TEXT_NODE,
+  );
+
+/**
+ * A novel chapter's HTML, sanitised, with its "Пояснення" (footnotes) turned
+ * into hover cards on the words they explain (`hover-card-trigger` spans).
+ * Works on an inert document: nothing in it runs or loads.
+ */
+export const parseNovelPage = (html: string): string => {
+  const body = DOMPurify.sanitize(html, {
+    FORBID_ATTR: ['class', 'style'],
+    RETURN_DOM: true,
+  }) as HTMLElement;
+  const document = body.ownerDocument;
+
+  for (const span of body.querySelectorAll('p span')) {
+    span.replaceWith(...span.childNodes);
+  }
 
   const definitionsMap = new Map<number, string>();
 
-  const explanationHeader = $('p, h1, h2, h3, div').filter((_, el) => {
-    const cleanText = $(el)
-      .text()
-      .replace(/[^\p{L}\p{N}\s]/gu, '')
-      .trim()
-      .toLowerCase();
+  const explanationHeaders = [
+    ...body.querySelectorAll('p, h1, h2, h3, div'),
+  ].filter(
+    (element) =>
+      (element.textContent ?? '')
+        .replace(/[^\p{L}\p{N}\s]/gu, '')
+        .trim()
+        .toLowerCase() === 'пояснення',
+  );
 
-    return cleanText === 'пояснення';
-  });
-
-  if (explanationHeader.length > 0) {
+  if (explanationHeaders.length > 0) {
+    // What follows the headers, once each, in the page's order.
+    const definitions = [
+      ...new Set(explanationHeaders.flatMap(followingSiblings)),
+    ].sort((left, right) =>
+      left.compareDocumentPosition(right) & Node.DOCUMENT_POSITION_FOLLOWING
+        ? -1
+        : 1,
+    );
     // Unnumbered definitions follow on from the one before.
     let nextIndex = 1;
-    explanationHeader.nextAll().each((_, el) => {
-      const $el = $(el);
-      const text = $el.text().trim();
-      if (!text) return;
+    for (const element of definitions) {
+      const text = element.textContent?.trim();
+      if (!text) continue;
 
       const [, number, definition] = text.match(/^(\d+)[.)]\s*(.*)/) ?? [];
       const index = number ? parseInt(number, 10) : nextIndex;
       nextIndex = index + 1;
       definitionsMap.set(index, (definition ?? text).trim());
 
-      if ($el.find('img').length === 0) {
-        $el.remove();
+      if (!element.querySelector('img')) {
+        element.remove();
       } else {
-        $el
-          .contents()
-          .filter(function () {
-            return this.type === 'text';
-          })
-          .remove();
+        for (const node of directTextNodes(element)) node.remove();
       }
-    });
-    explanationHeader.remove();
+    }
+    for (const header of explanationHeaders) header.remove();
   }
 
   const superscriptRegex =
     /(«[^»]+»|"[^"]+"|'[^']+'|[^\s¹²³⁴⁵⁶⁷⁸⁹⁰.,!?;:]+)([.,!?;:]?)([¹²³⁴⁵⁶⁷⁸⁹⁰]+)/gu;
 
-  $('p, li, span, td')
-    .contents()
-    .each(function () {
-      if (this.type !== 'text') return;
+  if (definitionsMap.size > 0) {
+    // Taken before any change, so the spans added aren't read again.
+    const textNodes = [...body.querySelectorAll('p, li, span, td')].flatMap(
+      directTextNodes,
+    );
+    for (const node of textNodes) {
       // Text nodes hold decoded text; it goes back into the page as HTML.
-      const text = escapeHtml($(this).text());
-      const html = text.replace(
+      const text = escapeHtml(node.data);
+      const replaced = text.replace(
         superscriptRegex,
         (match, term: string, punctuation: string, superscripts: string) => {
           const definition = definitionsMap.get(
@@ -85,8 +109,12 @@ export const parseNovelPage = (html: string) => {
           return `<span class="hover-card-trigger" data-definition="${escapeHtml(definition, true)}" data-term="${termWithPunctuation.replaceAll('"', '&quot;')}">${termWithPunctuation}${superscripts}</span>`;
         },
       );
-      if (html !== text) $(this).replaceWith(html);
-    });
+      if (replaced === text) continue;
+      const template = document.createElement('template');
+      template.innerHTML = replaced;
+      node.replaceWith(template.content);
+    }
+  }
 
-  return $('body').contents().toArray();
+  return body.innerHTML;
 };

@@ -7,8 +7,8 @@ import {
   type ReleaseNotificationMenu,
   convexApi,
 } from '@/utils/convex-api';
-import { liveConvex } from '@/utils/convex-client';
 import { useHikkaViewer } from '@/utils/hikka-viewer';
+import { liveConvex } from '@/utils/live-convex';
 
 const MENU_ARGS = { limit: 50 };
 const EMPTY_MENU: ReleaseNotificationMenu = {

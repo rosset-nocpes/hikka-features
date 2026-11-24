@@ -1,8 +1,16 @@
-import * as cheerio from 'cheerio';
-
 import { sendToBackground } from '@/utils/messaging';
 
 import type { ReaderContent, TitleInfo } from '../reader.types';
+
+export const parseHtml = (html: string) =>
+  new DOMParser().parseFromString(html, 'text/html');
+
+/** The trimmed text of every element `selector` finds under `root`, joined. */
+export const textOf = (root: ParentNode, selector: string) =>
+  [...root.querySelectorAll(selector)]
+    .map((element) => element.textContent ?? '')
+    .join('')
+    .trim();
 
 /** A site the reader reads from, fetched through the background. */
 abstract class BaseScraper {
@@ -46,9 +54,12 @@ abstract class BaseScraper {
     }
   }
 
-  /** A page, parsed. */
+  /**
+   * A page, parsed. The browser's parser makes an inert document: its
+   * scripts don't run and its images don't load.
+   */
   protected async load(...args: Parameters<BaseScraper['request']>) {
-    return cheerio.load(await this.request(...args));
+    return parseHtml(await this.request(...args));
   }
 }
 

@@ -48,8 +48,57 @@ type FeatureUiOptions = DistributiveOmit<
   onRemove?: () => void;
 };
 
+/** At-rules that only apply from the document, not inside a shadow root. */
+const DOCUMENT_AT_RULES = /(\s*@(property|font-face)[\s\S]*?{[\s\S]*?})/gm;
+
+let sharedCss: Promise<{ shadowCss: string; documentCss: string }> | undefined;
+let documentCssAdded = false;
+
+/**
+ * The content script's stylesheet, fetched and prepared once for every
+ * shadow root: left to itself, WXT fetches it, rewrites it for `:host` and
+ * splits it again for each of the dozens of UIs a page creates. Starts
+ * before the site has hydrated; nothing goes on the page here.
+ */
+export function preloadContentCss() {
+  sharedCss ??= (async () => {
+    // Where WXT puts the entrypoint's CSS; not one of the typed public paths.
+    const url = (browser.runtime.getURL as (path: string) => string)(
+      `/content-scripts/${import.meta.env.ENTRYPOINT}.css`,
+    );
+    const css = await fetch(url)
+      .then((response) => response.text())
+      .catch((error: unknown) => {
+        console.warn(`Failed to load styles @ ${url}`, error);
+        return '';
+      });
+    const hostCss = css.replaceAll(':root', ':host');
+    return {
+      shadowCss: hostCss.replace(DOCUMENT_AT_RULES, '').trim(),
+      documentCss: Array.from(
+        hostCss.matchAll(DOCUMENT_AT_RULES),
+        (match) => match[0],
+      ).join(''),
+    };
+  })();
+  return sharedCss;
+}
+
+/** The shadow roots' CSS; what must live in the document (`@property`) goes there once. */
+async function contentCss() {
+  const { shadowCss, documentCss } = await preloadContentCss();
+  if (documentCss && !documentCssAdded) {
+    documentCssAdded = true;
+    const style = document.createElement('style');
+    style.textContent = documentCss;
+    (document.head ?? document.documentElement).append(style);
+    usePageStore.getState().ctx.onInvalidated(() => style.remove());
+  }
+  return shadowCss;
+}
+
 /** A shadow root UI that renders a React app themed like hikka.io. */
-export function createFeatureUi({
+export async function createFeatureUi({
   render,
   hostCss,
   themeVariables = true,
@@ -57,9 +106,17 @@ export function createFeatureUi({
   onRemove,
   ...options
 }: FeatureUiOptions) {
-  return createShadowRootUi(usePageStore.getState().ctx, {
+  const { ctx } = usePageStore.getState();
+  const css = await contentCss();
+  // The context WXT reads, with its own loading off: the CSS comes above.
+  const uiCtx = {
+    options: { ...ctx.options, cssInjectionMode: 'manual' },
+    onInvalidated: (callback: () => void) => ctx.onInvalidated(callback),
+  } as typeof ctx;
+  return createShadowRootUi(uiCtx, {
     inheritStyles: true,
-    css: hostCss && `:host(${options.name}) { ${hostCss} }`,
+    // The host's rules first, as WXT orders them.
+    css: hostCss ? `:host(${options.name}) { ${hostCss} }\n${css}` : css,
     ...options,
     onMount(container, _shadow, host) {
       const wrapper = document.createElement('div');

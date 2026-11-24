@@ -7,8 +7,8 @@ import type { WatchRoomInbox } from '@/utils/convex-api';
 
 import { useLiveQuery } from '@/hooks/use-live-query';
 import { convexApi } from '@/utils/convex-api';
-import { liveConvex } from '@/utils/convex-client';
 import { useHikkaViewer } from '@/utils/hikka-viewer';
+import { liveConvex } from '@/utils/live-convex';
 
 import { BaseFeature } from '../core/base-feature';
 import { HikkaPages } from '../core/core.enums';

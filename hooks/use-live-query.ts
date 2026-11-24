@@ -3,7 +3,8 @@ import type { FunctionReference, FunctionReturnType } from 'convex/server';
 import { getFunctionName } from 'convex/server';
 import { useEffect, useState } from 'react';
 
-import { convex, liveConvex } from '@/utils/convex-client';
+import { convex } from '@/utils/convex-client';
+import { liveConvex } from '@/utils/live-convex';
 
 interface LiveQueryState<Result> {
   key: string;

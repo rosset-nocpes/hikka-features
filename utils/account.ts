@@ -1,7 +1,8 @@
 import { useSettings } from '@/hooks/use-settings';
 
 import { convexApi, type TranslationType } from './convex-api';
-import { convex, liveConvex } from './convex-client';
+import { convex } from './convex-client';
+import { liveConvex } from './live-convex';
 import { awaitLogin } from './login-state';
 import { sendToBackground } from './messaging';
 import { syncTeamPriority } from './team-priority-sync';

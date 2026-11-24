@@ -1,6 +1,8 @@
-import type { DOMNode, HTMLReactParserOptions } from 'html-react-parser';
-
-import domToReact from 'html-react-parser/lib/dom-to-react';
+import parse, {
+  type DOMNode,
+  domToReact,
+  type HTMLReactParserOptions,
+} from 'html-react-parser';
 import {
   AnimatePresence,
   type HTMLMotionProps,
@@ -43,11 +45,11 @@ const NovelRenderer = () => {
     scrollRef.current?.dispatchEvent(new Event('scroll'));
   }, [animationComplete, chapterPage]);
 
-  const contentNodes = useMemo(
+  const contentHtml = useMemo(
     () =>
       chapterPage && !Array.isArray(chapterPage)
         ? parseNovelPage(chapterPage)
-        : [],
+        : '',
     [chapterPage],
   );
 
@@ -91,7 +93,7 @@ const NovelRenderer = () => {
           <AnimatePresence mode="wait">
             {chapterPage && !isLoading && (
               <PageParser
-                contentNodes={contentNodes}
+                contentHtml={contentHtml}
                 onAnimationStart={() => setAnimationComplete(false)}
                 onAnimationComplete={() => setAnimationComplete(true)}
               />
@@ -111,11 +113,11 @@ const NovelRenderer = () => {
 };
 
 interface PageParserProps extends HTMLMotionProps<'div'> {
-  contentNodes: ReturnType<typeof parseNovelPage>;
+  contentHtml: string;
 }
 
 /** The chapter's text, with zoomable images and footnotes on hover. */
-const PageParser = ({ contentNodes, ...props }: PageParserProps) => {
+const PageParser = ({ contentHtml, ...props }: PageParserProps) => {
   const { container } = useReader();
 
   const parsed = useMemo(() => {
@@ -138,7 +140,7 @@ const PageParser = ({ contentNodes, ...props }: PageParserProps) => {
                 closeDelay={100}
                 render={
                   <span className="text-primary cursor-help underline decoration-dotted underline-offset-4">
-                    {domToReact(domNode.children)}
+                    {domToReact(domNode.children as DOMNode[])}
                   </span>
                 }
               />
@@ -159,8 +161,8 @@ const PageParser = ({ contentNodes, ...props }: PageParserProps) => {
         return undefined;
       },
     };
-    return domToReact(contentNodes as DOMNode[], options);
-  }, [contentNodes, container]);
+    return parse(contentHtml, options);
+  }, [contentHtml, container]);
 
   return (
     <motion.div

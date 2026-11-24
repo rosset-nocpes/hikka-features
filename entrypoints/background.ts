@@ -1,5 +1,3 @@
-import ky from 'ky';
-
 import { isHikkaUrl } from '@/constants/hikka';
 import { BAKA_IN_UA_URL, MANGA_IN_UA_URL } from '@/constants/links';
 import {
@@ -16,6 +14,9 @@ import {
 } from '@/utils/messaging';
 
 const COMPATIBILITY_ALARM = 'extension-compatibility';
+
+/** As long as ky gave a request before: a reader site that hangs fails. */
+const REMOTE_FETCH_TIMEOUT_MS = 10_000;
 
 /** Origins the reader reads from, with the methods it uses there. */
 const REMOTE_FETCH_ORIGINS = new Map<
@@ -168,12 +169,12 @@ async function remoteFetch(
     );
   }
 
-  const response = await ky(url, {
+  const response = await fetch(url, {
     method: request.method,
     headers,
     body: request.method === 'POST' ? request.body : undefined,
     credentials: 'omit',
-    throwHttpErrors: false,
+    signal: AbortSignal.timeout(REMOTE_FETCH_TIMEOUT_MS),
   });
 
   return {

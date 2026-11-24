@@ -1,4 +1,6 @@
-import type { BaseFeature } from './base-feature';
+import { whenHydrated } from '@/utils/hikka-router';
+
+import { type BaseFeature, preloadContentCss } from './base-feature';
 
 interface FeatureModule {
   default: new () => BaseFeature;
@@ -19,7 +21,14 @@ export class FeatureManager {
     this.features = Object.values(modules).map((mod) => new mod.default());
   }
 
-  init() {
+  /**
+   * Starts once the site has hydrated: anything put on the page before
+   * then fails hydration, and React renders the whole page again.
+   */
+  async init() {
+    void preloadContentCss();
+    await whenHydrated();
+    if (this.stopped) return;
     // UIs load their styles first; place them as soon as they're ready.
     void Promise.all(this.features.map((feature) => feature.init())).then(
       this.schedule,
