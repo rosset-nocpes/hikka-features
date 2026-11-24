@@ -15,8 +15,10 @@ import {
 
 const COMPATIBILITY_ALARM = 'extension-compatibility';
 
-/** As long as ky gave a request before: a reader site that hangs fails. */
+/** How long one attempt may take, body included: a reader site that hangs fails. */
 const REMOTE_FETCH_TIMEOUT_MS = 10_000;
+/** Pauses before retrying a GET that failed on the network, as ky did. */
+const REMOTE_FETCH_RETRY_DELAYS_MS = [300, 600];
 
 /** Origins the reader reads from, with the methods it uses there. */
 const REMOTE_FETCH_ORIGINS = new Map<
@@ -169,18 +171,33 @@ async function remoteFetch(
     );
   }
 
-  const response = await fetch(url, {
-    method: request.method,
-    headers,
-    body: request.method === 'POST' ? request.body : undefined,
-    credentials: 'omit',
-    signal: AbortSignal.timeout(REMOTE_FETCH_TIMEOUT_MS),
-  });
-
-  return {
-    ok: response.ok,
-    status: response.status,
-    statusText: response.statusText,
-    body: await response.text(),
+  const attempt = async (): Promise<RemoteFetchResponse> => {
+    const signal = AbortSignal.timeout(REMOTE_FETCH_TIMEOUT_MS);
+    const response = await fetch(url, {
+      method: request.method,
+      headers,
+      body: request.method === 'POST' ? request.body : undefined,
+      credentials: 'omit',
+      signal,
+    });
+    return {
+      ok: response.ok,
+      status: response.status,
+      statusText: response.statusText,
+      body: await response.text(),
+    };
   };
+
+  for (const delay of request.method === 'GET'
+    ? REMOTE_FETCH_RETRY_DELAYS_MS
+    : []) {
+    try {
+      return await attempt();
+    } catch (error) {
+      // Only a dropped connection; a timeout already took long enough.
+      if (!(error instanceof TypeError)) throw error;
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+  return attempt();
 }

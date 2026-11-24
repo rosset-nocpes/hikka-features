@@ -70,6 +70,8 @@ export function preloadContentCss() {
       .then((response) => response.text())
       .catch((error: unknown) => {
         console.warn(`Failed to load styles @ ${url}`, error);
+        // Unstyled this once; the next UI tries again.
+        sharedCss = undefined;
         return '';
       });
     const hostCss = css.replaceAll(':root', ':host');

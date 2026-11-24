@@ -28,6 +28,8 @@ const findRouter = async () => {
 
 /** How often to look whether the site has hydrated. */
 const HYDRATION_POLL_MS = 25;
+/** How long after the page has loaded React may take to show up at all. */
+const REACT_ROOT_GRACE_MS = 2_000;
 
 /**
  * Whether React has hydrated the site's server HTML: the root, and every
@@ -35,11 +37,12 @@ const HYDRATION_POLL_MS = 25;
  * React's internals, which only this world sees; undefined once they don't
  * look as expected, so the caller stops waiting.
  */
-function hydrationPending(): boolean | undefined {
+function hydrationPending(loadedFor: number): boolean | undefined {
   const key = Object.keys(document).find((name) =>
     name.startsWith('__reactContainer$'),
   );
-  if (!key) return true;
+  // React mounts from a module script; well after the page has loaded, it isn't coming.
+  if (!key) return loadedFor < REACT_ROOT_GRACE_MS ? true : undefined;
   type Fiber = {
     child?: Fiber | null;
     sibling?: Fiber | null;
@@ -48,12 +51,14 @@ function hydrationPending(): boolean | undefined {
   const current = (
     document as unknown as Record<string, { stateNode?: { current?: Fiber } }>
   )[key]?.stateNode?.current;
-  if (!current) return undefined;
-  if (current.memoizedState?.isDehydrated !== false) return true;
+  const isDehydrated = current?.memoizedState?.isDehydrated;
+  if (!current || typeof isDehydrated !== 'boolean') return undefined;
+  if (isDehydrated) return true;
   const stack: Fiber[] = [current];
   while (stack.length) {
     const fiber = stack.pop()!;
-    if (fiber.memoizedState?.dehydrated) return true;
+    // A dehydrated Suspense boundary keeps its server HTML's comment node here.
+    if (fiber.memoizedState?.dehydrated instanceof Node) return true;
     if (fiber.sibling) stack.push(fiber.sibling);
     if (fiber.child) stack.push(fiber.child);
   }
@@ -63,10 +68,13 @@ function hydrationPending(): boolean | undefined {
 /** Marks `<html>` once the site has hydrated, or after a while regardless. */
 function markHydrated(root: HTMLElement) {
   const started = Date.now();
+  let loadedAt: number | undefined;
   const check = () => {
+    const now = Date.now();
+    if (document.readyState === 'complete') loadedAt ??= now;
     if (
-      hydrationPending() === true &&
-      Date.now() - started < HYDRATION_TIMEOUT_MS
+      hydrationPending(loadedAt === undefined ? 0 : now - loadedAt) === true &&
+      now - started < HYDRATION_TIMEOUT_MS
     ) {
       setTimeout(check, HYDRATION_POLL_MS);
       return;

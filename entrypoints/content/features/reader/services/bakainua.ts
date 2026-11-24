@@ -172,7 +172,9 @@ class BIUScraper extends BaseScraper {
 
       if (!link || !href) return [];
 
-      const chNum = Number(row.querySelector('span')?.textContent?.trim());
+      const chNum = Number(
+        row.querySelector('span')?.textContent?.trim() ?? '',
+      );
       const translator = [
         ...row.querySelectorAll('a[href^="/scanlators"]'),
       ].map((element) => element.textContent?.trim() ?? '');
