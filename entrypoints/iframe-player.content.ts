@@ -20,6 +20,7 @@ export default defineContentScript({
     );
 
     if (!fromHikka && !(await isHikkaContentLoaded())) return;
+    if (!(await isPlayerIFrame(ctx))) return;
 
     const player = await findPlayer(ctx);
     if (!player) return;
@@ -83,6 +84,29 @@ const findPlayer = async (ctx: {
     ctx.onInvalidated(() => finish(null));
   });
 };
+
+const isPlayerIFrame = (ctx: {
+  onInvalidated: (callback: () => void) => void;
+}) =>
+  new Promise<boolean>((resolve) => {
+    const channel = new MessageChannel();
+    const timeout = window.setTimeout(
+      () => finish(false),
+      PLAYER_DETECTION_TIMEOUT_MS,
+    );
+
+    const finish = (isPlayer: boolean) => {
+      window.clearTimeout(timeout);
+      channel.port1.close();
+      resolve(isPlayer);
+    };
+
+    channel.port1.onmessage = ({ data }) => finish(data === true);
+    ctx.onInvalidated(() => finish(false));
+    window.parent.postMessage('hikka-features-player-check', '*', [
+      channel.port2,
+    ]);
+  });
 
 const isHikkaContentLoaded = async () =>
   (await sendToBackground('hikka-content-status').catch(() => false)) === true;
