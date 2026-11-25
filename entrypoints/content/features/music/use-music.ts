@@ -17,9 +17,14 @@ import {
   REPEAT_S,
 } from './music.constants';
 
+/** After the last track: stop, start over, or the same track again and again. */
+export type RepeatMode = 'off' | 'all' | 'one';
+
 interface MusicState {
   /** What plays, in order; empty while the player is closed. */
   queue: MusicTrack[];
+  /** The queue as it was given, while `queue` plays it shuffled. */
+  unshuffled?: MusicTrack[];
   index: number;
   playing: boolean;
   /** Waiting for the audio to start or to buffer. */
@@ -32,12 +37,17 @@ interface MusicState {
   /** 0 to 1; kept between visits. */
   volume: number;
   muted: boolean;
+  /** Both kept between visits. */
+  repeat: RepeatMode;
+  shuffle: boolean;
   corner: FloatingCorner;
 }
 
 interface MusicActions {
-  /** Plays `queue` from `index`. */
+  /** Plays `queue` from `index`, shuffling the rest when shuffle is on. */
   playQueue: (queue: MusicTrack[], index: number) => void;
+  /** Plays the queue's track at `index`. */
+  playAt: (index: number) => void;
   play: () => void;
   pause: () => void;
   toggle: () => void;
@@ -48,10 +58,14 @@ interface MusicActions {
   stop: () => void;
   setVolume: (volume: number) => void;
   toggleMute: () => void;
+  /** Off, then the queue, then the track, then off again. */
+  cycleRepeat: () => void;
+  toggleShuffle: () => void;
 }
 
 const idle = {
   queue: [] as MusicTrack[],
+  unshuffled: undefined,
   index: 0,
   playing: false,
   loading: false,
@@ -66,6 +80,36 @@ let element: HTMLAudioElement | undefined;
 
 const storedVolume = new StoredValue<number>(STORAGE_KEYS.musicVolume);
 let saveVolume = 0;
+
+const storedModes = new StoredValue<{ repeat: RepeatMode; shuffle: boolean }>(
+  STORAGE_KEYS.musicModes,
+);
+const saveModes = () => {
+  const { repeat, shuffle } = useMusic.getState();
+  void storedModes.set({ repeat, shuffle });
+};
+
+/** `tracks` in a random order (Fisher–Yates). */
+const shuffled = (tracks: MusicTrack[]) => {
+  const result = [...tracks];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j]!, result[i]!];
+  }
+  return result;
+};
+
+/** `queue` with its `index`th track first and the rest shuffled. */
+const shuffleFrom = (queue: MusicTrack[], index: number) => {
+  const first = queue[index];
+  if (!first) return queue;
+  return [first, ...shuffled(queue.filter((_, i) => i !== index))];
+};
+
+/** Repeating one track, the browser loops it, with no `ended` in between. */
+const applyLoop = (el: HTMLAudioElement | undefined) => {
+  if (el) el.loop = useMusic.getState().repeat === 'one';
+};
 
 /** A seek that plays muted until it settles. */
 let twin:
@@ -137,6 +181,7 @@ const swapToTwin = () => {
   twin = undefined;
 
   element = next;
+  applyLoop(next);
   const from = old.volume;
   next.volume = 0;
   next.muted = useMusic.getState().muted;
@@ -154,10 +199,19 @@ const swapToTwin = () => {
     () => dispose(old),
   );
   // A seek to the very end: its `ended` went by while it was the twin.
-  if (next.ended) {
-    const { queue, index } = useMusic.getState();
-    if (index < queue.length - 1) useMusic.getState().next();
-    else useMusic.setState({ playing: false });
+  if (next.ended) trackEnded();
+};
+
+/** What follows a track that played to its end. */
+const trackEnded = () => {
+  const music = useMusic.getState();
+  if (music.repeat === 'one') {
+    music.seek(0);
+    music.play();
+  } else if (music.index < music.queue.length - 1 || music.repeat === 'all') {
+    music.next();
+  } else {
+    useMusic.setState({ playing: false });
   }
 };
 
@@ -304,9 +358,7 @@ const createElement = () => {
   });
   on('ended', () => {
     // A seek away from the end is still settling; it plays on from there.
-    if (twin) return;
-    const { queue, index } = useMusic.getState();
-    if (index < queue.length - 1) useMusic.getState().next();
+    if (!twin) trackEnded();
   });
   on('error', () => {
     // Also fires when the source is cleared on stop.
@@ -326,6 +378,7 @@ const audio = () => {
   element = createElement();
   element.volume = userVolume();
   element.muted = useMusic.getState().muted;
+  applyLoop(element);
   return element;
 };
 
@@ -354,15 +407,25 @@ export const useMusic = create<MusicState & MusicActions>((set, get) => ({
   ...idle,
   volume: 1,
   muted: false,
+  repeat: 'off',
+  shuffle: false,
   corner: 'bottom-right',
 
   playQueue: (queue, index) => {
-    const track = queue[index];
-    if (!track) return;
-    const current = get().queue[get().index];
-    set({ queue, index });
-    if (current?.key === track.key && !get().failed) get().play();
-    else load(track);
+    if (!queue[index]) return;
+    const current = currentTrack(get());
+    if (get().shuffle) {
+      set({ queue: shuffleFrom(queue, index), unshuffled: queue, index: 0 });
+    } else {
+      set({ queue, unshuffled: undefined, index });
+    }
+    startTrack(current);
+  },
+  playAt: (index) => {
+    if (!get().queue[index]) return;
+    const current = currentTrack(get());
+    set({ index });
+    startTrack(current);
   },
   play: () => {
     const track = get().queue[get().index];
@@ -387,18 +450,31 @@ export const useMusic = create<MusicState & MusicActions>((set, get) => ({
     set({ currentTime: time });
   },
   next: () => {
-    const { queue, index } = get();
-    const track = queue[index + 1];
-    if (!track) return;
-    set({ index: index + 1 });
-    load(track);
+    const { queue, index, repeat } = get();
+    // Past the last track, repeating the queue starts it over.
+    const target =
+      index < queue.length - 1 ? index + 1 : repeat === 'all' ? 0 : undefined;
+    if (target === undefined) return;
+    if (target === index) {
+      get().seek(0);
+      return get().play();
+    }
+    set({ index: target });
+    load(queue[target]!);
   },
   previous: () => {
-    const { queue, index, currentTime } = get();
-    const track = queue[index - 1];
-    if (!track || currentTime > RESTART_AFTER_S) return get().seek(0);
-    set({ index: index - 1 });
-    load(track);
+    const { queue, index, currentTime, repeat } = get();
+    const target =
+      index > 0 ? index - 1 : repeat === 'all' ? queue.length - 1 : undefined;
+    if (
+      target === undefined ||
+      target === index ||
+      currentTime > RESTART_AFTER_S
+    ) {
+      return get().seek(0);
+    }
+    set({ index: target });
+    load(queue[target]!);
   },
   stop: () => {
     cancelSeeks();
@@ -421,6 +497,37 @@ export const useMusic = create<MusicState & MusicActions>((set, get) => ({
     set({ muted });
     if (element) element.muted = muted;
   },
+  cycleRepeat: () => {
+    const order: RepeatMode[] = ['off', 'all', 'one'];
+    set({ repeat: order[(order.indexOf(get().repeat) + 1) % order.length] });
+    applyLoop(element);
+    saveModes();
+  },
+  toggleShuffle: () => {
+    const { queue, index, unshuffled, shuffle } = get();
+    if (shuffle) {
+      // Back to the given order, at the track that plays.
+      const key = queue[index]?.key;
+      const original = unshuffled ?? queue;
+      set({
+        shuffle: false,
+        queue: original,
+        unshuffled: undefined,
+        index: Math.max(
+          0,
+          original.findIndex((track) => track.key === key),
+        ),
+      });
+    } else {
+      set({
+        shuffle: true,
+        queue: shuffleFrom(queue, index),
+        unshuffled: queue,
+        index: 0,
+      });
+    }
+    saveModes();
+  },
 }));
 
 void storedVolume.get().then((volume) => {
@@ -428,7 +535,26 @@ void storedVolume.get().then((volume) => {
   applyVolume();
 });
 
+void storedModes.get().then((modes) => {
+  if (!modes) return;
+  useMusic.setState({ repeat: modes.repeat, shuffle: modes.shuffle });
+  applyLoop(element);
+});
+
 export const currentTrack = ({ queue, index }: MusicState) => queue[index];
+
+/**
+ * Plays the queue's current track, which was `previous` until now: loaded
+ * afresh if it's another, or resumed (from its start once ended) if not.
+ */
+const startTrack = (previous: MusicTrack | undefined) => {
+  const music = useMusic.getState();
+  const track = currentTrack(music);
+  if (!track) return;
+  if (previous?.key !== track.key || music.failed) return load(track);
+  if (element?.ended) music.seek(0);
+  music.play();
+};
 
 export const musicCorner: CornerStore = {
   get: () => useMusic.getState().corner,

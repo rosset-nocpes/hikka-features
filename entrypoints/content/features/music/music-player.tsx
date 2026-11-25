@@ -1,10 +1,13 @@
 import { ScrollArea as ScrollAreaPrimitive } from '@base-ui/react/scroll-area';
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
-import { useEffect, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
 import MaterialSymbolsDragIndicator from '~icons/material-symbols/drag-indicator';
 import MaterialSymbolsLibraryMusicRounded from '~icons/material-symbols/library-music-rounded';
 import MaterialSymbolsQueueMusicRounded from '~icons/material-symbols/queue-music-rounded';
+import MaterialSymbolsRepeatOneRounded from '~icons/material-symbols/repeat-one-rounded';
+import MaterialSymbolsRepeatRounded from '~icons/material-symbols/repeat-rounded';
+import MaterialSymbolsShuffleRounded from '~icons/material-symbols/shuffle-rounded';
 import MaterialSymbolsSkipNextOutlineRounded from '~icons/material-symbols/skip-next-outline-rounded';
 import MaterialSymbolsSkipPreviousOutlineRounded from '~icons/material-symbols/skip-previous-outline-rounded';
 
@@ -35,7 +38,14 @@ import type { MusicTrack } from './animethemes';
 
 import { ModalUi } from '../../core/base-feature';
 import Equalizer from './equalizer';
-import { currentTrack, musicCorner, trackLabel, useMusic } from './use-music';
+import LikeButton from './like-button';
+import {
+  currentTrack,
+  musicCorner,
+  type RepeatMode,
+  trackLabel,
+  useMusic,
+} from './use-music';
 
 const musicUi = new ModalUi({
   name: 'music-player',
@@ -91,6 +101,7 @@ const MusicCard = () => {
     currentTime,
     duration,
     bufferedTime,
+    repeat,
     toggle,
     seek,
     next,
@@ -182,6 +193,7 @@ const MusicCard = () => {
                 [trackLabel(track), track.author].filter(Boolean).join(' · ')}
           </span>
         </div>
+        {track && <LikeButton track={track} tooltip />}
         <Button
           variant="ghost"
           size="icon-sm"
@@ -224,7 +236,7 @@ const MusicCard = () => {
           {hasQueue && (
             <MediaButton
               label="Наступний"
-              disabled={index >= queue.length - 1}
+              disabled={index >= queue.length - 1 && repeat === 'off'}
               onClick={next}
             >
               <MaterialSymbolsSkipNextOutlineRounded className="size-5" />
@@ -234,8 +246,10 @@ const MusicCard = () => {
           <MediaDivider />
           <TimeToggle currentTime={currentTime} duration={duration} />
         </div>
-        {hasQueue && (
-          <div className="shrink-0">
+        <div className="flex shrink-0 items-center gap-1">
+          {hasQueue && <ShuffleButton />}
+          <RepeatButton />
+          {hasQueue && (
             <MediaButton
               label={showQueue ? 'Сховати треки' : 'Треки'}
               pressed={showQueue}
@@ -243,8 +257,8 @@ const MusicCard = () => {
             >
               <MaterialSymbolsQueueMusicRounded className="size-5" />
             </MediaButton>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Unfolds from under the toolbar; a card in a bottom corner grows
@@ -267,6 +281,55 @@ const MusicCard = () => {
   );
 };
 
+/** What a click on the repeat button turns it to. */
+const REPEAT_LABELS: Record<RepeatMode, string> = {
+  off: 'Повторювати всі',
+  all: 'Повторювати трек',
+  one: 'Не повторювати',
+};
+
+/** A mode that's on: lit in the accent, with a dot under it. */
+const ModeIcon = ({ on, children }: { on: boolean; children: ReactNode }) => (
+  <span
+    className={cn(
+      'relative flex transition-colors',
+      on &&
+        'text-primary after:bg-primary after:absolute after:-bottom-1.5 after:left-1/2 after:size-1 after:-translate-x-1/2 after:rounded-full',
+    )}
+  >
+    {children}
+  </span>
+);
+
+const RepeatButton = () => {
+  const { repeat, cycleRepeat } = useMusic();
+  return (
+    <MediaButton label={REPEAT_LABELS[repeat]} onClick={cycleRepeat}>
+      <ModeIcon on={repeat !== 'off'}>
+        {repeat === 'one' ? (
+          <MaterialSymbolsRepeatOneRounded className="size-5" />
+        ) : (
+          <MaterialSymbolsRepeatRounded className="size-5" />
+        )}
+      </ModeIcon>
+    </MediaButton>
+  );
+};
+
+const ShuffleButton = () => {
+  const { shuffle, toggleShuffle } = useMusic();
+  return (
+    <MediaButton
+      label={shuffle ? 'Не перемішувати' : 'Перемішати'}
+      onClick={toggleShuffle}
+    >
+      <ModeIcon on={shuffle}>
+        <MaterialSymbolsShuffleRounded className="size-5" />
+      </ModeIcon>
+    </MediaButton>
+  );
+};
+
 /** Mute, with the level sliding out on hover or focus. */
 const VolumeControl = () => {
   const { volume, muted, setVolume, toggleMute } = useMusic();
@@ -286,7 +349,9 @@ const VolumeControl = () => {
 
 /** The anime's openings and endings, laid out like the player's episodes. */
 const TrackList = () => {
-  const { queue, index, playing, playQueue, toggle } = useMusic();
+  const { queue, index, playing, playAt, toggle } = useMusic();
+  // Favourites from a profile come from many anime: each row says which.
+  const mixed = new Set(queue.map((item) => item.slug)).size > 1;
 
   return (
     <ScrollArea
@@ -301,15 +366,16 @@ const TrackList = () => {
           {queue.map((item, position) => {
             const current = position === index;
             return (
-              <li key={item.key}>
+              <li
+                key={item.key}
+                data-active={current}
+                className="group/track hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground flex items-center rounded-md pr-1"
+              >
                 <button
                   type="button"
                   aria-current={current}
-                  data-active={current}
-                  className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground focus-visible:ring-sidebar-ring flex w-full items-center gap-2 rounded-md p-2 text-left text-sm outline-hidden focus-visible:ring-2 data-[active=true]:font-medium"
-                  onClick={() =>
-                    current ? toggle() : playQueue(queue, position)
-                  }
+                  className="focus-visible:ring-sidebar-ring flex min-w-0 flex-1 items-center gap-2 rounded-md p-2 text-left text-sm outline-hidden group-data-[active=true]/track:font-medium focus-visible:ring-2"
+                  onClick={() => (current ? toggle() : playAt(position))}
                 >
                   <span className="text-muted-foreground flex w-4 shrink-0 justify-center text-xs tabular-nums">
                     {current ? (
@@ -320,9 +386,11 @@ const TrackList = () => {
                   </span>
                   <span className="grid min-w-0 flex-1 leading-tight">
                     <span className="truncate">{item.title}</span>
-                    {item.author && (
+                    {(item.author || mixed) && (
                       <span className="text-muted-foreground truncate text-xs font-normal">
-                        {item.author}
+                        {[mixed && item.animeTitle, item.author]
+                          .filter(Boolean)
+                          .join(' · ')}
                       </span>
                     )}
                   </span>
@@ -330,6 +398,7 @@ const TrackList = () => {
                     {trackLabel(item)}
                   </Badge>
                 </button>
+                <LikeButton track={item} className="size-7" />
               </li>
             );
           })}

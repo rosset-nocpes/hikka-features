@@ -289,6 +289,50 @@ export const convexApi = {
       'friends:refresh',
     ),
   },
+  musicFavorites: {
+    add: makeFunctionReference<
+      'mutation',
+      {
+        song: {
+          animeSlug: string;
+          ostType: 'opening' | 'ending';
+          index: number;
+          title: string;
+          author?: string;
+          animeTitle?: string;
+          poster?: string;
+          audio: string;
+        };
+      },
+      null
+    >('musicFavorites:add'),
+    list: makeFunctionReference<
+      'query',
+      {
+        hikkaId: string;
+      },
+      {
+        animeSlug: string;
+        ostType: 'opening' | 'ending';
+        index: number;
+        title: string;
+        author?: string;
+        animeTitle?: string;
+        poster?: string;
+        audio: string;
+        addedAt: number;
+      }[]
+    >('musicFavorites:list'),
+    remove: makeFunctionReference<
+      'mutation',
+      {
+        animeSlug: string;
+        ostType: 'opening' | 'ending';
+        index: number;
+      },
+      null
+    >('musicFavorites:remove'),
+  },
   notifications: {
     markAllSeen: makeFunctionReference<'mutation', Record<string, never>, null>(
       'notifications:markAllSeen',

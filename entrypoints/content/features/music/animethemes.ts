@@ -143,13 +143,15 @@ const fetchThemes = async (malId: number) => {
 /** The anime's openings and endings Hikka lists that AnimeThemes can play. */
 export const useAnimeMusic = (anime?: HikkaContent, slug?: string) => {
   const malId = anime?.mal_id;
-  const { data: themes } = useQuery({
+  const { data, isError } = useQuery({
     queryKey: ['animethemes', malId],
     queryFn: () => fetchThemes(malId!),
     enabled: !!malId && !!anime?.ost?.length,
     retry: 1,
     staleTime: Infinity,
   });
+  // Without a MAL id or AnimeThemes, there's nothing to play: not loading.
+  const themes = data ?? (isError || (anime && !malId) ? [] : undefined);
 
   if (!anime || !slug || !themes) return undefined;
   return (anime.ost ?? []).flatMap((ost): MusicTrack[] => {

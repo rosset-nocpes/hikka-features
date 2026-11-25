@@ -6,6 +6,7 @@ export const STORAGE_KEYS = {
   settings: 'settings',
   playerQueue: 'player-queue',
   musicVolume: 'music-volume',
+  musicModes: 'music-modes',
   accountLogin: 'account-login',
   compatibility: 'extensionCompatibility',
 } as const;

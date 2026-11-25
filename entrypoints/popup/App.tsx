@@ -147,7 +147,7 @@ function HomePage() {
               feature="musicPlayer"
               icon={<MaterialSymbolsLibraryMusicRounded />}
               label="Опенінги та ендінги"
-              description="Кнопка відтворення в блоці музики тайтлу і плаваючий програвач"
+              description="Список треків у блоці музики тайтлу, плаваючий програвач і улюблена музика в профілі"
             />
           </SettingsGroup>
         </motion.div>

@@ -29,6 +29,7 @@ export const HIKKA_PAGE_CHECKERS: Record<
   [HikkaPages.CharacterPage]: (p) => /^\/characters\/[\w-]+$/.test(p),
   [HikkaPages.PersonPage]: (p) => /^\/people\/[\w-]+$/.test(p),
   [HikkaPages.UserPage]: (p) => /^\/u\/[^/]+$/.test(p),
+  [HikkaPages.UserFavoritesPage]: (p) => /^\/u\/[^/]+\/favorites$/.test(p),
   [HikkaPages.TeamPages]: isTeamPagePath,
   [HikkaPages.RecommendationsPage]: isRecommendationsPagePath,
   [HikkaPages.EditContent]: (p) => p.startsWith('/edit/'),
