@@ -7,11 +7,13 @@ import { AspectRatio } from '@/components/ui/aspect-ratio';
 /** A poster in hikka.io's card ratio, with a placeholder when missing. */
 export const Poster: FC<{
   image?: string;
+  /** Width over height; another for square art such as albums'. */
+  ratio?: number;
   className?: string;
   children?: ReactNode;
-}> = ({ image, className, children }) => (
+}> = ({ image, ratio = 0.7, className, children }) => (
   <AspectRatio
-    ratio={0.7}
+    ratio={ratio}
     className={cn(
       'bg-muted relative w-full overflow-hidden rounded-md',
       className,

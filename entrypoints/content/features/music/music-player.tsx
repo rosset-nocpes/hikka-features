@@ -39,13 +39,16 @@ import type { MusicTrack } from './animethemes';
 import { ModalUi } from '../../core/base-feature';
 import Equalizer from './equalizer';
 import LikeButton from './like-button';
+import SongLink from './song-link';
 import {
   currentTrack,
   musicCorner,
   type RepeatMode,
+  setMediaArtwork,
   trackLabel,
   useMusic,
 } from './use-music';
+import { artOf, useTrackRelease } from './use-song-releases';
 
 const musicUi = new ModalUi({
   name: 'music-player',
@@ -110,6 +113,11 @@ const MusicCard = () => {
   const { disableBlur } = useSettings().features.player;
   const [showQueue, setShowQueue] = useState(false);
   const cardRef = useRef<HTMLElement>(null);
+  const release = useTrackRelease(track);
+  const art = artOf(track, release);
+
+  // The OS's controls show the cover too, once it's known.
+  useEffect(() => setMediaArtwork(art), [art, track?.key]);
 
   // Stacks above the video's mini player when they share a corner.
   const startDrag = useFloatingCard(cardRef, {
@@ -160,9 +168,9 @@ const MusicCard = () => {
           draggable={false}
           className="bg-muted flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-md"
         >
-          {track?.poster ? (
+          {art ? (
             <img
-              src={track.poster}
+              src={art}
               alt=""
               className="size-full object-cover"
               draggable={false}
@@ -193,6 +201,7 @@ const MusicCard = () => {
                 [trackLabel(track), track.author].filter(Boolean).join(' · ')}
           </span>
         </div>
+        <SongLink release={release} tooltip />
         {track && <LikeButton track={track} tooltip />}
         <Button
           variant="ghost"

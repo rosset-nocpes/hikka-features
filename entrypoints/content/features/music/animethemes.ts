@@ -50,6 +50,13 @@ export interface MusicTrack {
   author?: string | null;
   /** The theme's audio (Ogg, TV size), from AnimeThemes. */
   audio: string;
+  /** Its cover and album, when it came with them (a favourite does). */
+  release?: {
+    cover: string;
+    album?: string;
+    released?: string;
+    link?: string;
+  };
 }
 
 export const OST_LABEL: Record<HikkaOst['ost_type'], string> = {

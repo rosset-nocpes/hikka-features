@@ -564,6 +564,20 @@ export const musicCorner: CornerStore = {
 export const trackLabel = (track: MusicTrack) =>
   `${OST_LABEL[track.type]} ${track.index}`;
 
+const artwork = (src: string | null | undefined) => (src ? [{ src }] : []);
+
+/** The playing track's cover, once the player has found it. */
+export const setMediaArtwork = (src: string | undefined) => {
+  try {
+    const { metadata } = navigator.mediaSession;
+    if (metadata && metadata.artwork[0]?.src !== src) {
+      metadata.artwork = artwork(src);
+    }
+  } catch {
+    // As for the rest of the session's metadata.
+  }
+};
+
 /** The OS's media controls and keys, for the playing track. */
 const updateMediaSession = (track: MusicTrack | undefined) => {
   try {
@@ -576,7 +590,7 @@ const updateMediaSession = (track: MusicTrack | undefined) => {
       title: track.title,
       artist: track.author ?? trackLabel(track),
       album: track.animeTitle ?? '',
-      artwork: track.poster ? [{ src: track.poster }] : [],
+      artwork: artwork(track.release?.cover ?? track.poster),
     });
     const music = useMusic.getState();
     session.setActionHandler('play', music.play);

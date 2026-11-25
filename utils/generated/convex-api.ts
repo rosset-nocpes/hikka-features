@@ -321,6 +321,12 @@ export const convexApi = {
         poster?: string;
         audio: string;
         addedAt: number;
+        release?: {
+          cover: string;
+          album?: string;
+          released?: string;
+          link?: string;
+        };
       }[]
     >('musicFavorites:list'),
     remove: makeFunctionReference<
@@ -419,6 +425,34 @@ export const convexApi = {
         }[];
       }
     >('skip:segments'),
+  },
+  songInfo: {
+    forAnime: makeFunctionReference<
+      'query',
+      {
+        animeSlug: string;
+      },
+      {
+        songs: {
+          ostType: 'opening' | 'ending';
+          index: number;
+          cover: string;
+          album?: string;
+          released?: string;
+          link?: string;
+        }[];
+        state: 'unknown' | 'queued' | 'done';
+        queuedAt?: number;
+        refreshAt?: number;
+      }
+    >('songInfo:forAnime'),
+    request: makeFunctionReference<
+      'mutation',
+      {
+        animeSlug: string;
+      },
+      null
+    >('songInfo:request'),
   },
   teamPriority: {
     get: makeFunctionReference<

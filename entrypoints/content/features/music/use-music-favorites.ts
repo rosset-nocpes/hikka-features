@@ -39,6 +39,7 @@ export const favoriteTrack = (song: FavoriteSong): MusicTrack => ({
   title: song.title,
   author: song.author,
   audio: song.audio,
+  release: song.release,
 });
 
 /** Hearts clicked whose change hasn't reached the list yet, by `songId`. */

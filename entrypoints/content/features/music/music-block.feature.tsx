@@ -6,13 +6,12 @@ import MaterialSymbolsMusicOffRounded from '~icons/material-symbols/music-off-ro
 import MaterialSymbolsPauseRounded from '~icons/material-symbols/pause-rounded';
 import MaterialSymbolsPlayArrowRounded from '~icons/material-symbols/play-arrow-rounded';
 import MaterialSymbolsShuffleRounded from '~icons/material-symbols/shuffle-rounded';
-import MdiSpotify from '~icons/mdi/spotify';
 
 import type { HikkaOst } from '@/hooks/use-hikka';
 
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { NEW_TAB, onHikkaLinkClick } from '@/utils/hikka-router';
+import { onHikkaLinkClick } from '@/utils/hikka-router';
 import { plural } from '@/utils/plural';
 
 import { BaseFeature } from '../../core/base-feature';
@@ -21,7 +20,13 @@ import { type MusicTrack, OST_LABEL, useAnimeMusic } from './animethemes';
 import Equalizer from './equalizer';
 import LikeButton from './like-button';
 import { playMusic } from './music-player';
+import SongLink from './song-link';
 import { currentTrack, useMusic } from './use-music';
+import {
+  findRelease,
+  type SongRelease,
+  useSongReleases,
+} from './use-song-releases';
 
 /** Set on hikka.io's own cards while the block stands in for them. */
 const REPLACED = 'data-hikka-features-music-replaced';
@@ -116,6 +121,7 @@ const MusicBlock = () => {
   const { slug } = usePageStore();
   const { data: anime } = useHikka();
   const tracks = useAnimeMusic(anime, slug);
+  const releases = useSongReleases(anime?.ost?.length ? slug : undefined);
   const extended = isMediaPage();
 
   const ost = anime?.ost ?? [];
@@ -143,6 +149,10 @@ const MusicBlock = () => {
             key={keyOf(slug, item) + index}
             ost={item}
             track={track}
+            release={findRelease(releases, {
+              type: item.ost_type,
+              index: item.index,
+            })}
             loading={!tracks}
             queue={tracks}
           />
@@ -224,18 +234,22 @@ interface RowProps {
   ost: HikkaOst;
   /** What plays it; none when AnimeThemes has no audio for it. */
   track?: MusicTrack;
+  /** Its cover and album, once the backend has found them. */
+  release?: SongRelease;
   /** AnimeThemes hasn't answered yet. */
   loading: boolean;
   /** The anime's playable tracks, queued when one is played. */
   queue?: MusicTrack[];
 }
 
-const TrackRow: FC<RowProps> = ({ ost, track, loading, queue }) => {
+const TrackRow: FC<RowProps> = ({ ost, track, release, loading, queue }) => {
   const isCurrent = useMusic(
     (state) => !!track && currentTrack(state)?.key === track.key,
   );
   const playing = useMusic((state) => state.playing) && isCurrent;
   const label = `${OST_LABEL[ost.ost_type]} ${ost.index}`;
+  const unavailable = !track && !loading;
+  const cover = release?.cover;
 
   const play = () => {
     if (!track || !queue) return;
@@ -267,58 +281,93 @@ const TrackRow: FC<RowProps> = ({ ost, track, loading, queue }) => {
       >
         <span
           className={cn(
-            'bg-secondary/60 text-muted-foreground relative flex size-10 shrink-0 items-center justify-center rounded-md',
-            isCurrent && 'bg-primary/15 text-primary',
+            'relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-md',
+            cover
+              ? 'bg-muted text-white'
+              : cn(
+                  'bg-secondary/60 text-muted-foreground',
+                  isCurrent && 'bg-primary/15 text-primary',
+                ),
           )}
         >
-          {loading ? (
-            <Spinner className="size-4" />
-          ) : !track ? (
-            <MaterialSymbolsMusicOffRounded className="size-5 opacity-60" />
-          ) : playing ? (
+          {cover && (
             <>
-              <Equalizer playing className="group-hover/row:hidden" />
-              <MaterialSymbolsPauseRounded className="hidden size-6 group-hover/row:block" />
-            </>
-          ) : (
-            <>
-              {isCurrent ? (
-                <Equalizer playing={false} className="group-hover/row:hidden" />
-              ) : (
-                <MaterialSymbolsMusicNoteRounded className="size-5 group-hover/row:hidden" />
-              )}
-              <MaterialSymbolsPlayArrowRounded className="text-foreground hidden size-6 group-hover/row:block" />
+              <img
+                src={cover}
+                alt=""
+                loading="lazy"
+                draggable={false}
+                className={cn(
+                  'absolute inset-0 size-full object-cover',
+                  unavailable && 'opacity-50 grayscale',
+                )}
+              />
+              {/* Under the icons, which a cover alone would swallow. */}
+              <span
+                className={cn(
+                  'absolute inset-0 bg-black/45 opacity-0 transition-opacity group-hover/row:opacity-100',
+                  (loading || isCurrent) && 'opacity-100',
+                  unavailable && 'group-hover/row:opacity-0',
+                )}
+              />
             </>
           )}
+          <span className="relative flex">
+            {loading ? (
+              <Spinner className="size-4" />
+            ) : !track ? (
+              !cover && (
+                <MaterialSymbolsMusicOffRounded className="size-5 opacity-60" />
+              )
+            ) : playing ? (
+              <>
+                <Equalizer playing className="group-hover/row:hidden" />
+                <MaterialSymbolsPauseRounded className="hidden size-6 group-hover/row:block" />
+              </>
+            ) : (
+              <>
+                {isCurrent ? (
+                  <Equalizer
+                    playing={false}
+                    className="group-hover/row:hidden"
+                  />
+                ) : (
+                  !cover && (
+                    <MaterialSymbolsMusicNoteRounded className="size-5 group-hover/row:hidden" />
+                  )
+                )}
+                <MaterialSymbolsPlayArrowRounded
+                  className={cn(
+                    'hidden size-6 group-hover/row:block',
+                    !cover && 'text-foreground',
+                  )}
+                />
+              </>
+            )}
+          </span>
         </span>
         <span className="grid min-w-0 flex-1 gap-0.5">
           <span
             className={cn(
               'truncate text-sm leading-5 font-medium',
               isCurrent && 'text-primary',
-              !track && !loading && 'text-muted-foreground',
+              unavailable && 'text-muted-foreground',
             )}
           >
             {ost.title}
           </span>
           <span className="text-muted-foreground truncate text-xs leading-4">
-            {[label, ost.author].filter(Boolean).join(' · ')}
+            {[label, ost.author, release?.released?.slice(0, 4)]
+              .filter(Boolean)
+              .join(' · ')}
           </span>
         </span>
       </button>
-      {ost.spotify && (
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Відкрити у Spotify"
-          title="Відкрити у Spotify"
-          className="text-muted-foreground shrink-0"
-          nativeButton={false}
-          render={<a href={ost.spotify} {...NEW_TAB} />}
-        >
-          <MdiSpotify className="size-4.5" />
-        </Button>
-      )}
+      <SongLink
+        spotify={ost.spotify}
+        release={release}
+        className="text-muted-foreground"
+      />
       {track && <LikeButton track={track} className="text-muted-foreground" />}
     </li>
   );

@@ -334,7 +334,7 @@ const SongGrid: FC<GridProps> = ({
       {overflow && (
         <MoreCard
           count={songs.length}
-          image={songs[PREVIEW - 1]?.poster}
+          image={coverOf(songs[PREVIEW - 1])}
           username={username}
         />
       )}
@@ -353,7 +353,7 @@ const SongCard: FC<{ song: FavoriteSong; onPlay: () => void }> = ({
 
   return (
     <div className="group relative flex w-full min-w-0 flex-col gap-2">
-      <Poster image={song.poster}>
+      <Poster image={coverOf(song)} ratio={1}>
         <button
           type="button"
           aria-label={
@@ -403,6 +403,10 @@ const SongCard: FC<{ song: FavoriteSong; onPlay: () => void }> = ({
   );
 };
 
+/** The song's album cover, else its anime's poster. */
+const coverOf = (song: FavoriteSong | undefined) =>
+  song?.release?.cover ?? song?.poster;
+
 /** hikka.io's last card of a preview: the total over the next poster, blurred. */
 const MoreCard: FC<{
   count: number;
@@ -420,7 +424,7 @@ const MoreCard: FC<{
       }}
       className="flex flex-col gap-2"
     >
-      <Poster>
+      <Poster ratio={1}>
         <div className="@container absolute inset-0">
           {image && (
             <img
