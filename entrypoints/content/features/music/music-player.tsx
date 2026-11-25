@@ -162,11 +162,9 @@ const MusicCard = () => {
           aria-hidden
           className="pointer-events-none absolute inset-0 -z-10 overflow-hidden [mask-image:linear-gradient(to_bottom,black,transparent_85%)] opacity-30 dark:opacity-25"
         >
-          <FadeImage
-            src={art}
-            loading="eager"
-            className="scale-150 blur-2xl saturate-150"
-          />
+          <div className="absolute inset-0 scale-150 blur-2xl saturate-150">
+            <FadeImage src={art} loading="eager" />
+          </div>
         </div>
       )}
       <div className="flex w-full items-center gap-2 p-2">
