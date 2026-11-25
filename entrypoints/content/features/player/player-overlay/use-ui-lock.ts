@@ -28,6 +28,7 @@ export const useToolbarMenuPosition = (
     side,
     sideOffset: side === 'top' ? 20 : 8,
     align: 'end' as const,
+    collisionAvoidance: { align: 'shift' } as const,
     collisionBoundary: overlay ?? undefined,
     collisionPadding: 8,
   };
