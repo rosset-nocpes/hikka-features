@@ -142,7 +142,7 @@ const EpisodeMenu: FC<EpisodeMenuProps> = ({
             </DropdownMenuItem>
           )}
           {rest.length > 1 && (
-            <DropdownMenuItem onClick={() => queue.add(rest)}>
+            <DropdownMenuItem onClick={() => queue.insert(rest)}>
               <MaterialSymbolsKeyboardDoubleArrowDownRounded />
               Додати звідси до кінця
               <span className="text-muted-foreground ml-auto pl-2 text-xs tabular-nums">

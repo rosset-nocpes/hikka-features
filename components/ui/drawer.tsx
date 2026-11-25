@@ -31,13 +31,17 @@ function DrawerOverlay({
 
 function DrawerContent({
   className,
+  overlayClassName,
   children,
   container,
   ...props
-}: DrawerPrimitive.Popup.Props & { container?: HTMLElement }) {
+}: DrawerPrimitive.Popup.Props & {
+  container?: HTMLElement;
+  overlayClassName?: string;
+}) {
   return (
     <DrawerPortal data-slot="drawer-portal" container={container}>
-      <DrawerOverlay />
+      <DrawerOverlay className={overlayClassName} />
       <DrawerPrimitive.Viewport
         data-slot="drawer-viewport"
         className="pointer-events-none fixed inset-0 z-50"

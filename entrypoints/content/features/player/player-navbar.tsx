@@ -141,7 +141,10 @@ const PlayerNavbar: FC<Props> = ({ onDragStart }) => {
                 >
                   <MaterialSymbolsViewListRounded />
                 </DrawerTrigger>
-                <DrawerContent container={container}>
+                <DrawerContent
+                  container={container}
+                  overlayClassName="bg-black/40 supports-backdrop-filter:backdrop-blur-none"
+                >
                   <PlayerMobilePanel className="pt-[max(1rem,env(safe-area-inset-top))]" />
                 </DrawerContent>
               </Drawer>

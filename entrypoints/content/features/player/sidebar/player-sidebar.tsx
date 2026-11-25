@@ -1,5 +1,3 @@
-import { useState } from 'react';
-
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Sidebar,
@@ -10,12 +8,16 @@ import {
   SidebarSeparator,
 } from '@/components/ui/sidebar';
 
-import PanelTabs, { PanelContent, type PanelTab } from '../queue/panel-tabs';
+import PanelTabs, {
+  PanelContent,
+  setPanelTab,
+  usePanelTab,
+} from '../queue/panel-tabs';
 import { AutoplaySwitch } from '../queue/queue-list';
 import TeamSelect from './team-select';
 
 const PlayerSidebar = () => {
-  const [tab, setTab] = useState<PanelTab>('episodes');
+  const tab = usePanelTab((state) => state.tab);
 
   return (
     <Sidebar
@@ -27,7 +29,7 @@ const PlayerSidebar = () => {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem className="flex items-center justify-between gap-2">
-            <PanelTabs value={tab} onChange={setTab} />
+            <PanelTabs value={tab} onChange={setPanelTab} />
             {/* Room for the sidebar's trigger, which the navbar places. */}
             <div className="h-8 w-8 shrink-0" />
           </SidebarMenuItem>

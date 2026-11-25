@@ -1,7 +1,9 @@
 import type { WatchRoom } from '@/utils/convex-api';
 
 import { playQueued } from '../player';
+import { MAX_ROOM_QUEUE } from '../player.constants';
 import { useWatchTogether } from '../watch-together/use-watch-together';
+import { roomInsertion } from './queue-order';
 import {
   type QueueActions,
   type QueueEpisode,
@@ -33,11 +35,13 @@ const roomItem = ({ slug, provider, team, episode }: QueueItem) => ({
 });
 
 const ownQueue = (items: QueueItem[]): ActiveQueue => {
-  const { add, remove, toggle, move, restore, clear } = useQueue.getState();
+  const { add, insert, remove, toggle, move, restore, clear } =
+    useQueue.getState();
   return {
     shared: false,
     items,
     add,
+    insert,
     remove,
     toggle,
     move,
@@ -59,14 +63,20 @@ const roomQueue = (room: WatchRoom): ActiveQueue => {
     editQueue({ type: 'enqueue', items: added.map(roomItem) });
   const move = (episode: QueueEpisode, index: number) =>
     editQueue({ type: 'requeue', item: roomEpisode(episode), index });
-  const remove = (episode: QueueEpisode) =>
-    editQueue({ type: 'dequeue', items: [roomEpisode(episode)] });
+  const remove = (episodes: QueueEpisode | QueueEpisode[]) =>
+    editQueue({ type: 'dequeue', items: [episodes].flat().map(roomEpisode) });
   // The room appends what it is sent; the moves, in order, then place it.
   // Each lands where it belongs since all before it are placed already.
   const place = (placed: { item: QueueItem; index: number }[]) =>
     placed
       .toSorted((a, b) => a.index - b.index)
       .forEach(({ item, index }) => move(item, index));
+  const insert = (added: QueueItem[]) => {
+    const { fresh, moves } = roomInsertion(items, added, MAX_ROOM_QUEUE);
+    if (!fresh.length) return;
+    enqueue(fresh);
+    place(moves);
+  };
 
   return {
     shared: true,
@@ -75,11 +85,12 @@ const roomQueue = (room: WatchRoom): ActiveQueue => {
       enqueue(added);
       if (next) place(added.map((item, index) => ({ item, index })));
     },
+    insert,
     remove,
     toggle: (item) =>
       items.some((queued) => queueKey(queued) === queueKey(item))
         ? remove(item)
-        : enqueue([item]),
+        : insert([item]),
     move,
     restore: (before, removed) => {
       const order = restoredOrder(before, items, removed).map(queueKey);

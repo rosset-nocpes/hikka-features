@@ -1,9 +1,13 @@
-import { type FC, useState } from 'react';
+import type { FC } from 'react';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SidebarMenu, SidebarSeparator } from '@/components/ui/sidebar';
 
-import PanelTabs, { PanelContent, type PanelTab } from '../queue/panel-tabs';
+import PanelTabs, {
+  PanelContent,
+  setPanelTab,
+  usePanelTab,
+} from '../queue/panel-tabs';
 import { AutoplaySwitch } from '../queue/queue-list';
 import TeamSelect from '../sidebar/team-select';
 import { useNowPlaying } from '../use-now-playing';
@@ -18,7 +22,7 @@ interface Props {
  */
 const PlayerMobilePanel: FC<Props> = ({ className }) => {
   const { title, subtitle } = useNowPlaying();
-  const [tab, setTab] = useState<PanelTab>('episodes');
+  const tab = usePanelTab((state) => state.tab);
 
   return (
     <div className={cn('flex min-h-0 flex-1 flex-col', className)}>
@@ -31,7 +35,7 @@ const PlayerMobilePanel: FC<Props> = ({ className }) => {
             {subtitle}
           </span>
         </div>
-        <PanelTabs value={tab} onChange={setTab} />
+        <PanelTabs value={tab} onChange={setPanelTab} />
         {tab === 'episodes' ? (
           <SidebarMenu>
             <TeamSelect />
