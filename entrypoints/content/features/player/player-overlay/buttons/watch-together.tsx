@@ -317,9 +317,10 @@ const RoomMenu = ({
   onInvite: () => void;
   onLeave: () => void;
 }) => {
-  const { error, leave, share } = useWatchTogether();
+  const { error, leave, share, setVoting } = useWatchTogether();
   const { copied, copy } = useCopy();
   const [sharing, setSharing] = useState<boolean>();
+  const [voting, setVotingShown] = useState<boolean>();
   const isOwner = room.members.some(
     (member) => member.self && member.id === room.ownerId,
   );
@@ -330,6 +331,13 @@ const RoomMenu = ({
     share(friendsCanJoin)
       .catch(console.error)
       .finally(() => setSharing(undefined));
+  };
+
+  const toggleVoting = (next: boolean) => {
+    setVotingShown(next);
+    setVoting(next)
+      .catch(console.error)
+      .finally(() => setVotingShown(undefined));
   };
 
   return (
@@ -373,6 +381,20 @@ const RoomMenu = ({
           onCheckedChange={toggleSharing}
         />
         Відкрито для друзів
+      </label>
+      <label
+        className={cn(
+          'flex items-center gap-2 px-2 py-1.5 text-sm select-none',
+          isOwner ? 'cursor-pointer' : 'text-muted-foreground',
+        )}
+      >
+        <Switch
+          size="sm"
+          checked={voting ?? room.voting}
+          disabled={!isOwner || voting !== undefined}
+          onCheckedChange={toggleVoting}
+        />
+        Голосувати за пропуски й перемикання
       </label>
       <MenuSeparator />
       <MenuItem onClick={onInvite}>

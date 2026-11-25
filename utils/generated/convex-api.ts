@@ -616,6 +616,58 @@ export const convexApi = {
                 team: string;
                 episode: number;
               };
+            }
+          | {
+              type: 'propose';
+              proposal:
+                | {
+                    type: 'skip';
+                    from: {
+                      provider: string;
+                      team: string;
+                      episode: number;
+                      animeSlug: string;
+                    };
+                    segment: 'opening' | 'ending' | 'recap';
+                    to: number;
+                  }
+                | {
+                    type: 'advance';
+                    from: {
+                      provider: string;
+                      team: string;
+                      episode: number;
+                      animeSlug: string;
+                    };
+                    item?: {
+                      animeSlug: string;
+                      episode: number;
+                    };
+                    next?: {
+                      provider: string;
+                      team: string;
+                      episode: number;
+                    };
+                  }
+                | {
+                    type: 'select';
+                    from: {
+                      provider: string;
+                      team: string;
+                      episode: number;
+                    };
+                    to: {
+                      provider: string;
+                      team: string;
+                      episode: number;
+                    };
+                    rate?: number;
+                  };
+            }
+          | {
+              type: 'vote';
+              id: string;
+              yes: boolean;
             };
         tab?: string;
       },
@@ -632,6 +684,7 @@ export const convexApi = {
         position: number;
         rate: number;
         tab?: string;
+        votes?: boolean;
       },
       {
         code: string;
@@ -681,6 +734,62 @@ export const convexApi = {
           episode: number;
           animeSlug: string;
         }[];
+        voting: boolean;
+        voters: number;
+        vote?: {
+          id: string;
+          animeSlug: string;
+          proposal:
+            | {
+                type: 'skip';
+                from: {
+                  provider: string;
+                  team: string;
+                  episode: number;
+                  animeSlug: string;
+                };
+                segment: 'opening' | 'ending' | 'recap';
+                to: number;
+              }
+            | {
+                type: 'advance';
+                from: {
+                  provider: string;
+                  team: string;
+                  episode: number;
+                  animeSlug: string;
+                };
+                item?: {
+                  animeSlug: string;
+                  episode: number;
+                };
+                next?: {
+                  provider: string;
+                  team: string;
+                  episode: number;
+                };
+              }
+            | {
+                type: 'select';
+                from: {
+                  provider: string;
+                  team: string;
+                  episode: number;
+                };
+                to: {
+                  provider: string;
+                  team: string;
+                  episode: number;
+                };
+                rate?: number;
+              };
+          by: string;
+          yes: string[];
+          no: string[];
+          expiresAt: number;
+          result?: 'passed' | 'rejected' | 'failed' | 'expired' | 'cancelled';
+          needed: number;
+        };
         members: {
           username?: string;
           avatar?: string;
@@ -699,6 +808,7 @@ export const convexApi = {
           animeSlug: string;
         };
         followsAnime?: boolean;
+        votes?: boolean;
       },
       {
         now: number;
@@ -753,6 +863,14 @@ export const convexApi = {
       },
       null
     >('watchRooms:leave'),
+    setVoting: makeFunctionReference<
+      'mutation',
+      {
+        code: string;
+        voting: boolean;
+      },
+      null
+    >('watchRooms:setVoting'),
     share: makeFunctionReference<
       'mutation',
       {

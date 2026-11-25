@@ -10,7 +10,7 @@ import { memberName } from './menu';
 /** How long a member's coming or going is shown. */
 const MEMBER_NOTICE_MS = 4_000;
 
-const MemberMedia = ({ member }: { member: WatchRoomProfile }) => (
+export const MemberMedia = ({ member }: { member: WatchRoomProfile }) => (
   <Avatar className="size-9">
     {member.avatar && <AvatarImage src={member.avatar} alt="" />}
     <AvatarFallback>{memberName(member)[0]?.toUpperCase()}</AvatarFallback>

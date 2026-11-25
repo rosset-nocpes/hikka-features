@@ -93,6 +93,34 @@ interface PlayerActions {
   setOverlay: (overlay: HTMLDivElement | null) => void;
 }
 
+/** A source, team and episode the user picked. */
+export interface SelectIntent {
+  provider: string;
+  /** The team's key. */
+  team: string;
+  episode: number;
+}
+
+let selectIntentListener: ((intent: SelectIntent) => boolean) | undefined;
+
+/**
+ * Lets watch together take over the user's picks of a team or episode,
+ * e.g. to vote on them first; the listener returns true when it did, and the
+ * player stays as it is.
+ */
+export const onSelectIntent = (
+  listener: ((intent: SelectIntent) => boolean) | undefined,
+) => {
+  selectIntentListener = listener;
+};
+
+const takenOver = ({ team, entry }: Selection) =>
+  selectIntentListener?.({
+    provider: entry.provider,
+    team: team.key,
+    episode: entry.episode,
+  }) ?? false;
+
 /**
  * The team's episode after the playing one, from whichever provider has it,
  * which plays once the queue runs out.
@@ -254,6 +282,7 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
         set({ pinnedProvider, teams, team: shown });
         return;
       }
+      if (takenOver({ team: shown, entry })) return;
 
       // The same episode from elsewhere carries on where it was.
       const { currentTime, isPlaying } = useIFramePlayer.getState();
@@ -267,8 +296,13 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
             : undefined,
       });
     },
-    setTeam: (team) =>
-      set(show({ team, entry: nextUnwatched(team.episodes, get().slug) })),
+    setTeam: (team) => {
+      const selection = {
+        team,
+        entry: nextUnwatched(team.episodes, get().slug),
+      };
+      if (!takenOver(selection)) set(show(selection));
+    },
     toggleFavoriteTeam: (team) => {
       const { slug } = get();
       if (!slug) return;
@@ -291,7 +325,10 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
         })
         .catch(console.error);
     },
-    setEpisode: (entry) => set(show({ team: get().team!, entry })),
+    setEpisode: (entry) => {
+      const selection = { team: get().team!, entry };
+      if (!takenOver(selection)) set(show(selection));
+    },
     selectSource: (provider, team, episode) => {
       const { teams } = get();
       const selection = teams && exactSource(teams, provider, team, episode);
@@ -357,10 +394,11 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
   };
 });
 
+/** The speeds `provider`'s players offer. */
+export const speedOptionsOf = (provider: string) =>
+  provider === 'ashdi'
+    ? [1, 1.25, 1.5, 2]
+    : useIFramePlayer.getInitialState().speedOptions;
+
 const setSpeedOptions = (provider: string) =>
-  useIFramePlayer.setState({
-    speedOptions:
-      provider === 'ashdi'
-        ? [1, 1.25, 1.5, 2]
-        : useIFramePlayer.getInitialState().speedOptions,
-  });
+  useIFramePlayer.setState({ speedOptions: speedOptionsOf(provider) });

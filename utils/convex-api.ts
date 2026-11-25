@@ -71,6 +71,13 @@ export type WatchRoomQueueEpisode = Pick<
 >;
 export type WatchRoomProfile = Omit<WatchRoom['members'][number], 'self'>;
 export type WatchRoomAction = Args<'watchRooms', 'control'>['action'];
+/**
+ * A room's vote on what a member proposed, pending until it has a `result`;
+ * it passes with `needed` votes for it.
+ */
+export type WatchRoomVote = NonNullable<WatchRoom['vote']>;
+/** Skipping a segment, moving on or switching source, for everyone. */
+export type WatchRoomProposal = WatchRoomVote['proposal'];
 export type WatchRoomInbox = Returns<'watchRooms', 'inbox'>;
 /** A room the user can join from their inbox. */
 export type WatchRoomListing = WatchRoomInbox['rooms'][number];

@@ -13,12 +13,19 @@ import {
   convexApi,
   type WatchRoom,
   type WatchRoomAction,
+  type WatchRoomProposal,
   type WatchRoomQueueEpisode,
   type WatchRoomQueueItem,
 } from '@/utils/convex-api';
 import { liveConvex } from '@/utils/live-convex';
 
-import { followingEpisode, usePlayer } from '../context/player-context';
+import {
+  followingEpisode,
+  onSelectIntent,
+  type SelectIntent,
+  speedOptionsOf,
+  usePlayer,
+} from '../context/player-context';
 import { followRoom } from '../player';
 import { dispatchPlayerOverlayAction } from '../player-overlay/action-popup';
 import {
@@ -48,6 +55,7 @@ import {
   selectionOf,
 } from './room';
 import { notifyMemberChanges } from './room-notifications';
+import { dismissVote, notifyVote, notifyVoteFailed } from './room-votes';
 
 type PlayerStore = ReturnType<typeof usePlayer.getState>;
 type IFramePlayerStore = ReturnType<typeof useIFramePlayer.getState>;
@@ -123,6 +131,8 @@ export class RoomSession {
   /** A new episode's first play is the room's command or autoplay. */
   private playedSinceReady = false;
   private reportTimer?: ReturnType<typeof setTimeout>;
+  /** Proposals the user didn't ask for, which fail without a word. */
+  private readonly quiet = new WeakSet<WatchRoomAction>();
 
   constructor(
     private readonly store: RoomStore,
@@ -149,15 +159,20 @@ export class RoomSession {
     // A room on another anime than the player's is followed there.
 
     this.store.setState({ room });
+    // A vote open as the user joins is theirs too.
+    notifyVote(undefined, room, this.castVote);
     const { isPlaying, currentTime } = useIFramePlayer.getState();
     this.playedSinceReady = isPlaying || currentTime > 0;
     onPlaybackIntent(this.handleIntent);
+    onSelectIntent(this.handleSelectIntent);
     const heartbeat = setInterval(this.keepAlive, ROOM_HEARTBEAT_MS);
     const reconcile = setInterval(this.reconcile, ROOM_RECONCILE_MS);
     const leave = () => this.onEnd(undefined);
     window.addEventListener('pagehide', leave);
     this.cleanups.push(
       () => onPlaybackIntent(undefined),
+      () => onSelectIntent(undefined),
+      dismissVote,
       usePlayer.subscribe(this.handlePlayerChange),
       useIFramePlayer.subscribe(this.handlePlayerReport),
       useSettings.subscribe(this.handleAccountChange),
@@ -195,6 +210,13 @@ export class RoomSession {
     await this.client?.mutation(convexApi.watchRooms.share, {
       code: this.code,
       friendsCanJoin,
+    });
+  }
+
+  async setVoting(voting: boolean) {
+    await this.client?.mutation(convexApi.watchRooms.setVoting, {
+      code: this.code,
+      voting,
     });
   }
 
@@ -243,6 +265,7 @@ export class RoomSession {
           code: this.code,
           tab: this.tab,
           followsAnime: true,
+          votes: true,
           ...(join && { join }),
         },
       );
@@ -284,11 +307,17 @@ export class RoomSession {
     const previous = this.store.getState().room;
     this.store.setState({ room });
     if (previous) notifyMemberChanges(previous, room);
+    notifyVote(previous, room, this.castVote);
 
     const self = room.members.find((member) => member.self);
+    // A vote passing moves the room for everyone, whoever cast the last vote.
+    const passed =
+      room.vote?.result === 'passed' &&
+      previous?.vote?.id === room.vote.id &&
+      !previous.vote.result;
     if (
       previous &&
-      room.updatedBy !== self?.id &&
+      (room.updatedBy !== self?.id || passed) &&
       playbackKey(previous) !== playbackKey(room)
     ) {
       // The cooldowns stop correction loops; someone else's change is
@@ -428,18 +457,66 @@ export class RoomSession {
     ) {
       return;
     }
-    const { speedOptions } = useIFramePlayer.getState();
-    this.send({
+    // A room that votes puts it to a vote, and steers the player back
+    // meanwhile; picks of a team or episode are put to it before they show
+    // (see `handleSelectIntent`).
+    this.propose({
       type: 'select',
       // A player that couldn't follow the room moves it from where it is.
       from: pickSelection(this.unavailable ? room : before),
       to: pickSelection(to),
-      ...(speedOptions.length > 0 &&
-        !speedOptions.includes(room.rate) && {
-          rate: nearest(speedOptions, room.rate),
-        }),
+      ...this.rateFor(to.provider, room),
     });
   };
+
+  /** A speed for the room's rate the provider's players offer, if it differs. */
+  private rateFor(provider: string, room: WatchRoom) {
+    const options = speedOptionsOf(provider);
+    return options.length > 0 && !options.includes(room.rate)
+      ? { rate: nearest(options, room.rate) }
+      : {};
+  }
+
+  /**
+   * In a room that votes, a team or episode the user picks is proposed
+   * instead of shown: it plays once the room switches to it.
+   */
+  private handleSelectIntent = (to: SelectIntent) => {
+    const { room } = this.store.getState();
+    if (
+      !room?.voting ||
+      usePlayer.getState().slug !== room.animeSlug ||
+      sameSelection({ ...to, animeSlug: room.animeSlug }, room)
+    ) {
+      return false;
+    }
+    this.propose({
+      type: 'select',
+      from: pickSelection(room),
+      to,
+      ...this.rateFor(to.provider, room),
+    });
+    return true;
+  };
+
+  /**
+   * Does it for everyone: at once, or once most members vote for it in a
+   * room that votes.
+   */
+  propose(proposal: WatchRoomProposal, { quiet = false } = {}) {
+    const action: WatchRoomAction = { type: 'propose', proposal };
+    if (quiet) this.quiet.add(action);
+    this.send(action);
+  }
+
+  /** For or against the room's open vote, or the vote `id` while it is open. */
+  vote(yes: boolean, id?: string) {
+    const vote = this.store.getState().room?.vote;
+    if (!vote || vote.result || (id !== undefined && vote.id !== id)) return;
+    this.send({ type: 'vote', id: vote.id, yes });
+  }
+
+  private castVote = (id: string, yes: boolean) => this.vote(yes, id);
 
   /** Edits the room's queue, showing the edit before the room confirms it. */
   editQueue(edit: RoomQueueEdit) {
@@ -466,9 +543,9 @@ export class RoomSession {
   /**
    * Moves everyone on from the room's episode: to `item`, else the queue's
    * first episode, else the anime's next one. Members who finish together
-   * move it once.
+   * move it once; moving on before the end may take a vote.
    */
-  advance(item?: WatchRoomQueueEpisode) {
+  advance(item?: WatchRoomQueueEpisode, { ended = false } = {}) {
     const { room } = this.store.getState();
     if (!room) return;
 
@@ -479,8 +556,8 @@ export class RoomSession {
       selection &&
       sameSelection(selection, room) &&
       followingEpisode(player);
-    this.send({
-      type: 'advance',
+    const advance = {
+      type: 'advance' as const,
       from: pickPlace(room),
       ...(item && {
         item: { animeSlug: item.animeSlug, episode: item.episode },
@@ -492,7 +569,9 @@ export class RoomSession {
           episode: next.episode,
         },
       }),
-    });
+    };
+    if (ended) this.send(advance);
+    else this.propose(advance);
   }
 
   private send(action: WatchRoomAction) {
@@ -529,8 +608,17 @@ export class RoomSession {
         }
       } catch (error) {
         console.error(error);
+        if (this.closed) continue;
+        // Shown where it was asked, which may be no menu: e.g. another vote
+        // is open.
+        if (action.type === 'propose' || action.type === 'vote') {
+          if (!this.quiet.has(action)) {
+            notifyVoteFailed(action.type, errorMessage(error));
+          }
+          continue;
+        }
         // E.g. an older extension in the room keeps it on its anime.
-        if (error instanceof ConvexError && !this.closed) {
+        if (error instanceof ConvexError) {
           this.actionFailed = true;
           this.store.setState({ error: errorMessage(error) });
         }

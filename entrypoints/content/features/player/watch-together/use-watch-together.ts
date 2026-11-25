@@ -5,6 +5,7 @@ import { account } from '@/utils/account';
 import {
   convexApi,
   type WatchRoom,
+  type WatchRoomProposal,
   type WatchRoomQueueEpisode,
 } from '@/utils/convex-api';
 
@@ -27,14 +28,27 @@ interface WatchTogetherActions {
   leave: () => void;
   /** Owner only: lets their friends find the room and join. */
   share: (friendsCanJoin: boolean) => Promise<void>;
+  /** Owner only: whether skipping and switching take a vote. */
+  setVoting: (voting: boolean) => Promise<void>;
   invite: (userId: string) => Promise<void>;
   /** Edits the queue every member shares. */
   editQueue: (edit: RoomQueueEdit) => void;
   /**
    * Moves the room on: to the queued `item`, else the queue's next episode,
-   * else the anime's next one.
+   * else the anime's next one. Unless the episode `ended`, a room that votes
+   * votes on it first.
    */
-  advance: (item?: WatchRoomQueueEpisode) => void;
+  advance: (
+    item?: WatchRoomQueueEpisode,
+    options?: { ended?: boolean },
+  ) => void;
+  /**
+   * Does it for everyone, once most members vote for it if the room votes.
+   * A `quiet` one, which the user didn't ask for, fails without a word.
+   */
+  propose: (proposal: WatchRoomProposal, options?: { quiet?: boolean }) => void;
+  /** For or against the room's open vote. */
+  vote: (yes: boolean) => void;
 }
 
 let session: RoomSession | undefined;
@@ -89,6 +103,7 @@ export const useWatchTogether = create<
           position: finite(currentTime),
           rate: finite(currentSpeed) || 1,
           tab,
+          votes: true,
         });
         return code;
       }),
@@ -108,12 +123,20 @@ export const useWatchTogether = create<
       await session?.share(friendsCanJoin);
     },
 
+    setVoting: async (voting) => {
+      await session?.setVoting(voting);
+    },
+
     invite: async (userId) => {
       await session?.invite(userId);
     },
 
     editQueue: (edit) => session?.editQueue(edit),
 
-    advance: (item) => session?.advance(item),
+    advance: (item, options) => session?.advance(item, options),
+
+    propose: (proposal, options) => session?.propose(proposal, options),
+
+    vote: (yes) => session?.vote(yes),
   };
 });

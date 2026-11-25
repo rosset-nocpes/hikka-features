@@ -20,6 +20,7 @@ import {
   SKIP_SHOWN_ALONE_S,
   SKIP_FADE_MS,
 } from '../player.constants';
+import { sameSelection, selectionOf } from '../watch-together/room';
 import { useWatchTogether } from '../watch-together/use-watch-together';
 import { useSkipSegments } from './use-skip-segments';
 
@@ -36,8 +37,11 @@ const LABELS: Record<Segment['type'], string> = {
 
 interface AutoSkip {
   key: string;
+  type: Segment['type'];
   start: number;
   end: number;
+  /** In a room that votes: voted for, rather than skipped. */
+  vote: boolean;
 }
 
 /** Whether the player, as it is now, still plays `segment`. */
@@ -50,6 +54,39 @@ const stillIn = ({ start, end }: AutoSkip) => {
     !adInProgress &&
     currentTime >= start &&
     currentTime < end - 1
+  );
+};
+
+/** Where the player skips the segment to. */
+const endOf = ({ end }: { end: number }) => {
+  const { duration } = useIFramePlayer.getState();
+  return duration > 0 ? Math.min(end, duration) : end;
+};
+
+/**
+ * Asks the room to skip the segment, which it votes on. By itself (`auto`)
+ * it says nothing if that fails, and keeps out of the room's way: it joins
+ * an open vote on the segment but no other, and doesn't ask again once the
+ * room decided on it.
+ */
+const proposeSkip = (
+  segment: { type: Segment['type']; end: number },
+  { auto = false } = {},
+) => {
+  const from = selectionOf(usePlayer.getState());
+  const { room, propose } = useWatchTogether.getState();
+  if (!from || !room) return;
+  const vote = room.vote;
+  if (auto && vote) {
+    const same =
+      vote.proposal.type === 'skip' &&
+      vote.proposal.segment === segment.type &&
+      sameSelection(vote.proposal.from, from);
+    if (vote.result ? same : !same) return;
+  }
+  propose(
+    { type: 'skip', from, segment: segment.type, to: endOf(segment) },
+    { quiet: auto },
   );
 };
 
@@ -91,12 +128,28 @@ const SkipSegmentButton = ({ auto }: { auto: boolean }) => {
 
   /*
    * With `auto`, each segment of the episode is skipped once, while it
-   * plays, past any ad. Not in a room: the seek would move every member,
-   * whatever they chose, so there it is the button's.
+   * plays, past any ad. In a room that votes, that is a vote to skip it;
+   * not in others: the seek would move every member, whatever they chose,
+   * so there it is the button's.
    */
   const slug = usePlayer((state) => state.slug);
   const episode = usePlayer((state) => state.currentEpisode?.episode);
   const inRoom = useWatchTogether((state) => !!state.room);
+  const voting = useWatchTogether((state) => !!state.room?.voting);
+  // The room's open vote to skip a segment of this episode.
+  const provider = usePlayer((state) => state.provider);
+  const team = usePlayer((state) => state.team?.key ?? '');
+  const openVote = useWatchTogether((state) => {
+    const vote = state.room?.vote;
+    if (!vote || vote.result || vote.proposal.type !== 'skip') return;
+    const { from } = vote.proposal;
+    return from.animeSlug === slug &&
+      from.provider === provider &&
+      from.team === team &&
+      from.episode === episode
+      ? vote
+      : undefined;
+  });
   const playing = useIFramePlayer(
     (state) => state.isReady && state.isPlaying && !state.adInProgress,
   );
@@ -110,25 +163,33 @@ const SkipSegmentButton = ({ auto }: { auto: boolean }) => {
   const [autoSkip, setAutoSkip] = useState<AutoSkip>();
   if (
     auto &&
-    !inRoom &&
+    (!inRoom || voting) &&
     playing &&
     segment &&
     segmentKey &&
     !autoSkipped.has(segmentKey)
   ) {
     setAutoSkipped(new Set(autoSkipped).add(segmentKey));
-    setAutoSkip({ key: segmentKey, start: segment.start, end: segment.end });
+    setAutoSkip({
+      key: segmentKey,
+      type: segment.type,
+      start: segment.start,
+      end: segment.end,
+      vote: inRoom,
+    });
   } else if (autoSkip && autoSkip.key !== segmentKey) {
     setAutoSkip(undefined);
   }
 
+  // A vote to skip keeps the button, which counts the votes.
   const shown =
     useIFramePlayer(
       (state) =>
         !!segment &&
         (state.uiShown ||
           state.currentTime < segment.start + SKIP_SHOWN_ALONE_S),
-    ) && autoSkip?.key !== segmentKey;
+    ) &&
+    (autoSkip?.key !== segmentKey || !!autoSkip?.vote);
   const uiShown = useIFramePlayer((state) => state.uiShown);
   const isCompact = usePlayer(compactMode);
   const reduceMotion = useReducedMotion();
@@ -210,14 +271,15 @@ const SkipSegmentButton = ({ auto }: { auto: boolean }) => {
     };
   }, [shown, settled, target, top, reduceMotion]);
 
-  const seekPast = ({ end }: { end: number }) => {
-    const { duration, seek } = useIFramePlayer.getState();
-    seek(duration > 0 ? Math.min(end, duration) : end);
-  };
+  const seekPast = (segment: { end: number }) =>
+    useIFramePlayer.getState().seek(endOf(segment));
 
-  // The segment it offers, while it shows: fading out, it does nothing.
+  // The segment it offers, while it shows: fading out, it does nothing. A
+  // room that votes votes on it.
   const skip = () => {
-    if (shown && segment) seekPast(segment);
+    if (!shown || !segment) return;
+    if (voting) proposeSkip(segment);
+    else seekPast(segment);
   };
 
   const forget = ({ key }: AutoSkip) => {
@@ -237,7 +299,11 @@ const SkipSegmentButton = ({ auto }: { auto: boolean }) => {
     // tabs (picture-in-picture) have none, yet keep playing.
     const check = setTimeout(() => {
       ran = true;
-      if (stillIn(autoSkip)) return seekPast(autoSkip);
+      if (stillIn(autoSkip)) {
+        return autoSkip.vote
+          ? proposeSkip(autoSkip, { auto: true })
+          : seekPast(autoSkip);
+      }
       // Not skipped after all: it may be, once the player is really in it.
       forget(autoSkip);
     }, 0);
@@ -282,6 +348,12 @@ const SkipSegmentButton = ({ auto }: { auto: boolean }) => {
           >
             <MaterialSymbolsFastForwardRounded className="size-5" />
             {LABELS[offered.type]}
+            {openVote?.proposal.type === 'skip' &&
+              openVote.proposal.segment === offered.type && (
+                <span className="text-muted-foreground tabular-nums">
+                  {openVote.yes.length}/{openVote.needed}
+                </span>
+              )}
           </Button>
         )}
       </motion.div>

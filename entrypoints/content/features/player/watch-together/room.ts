@@ -21,6 +21,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   EXTENSION_UPDATE_REQUIRED: 'Оновіть розширення, щоб дивитися разом',
   MEMBERS_OUTDATED:
     'Хтось у кімнаті має стару версію розширення, тож інше аніме не ввімкнеться',
+  VOTE_OPEN: 'Уже триває інше голосування',
   cancelled: 'Вхід скасовано',
   login_expired: 'Час на вхід минув',
   hikka_exchange_failed: 'hikka.io не підтвердила вхід',

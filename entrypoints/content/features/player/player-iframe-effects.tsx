@@ -20,12 +20,13 @@ const getEpisodeKey = (episode: API.EpisodeData) =>
 /** Set while what follows an episode loads, so it plays once ready. */
 let pendingAutoPlay = false;
 
-const loadNext = async () => {
+const loadNext = async (ended: boolean) => {
   const { room, advance } = useWatchTogether.getState();
   // A watch together room moves everyone on together, to its own queue or
-  // the anime's next episode, and plays it.
+  // the anime's next episode, and plays it; before the end, it may vote on
+  // it first.
   if (room) {
-    advance();
+    advance(undefined, { ended });
     return false;
   }
 
@@ -43,10 +44,14 @@ const loadNext = async () => {
   return true;
 };
 
-/** Plays what follows the episode: the queue, else the anime's next one. */
-export const playNext = async () => {
+/**
+ * Plays what follows the episode: the queue, else the anime's next one.
+ * `ended` says the episode played to its end, rather than the user skipping
+ * it.
+ */
+export const playNext = async ({ ended = false } = {}) => {
   pendingAutoPlay = true;
-  const played = await loadNext();
+  const played = await loadNext(ended);
   if (!played) pendingAutoPlay = false;
   return played;
 };
@@ -213,7 +218,7 @@ const PlayerIFrameEffects = () => {
 
     // A watch together room moves everyone on at once; alone, the user gets
     // a moment to stay.
-    if (useWatchTogether.getState().room) void playNext();
+    if (useWatchTogether.getState().room) void playNext({ ended: true });
     else upNext.offer();
   }, [endedCount]);
 
