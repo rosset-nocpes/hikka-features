@@ -47,6 +47,7 @@ import {
   selectionKey,
   selectionOf,
 } from './room';
+import { notifyMemberChanges } from './room-notifications';
 
 type PlayerStore = ReturnType<typeof usePlayer.getState>;
 type IFramePlayerStore = ReturnType<typeof useIFramePlayer.getState>;
@@ -282,6 +283,7 @@ export class RoomSession {
 
     const previous = this.store.getState().room;
     this.store.setState({ room });
+    if (previous) notifyMemberChanges(previous, room);
 
     const self = room.members.find((member) => member.self);
     if (

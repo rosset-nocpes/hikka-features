@@ -187,7 +187,7 @@ const Row = ({ activity, now }: { activity: FriendActivity; now: number }) => {
           size="sm"
           variant="secondary"
           className="relative z-10 shrink-0"
-          onClick={() => openRoom(slug, room.code!)}
+          onClick={() => void openRoom(slug, room.code!)}
         >
           Приєднатися
         </Button>

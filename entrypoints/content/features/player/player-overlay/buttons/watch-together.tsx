@@ -151,7 +151,7 @@ const ListingItem = ({
   const slug = usePlayer((state) => state.slug);
 
   return (
-    <MenuItem onClick={() => openRoom(listing.animeSlug, listing.code)}>
+    <MenuItem onClick={() => void openRoom(listing.animeSlug, listing.code)}>
       <MemberAvatar member={listing.friend} />
       <span className="grid min-w-0 flex-1 leading-tight">
         <span className="flex min-w-0 items-baseline gap-1">

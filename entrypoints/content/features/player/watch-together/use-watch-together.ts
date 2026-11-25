@@ -10,6 +10,7 @@ import {
 
 import { usePlayer } from '../context/player-context';
 import { errorMessage, finite, type RoomQueueEdit, selectionOf } from './room';
+import { notifyRoomEnded } from './room-notifications';
 import { type OpenRoom, RoomSession } from './room-session';
 
 interface WatchTogetherState {
@@ -45,11 +46,13 @@ export const useWatchTogether = create<
     if (session !== current) return;
     session = undefined;
     current.stop();
-    set({
-      status: 'idle',
-      room: undefined,
-      error: error === undefined ? undefined : errorMessage(error),
-    });
+    const message = error === undefined ? undefined : errorMessage(error);
+    // Failing to join shows where it was asked; a room that ends by itself
+    // may do so with no menu open.
+    if (message && useWatchTogether.getState().status === 'joined') {
+      notifyRoomEnded(message);
+    }
+    set({ status: 'idle', room: undefined, error: message });
   };
 
   const start = async (open: OpenRoom) => {
