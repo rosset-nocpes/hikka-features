@@ -12,6 +12,8 @@ export enum HikkaPages {
   PersonPage = 'person-page',
   /** A user's profile, `/u/<username>`. */
   UserPage = 'user-page',
+  /** A user's favourites, `/u/<username>/favorites`. */
+  UserFavoritesPage = 'user-favorites-page',
   // The extension's own pages
   TeamPages = 'team-pages',
   RecommendationsPage = 'recommendations-page',

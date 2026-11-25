@@ -2,23 +2,35 @@ import type { FC, ReactNode } from 'react';
 
 import MaterialSymbolsImageNotSupportedOutlineRounded from '~icons/material-symbols/image-not-supported-outline-rounded';
 
+import { FadeImage } from '@/components/fade-image';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 
 /** A poster in hikka.io's card ratio, with a placeholder when missing. */
 export const Poster: FC<{
   image?: string;
+  /** Width over height; another for square art such as albums'. */
+  ratio?: number;
+  /** Fades the image in, and from one image to the next. */
+  fade?: boolean;
   className?: string;
   children?: ReactNode;
-}> = ({ image, className, children }) => (
+}> = ({ image, ratio = 0.7, fade, className, children }) => (
   <AspectRatio
-    ratio={0.7}
+    ratio={ratio}
     className={cn(
       'bg-muted relative w-full overflow-hidden rounded-md',
       className,
     )}
   >
     <div className="bg-secondary/20 absolute inset-0 flex items-center justify-center">
-      {image ? (
+      {fade ? (
+        <>
+          {!image && (
+            <MaterialSymbolsImageNotSupportedOutlineRounded className="text-muted-foreground text-4xl" />
+          )}
+          <FadeImage src={image} />
+        </>
+      ) : image ? (
         <img
           src={image}
           alt=""

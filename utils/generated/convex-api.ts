@@ -289,6 +289,56 @@ export const convexApi = {
       'friends:refresh',
     ),
   },
+  musicFavorites: {
+    add: makeFunctionReference<
+      'mutation',
+      {
+        song: {
+          animeSlug: string;
+          ostType: 'opening' | 'ending';
+          index: number;
+          title: string;
+          author?: string;
+          animeTitle?: string;
+          poster?: string;
+          audio: string;
+        };
+      },
+      null
+    >('musicFavorites:add'),
+    list: makeFunctionReference<
+      'query',
+      {
+        hikkaId: string;
+      },
+      {
+        animeSlug: string;
+        ostType: 'opening' | 'ending';
+        index: number;
+        title: string;
+        author?: string;
+        animeTitle?: string;
+        poster?: string;
+        audio: string;
+        addedAt: number;
+        release?: {
+          cover: string;
+          album?: string;
+          released?: string;
+          link?: string;
+        };
+      }[]
+    >('musicFavorites:list'),
+    remove: makeFunctionReference<
+      'mutation',
+      {
+        animeSlug: string;
+        ostType: 'opening' | 'ending';
+        index: number;
+      },
+      null
+    >('musicFavorites:remove'),
+  },
   notifications: {
     markAllSeen: makeFunctionReference<'mutation', Record<string, never>, null>(
       'notifications:markAllSeen',
@@ -375,6 +425,33 @@ export const convexApi = {
         }[];
       }
     >('skip:segments'),
+  },
+  songInfo: {
+    forAnime: makeFunctionReference<
+      'query',
+      {
+        animeSlug: string;
+      },
+      {
+        songs: {
+          ostType: 'opening' | 'ending';
+          index: number;
+          cover: string;
+          album?: string;
+          released?: string;
+          link?: string;
+        }[];
+        state: 'unknown' | 'queued' | 'done';
+        refreshAt?: number;
+      }
+    >('songInfo:forAnime'),
+    request: makeFunctionReference<
+      'mutation',
+      {
+        animeSlug: string;
+      },
+      null
+    >('songInfo:request'),
   },
   teamPriority: {
     get: makeFunctionReference<

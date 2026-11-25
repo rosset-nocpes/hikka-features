@@ -12,7 +12,10 @@ const QUERY = `query ($id: [Int!]) {
       type
       sequence
       group { name }
-      song { title { romaji native } }
+      song {
+        title { romaji native }
+        performances { artist { name { main } } }
+      }
       animethemeentries { videos { nodes { audio { link } } } }
     }
   }
@@ -24,7 +27,10 @@ interface AnimeTheme {
   sequence: number | null;
   /** Another version of the theme, e.g. "TV Version" or a dub's. */
   group: { name: string } | null;
-  song: { title: { romaji: string | null; native: string | null } } | null;
+  song: {
+    title: { romaji: string | null; native: string | null };
+    performances?: { artist: { name: { main: string | null } } }[];
+  } | null;
   animethemeentries: {
     videos: { nodes: { audio: { link: string } | null }[] };
   }[];
@@ -50,6 +56,13 @@ export interface MusicTrack {
   author?: string | null;
   /** The theme's audio (Ogg, TV size), from AnimeThemes. */
   audio: string;
+  /** Its cover and album, when it came with them (a favourite does). */
+  release?: {
+    cover: string;
+    album?: string;
+    released?: string;
+    link?: string;
+  };
 }
 
 export const OST_LABEL: Record<HikkaOst['ost_type'], string> = {
@@ -68,6 +81,25 @@ const titleKey = (title?: string | null) =>
     ?.normalize('NFKC')
     .toLowerCase()
     .replace(/[^\p{L}\p{N}]/gu, '') ?? '';
+
+/** Performers a track names; more are "та ін.", as in a credit. */
+const PERFORMERS_SHOWN = 4;
+
+/**
+ * Who performs the theme, in full: Hikka keeps only the first word of a
+ * name ("Kessoku" for Kessoku Band, "Gen" for Gen Hoshino).
+ */
+const performersOf = (theme: AnimeTheme | undefined) => {
+  const names = new Set(
+    theme?.song?.performances?.flatMap(({ artist }) =>
+      artist.name.main ? [artist.name.main] : [],
+    ),
+  );
+  if (!names.size) return undefined;
+  // A choir of a theme (Uma Musume's has 34) reads, and saves, as its first.
+  const shown = [...names].slice(0, PERFORMERS_SHOWN).join(', ');
+  return names.size > PERFORMERS_SHOWN ? `${shown} та ін.` : shown;
+};
 
 const audioOf = (theme: AnimeTheme) =>
   theme.animethemeentries
@@ -143,13 +175,15 @@ const fetchThemes = async (malId: number) => {
 /** The anime's openings and endings Hikka lists that AnimeThemes can play. */
 export const useAnimeMusic = (anime?: HikkaContent, slug?: string) => {
   const malId = anime?.mal_id;
-  const { data: themes } = useQuery({
+  const { data, isError } = useQuery({
     queryKey: ['animethemes', malId],
     queryFn: () => fetchThemes(malId!),
     enabled: !!malId && !!anime?.ost?.length,
     retry: 1,
     staleTime: Infinity,
   });
+  // Without a MAL id or AnimeThemes, there's nothing to play: not loading.
+  const themes = data ?? (isError || (anime && !malId) ? [] : undefined);
 
   if (!anime || !slug || !themes) return undefined;
   return (anime.ost ?? []).flatMap((ost): MusicTrack[] => {
@@ -165,7 +199,7 @@ export const useAnimeMusic = (anime?: HikkaContent, slug?: string) => {
         type: ost.ost_type,
         index: ost.index,
         title: ost.title,
-        author: ost.author,
+        author: performersOf(theme) ?? ost.author,
         audio,
       },
     ];

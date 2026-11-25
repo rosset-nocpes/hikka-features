@@ -1,13 +1,17 @@
 import { ScrollArea as ScrollAreaPrimitive } from '@base-ui/react/scroll-area';
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
-import { useEffect, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
 import MaterialSymbolsDragIndicator from '~icons/material-symbols/drag-indicator';
 import MaterialSymbolsLibraryMusicRounded from '~icons/material-symbols/library-music-rounded';
 import MaterialSymbolsQueueMusicRounded from '~icons/material-symbols/queue-music-rounded';
+import MaterialSymbolsRepeatOneRounded from '~icons/material-symbols/repeat-one-rounded';
+import MaterialSymbolsRepeatRounded from '~icons/material-symbols/repeat-rounded';
+import MaterialSymbolsShuffleRounded from '~icons/material-symbols/shuffle-rounded';
 import MaterialSymbolsSkipNextOutlineRounded from '~icons/material-symbols/skip-next-outline-rounded';
 import MaterialSymbolsSkipPreviousOutlineRounded from '~icons/material-symbols/skip-previous-outline-rounded';
 
+import { FadeImage } from '@/components/fade-image';
 import {
   MediaButton,
   MediaDivider,
@@ -35,7 +39,22 @@ import type { MusicTrack } from './animethemes';
 
 import { ModalUi } from '../../core/base-feature';
 import Equalizer from './equalizer';
-import { currentTrack, musicCorner, trackLabel, useMusic } from './use-music';
+import LikeButton from './like-button';
+import SongLink from './song-link';
+import {
+  currentTrack,
+  musicCorner,
+  type RepeatMode,
+  setMediaArtwork,
+  trackLabel,
+  useMusic,
+} from './use-music';
+import {
+  artOf,
+  findRelease,
+  useSongReleases,
+  useTrackRelease,
+} from './use-song-releases';
 
 const musicUi = new ModalUi({
   name: 'music-player',
@@ -91,6 +110,7 @@ const MusicCard = () => {
     currentTime,
     duration,
     bufferedTime,
+    repeat,
     toggle,
     seek,
     next,
@@ -99,6 +119,11 @@ const MusicCard = () => {
   const { disableBlur } = useSettings().features.player;
   const [showQueue, setShowQueue] = useState(false);
   const cardRef = useRef<HTMLElement>(null);
+  const release = useTrackRelease(track);
+  const art = artOf(track, release);
+
+  // The OS's controls show the cover too, once it's known.
+  useEffect(() => setMediaArtwork(art), [art, track?.key]);
 
   // Stacks above the video's mini player when they share a corner.
   const startDrag = useFloatingCard(cardRef, {
@@ -131,6 +156,17 @@ const MusicCard = () => {
         disableBlur && 'bg-background! backdrop-filter-none',
       )}
     >
+      {/* The cover's colours, washed over the glass behind everything. */}
+      {!disableBlur && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 overflow-hidden [mask-image:linear-gradient(to_bottom,black,transparent_85%)] opacity-30 dark:opacity-25"
+        >
+          <div className="absolute inset-0 scale-150 blur-2xl saturate-150">
+            <FadeImage src={art} loading="eager" />
+          </div>
+        </div>
+      )}
       <div className="flex w-full items-center gap-2 p-2">
         <Button
           variant="ghost"
@@ -147,18 +183,12 @@ const MusicCard = () => {
           tabIndex={-1}
           aria-hidden
           draggable={false}
-          className="bg-muted flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-md"
+          className="bg-muted relative flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-md shadow-sm"
         >
-          {track?.poster ? (
-            <img
-              src={track.poster}
-              alt=""
-              className="size-full object-cover"
-              draggable={false}
-            />
-          ) : (
+          {!art && (
             <MaterialSymbolsLibraryMusicRounded className="text-muted-foreground size-5" />
           )}
+          <FadeImage src={art} loading="eager" />
         </a>
         <div className="grid min-w-0 flex-1 leading-tight">
           <a
@@ -182,6 +212,8 @@ const MusicCard = () => {
                 [trackLabel(track), track.author].filter(Boolean).join(' · ')}
           </span>
         </div>
+        <SongLink release={release} tooltip />
+        {track && <LikeButton track={track} tooltip />}
         <Button
           variant="ghost"
           size="icon-sm"
@@ -205,7 +237,7 @@ const MusicCard = () => {
       </div>
 
       <div className="flex items-center justify-between gap-2 p-2 pt-1">
-        <div className="flex min-w-0 items-center gap-1">
+        <div className="group/transport flex min-w-0 items-center gap-1">
           {hasQueue && (
             <MediaButton label="Попередній" onClick={previous}>
               <MaterialSymbolsSkipPreviousOutlineRounded className="size-5" />
@@ -224,18 +256,32 @@ const MusicCard = () => {
           {hasQueue && (
             <MediaButton
               label="Наступний"
-              disabled={index >= queue.length - 1}
+              // Only repeating the queue goes on past its end.
+              disabled={index >= queue.length - 1 && repeat !== 'all'}
               onClick={next}
             >
               <MaterialSymbolsSkipNextOutlineRounded className="size-5" />
             </MediaButton>
           )}
           <VolumeControl />
-          <MediaDivider />
-          <TimeToggle currentTime={currentTime} duration={duration} />
+          {/* The card has no room for both: the time steps aside while
+              the volume slides out (on hover, keyboard focus or a drag). */}
+          <div
+            className={cn(
+              'flex max-w-32 items-center gap-1 overflow-hidden transition-[max-width,opacity] duration-200 ease-out motion-reduce:transition-opacity',
+              '[@media(hover:hover)]:group-has-[[data-slot=volume-slide-out]:hover]/transport:max-w-0 [@media(hover:hover)]:group-has-[[data-slot=volume-slide-out]:hover]/transport:opacity-0',
+              'group-has-[[data-slot=volume-slide-out]_:focus-visible]/transport:max-w-0 group-has-[[data-slot=volume-slide-out]_:focus-visible]/transport:opacity-0',
+              'group-has-[[data-slot=volume-slide-out]_[data-dragging]]/transport:max-w-0 group-has-[[data-slot=volume-slide-out]_[data-dragging]]/transport:opacity-0',
+            )}
+          >
+            <MediaDivider />
+            <TimeToggle currentTime={currentTime} duration={duration} />
+          </div>
         </div>
-        {hasQueue && (
-          <div className="shrink-0">
+        <div className="flex shrink-0 items-center gap-1">
+          {hasQueue && <ShuffleButton />}
+          <RepeatButton />
+          {hasQueue && (
             <MediaButton
               label={showQueue ? 'Сховати треки' : 'Треки'}
               pressed={showQueue}
@@ -243,8 +289,8 @@ const MusicCard = () => {
             >
               <MaterialSymbolsQueueMusicRounded className="size-5" />
             </MediaButton>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Unfolds from under the toolbar; a card in a bottom corner grows
@@ -267,6 +313,55 @@ const MusicCard = () => {
   );
 };
 
+/** What a click on the repeat button turns it to. */
+const REPEAT_LABELS: Record<RepeatMode, string> = {
+  off: 'Повторювати всі',
+  all: 'Повторювати трек',
+  one: 'Не повторювати',
+};
+
+/** A mode that's on: lit in the accent, with a dot under it. */
+const ModeIcon = ({ on, children }: { on: boolean; children: ReactNode }) => (
+  <span
+    className={cn(
+      'relative flex transition-colors',
+      on &&
+        'text-primary after:bg-primary after:absolute after:-bottom-1.5 after:left-1/2 after:size-1 after:-translate-x-1/2 after:rounded-full',
+    )}
+  >
+    {children}
+  </span>
+);
+
+const RepeatButton = () => {
+  const { repeat, cycleRepeat } = useMusic();
+  return (
+    <MediaButton label={REPEAT_LABELS[repeat]} onClick={cycleRepeat}>
+      <ModeIcon on={repeat !== 'off'}>
+        {repeat === 'one' ? (
+          <MaterialSymbolsRepeatOneRounded className="size-5" />
+        ) : (
+          <MaterialSymbolsRepeatRounded className="size-5" />
+        )}
+      </ModeIcon>
+    </MediaButton>
+  );
+};
+
+const ShuffleButton = () => {
+  const { shuffle, toggleShuffle } = useMusic();
+  return (
+    <MediaButton
+      label={shuffle ? 'Не перемішувати' : 'Перемішати'}
+      onClick={toggleShuffle}
+    >
+      <ModeIcon on={shuffle}>
+        <MaterialSymbolsShuffleRounded className="size-5" />
+      </ModeIcon>
+    </MediaButton>
+  );
+};
+
 /** Mute, with the level sliding out on hover or focus. */
 const VolumeControl = () => {
   const { volume, muted, setVolume, toggleMute } = useMusic();
@@ -286,55 +381,100 @@ const VolumeControl = () => {
 
 /** The anime's openings and endings, laid out like the player's episodes. */
 const TrackList = () => {
-  const { queue, index, playing, playQueue, toggle } = useMusic();
+  const { queue, index, playing, playAt, toggle } = useMusic();
+  // Favourites from a profile come from many anime: each row says which.
+  const mixed = new Set(queue.map((item) => item.slug)).size > 1;
+  // One anime's covers, followed once for the whole list. Favourites bring
+  // theirs along: a profile's long list asks the backend for nothing.
+  const songs = useSongReleases(mixed ? undefined : queue[0]?.slug);
 
   return (
     <ScrollArea
       scrollFade
-      className="border-border max-h-56 border-t [&>[data-slot=scroll-area-viewport]]:overscroll-contain"
+      className="border-border max-h-64 border-t [&>[data-slot=scroll-area-viewport]]:overscroll-contain"
     >
       <ScrollAreaPrimitive.Content
         // Not the default fit-content, which would stop titles truncating.
         style={{ minWidth: 0 }}
       >
         <ol className="p-2">
-          {queue.map((item, position) => {
-            const current = position === index;
-            return (
-              <li key={item.key}>
-                <button
-                  type="button"
-                  aria-current={current}
-                  data-active={current}
-                  className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground focus-visible:ring-sidebar-ring flex w-full items-center gap-2 rounded-md p-2 text-left text-sm outline-hidden focus-visible:ring-2 data-[active=true]:font-medium"
-                  onClick={() =>
-                    current ? toggle() : playQueue(queue, position)
-                  }
-                >
-                  <span className="text-muted-foreground flex w-4 shrink-0 justify-center text-xs tabular-nums">
-                    {current ? (
-                      <Equalizer playing={playing} className="text-primary" />
-                    ) : (
-                      position + 1
-                    )}
-                  </span>
-                  <span className="grid min-w-0 flex-1 leading-tight">
-                    <span className="truncate">{item.title}</span>
-                    {item.author && (
-                      <span className="text-muted-foreground truncate text-xs font-normal">
-                        {item.author}
-                      </span>
-                    )}
-                  </span>
-                  <Badge className="bg-muted text-muted-foreground h-4 shrink-0 rounded-sm px-1.5 text-[10px] font-semibold">
-                    {trackLabel(item)}
-                  </Badge>
-                </button>
-              </li>
-            );
-          })}
+          {queue.map((item, position) => (
+            <QueueRow
+              key={item.key}
+              track={item}
+              position={position}
+              current={position === index}
+              playing={playing}
+              mixed={mixed}
+              art={artOf(
+                item,
+                item.release ??
+                  findRelease(songs, { type: item.type, index: item.index }),
+              )}
+              onPlay={() => (position === index ? toggle() : playAt(position))}
+            />
+          ))}
         </ol>
       </ScrollAreaPrimitive.Content>
     </ScrollArea>
   );
 };
+
+interface QueueRowProps {
+  track: MusicTrack;
+  position: number;
+  current: boolean;
+  playing: boolean;
+  /** The queue spans several anime: the row says which. */
+  mixed: boolean;
+  /** Its cover, else its anime's poster. */
+  art?: string;
+  onPlay: () => void;
+}
+
+/** A queued track: its cover, with the equalizer over it while it plays. */
+const QueueRow = ({
+  track,
+  position,
+  current,
+  playing,
+  mixed,
+  art,
+  onPlay,
+}: QueueRowProps) => (
+  <li
+    data-active={current}
+    className="group/track hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground flex items-center rounded-md pr-1 transition-colors"
+  >
+    <button
+      type="button"
+      aria-current={current}
+      className="focus-visible:ring-sidebar-ring flex min-w-0 flex-1 items-center gap-2.5 rounded-md p-1.5 text-left text-sm outline-hidden group-data-[active=true]/track:font-medium focus-visible:ring-2"
+      onClick={onPlay}
+    >
+      <span className="bg-muted text-muted-foreground relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded text-xs tabular-nums">
+        {!art && position + 1}
+        <FadeImage src={art} />
+        {current && (
+          <span className="absolute inset-0 flex items-center justify-center bg-black/50 text-white">
+            <Equalizer playing={playing} />
+          </span>
+        )}
+      </span>
+      <span className="grid min-w-0 flex-1 gap-0.5 leading-tight">
+        <span className="truncate">{track.title}</span>
+        {(track.author || mixed) && (
+          <span className="text-muted-foreground truncate text-xs font-normal">
+            {[mixed && track.animeTitle, track.author]
+              .filter(Boolean)
+              .join(' · ')}
+          </span>
+        )}
+      </span>
+      <Badge className="bg-muted text-muted-foreground h-4 shrink-0 rounded-sm px-1.5 text-[10px] font-semibold">
+        {trackLabel(track)}
+      </Badge>
+    </button>
+    <LikeButton track={track} className="size-7" />
+  </li>
+);

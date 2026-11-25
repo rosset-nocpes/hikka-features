@@ -88,7 +88,10 @@ interface AppState {
     recommendationBlock: {
       enabled: boolean;
     };
-    /** Play buttons on an anime's openings and endings, and their player. */
+    /**
+     * The anime's openings and endings as a playable track list, their
+     * player, and the favourite songs on users' profiles.
+     */
     musicPlayer: {
       enabled: boolean;
     };
