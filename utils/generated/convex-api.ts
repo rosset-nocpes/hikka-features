@@ -442,7 +442,6 @@ export const convexApi = {
           link?: string;
         }[];
         state: 'unknown' | 'queued' | 'done';
-        queuedAt?: number;
         refreshAt?: number;
       }
     >('songInfo:forAnime'),

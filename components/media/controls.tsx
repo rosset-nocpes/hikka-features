@@ -226,6 +226,7 @@ export const VolumeSlideOut = ({
   ...slider
 }: VolumeSlideOutProps) => (
   <div
+    data-slot="volume-slide-out"
     className="group/volume flex items-center"
     onPointerEnter={(event) => event.pointerType === 'mouse' && onOpen?.()}
   >

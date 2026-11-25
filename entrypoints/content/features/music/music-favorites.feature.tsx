@@ -8,6 +8,7 @@ import MaterialSymbolsLibraryMusicRounded from '~icons/material-symbols/library-
 import MaterialSymbolsPauseRounded from '~icons/material-symbols/pause-rounded';
 import MaterialSymbolsPlayArrowRounded from '~icons/material-symbols/play-arrow-rounded';
 
+import { FadeImage } from '@/components/fade-image';
 import { Poster } from '@/components/hikka/poster';
 import EmptyState from '@/components/ui/empty-state';
 import { fetchHikka } from '@/hooks/use-hikka';
@@ -353,7 +354,7 @@ const SongCard: FC<{ song: FavoriteSong; onPlay: () => void }> = ({
 
   return (
     <div className="group relative flex w-full min-w-0 flex-col gap-2">
-      <Poster image={coverOf(song)} ratio={1}>
+      <Poster image={coverOf(song)} ratio={1} fade>
         <button
           type="button"
           aria-label={
@@ -426,14 +427,7 @@ const MoreCard: FC<{
     >
       <Poster ratio={1}>
         <div className="@container absolute inset-0">
-          {image && (
-            <img
-              src={image}
-              alt=""
-              loading="lazy"
-              className="absolute inset-0 size-full object-cover"
-            />
-          )}
+          <FadeImage src={image} />
           <div className="absolute inset-x-0 bottom-0 h-3/5 [mask-image:linear-gradient(to_top,black_60%,transparent)] backdrop-blur-lg" />
           <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/30 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 flex flex-col p-2 text-white @min-[8rem]:p-3">

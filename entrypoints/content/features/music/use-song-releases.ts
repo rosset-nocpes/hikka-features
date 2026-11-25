@@ -8,8 +8,6 @@ import { convex } from '@/utils/convex-client';
 
 import type { MusicTrack } from './animethemes';
 
-import { SONG_LOOKUP_STUCK_MS } from './music.constants';
-
 /** An opening's or ending's release: its cover, album and store page. */
 export type SongRelease = FunctionReturnType<
   typeof convexApi.songInfo.forAnime
@@ -20,11 +18,10 @@ type Lookup = FunctionReturnType<typeof convexApi.songInfo.forAnime>;
 /** Anime whose lookup this tab has asked for already. */
 const requested = new Set<string>();
 
+/** Never looked up, or long ago; one on its way keeps its place. */
 const isDue = (lookup: Lookup, now: number) =>
   lookup.state === 'unknown' ||
-  (lookup.state === 'done'
-    ? (lookup.refreshAt ?? 0) <= now
-    : (lookup.queuedAt ?? 0) + SONG_LOOKUP_STUCK_MS <= now);
+  (lookup.state === 'done' && (lookup.refreshAt ?? 0) <= now);
 
 /**
  * The covers and albums of the anime's songs that the backend has found,

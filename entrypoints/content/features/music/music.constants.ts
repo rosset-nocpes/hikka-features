@@ -30,6 +30,3 @@ export const TWIN_DEADLINE_MS = 4_000;
 /** A seek to within `REPEAT_S` of where the last one went, this soon, is the same seek again. */
 export const REPEAT_MS = 1_000;
 export const REPEAT_S = 0.05;
-
-/** A queued cover lookup not done by then is asked for again (the backend's `SONG_LOOKUP_STUCK_MS`). */
-export const SONG_LOOKUP_STUCK_MS = 15 * 60_000;

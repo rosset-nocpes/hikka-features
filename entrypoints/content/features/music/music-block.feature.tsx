@@ -9,6 +9,7 @@ import MaterialSymbolsShuffleRounded from '~icons/material-symbols/shuffle-round
 
 import type { HikkaOst } from '@/hooks/use-hikka';
 
+import { FadeImage } from '@/components/fade-image';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { onHikkaLinkClick } from '@/utils/hikka-router';
@@ -177,7 +178,9 @@ const Toolbar: FC<{ tracks?: MusicTrack[]; total: number }> = ({
   total,
 }) => {
   const slug = tracks?.[0]?.slug;
-  const isThisAnime = useMusic((state) => currentTrack(state)?.slug === slug);
+  const isThisAnime = useMusic(
+    (state) => !!slug && currentTrack(state)?.slug === slug,
+  );
   const playing = useMusic((state) => state.playing) && isThisAnime;
   const playable = tracks?.length ?? 0;
 
@@ -276,7 +279,7 @@ const TrackRow: FC<RowProps> = ({ ost, track, release, loading, queue }) => {
         title={
           !track && !loading ? 'AnimeThemes не має цього треку' : undefined
         }
-        className="focus-visible:ring-ring flex min-w-0 flex-1 items-center gap-3 rounded-md p-2 text-left outline-none focus-visible:ring-2 disabled:cursor-default"
+        className="group/play focus-visible:ring-ring flex min-w-0 flex-1 items-center gap-3 rounded-md p-2 text-left outline-none focus-visible:ring-2 disabled:cursor-default"
         onClick={play}
       >
         <span
@@ -292,22 +295,22 @@ const TrackRow: FC<RowProps> = ({ ost, track, release, loading, queue }) => {
         >
           {cover && (
             <>
-              <img
-                src={cover}
-                alt=""
-                loading="lazy"
-                draggable={false}
+              {/* Dimmed around it: its own opacity is the fade's. */}
+              <span
                 className={cn(
-                  'absolute inset-0 size-full object-cover',
+                  'absolute inset-0',
                   unavailable && 'opacity-50 grayscale',
                 )}
-              />
+              >
+                <FadeImage src={cover} />
+              </span>
               {/* Under the icons, which a cover alone would swallow. */}
               <span
                 className={cn(
-                  'absolute inset-0 bg-black/45 opacity-0 transition-opacity group-hover/row:opacity-100',
+                  'absolute inset-0 bg-black/45 opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-visible/play:opacity-100',
                   (loading || isCurrent) && 'opacity-100',
-                  unavailable && 'group-hover/row:opacity-0',
+                  unavailable &&
+                    'group-hover/row:opacity-0 group-focus-visible/play:opacity-0',
                 )}
               />
             </>
@@ -321,24 +324,27 @@ const TrackRow: FC<RowProps> = ({ ost, track, release, loading, queue }) => {
               )
             ) : playing ? (
               <>
-                <Equalizer playing className="group-hover/row:hidden" />
-                <MaterialSymbolsPauseRounded className="hidden size-6 group-hover/row:block" />
+                <Equalizer
+                  playing
+                  className="group-hover/row:hidden group-focus-visible/play:hidden"
+                />
+                <MaterialSymbolsPauseRounded className="hidden size-6 group-hover/row:block group-focus-visible/play:block" />
               </>
             ) : (
               <>
                 {isCurrent ? (
                   <Equalizer
                     playing={false}
-                    className="group-hover/row:hidden"
+                    className="group-hover/row:hidden group-focus-visible/play:hidden"
                   />
                 ) : (
                   !cover && (
-                    <MaterialSymbolsMusicNoteRounded className="size-5 group-hover/row:hidden" />
+                    <MaterialSymbolsMusicNoteRounded className="size-5 group-hover/row:hidden group-focus-visible/play:hidden" />
                   )
                 )}
                 <MaterialSymbolsPlayArrowRounded
                   className={cn(
-                    'hidden size-6 group-hover/row:block',
+                    'hidden size-6 group-hover/row:block group-focus-visible/play:block',
                     !cover && 'text-foreground',
                   )}
                 />
@@ -357,7 +363,11 @@ const TrackRow: FC<RowProps> = ({ ost, track, release, loading, queue }) => {
             {ost.title}
           </span>
           <span className="text-muted-foreground truncate text-xs leading-4">
-            {[label, ost.author, release?.released?.slice(0, 4)]
+            {[
+              label,
+              track?.author ?? ost.author,
+              release?.released?.slice(0, 4),
+            ]
               .filter(Boolean)
               .join(' · ')}
           </span>

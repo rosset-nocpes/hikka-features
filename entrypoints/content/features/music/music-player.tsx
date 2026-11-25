@@ -11,6 +11,7 @@ import MaterialSymbolsShuffleRounded from '~icons/material-symbols/shuffle-round
 import MaterialSymbolsSkipNextOutlineRounded from '~icons/material-symbols/skip-next-outline-rounded';
 import MaterialSymbolsSkipPreviousOutlineRounded from '~icons/material-symbols/skip-previous-outline-rounded';
 
+import { FadeImage } from '@/components/fade-image';
 import {
   MediaButton,
   MediaDivider,
@@ -48,7 +49,12 @@ import {
   trackLabel,
   useMusic,
 } from './use-music';
-import { artOf, useTrackRelease } from './use-song-releases';
+import {
+  artOf,
+  findRelease,
+  useSongReleases,
+  useTrackRelease,
+} from './use-song-releases';
 
 const musicUi = new ModalUi({
   name: 'music-player',
@@ -150,6 +156,19 @@ const MusicCard = () => {
         disableBlur && 'bg-background! backdrop-filter-none',
       )}
     >
+      {/* The cover's colours, washed over the glass behind everything. */}
+      {!disableBlur && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 overflow-hidden [mask-image:linear-gradient(to_bottom,black,transparent_85%)] opacity-30 dark:opacity-25"
+        >
+          <FadeImage
+            src={art}
+            loading="eager"
+            className="scale-150 blur-2xl saturate-150"
+          />
+        </div>
+      )}
       <div className="flex w-full items-center gap-2 p-2">
         <Button
           variant="ghost"
@@ -166,18 +185,12 @@ const MusicCard = () => {
           tabIndex={-1}
           aria-hidden
           draggable={false}
-          className="bg-muted flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-md"
+          className="bg-muted relative flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-md shadow-sm"
         >
-          {art ? (
-            <img
-              src={art}
-              alt=""
-              className="size-full object-cover"
-              draggable={false}
-            />
-          ) : (
+          {!art && (
             <MaterialSymbolsLibraryMusicRounded className="text-muted-foreground size-5" />
           )}
+          <FadeImage src={art} loading="eager" />
         </a>
         <div className="grid min-w-0 flex-1 leading-tight">
           <a
@@ -226,7 +239,7 @@ const MusicCard = () => {
       </div>
 
       <div className="flex items-center justify-between gap-2 p-2 pt-1">
-        <div className="flex min-w-0 items-center gap-1">
+        <div className="group/transport flex min-w-0 items-center gap-1">
           {hasQueue && (
             <MediaButton label="Попередній" onClick={previous}>
               <MaterialSymbolsSkipPreviousOutlineRounded className="size-5" />
@@ -245,15 +258,27 @@ const MusicCard = () => {
           {hasQueue && (
             <MediaButton
               label="Наступний"
-              disabled={index >= queue.length - 1 && repeat === 'off'}
+              // Only repeating the queue goes on past its end.
+              disabled={index >= queue.length - 1 && repeat !== 'all'}
               onClick={next}
             >
               <MaterialSymbolsSkipNextOutlineRounded className="size-5" />
             </MediaButton>
           )}
           <VolumeControl />
-          <MediaDivider />
-          <TimeToggle currentTime={currentTime} duration={duration} />
+          {/* The card has no room for both: the time steps aside while
+              the volume slides out (on hover, keyboard focus or a drag). */}
+          <div
+            className={cn(
+              'flex max-w-32 items-center gap-1 overflow-hidden transition-[max-width,opacity] duration-200 ease-out motion-reduce:transition-opacity',
+              '[@media(hover:hover)]:group-has-[[data-slot=volume-slide-out]:hover]/transport:max-w-0 [@media(hover:hover)]:group-has-[[data-slot=volume-slide-out]:hover]/transport:opacity-0',
+              'group-has-[[data-slot=volume-slide-out]_:focus-visible]/transport:max-w-0 group-has-[[data-slot=volume-slide-out]_:focus-visible]/transport:opacity-0',
+              'group-has-[[data-slot=volume-slide-out]_[data-dragging]]/transport:max-w-0 group-has-[[data-slot=volume-slide-out]_[data-dragging]]/transport:opacity-0',
+            )}
+          >
+            <MediaDivider />
+            <TimeToggle currentTime={currentTime} duration={duration} />
+          </div>
         </div>
         <div className="flex shrink-0 items-center gap-1">
           {hasQueue && <ShuffleButton />}
@@ -361,58 +386,97 @@ const TrackList = () => {
   const { queue, index, playing, playAt, toggle } = useMusic();
   // Favourites from a profile come from many anime: each row says which.
   const mixed = new Set(queue.map((item) => item.slug)).size > 1;
+  // One anime's covers, followed once for the whole list. Favourites bring
+  // theirs along: a profile's long list asks the backend for nothing.
+  const songs = useSongReleases(mixed ? undefined : queue[0]?.slug);
 
   return (
     <ScrollArea
       scrollFade
-      className="border-border max-h-56 border-t [&>[data-slot=scroll-area-viewport]]:overscroll-contain"
+      className="border-border max-h-64 border-t [&>[data-slot=scroll-area-viewport]]:overscroll-contain"
     >
       <ScrollAreaPrimitive.Content
         // Not the default fit-content, which would stop titles truncating.
         style={{ minWidth: 0 }}
       >
         <ol className="p-2">
-          {queue.map((item, position) => {
-            const current = position === index;
-            return (
-              <li
-                key={item.key}
-                data-active={current}
-                className="group/track hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground flex items-center rounded-md pr-1"
-              >
-                <button
-                  type="button"
-                  aria-current={current}
-                  className="focus-visible:ring-sidebar-ring flex min-w-0 flex-1 items-center gap-2 rounded-md p-2 text-left text-sm outline-hidden group-data-[active=true]/track:font-medium focus-visible:ring-2"
-                  onClick={() => (current ? toggle() : playAt(position))}
-                >
-                  <span className="text-muted-foreground flex w-4 shrink-0 justify-center text-xs tabular-nums">
-                    {current ? (
-                      <Equalizer playing={playing} className="text-primary" />
-                    ) : (
-                      position + 1
-                    )}
-                  </span>
-                  <span className="grid min-w-0 flex-1 leading-tight">
-                    <span className="truncate">{item.title}</span>
-                    {(item.author || mixed) && (
-                      <span className="text-muted-foreground truncate text-xs font-normal">
-                        {[mixed && item.animeTitle, item.author]
-                          .filter(Boolean)
-                          .join(' · ')}
-                      </span>
-                    )}
-                  </span>
-                  <Badge className="bg-muted text-muted-foreground h-4 shrink-0 rounded-sm px-1.5 text-[10px] font-semibold">
-                    {trackLabel(item)}
-                  </Badge>
-                </button>
-                <LikeButton track={item} className="size-7" />
-              </li>
-            );
-          })}
+          {queue.map((item, position) => (
+            <QueueRow
+              key={item.key}
+              track={item}
+              position={position}
+              current={position === index}
+              playing={playing}
+              mixed={mixed}
+              art={artOf(
+                item,
+                item.release ??
+                  findRelease(songs, { type: item.type, index: item.index }),
+              )}
+              onPlay={() => (position === index ? toggle() : playAt(position))}
+            />
+          ))}
         </ol>
       </ScrollAreaPrimitive.Content>
     </ScrollArea>
   );
 };
+
+interface QueueRowProps {
+  track: MusicTrack;
+  position: number;
+  current: boolean;
+  playing: boolean;
+  /** The queue spans several anime: the row says which. */
+  mixed: boolean;
+  /** Its cover, else its anime's poster. */
+  art?: string;
+  onPlay: () => void;
+}
+
+/** A queued track: its cover, with the equalizer over it while it plays. */
+const QueueRow = ({
+  track,
+  position,
+  current,
+  playing,
+  mixed,
+  art,
+  onPlay,
+}: QueueRowProps) => (
+  <li
+    data-active={current}
+    className="group/track hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground flex items-center rounded-md pr-1 transition-colors"
+  >
+    <button
+      type="button"
+      aria-current={current}
+      className="focus-visible:ring-sidebar-ring flex min-w-0 flex-1 items-center gap-2.5 rounded-md p-1.5 text-left text-sm outline-hidden group-data-[active=true]/track:font-medium focus-visible:ring-2"
+      onClick={onPlay}
+    >
+      <span className="bg-muted text-muted-foreground relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded text-xs tabular-nums">
+        {!art && position + 1}
+        <FadeImage src={art} />
+        {current && (
+          <span className="absolute inset-0 flex items-center justify-center bg-black/50 text-white">
+            <Equalizer playing={playing} />
+          </span>
+        )}
+      </span>
+      <span className="grid min-w-0 flex-1 gap-0.5 leading-tight">
+        <span className="truncate">{track.title}</span>
+        {(track.author || mixed) && (
+          <span className="text-muted-foreground truncate text-xs font-normal">
+            {[mixed && track.animeTitle, track.author]
+              .filter(Boolean)
+              .join(' · ')}
+          </span>
+        )}
+      </span>
+      <Badge className="bg-muted text-muted-foreground h-4 shrink-0 rounded-sm px-1.5 text-[10px] font-semibold">
+        {trackLabel(track)}
+      </Badge>
+    </button>
+    <LikeButton track={track} className="size-7" />
+  </li>
+);
