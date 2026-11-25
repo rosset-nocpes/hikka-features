@@ -1,4 +1,6 @@
-import { BaseFeature } from './base-feature';
+import { whenHydrated } from '@/utils/hikka-router';
+
+import { type BaseFeature, preloadContentCss } from './base-feature';
 
 interface FeatureModule {
   default: new () => BaseFeature;
@@ -7,6 +9,9 @@ interface FeatureModule {
 export class FeatureManager {
   private observer: MutationObserver | null = null;
   private features: BaseFeature[] = [];
+  private frame = 0;
+  private stopped = false;
+  private unfollowSettings?: () => void;
 
   constructor() {
     const modules = import.meta.glob<FeatureModule>(
@@ -17,65 +22,69 @@ export class FeatureManager {
     this.features = Object.values(modules).map((mod) => new mod.default());
   }
 
-  init() {
-    usePageStore.getState().updateFromUrl(new URL(location.href));
-    for (const f of this.features) f.init();
-
-    // Initial check
+  /**
+   * Starts once the site has hydrated: anything put on the page before
+   * then fails hydration, and React renders the whole page again.
+   */
+  async init() {
+    void preloadContentCss();
+    await whenHydrated();
+    if (this.stopped) return;
+    // UIs load their styles first; place them as soon as they're ready.
+    void Promise.all(this.features.map((feature) => feature.init())).then(
+      this.schedule,
+    );
     this.reconcile();
     this.startObserving();
-  }
-
-  async reconcile() {
-    const mountOperations = this.features.map(async (feature) => {
-      const shouldBeVisible = feature.shouldMount;
-      const currentlyVisible = feature.isMounted;
-
-      // when opening a new page, it may remove features from dom, so unmount if needed
-      if (
-        shouldBeVisible &&
-        currentlyVisible &&
-        document.body.querySelectorAll(feature.id).length === 0
-      ) {
-        feature.unmount();
-      }
-
-      if (shouldBeVisible && !currentlyVisible) {
-        feature.mount();
-      } else if (!shouldBeVisible && currentlyVisible) {
-        feature.unmount();
-      }
+    // Features turned on or off in the popup come and go without a change
+    // on the page.
+    this.unfollowSettings = useSettings.subscribe((state, previous) => {
+      if (state.features !== previous.features) this.schedule();
     });
-
-    const results = await Promise.allSettled(mountOperations);
-
-    // results.forEach((result, index) => {
-    //   if (result.status === 'rejected') {
-    //     console.error(
-    //       `Failed to mount/unmount feature ${this.features[index].id}:`,
-    //       result.reason,
-    //     );
-    //   }
-    // });
   }
 
-  /**
-   * Self-healing: Watch the DOM. If features are deleted, re-mount them.
-   */
-  private startObserving() {
-    this.observer = new MutationObserver(() => {
-      usePageStore.getState().updateFromUrl(new URL(location.href));
+  /** Mounts the features the page wants and unmounts the rest. */
+  reconcile() {
+    usePageStore.getState().updateFromUrl(new URL(location.href));
+
+    for (const feature of this.features) {
+      try {
+        if (!feature.shouldMount) {
+          if (feature.isMounted) feature.unmount();
+        } else if (
+          !feature.isMounted ||
+          // Opening another page may take the feature off it.
+          !document.body.querySelector(feature.id)
+        ) {
+          feature.mount();
+        }
+      } catch {
+        // Its anchor isn't on the page yet; the next change tries again.
+      }
+    }
+  }
+
+  /** Once a frame at most: the page changes a lot while it renders. */
+  private schedule = () => {
+    if (this.stopped) return;
+    this.frame ||= requestAnimationFrame(() => {
+      this.frame = 0;
       this.reconcile();
     });
+  };
 
-    this.observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-    });
+  /** Self-healing: features the page removes are mounted again. */
+  private startObserving() {
+    this.observer = new MutationObserver(this.schedule);
+    this.observer.observe(document.body, { childList: true, subtree: true });
   }
 
   stop() {
+    this.stopped = true;
+    cancelAnimationFrame(this.frame);
+    this.frame = 0;
     this.observer?.disconnect();
-    this.features.forEach((f) => f.unmount());
+    this.unfollowSettings?.();
+    this.features.forEach((feature) => feature.unmount());
   }
 }

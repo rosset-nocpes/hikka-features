@@ -3,6 +3,8 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { addAlias, addPublicAssets, defineWxtModule } from 'wxt/modules';
 
+import { HIKKA_MATCHES } from '../constants/hikka';
+
 const require = createRequire(import.meta.url);
 
 const FONT_FACE_RE = /\/\*[^*]*\*\/\s*@font-face\s*{[^}]*}/g;
@@ -54,8 +56,8 @@ export default defineWxtModule({
         const fontDestDir = path.join(tempAssetsDir, 'fonts', safePkgName);
         fs.mkdirSync(fontDestDir, { recursive: true });
 
-        for (const match of css.matchAll(urlRegex)) {
-          const relativePath = match[1];
+        for (const [, relativePath] of css.matchAll(urlRegex)) {
+          if (!relativePath) continue;
           const fileName = path.basename(relativePath);
           fs.copyFileSync(
             path.join(pkgPath, relativePath),
@@ -80,7 +82,7 @@ export default defineWxtModule({
         const varName = name.toUpperCase().replace(/[^A-Z0-9]/g, '_');
         const runtimeCss = JSON.stringify(css).replace(
           /__WXT_FONT_URL__(.*?)__/g,
-          `" + browser.runtime.getURL("$1") + "`,
+          `" + fontUrl("$1") + "`,
         );
         return `export const ${varName}_CSS = ${runtimeCss};`;
       })
@@ -95,6 +97,9 @@ export default defineWxtModule({
 
     const runtimeCode = `
 import { browser } from 'wxt/browser';
+
+// The fonts are public assets added after WXT typed the public paths.
+const fontUrl = browser.runtime.getURL as (path: string) => string;
 
 ${cssExports}
 
@@ -124,7 +129,7 @@ export function injectAllFonts() {
       } else {
         manifest.web_accessible_resources ??= [];
         manifest.web_accessible_resources.push({
-          matches: ['https://hikka.io/*', 'https://dev.hikka.io/*'],
+          matches: HIKKA_MATCHES,
           resources: ['fonts/**/*'],
         });
       }

@@ -1,58 +1,72 @@
-import type { FC, PropsWithChildren } from 'react';
+import { type FC, type ReactNode, useId } from 'react';
 
-import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 
-interface Props extends PropsWithChildren {
+import RowIcon from './row-icon';
+import RowLabel from './row-label';
+
+interface Props {
   label: string;
   beta?: boolean;
-  description?: string;
+  description?: ReactNode;
+  icon?: ReactNode;
   checked: boolean;
+  /**
+   * Can't be changed now, e.g. while what it depends on is off. The
+   * description, which says why, stays readable.
+   */
+  disabled?: boolean;
+  /** Its value is loading or saving; it can't be changed until it is. */
+  pending?: boolean;
   onClick?: () => void;
-  grouped?: boolean;
 }
 
+/** A settings row that toggles when clicked anywhere. */
 const SwitchOption: FC<Props> = ({
   label,
   description,
+  icon,
   checked,
+  disabled,
+  pending,
   onClick,
   beta = false,
-  grouped = false,
 }) => {
+  const id = useId();
+  const descriptionId = useId();
+  const locked = disabled || pending;
+
   return (
     <div
       className={cn(
-        'flex items-center justify-between',
-        grouped &&
-          'hover:bg-accent/30 cursor-pointer px-4 py-3 transition-[background-color]',
+        'flex min-h-14 items-center gap-3 px-4 py-3 transition-[background-color]',
+        pending && 'cursor-progress',
+        disabled && 'cursor-not-allowed',
+        !locked && 'hover:bg-accent/40 cursor-pointer',
       )}
-      onClick={grouped ? onClick : undefined}
+      onClick={locked ? undefined : onClick}
     >
-      <div className="mr-10 flex flex-col gap-1">
-        <span className="flex items-center gap-1 text-sm leading-none font-medium">
-          {label}
-          {beta && (
-            <Badge
-              variant="outline"
-              className="text-primary-foreground bg-yellow-500 px-2 py-0"
-            >
-              Beta
-            </Badge>
-          )}
-        </span>
-        {description && (
-          <p className="text-xs font-medium text-pretty text-[#A1A1A1]">
-            {description}
-          </p>
-        )}
-      </div>
+      {icon && <RowIcon active={checked && !disabled}>{icon}</RowIcon>}
+      <RowLabel
+        id={id}
+        descriptionId={description ? descriptionId : undefined}
+        label={label}
+        description={description}
+        beta={beta}
+        dimmed={disabled}
+      />
       <Switch
         checked={checked}
-        aria-label={label}
-        onClick={grouped ? (event) => event.stopPropagation() : undefined}
+        disabled={locked}
+        aria-labelledby={id}
+        aria-describedby={description ? descriptionId : undefined}
+        onClick={(event) => event.stopPropagation()}
         onCheckedChange={() => onClick?.()}
-        className="flex items-center justify-between transition-[background-color,box-shadow] after:-inset-y-3"
+        // Pending, it keeps its look: the value it shows is already the new one.
+        className={cn(
+          'ml-1 after:-inset-y-3',
+          pending && !disabled && 'data-disabled:opacity-100',
+        )}
       />
     </div>
   );

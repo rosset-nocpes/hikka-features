@@ -1,39 +1,61 @@
-import { useQuery } from '@tanstack/react-query';
-import ky from 'ky';
+import { queryOptions, useQuery } from '@tanstack/react-query';
 
-import { ProviderIFrame, ProviderTeamIFrame } from '@/utils/provider_classes';
+import { type ConvexWatchResponse, convexApi } from '@/utils/convex-api';
+import { convex } from '@/utils/convex-client';
 
-// TODO: add types for api
-const useWatchData = () => {
-  const { backendBranch } = useSettings();
-  const { slug } = usePageStore();
+const toWatchData = (data: ConvexWatchResponse): API.WatchData => {
+  const info = new Map(
+    data.episodes.map((episode) => [episode.number, episode]),
+  );
 
-  return useQuery({
+  return {
+    type: data.anime.mediaType === 'unknown' ? 'tv' : data.anime.mediaType,
+    providers: data.providers,
+    teams: data.teams.map(
+      ({ key, team, unnamed, translationType, episodes }) => ({
+        key,
+        id: team.id,
+        slug: team.slug,
+        title: team.title,
+        logo: team.logo ?? '',
+        unnamed,
+        translationType,
+        sources: episodes.flatMap(({ number, sources }) => {
+          // When the team first put the episode out, so a provider that
+          // doesn't say still dates it.
+          const dates = sources.flatMap(({ releasedAt }) => releasedAt ?? []);
+          const releasedAt = dates.length ? Math.min(...dates) : undefined;
+          return sources.map(({ provider, url }) => ({
+            episode: number,
+            video_url: url,
+            provider,
+            title: info.get(number)?.title,
+            episode_type: info.get(number)?.type,
+            releasedAt,
+          }));
+        }),
+      }),
+    ),
+  };
+};
+
+/** An anime's watch data, for its page's player and for the queue. */
+export const watchDataQuery = (slug?: string) =>
+  queryOptions({
     queryKey: ['watch-data', slug],
-    queryFn: async () => {
-      const data = await ky
-        .get(`${BACKEND_BRANCHES[backendBranch]}/watch/v2/${slug}`)
-        .json<API.WatchData>();
-      const out = data;
-      for (const [key, elem] of Object.entries(data)) {
-        if (typeof elem === 'string') continue;
-
-        if (elem.type === 'team-iframe') {
-          out[key] = new ProviderTeamIFrame(out[key].lang);
-          out[key].teams = (elem as ProviderTeamIFrame).teams || {};
-          out[key].sortTeams();
-        } else if (elem.type === 'iframe') {
-          out[key] = new ProviderIFrame(out[key].lang);
-          out[key].episodes = (elem as ProviderIFrame).episodes || [];
-        }
-      }
-
-      return out as API.WatchData;
-    },
+    queryFn: async () =>
+      toWatchData(
+        await convex.action(convexApi.watch.resolve, { slug: slug! }),
+      ),
     retry: false,
-    staleTime: Infinity,
+    staleTime: 5 * 60 * 1000,
     enabled: !!slug,
   });
+
+const useWatchData = () => {
+  const { slug } = usePageStore();
+
+  return useQuery(watchDataQuery(slug));
 };
 
 export default useWatchData;

@@ -1,9 +1,11 @@
 import type { IFramePlayerBridgeClass } from '@/integrations/iframe-player/bridge';
 
+import { isHikkaUrl } from '@/constants/hikka';
 import {
   findIFramePlayerBridge,
   IFRAME_PLAYER_MATCHES,
 } from '@/integrations/iframe-player/registry';
+import { sendToBackground } from '@/utils/messaging';
 
 const PLAYER_DETECTION_TIMEOUT_MS = 15_000;
 
@@ -14,9 +16,7 @@ export default defineContentScript({
   async main(ctx) {
     if (window.parent === window) return;
 
-    const fromHikka = ['https://hikka.io/', 'https://dev.hikka.io/'].some(
-      (origin) => document.referrer.startsWith(origin),
-    );
+    const fromHikka = isHikkaUrl(document.referrer);
 
     if (!fromHikka && !(await isHikkaContentLoaded())) return;
     if (!(await isPlayerIFrame(ctx))) return;
@@ -107,18 +107,5 @@ const isPlayerIFrame = (ctx: {
     ]);
   });
 
-const isHikkaContentLoaded = async () => {
-  const response = await browser.runtime
-    .sendMessage({ type: 'hikka-content-status' })
-    .catch(() => undefined);
-
-  return isHikkaContentStatusResponse(response) && response.loaded;
-};
-
-const isHikkaContentStatusResponse = (
-  response: unknown,
-): response is { loaded: boolean } =>
-  !!response &&
-  typeof response === 'object' &&
-  'loaded' in response &&
-  typeof response.loaded === 'boolean';
+const isHikkaContentLoaded = async () =>
+  (await sendToBackground('hikka-content-status').catch(() => false)) === true;

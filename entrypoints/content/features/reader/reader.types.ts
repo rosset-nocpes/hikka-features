@@ -19,6 +19,15 @@ export interface Chapter {
   url: string;
 }
 
+/** What a source searches by: the title's hikka.io record. */
+export interface TitleInfo {
+  title_ua?: string | null;
+  title_en?: string | null;
+  title_original?: string | null;
+  year?: number | null;
+  external?: { text: string; url: string }[];
+}
+
 export interface Volume {
   number: number;
   chapters: Chapter[];
@@ -37,7 +46,7 @@ export type ReaderContent =
 /*
  * Settings
  */
-export interface BaseReaderSettings {
+interface BaseReaderSettings {
   fullscreen: boolean;
   sortBy: {
     field: ReaderSortBy;
@@ -48,7 +57,7 @@ export interface BaseReaderSettings {
 
 export interface MangaSettings extends BaseReaderSettings {
   type: ReaderType.Manga;
-  scale: number; // maybe move it to base settings
+  scale: number;
   orientation: MangaOrientation;
   scrollMode: boolean;
 }
@@ -62,16 +71,11 @@ export interface NovelSettings extends BaseReaderSettings {
 
 export type ReaderSettings = MangaSettings | NovelSettings;
 
-export type UISettingType =
-  | 'boolean'
-  | 'number'
-  | 'slider'
-  | 'select'
-  | 'tabs'
-  | 'text';
+type UISettingType = 'boolean' | 'slider' | 'select' | 'tabs';
 
 export interface UISettingMetadata {
   label: string;
+  description?: string;
   type: UISettingType;
   min?: number;
   max?: number;
@@ -84,5 +88,10 @@ export interface UISettingMetadata {
   }[];
 }
 
-export type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type BaseKeys = BaseReaderSettings | 'type';
+type KeysOfUnion<T> = T extends T ? keyof T : never;
+
+/** The settings of one reader type, which the settings menu lists. */
+export type SettingKey = Exclude<
+  KeysOfUnion<ReaderSettings>,
+  keyof BaseReaderSettings | 'type'
+>;

@@ -1,106 +1,139 @@
-import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import MaterialSymbolsAutoplayRounded from '~icons/material-symbols/autoplay-rounded';
+import MaterialSymbolsBlurOffRounded from '~icons/material-symbols/blur-off-rounded';
+import MaterialSymbolsFastForwardRounded from '~icons/material-symbols/fast-forward-rounded';
+import MaterialSymbolsFormatListNumberedRounded from '~icons/material-symbols/format-list-numbered-rounded';
+import MaterialSymbolsPictureInPictureAltRounded from '~icons/material-symbols/picture-in-picture-alt-rounded';
+import MaterialSymbolsPlayCircleRounded from '~icons/material-symbols/play-circle-rounded';
+import MaterialSymbolsSmartDisplayRounded from '~icons/material-symbols/smart-display-rounded';
 
+import { PROVIDERS } from '@/constants/providers';
+import { useNavigation } from '@/hooks/use-navigation';
+
+import FeatureSwitch from '../_base/feature-switch';
+import NavigationRow from '../_base/navigation-row';
+import RowDescription from '../_base/row-description';
+import SegmentedOption from '../_base/segmented-option';
 import SettingsGroup from '../_base/settings-group';
-import SwitchOption from '../_base/switch-option';
+import SettingsPage from '../_base/settings-page';
 
-const miniModeTypeOptions = [
-  { value: 'custom', label: 'Кастомний' },
-  { value: 'video-native', label: 'Нативний' },
-];
+const MINI_MODE_OPTIONS = [
+  { value: 'custom', label: 'На сторінці' },
+  { value: 'video-native', label: 'Картинка в картинці' },
+] as const;
+
+const SKIP_OPTIONS = [
+  { value: 'off', label: 'Вимк.' },
+  { value: 'button', label: 'Кнопкою' },
+  { value: 'auto', label: 'Авто' },
+] as const;
+
+const PROVIDER_OPTIONS = PROVIDERS.map((value) => ({
+  value,
+  label: value[0]!.toUpperCase() + value.slice(1),
+}));
 
 const PlayerSettings = () => {
   const { features, updateFeatureSettings } = useSettings();
-  const { enabled, defaultProvider, disableBlur, miniModeType } =
-    features.player;
+  const {
+    enabled,
+    defaultProvider,
+    miniModeType,
+    skipSegments,
+    teamPriority,
+    teamPriorityTranslation,
+  } = features.player;
+  const { navigate } = useNavigation();
 
   return (
-    <ScrollArea className="flex-1" scrollFade>
-      <div className="flex flex-col gap-3 pb-4">
-        <SettingsGroup>
-          <SwitchOption
-            grouped
-            checked={enabled}
-            label="Кнопка перегляду"
-            description="Кнопка для відображення програвача"
-            onClick={() => {
-              updateFeatureSettings('player', { enabled: !enabled });
-            }}
-          />
-          <SwitchOption
-            grouped
-            checked={disableBlur}
-            label="Вимкнути блюр"
-            description="Прибирає розмиття фону в програвачі"
-            onClick={() => {
-              updateFeatureSettings('player', {
-                disableBlur: !disableBlur,
-              });
-            }}
-          />
-          <div className="flex items-center justify-between px-4 py-3">
-            <label className="text-sm font-medium">Тип мінірежиму</label>
-            <Select
-              items={miniModeTypeOptions}
-              value={miniModeType}
-              onValueChange={(value) => {
-                updateFeatureSettings('player', {
-                  miniModeType: value as 'custom' | 'video-native',
-                });
-              }}
-            >
-              <SelectTrigger className="w-36">
-                <SelectValue placeholder="Оберіть тип мінірежиму" />
-              </SelectTrigger>
-              <SelectContent alignItemWithTrigger={false}>
-                <SelectGroup>
-                  {miniModeTypeOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center justify-between px-4 py-3">
-            <label className="text-sm font-medium">
-              Програвач за замовчуванням
-            </label>
-            <Select
-              value={defaultProvider}
-              onValueChange={(value) => {
-                if (!value) return;
-                updateFeatureSettings('player', { defaultProvider: value });
-              }}
-            >
-              <SelectTrigger className="w-24">
-                <SelectValue
-                  className="uppercase"
-                  placeholder="Оберіть програвач за замовчуванням"
-                />
-              </SelectTrigger>
-              <SelectContent alignItemWithTrigger={false}>
-                <SelectGroup>
-                  {['moon', 'ashdi'].map((elem) => (
-                    <SelectItem className="uppercase" key={elem} value={elem}>
-                      {elem}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-        </SettingsGroup>
-      </div>
-    </ScrollArea>
+    <SettingsPage>
+      <SettingsGroup
+        footer={
+          enabled
+            ? undefined
+            : 'Налаштування нижче почнуть діяти, щойно кнопку буде увімкнено.'
+        }
+      >
+        <FeatureSwitch
+          feature="player"
+          icon={<MaterialSymbolsPlayCircleRounded />}
+          label="Кнопка перегляду"
+          description="Відкриває програвач на сторінці аніме"
+        />
+      </SettingsGroup>
+
+      <SettingsGroup title="Джерело">
+        <SegmentedOption
+          icon={<MaterialSymbolsSmartDisplayRounded />}
+          stacked
+          label="Типове джерело"
+          description="Коли серія є в кількох джерелах"
+          value={defaultProvider}
+          options={PROVIDER_OPTIONS}
+          onChange={(value) =>
+            updateFeatureSettings('player', { defaultProvider: value })
+          }
+        />
+        <NavigationRow
+          icon={<MaterialSymbolsFormatListNumberedRounded />}
+          active={teamPriority.length > 0}
+          label="Пріоритет команд"
+          description={
+            teamPriority.length ? (
+              <RowDescription>
+                <span className="line-clamp-2">
+                  {teamPriorityTranslation === 'sub' ? 'Субтитри' : 'Озвучення'}
+                  {' · '}
+                  {teamPriority.map((team) => team.title).join(', ')}
+                </span>
+              </RowDescription>
+            ) : (
+              'Яку команду обирати під час відкриття програвача'
+            )
+          }
+          onClick={() => navigate('teamPriority')}
+        />
+      </SettingsGroup>
+
+      <SettingsGroup title="Відтворення">
+        <FeatureSwitch
+          feature="player"
+          option="autoplayNext"
+          icon={<MaterialSymbolsAutoplayRounded />}
+          label="Автопрогравання"
+          description="Наступний епізод із черги вмикається сам, коли поточний закінчиться"
+        />
+        <SegmentedOption
+          icon={<MaterialSymbolsFastForwardRounded />}
+          active={skipSegments !== 'off'}
+          stacked
+          label="Пропуск заставок"
+          description="Опенінги, ендінги й рекапи; у спільному перегляді — лише кнопкою"
+          value={skipSegments}
+          options={SKIP_OPTIONS}
+          onChange={(value) =>
+            updateFeatureSettings('player', { skipSegments: value })
+          }
+        />
+        <SegmentedOption
+          icon={<MaterialSymbolsPictureInPictureAltRounded />}
+          stacked
+          label="Мінірежим"
+          description="Куди згортається програвач"
+          value={miniModeType}
+          options={MINI_MODE_OPTIONS}
+          onChange={(value) =>
+            updateFeatureSettings('player', { miniModeType: value })
+          }
+        />
+        <FeatureSwitch
+          feature="player"
+          option="disableBlur"
+          icon={<MaterialSymbolsBlurOffRounded />}
+          label="Вимкнути блюр"
+          description="Прибирає розмиття фону у відео- та музичному програвачі"
+        />
+      </SettingsGroup>
+    </SettingsPage>
   );
 };
 

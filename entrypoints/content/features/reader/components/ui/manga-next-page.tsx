@@ -1,35 +1,29 @@
 import { CarouselItem } from '@/components/ui/carousel';
 
+import { adjacentChapter } from '../../chapters';
 import useReadData from '../../hooks/use-read-data';
 import { useReader } from '../../hooks/use-reader';
-import { ReaderContentMode } from '../../reader.enums';
 
+/** The page after the last one: what was read and what comes next. */
 const MangaNextPage = () => {
   const { data } = useReadData();
-  const { currentChapter } = useReader();
+  const { currentChapter, settings } = useReader();
 
   if (!data || !currentChapter) return;
 
-  // todo: improve implementation
-  const nextChapterData =
-    data.displayMode === ReaderContentMode.Chapters
-      ? data.chapters[
-          data.chapters.findIndex((c) => c.id === currentChapter.id) + 1
-        ]
-      : data.volumes[
-          data.volumes.findIndex((v) => v.number === currentChapter.volume)
-        ].chapters[
-          data.volumes[
-            data.volumes.findIndex((v) => v.number === currentChapter.volume)
-          ].chapters.findIndex((c) => c.id === currentChapter.id) + 1
-        ];
+  const nextChapterData = adjacentChapter(
+    data,
+    settings.translator,
+    currentChapter,
+    1,
+  );
 
   return (
     <>
       <CarouselItem className="flex h-full flex-col items-center justify-center gap-4">
         <div className="flex flex-col gap-1">
           <div className="text-sm font-medium">Закінчено:</div>
-          <div>{`Том ${currentChapter?.volume}. Розділ ${currentChapter?.chapter}`}</div>
+          <div>{`Том ${currentChapter.volume}. Розділ ${currentChapter.chapter}`}</div>
         </div>
         <div className="flex flex-col gap-1">
           {nextChapterData ? (
@@ -46,4 +40,5 @@ const MangaNextPage = () => {
     </>
   );
 };
+
 export default MangaNextPage;

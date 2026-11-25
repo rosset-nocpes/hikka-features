@@ -1,34 +1,49 @@
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { useRef } from 'react';
+import {
+  AnimatePresence,
+  motion,
+  type Transition,
+  useReducedMotion,
+  type Variants,
+} from 'motion/react';
+import { type FC, lazy, Suspense, useEffect, useRef } from 'react';
+import MaterialSymbolsAutoAwesomeRounded from '~icons/material-symbols/auto-awesome-rounded';
 import MaterialSymbolsChevronLeftRounded from '~icons/material-symbols/chevron-left-rounded';
-import MaterialSymbolsDrawRounded from '~icons/material-symbols/draw-rounded';
-import MaterialSymbolsImageRounded from '~icons/material-symbols/image-rounded';
+import MaterialSymbolsCoPresentRounded from '~icons/material-symbols/co-present-rounded';
+import MaterialSymbolsDiversity3Rounded from '~icons/material-symbols/diversity-3-rounded';
+import MaterialSymbolsExperiment from '~icons/material-symbols/experiment';
+import MaterialSymbolsFactCheckRounded from '~icons/material-symbols/fact-check-rounded';
+import MaterialSymbolsGroups3Rounded from '~icons/material-symbols/groups-3-rounded';
+import MaterialSymbolsGroupsRounded from '~icons/material-symbols/groups-rounded';
+import MaterialSymbolsLibraryMusicRounded from '~icons/material-symbols/library-music-rounded';
+import MaterialSymbolsLinkRounded from '~icons/material-symbols/link-rounded';
+import MaterialSymbolsMenuBookRounded from '~icons/material-symbols/menu-book-rounded';
+import MaterialSymbolsNotificationsActiveRounded from '~icons/material-symbols/notifications-active-rounded';
+import MaterialSymbolsPersonEditRounded from '~icons/material-symbols/person-edit-rounded';
 import MaterialSymbolsPlayCircleRounded from '~icons/material-symbols/play-circle-rounded';
-import MaterialSymbolsViewListRounded from '~icons/material-symbols/view-list-rounded';
+import MaterialSymbolsRecommendRounded from '~icons/material-symbols/recommend-rounded';
+import MaterialSymbolsSettingsBackupRestoreRounded from '~icons/material-symbols/settings-backup-restore-rounded';
+import MaterialSymbolsTranslateRounded from '~icons/material-symbols/translate-rounded';
+import MaterialSymbolsWallpaperRounded from '~icons/material-symbols/wallpaper-rounded';
 import MdiGithub from '~icons/mdi/github';
 import MdiTelegram from '~icons/mdi/telegram';
 
+import ExtensionLogo from '@/assets/icon.png';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-
-import '../app.css';
+import { GITHUB_REPO_URL, TELEGRAM_CHANNEL_URL } from '@/constants/links';
 import { type Page, useNavigation } from '@/hooks/use-navigation';
 import { version } from '@/package.json';
+import { NEW_TAB } from '@/utils/hikka-router';
 
+import ActionRow from './_base/action-row';
+import ConfirmButton from './_base/confirm-button';
+import FeatureSwitch from './_base/feature-switch';
 import NavigationRow from './_base/navigation-row';
+import { resetPreferences } from './_base/reset-settings';
 import SettingsGroup from './_base/settings-group';
-import AniBackgroundSettings from './options/anibackground-settings';
-import AniButtonsSettings from './options/anibuttons-settings';
-import CharacterSuggestionsSettings from './options/character-suggestion-settings';
-import {
-  default as ExperimentalSettingsPage,
-  ExperimentalSettingsIcon,
-} from './options/experimental-settings';
-import FandubSettings from './options/fandub-settings';
-import LocalizedPosterSettings from './options/localized-poster-settings';
-import PlayerSettings from './options/player-settings';
-import ReaderSettings from './options/reader-settings';
-import RecommendationBlockSettings from './options/recommendation-block-settings';
+import UpdateBanner from './_base/update-banner';
+import ActivitySettings from './options/activity-settings';
+import UserOptions from './options/user-options';
 
 const EASE_SMOOTH_OUT = [0.22, 1, 0.36, 1] as const;
 
@@ -52,6 +67,11 @@ const staggerContainerVariants = {
 function HomePage() {
   const { navigate } = useNavigation();
   const reduceMotion = useReducedMotion();
+  const signedIn = useSettings((state) => Boolean(state.convexSession));
+  const playerEnabled = useSettings((state) => state.features.player.enabled);
+  const posterEnabled = useSettings(
+    (state) => state.features.localizedPoster.enabled,
+  );
 
   return (
     <ScrollArea className="h-full" scrollFade>
@@ -59,57 +79,170 @@ function HomePage() {
         initial={reduceMotion ? false : 'hidden'}
         animate="visible"
         variants={staggerContainerVariants}
-        className="flex flex-col gap-3 pb-4"
+        className="flex flex-col gap-5 pb-4"
       >
         <motion.div variants={groupVariants}>
+          <SettingsGroup>
+            <UserOptions />
+          </SettingsGroup>
+        </motion.div>
+
+        <motion.div variants={groupVariants}>
           <SettingsGroup
-            title="Медіа"
-            icon={<MaterialSymbolsPlayCircleRounded className="size-4" />}
+            title="Спільнота"
+            footer={
+              signedIn
+                ? undefined
+                : 'Увійдіть, щоб ділитися активністю, дивитися разом із друзями й отримувати сповіщення про нові серії.'
+            }
           >
+            {signedIn && <ActivitySettings />}
+            <FeatureSwitch
+              feature="friendsActivity"
+              option="hidden"
+              inverted
+              icon={<MaterialSymbolsDiversity3Rounded />}
+              label="Активність друзів"
+              description="Блок на головній hikka.io з тим, що друзі дивляться й читають"
+            />
+            {signedIn && (
+              <FeatureSwitch
+                feature="watchTogetherInvites"
+                icon={<MaterialSymbolsCoPresentRounded />}
+                label="Запрошення до перегляду"
+                description="З’являються, коли друзі запрошують дивитися разом"
+              />
+            )}
+            {signedIn && (
+              <FeatureSwitch
+                feature="releaseNotifications"
+                icon={<MaterialSymbolsNotificationsActiveRounded />}
+                label="Нові серії від команд"
+                description="У сповіщеннях hikka.io, від команд із вашого пріоритету"
+              />
+            )}
+          </SettingsGroup>
+        </motion.div>
+
+        <motion.div variants={groupVariants}>
+          <SettingsGroup title="Медіа">
             <NavigationRow
+              icon={<MaterialSymbolsPlayCircleRounded />}
+              active={playerEnabled}
               label="Програвач"
-              description="Налаштування програвача"
+              description={
+                playerEnabled
+                  ? 'Джерело, пропуск заставок і пріоритет команд'
+                  : 'Кнопку перегляду вимкнено'
+              }
               onClick={() => navigate('player')}
             />
-            <NavigationRow
+            <FeatureSwitch
+              feature="reader"
+              icon={<MaterialSymbolsMenuBookRounded />}
               label="Читалка"
-              description="Налаштування читалки"
-              onClick={() => navigate('reader')}
+              description="Кнопка «Читати» на сторінках манґи й ранобе"
+            />
+            <FeatureSwitch
+              feature="musicPlayer"
+              icon={<MaterialSymbolsLibraryMusicRounded />}
+              label="Опенінги та ендінги"
+              description="Кнопка відтворення в блоці музики тайтлу і плаваючий програвач"
             />
           </SettingsGroup>
         </motion.div>
 
         <motion.div variants={groupVariants}>
-          <SettingsGroup
-            title="Оформлення"
-            icon={<MaterialSymbolsImageRounded className="size-4" />}
-          >
-            <AniBackgroundSettings grouped />
-            <NavigationRow
+          <SettingsGroup title="Оформлення">
+            <FeatureSwitch
+              feature="aniBackground"
+              icon={<MaterialSymbolsWallpaperRounded />}
+              label="Обкладинки"
+              description="Покращене оформлення на сторінках тайтлів, персонажів та правок"
+            />
+            <FeatureSwitch
+              feature="localizedPoster"
+              icon={<MaterialSymbolsTranslateRounded />}
               label="Локалізовані постери"
-              description="Налаштування локалізованих постерів"
-              onClick={() => navigate('localizedPoster')}
+              description="Кнопка, що показує постер українською"
+            />
+            <FeatureSwitch
+              feature="localizedPoster"
+              option="autoShow"
+              disabled={!posterEnabled}
+              icon={<MaterialSymbolsAutoAwesomeRounded />}
+              label="Автолокалізація постера"
+              description={
+                posterEnabled
+                  ? 'Одразу замінює постер локалізованою версією'
+                  : 'Спершу увімкніть локалізовані постери'
+              }
             />
           </SettingsGroup>
         </motion.div>
 
         <motion.div variants={groupVariants}>
-          <SettingsGroup
-            title="Контент"
-            icon={<MaterialSymbolsViewListRounded className="size-4" />}
-          >
-            <AniButtonsSettings grouped />
-            <FandubSettings grouped />
-            <RecommendationBlockSettings grouped />
+          <SettingsGroup title="Контент">
+            <FeatureSwitch
+              feature="aniButtons"
+              icon={<MaterialSymbolsLinkRounded />}
+              label="Інші джерела"
+              description="Додаткові посилання на сторінках тайтлів"
+            />
+            <FeatureSwitch
+              feature="fandubBlock"
+              icon={<MaterialSymbolsGroupsRounded />}
+              label="Блок фандаб команд"
+              description="Команди, що озвучили чи перекладали тайтл, з їхніми сторінками"
+            />
+            <FeatureSwitch
+              feature="teamLinks"
+              icon={<MaterialSymbolsGroups3Rounded />}
+              label="Команди в меню й пошуку"
+              description="Пункт «Команди» в розділі «Спільнота» і команди в пошуку hikka.io"
+            />
+            <FeatureSwitch
+              feature="recommendationBlock"
+              icon={<MaterialSymbolsRecommendRounded />}
+              label="Блок рекомендацій"
+              description="Блок і вкладка тайтлу з контентом, схожим на той, який ви дивитеся"
+            />
           </SettingsGroup>
         </motion.div>
 
         <motion.div variants={groupVariants}>
-          <SettingsGroup
-            title="Редагування"
-            icon={<MaterialSymbolsDrawRounded className="size-4" />}
-          >
-            <CharacterSuggestionsSettings grouped />
+          <SettingsGroup title="Редагування">
+            <FeatureSwitch
+              feature="editorCharacters"
+              icon={<MaterialSymbolsPersonEditRounded />}
+              label="Пропозиції перекладу імен"
+              description="Показує переклад імені українською при редагуванні персонажа"
+              beta
+            />
+            <FeatureSwitch
+              feature="editorToolbar"
+              icon={<MaterialSymbolsFactCheckRounded />}
+              label="Панель редактора"
+              description="Перевірка правки за правилами, підпис джерела й перехід між правками на розгляді"
+              beta
+            />
+          </SettingsGroup>
+        </motion.div>
+
+        <motion.div variants={groupVariants}>
+          <SettingsGroup>
+            <ActionRow
+              icon={<MaterialSymbolsSettingsBackupRestoreRounded />}
+              label="Скинути налаштування"
+              description="Улюблені команди й пріоритет залишаться"
+            >
+              <ConfirmButton
+                label="Скинути налаштування"
+                onConfirm={resetPreferences}
+              >
+                Скинути
+              </ConfirmButton>
+            </ActionRow>
           </SettingsGroup>
         </motion.div>
       </motion.div>
@@ -117,63 +250,186 @@ function HomePage() {
   );
 }
 
-const PAGE_TITLES: Record<Page, string> = {
-  home: 'Налаштування',
-  player: 'Налаштування програвача',
-  reader: 'Налаштування читалки',
-  localizedPoster: 'Локалізовані постери',
-  experimental: 'Експериментальні функції',
+/**
+ * The sub-pages, loaded apart from the home page so the popup opens sooner,
+ * and fetched while it idles so going to one never waits.
+ */
+const loadPlayerSettings = () => import('./options/player-settings');
+const loadTeamPrioritySettings = () =>
+  import('./options/team-priority-settings');
+const loadExperimentalSettings = () =>
+  import('./options/experimental-settings');
+const PlayerSettings = lazy(loadPlayerSettings);
+const TeamPrioritySettings = lazy(loadTeamPrioritySettings);
+const ExperimentalSettingsPage = lazy(loadExperimentalSettings);
+
+const prefetchPages = () => {
+  for (const load of [
+    loadPlayerSettings,
+    loadTeamPrioritySettings,
+    loadExperimentalSettings,
+  ]) {
+    void load().catch(() => undefined);
+  }
 };
 
-function App() {
-  const { enabled, burunyaaMode } = useSettings().features.devOptions;
-  const { updateFeatureSettings } = useSettings();
-  const { currentPage, direction, goBack } = useNavigation();
-  const reduceMotion = useReducedMotion();
+const PAGES: Record<Page, { title: string; Content: FC }> = {
+  home: { title: 'Hikka Features', Content: HomePage },
+  player: { title: 'Програвач', Content: PlayerSettings },
+  experimental: {
+    title: 'Експериментальні функції',
+    Content: ExperimentalSettingsPage,
+  },
+  teamPriority: { title: 'Пріоритет команд', Content: TeamPrioritySettings },
+};
 
+const FADE: Variants = {
+  enter: { opacity: 0 },
+  center: { opacity: 1 },
+  exit: { opacity: 0 },
+};
+
+/**
+ * Slides in from the side the navigation goes to (`custom` is its
+ * direction) and out the other side.
+ */
+const slide = (
+  offset: (direction: number) => string | number,
+  blur: string,
+  exit: Transition,
+): Variants => ({
+  enter: (direction: number) => ({
+    x: offset(direction),
+    filter: `blur(${blur})`,
+    opacity: 0,
+  }),
+  center: { x: 0, filter: 'blur(0px)', opacity: 1 },
+  exit: (direction: number) => ({
+    x: offset(-direction),
+    filter: `blur(${blur})`,
+    opacity: 0,
+    transition: exit,
+  }),
+});
+
+const TITLE_SLIDE = slide((direction) => (direction > 0 ? 20 : -20), '2px', {
+  duration: 0.12,
+});
+const PAGE_SLIDE = slide(
+  (direction) => (direction > 0 ? '100%' : '-100%'),
+  '3px',
+  {
+    x: { duration: 0.15, ease: EASE_SMOOTH_OUT },
+    filter: { duration: 0.1 },
+    opacity: { duration: 0.1 },
+  },
+);
+
+const LINK_CLASS =
+  'text-muted-foreground hover:text-foreground hover:bg-accent/60 focus-visible:ring-ring/50 grid size-8 place-items-center rounded-lg transition-colors outline-none focus-visible:ring-2 [&>svg]:size-4.5';
+
+function HomeHeader() {
+  const { enabled } = useSettings((state) => state.features.devOptions);
+  const { navigate } = useNavigation();
   const devClicks = useRef(0);
 
-  const pageVariants = reduceMotion
-    ? {
-        enter: () => ({ opacity: 0 }),
-        center: { opacity: 1 },
-        exit: () => ({ opacity: 0 }),
-      }
-    : {
-        enter: (dir: number) => ({
-          x: dir > 0 ? '100%' : '-100%',
-          filter: 'blur(3px)',
-          opacity: 0,
-        }),
-        center: {
-          x: 0,
-          filter: 'blur(0px)',
-          opacity: 1,
-        },
-        exit: (dir: number) => ({
-          x: dir > 0 ? '-100%' : '100%',
-          filter: 'blur(3px)',
-          opacity: 0,
-          transition: {
-            x: { duration: 0.15, ease: EASE_SMOOTH_OUT },
-            filter: { duration: 0.1 },
-            opacity: { duration: 0.1 },
-          },
-        }),
-      };
+  return (
+    <>
+      <span className="flex min-w-0 items-center gap-2.5">
+        <img src={ExtensionLogo} alt="" className="size-8 shrink-0" />
+        <span className="flex min-w-0 flex-col">
+          <h1 className="truncate text-base leading-tight font-semibold">
+            Hikka Features
+          </h1>
+          {/* Five clicks show or hide the experimental page. */}
+          <button
+            type="button"
+            className="text-muted-foreground w-fit text-xs leading-tight font-normal tabular-nums"
+            onClick={() => {
+              devClicks.current += 1;
+              if (devClicks.current === 5) {
+                devClicks.current = 0;
+                useSettings
+                  .getState()
+                  .updateFeatureSettings('devOptions', { enabled: !enabled });
+              }
+            }}
+          >
+            v{version}
+          </button>
+        </span>
+      </span>
+      <span className="flex items-center gap-0.5">
+        <AnimatePresence initial={false}>
+          {enabled && (
+            <motion.button
+              type="button"
+              aria-label="Експериментальні функції"
+              title="Експериментальні функції"
+              onClick={() => navigate('experimental')}
+              initial={{ opacity: 0, scale: 0.25, filter: 'blur(4px)' }}
+              animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, scale: 0.25, filter: 'blur(4px)' }}
+              transition={{ type: 'spring', duration: 0.3, bounce: 0 }}
+              className={LINK_CLASS}
+            >
+              <MaterialSymbolsExperiment />
+            </motion.button>
+          )}
+        </AnimatePresence>
+        <a
+          href={GITHUB_REPO_URL}
+          {...NEW_TAB}
+          aria-label="GitHub"
+          title="GitHub"
+          className={LINK_CLASS}
+        >
+          <MdiGithub />
+        </a>
+        <a
+          href={TELEGRAM_CHANNEL_URL}
+          {...NEW_TAB}
+          aria-label="Telegram-канал"
+          title="Telegram-канал"
+          className={LINK_CLASS}
+        >
+          <MdiTelegram />
+        </a>
+      </span>
+    </>
+  );
+}
+
+function App() {
+  const burunyaaMode = useSettings(
+    (state) => state.features.devOptions.burunyaaMode,
+  );
+  const { currentPage, direction, goBack } = useNavigation();
+  const reduceMotion = useReducedMotion();
+  const { title, Content } = PAGES[currentPage];
+
+  useEffect(() => {
+    // After the first paint; Safari has no requestIdleCallback.
+    if (typeof requestIdleCallback === 'function') {
+      const id = requestIdleCallback(prefetchPages, { timeout: 1_000 });
+      return () => cancelIdleCallback(id);
+    }
+    const id = setTimeout(prefetchPages, 200);
+    return () => clearTimeout(id);
+  }, []);
 
   return (
     <div
       className={cn(
-        'flex h-150 w-100 flex-col gap-4 overflow-hidden rounded-none p-4 font-sans font-semibold antialiased',
+        'flex h-150 w-100 flex-col gap-4 overflow-hidden rounded-none p-4 font-sans antialiased',
         burunyaaMode
           ? 'bg-[url(https://media1.tenor.com/m/PDzKPqFw6f8AAAAC/neco-neco-arc.gif)] bg-cover bg-center bg-no-repeat'
           : 'bg-black',
       )}
     >
-      <h1 className="flex h-10 items-center text-balance">
+      <header className="flex h-10 shrink-0 items-center">
         <AnimatePresence initial={false} custom={direction} mode="popLayout">
-          <motion.span
+          <motion.div
             key={currentPage}
             custom={direction}
             initial="enter"
@@ -188,58 +444,35 @@ function App() {
                     opacity: { duration: 0.15 },
                   }
             }
-            variants={
-              reduceMotion
-                ? {
-                    enter: { opacity: 0 },
-                    center: { opacity: 1 },
-                    exit: { opacity: 0 },
-                  }
-                : {
-                    enter: (dir: number) => ({
-                      x: dir > 0 ? 20 : -20,
-                      opacity: 0,
-                      filter: 'blur(2px)',
-                    }),
-                    center: { x: 0, opacity: 1, filter: 'blur(0px)' },
-                    exit: (dir: number) => ({
-                      x: dir > 0 ? -20 : 20,
-                      opacity: 0,
-                      filter: 'blur(2px)',
-                      transition: { duration: 0.12 },
-                    }),
-                  }
-            }
-            className="flex w-full items-center justify-between gap-1 text-lg font-bold tracking-normal"
+            variants={reduceMotion ? FADE : TITLE_SLIDE}
+            className="flex w-full items-center justify-between gap-2"
           >
             {currentPage === 'home' ? (
-              <span className="flex w-full items-center justify-center gap-1">
-                <span>{PAGE_TITLES.home}</span>
-                <ExperimentalSettingsIcon />
-              </span>
+              <HomeHeader />
             ) : (
-              <>
+              <span className="flex min-w-0 items-center gap-1">
                 <Button
                   aria-label="Назад"
                   variant="ghost"
                   size="icon-md"
+                  className="-ml-2"
                   onClick={goBack}
                 >
                   <MaterialSymbolsChevronLeftRounded className="size-6" />
                 </Button>
-                {PAGE_TITLES[currentPage]}
-                <div className="size-10" />
-              </>
+                <h1 className="truncate text-base font-semibold">{title}</h1>
+              </span>
             )}
-          </motion.span>
+          </motion.div>
         </AnimatePresence>
-      </h1>
+      </header>
+      <UpdateBanner />
       <div className="relative flex-1">
         <AnimatePresence initial={false} custom={direction} mode="popLayout">
           <motion.div
             key={currentPage}
             custom={direction}
-            variants={pageVariants}
+            variants={reduceMotion ? FADE : PAGE_SLIDE}
             initial="enter"
             animate="center"
             exit="exit"
@@ -254,55 +487,11 @@ function App() {
             }
             className="absolute inset-0"
           >
-            {currentPage === 'home' && <HomePage />}
-            {currentPage === 'player' && <PlayerSettings />}
-            {currentPage === 'reader' && <ReaderSettings />}
-            {currentPage === 'localizedPoster' && <LocalizedPosterSettings />}
-            {currentPage === 'experimental' && <ExperimentalSettingsPage />}
+            <Suspense fallback={null}>
+              <Content />
+            </Suspense>
           </motion.div>
         </AnimatePresence>
-      </div>
-      <div className="text-muted-foreground flex items-center justify-center gap-3 text-xs">
-        <a
-          href="https://github.com/rosset-nocpes/hikka-features"
-          target="_blank"
-          rel="noopener"
-          className="flex flex-1 items-center justify-center gap-1 font-bold"
-        >
-          <MdiGithub />
-          GitHub
-        </a>
-        <div className="flex flex-1 items-center justify-between gap-3">
-          <div
-            aria-hidden="true"
-            className="bg-muted-foreground size-1 rounded-full"
-          />
-          <button
-            type="button"
-            onClick={() => {
-              devClicks.current += 1;
-              if (devClicks.current === 5) {
-                devClicks.current = 0;
-                updateFeatureSettings('devOptions', { enabled: !enabled });
-              }
-            }}
-          >
-            v{version}
-          </button>
-          <div
-            aria-hidden="true"
-            className="bg-muted-foreground size-1 rounded-full"
-          />
-        </div>
-        <a
-          href="https://t.me/hikka_features"
-          target="_blank"
-          rel="noopener"
-          className="flex flex-1 items-center justify-center gap-1 font-bold"
-        >
-          <MdiTelegram />
-          TG канал
-        </a>
       </div>
     </div>
   );
