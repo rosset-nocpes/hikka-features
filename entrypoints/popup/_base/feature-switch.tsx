@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 import SwitchOption from './switch-option';
 
-type Features = ReturnType<typeof useSettings.getState>['features'];
+export type Features = ReturnType<typeof useSettings.getState>['features'];
 
 type BooleanKey<T> = {
   [K in keyof T]: T[K] extends boolean ? K : never;

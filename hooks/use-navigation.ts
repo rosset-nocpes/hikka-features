@@ -1,6 +1,13 @@
 import { create } from 'zustand';
 
-export type Page = 'home' | 'player' | 'experimental' | 'teamPriority';
+export type Page =
+  | 'home'
+  | 'player'
+  | 'teamPriority'
+  | 'titlePages'
+  | 'community'
+  | 'editing'
+  | 'experimental';
 
 /** Sub-pages; everything else goes back to home. */
 const parents: Partial<Record<Page, Page>> = { teamPriority: 'player' };

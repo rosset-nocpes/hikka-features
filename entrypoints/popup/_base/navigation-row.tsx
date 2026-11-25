@@ -11,6 +11,8 @@ interface Props {
   icon?: ReactNode;
   /** Whether the feature behind the page is on; tints the icon. */
   active?: boolean;
+  /** A short state of what's behind it, before the chevron. */
+  value?: ReactNode;
   onClick: () => void;
 }
 
@@ -19,6 +21,7 @@ const NavigationRow = ({
   description,
   icon,
   active,
+  value,
   onClick,
 }: Props) => (
   <button
@@ -28,6 +31,11 @@ const NavigationRow = ({
   >
     {icon && <RowIcon active={active}>{icon}</RowIcon>}
     <RowLabel label={label} description={description} />
+    {value && (
+      <span className="text-muted-foreground ml-1 shrink-0 text-xs font-medium tabular-nums">
+        {value}
+      </span>
+    )}
     <MaterialSymbolsChevronRightRounded className="text-muted-foreground ml-1 size-5 shrink-0 transition-transform group-hover/row:translate-x-0.5" />
   </button>
 );

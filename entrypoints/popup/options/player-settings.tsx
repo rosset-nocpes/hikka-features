@@ -1,5 +1,5 @@
 import MaterialSymbolsAutoplayRounded from '~icons/material-symbols/autoplay-rounded';
-import MaterialSymbolsBlurOffRounded from '~icons/material-symbols/blur-off-rounded';
+import MaterialSymbolsBlurOnRounded from '~icons/material-symbols/blur-on-rounded';
 import MaterialSymbolsFastForwardRounded from '~icons/material-symbols/fast-forward-rounded';
 import MaterialSymbolsFormatListNumberedRounded from '~icons/material-symbols/format-list-numbered-rounded';
 import MaterialSymbolsPictureInPictureAltRounded from '~icons/material-symbols/picture-in-picture-alt-rounded';
@@ -114,6 +114,9 @@ const PlayerSettings = () => {
             updateFeatureSettings('player', { skipSegments: value })
           }
         />
+      </SettingsGroup>
+
+      <SettingsGroup title="Вигляд">
         <SegmentedOption
           icon={<MaterialSymbolsPictureInPictureAltRounded />}
           stacked
@@ -128,9 +131,10 @@ const PlayerSettings = () => {
         <FeatureSwitch
           feature="player"
           option="disableBlur"
-          icon={<MaterialSymbolsBlurOffRounded />}
-          label="Вимкнути блюр"
-          description="Прибирає розмиття фону у відео- та музичному програвачі"
+          inverted
+          icon={<MaterialSymbolsBlurOnRounded />}
+          label="Розмиття фону"
+          description="Напівпрозорі панелі відео- й музичного програвача. Вимкніть, якщо гальмує"
         />
       </SettingsGroup>
     </SettingsPage>

@@ -55,7 +55,7 @@ function SegmentedOption<T extends string>({
           key={option.value}
           value={option.value}
           className={cn(
-            'text-muted-foreground hover:text-foreground data-checked:text-foreground focus-visible:ring-ring/50 relative cursor-pointer rounded-md px-2.5 py-1 text-xs font-medium transition-colors outline-none focus-visible:ring-2',
+            'text-muted-foreground hover:text-foreground data-checked:text-foreground focus-visible:ring-ring/50 relative cursor-pointer rounded-md px-2.5 py-1 text-center text-xs font-medium transition-colors outline-none focus-visible:ring-2',
             stacked && 'flex-1',
           )}
         >

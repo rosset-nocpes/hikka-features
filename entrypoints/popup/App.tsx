@@ -5,25 +5,22 @@ import {
   useReducedMotion,
   type Variants,
 } from 'motion/react';
-import { type FC, lazy, Suspense, useEffect, useRef } from 'react';
-import MaterialSymbolsAutoAwesomeRounded from '~icons/material-symbols/auto-awesome-rounded';
+import {
+  type FC,
+  lazy,
+  type ReactNode,
+  Suspense,
+  useEffect,
+  useRef,
+} from 'react';
+import MaterialSymbolsArticleRounded from '~icons/material-symbols/article-rounded';
 import MaterialSymbolsChevronLeftRounded from '~icons/material-symbols/chevron-left-rounded';
-import MaterialSymbolsCoPresentRounded from '~icons/material-symbols/co-present-rounded';
 import MaterialSymbolsDiversity3Rounded from '~icons/material-symbols/diversity-3-rounded';
+import MaterialSymbolsEditNoteRounded from '~icons/material-symbols/edit-note-rounded';
 import MaterialSymbolsExperiment from '~icons/material-symbols/experiment';
-import MaterialSymbolsFactCheckRounded from '~icons/material-symbols/fact-check-rounded';
-import MaterialSymbolsGroups3Rounded from '~icons/material-symbols/groups-3-rounded';
-import MaterialSymbolsGroupsRounded from '~icons/material-symbols/groups-rounded';
-import MaterialSymbolsLibraryMusicRounded from '~icons/material-symbols/library-music-rounded';
-import MaterialSymbolsLinkRounded from '~icons/material-symbols/link-rounded';
 import MaterialSymbolsMenuBookRounded from '~icons/material-symbols/menu-book-rounded';
-import MaterialSymbolsNotificationsActiveRounded from '~icons/material-symbols/notifications-active-rounded';
-import MaterialSymbolsPersonEditRounded from '~icons/material-symbols/person-edit-rounded';
 import MaterialSymbolsPlayCircleRounded from '~icons/material-symbols/play-circle-rounded';
-import MaterialSymbolsRecommendRounded from '~icons/material-symbols/recommend-rounded';
 import MaterialSymbolsSettingsBackupRestoreRounded from '~icons/material-symbols/settings-backup-restore-rounded';
-import MaterialSymbolsTranslateRounded from '~icons/material-symbols/translate-rounded';
-import MaterialSymbolsWallpaperRounded from '~icons/material-symbols/wallpaper-rounded';
 import MdiGithub from '~icons/mdi/github';
 import MdiTelegram from '~icons/mdi/telegram';
 
@@ -31,18 +28,18 @@ import ExtensionLogo from '@/assets/icon.png';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { GITHUB_REPO_URL, TELEGRAM_CHANNEL_URL } from '@/constants/links';
+import { useActivitySharing } from '@/hooks/use-activity-sharing';
 import { type Page, useNavigation } from '@/hooks/use-navigation';
 import { version } from '@/package.json';
 import { NEW_TAB } from '@/utils/hikka-router';
 
 import ActionRow from './_base/action-row';
 import ConfirmButton from './_base/confirm-button';
-import FeatureSwitch from './_base/feature-switch';
+import FeatureSwitch, { type Features } from './_base/feature-switch';
 import NavigationRow from './_base/navigation-row';
 import { resetPreferences } from './_base/reset-settings';
 import SettingsGroup from './_base/settings-group';
 import UpdateBanner from './_base/update-banner';
-import ActivitySettings from './options/activity-settings';
 import UserOptions from './options/user-options';
 
 const EASE_SMOOTH_OUT = [0.22, 1, 0.36, 1] as const;
@@ -64,14 +61,93 @@ const staggerContainerVariants = {
   },
 };
 
+/**
+ * The switches behind each section page, to count how many are on. Ones
+ * that need an account count only while signed in, as the page shows them.
+ * Activity sharing, kept in the account, is added by `CommunityRow`. Keep in
+ * step with the switches on options/{title-page,community,editing}-settings.
+ */
+const SECTION_SWITCHES: Record<
+  'titlePages' | 'community' | 'editing',
+  { on: (features: Features) => boolean; account?: boolean }[]
+> = {
+  titlePages: [
+    { on: (f) => f.aniBackground.enabled },
+    { on: (f) => f.localizedPoster.enabled },
+    { on: (f) => f.localizedPoster.enabled && f.localizedPoster.autoShow },
+    { on: (f) => f.fandubBlock.enabled },
+    { on: (f) => f.recommendationBlock.enabled },
+    { on: (f) => f.musicPlayer.enabled },
+    { on: (f) => f.aniButtons.enabled },
+  ],
+  community: [
+    { on: (f) => f.watchTogetherInvites.enabled, account: true },
+    { on: (f) => f.releaseNotifications.enabled, account: true },
+    { on: (f) => !f.friendsActivity.hidden },
+    { on: (f) => f.teamLinks.enabled },
+  ],
+  editing: [
+    { on: (f) => f.editorToolbar.enabled },
+    { on: (f) => f.editorCharacters.enabled },
+  ],
+};
+
+interface SectionRowProps {
+  section: keyof typeof SECTION_SWITCHES;
+  icon: ReactNode;
+  label: string;
+  description: string;
+  /** One more switch to count, kept elsewhere; undefined while unknown. */
+  extra?: boolean;
+}
+
+/** Opens a section page, saying how many of its switches are on. */
+function SectionRow({ section, extra, ...props }: SectionRowProps) {
+  const { navigate } = useNavigation();
+  const signedIn = useSettings((state) => Boolean(state.convexSession));
+  const switches = SECTION_SWITCHES[section].filter(
+    (entry) => signedIn || !entry.account,
+  );
+  const on =
+    useSettings(
+      (state) => switches.filter((entry) => entry.on(state.features)).length,
+    ) + (extra ? 1 : 0);
+  const total = switches.length + (extra === undefined ? 0 : 1);
+
+  return (
+    <NavigationRow
+      {...props}
+      active={on > 0}
+      value={
+        <>
+          {on} з {total}
+          <span className="sr-only"> увімкнено</span>
+        </>
+      }
+      onClick={() => navigate(section)}
+    />
+  );
+}
+
+/** Counts activity sharing too, which only an account has. */
+function SignedInCommunityRow(props: SectionRowProps) {
+  const { shared } = useActivitySharing();
+  return <SectionRow {...props} extra={shared} />;
+}
+
+function CommunityRow(props: SectionRowProps) {
+  const signedIn = useSettings((state) => Boolean(state.convexSession));
+  return signedIn ? (
+    <SignedInCommunityRow {...props} />
+  ) : (
+    <SectionRow {...props} />
+  );
+}
+
 function HomePage() {
   const { navigate } = useNavigation();
   const reduceMotion = useReducedMotion();
-  const signedIn = useSettings((state) => Boolean(state.convexSession));
   const playerEnabled = useSettings((state) => state.features.player.enabled);
-  const posterEnabled = useSettings(
-    (state) => state.features.localizedPoster.enabled,
-  );
 
   return (
     <ScrollArea className="h-full" scrollFade>
@@ -88,143 +164,50 @@ function HomePage() {
         </motion.div>
 
         <motion.div variants={groupVariants}>
-          <SettingsGroup
-            title="Спільнота"
-            footer={
-              signedIn
-                ? undefined
-                : 'Увійдіть, щоб ділитися активністю, дивитися разом із друзями й отримувати сповіщення про нові серії.'
-            }
-          >
-            {signedIn && <ActivitySettings />}
-            <FeatureSwitch
-              feature="friendsActivity"
-              option="hidden"
-              inverted
-              icon={<MaterialSymbolsDiversity3Rounded />}
-              label="Активність друзів"
-              description="Блок на головній hikka.io з тим, що друзі дивляться й читають"
-            />
-            {signedIn && (
-              <FeatureSwitch
-                feature="watchTogetherInvites"
-                icon={<MaterialSymbolsCoPresentRounded />}
-                label="Запрошення до перегляду"
-                description="З’являються, коли друзі запрошують дивитися разом"
-              />
-            )}
-            {signedIn && (
-              <FeatureSwitch
-                feature="releaseNotifications"
-                icon={<MaterialSymbolsNotificationsActiveRounded />}
-                label="Нові серії від команд"
-                description="У сповіщеннях hikka.io, від команд із вашого пріоритету"
-              />
-            )}
-          </SettingsGroup>
-        </motion.div>
-
-        <motion.div variants={groupVariants}>
           <SettingsGroup title="Медіа">
             <NavigationRow
               icon={<MaterialSymbolsPlayCircleRounded />}
               active={playerEnabled}
-              label="Програвач"
-              description={
-                playerEnabled
-                  ? 'Джерело, пропуск заставок і пріоритет команд'
-                  : 'Кнопку перегляду вимкнено'
+              value={
+                playerEnabled ? undefined : (
+                  <>
+                    <span aria-hidden="true">Вимк.</span>
+                    <span className="sr-only">Вимкнено</span>
+                  </>
+                )
               }
+              label="Програвач"
+              description="Джерело, заставки й команди"
               onClick={() => navigate('player')}
             />
             <FeatureSwitch
               feature="reader"
               icon={<MaterialSymbolsMenuBookRounded />}
               label="Читалка"
-              description="Кнопка «Читати» на сторінках манґи й ранобе"
-            />
-            <FeatureSwitch
-              feature="musicPlayer"
-              icon={<MaterialSymbolsLibraryMusicRounded />}
-              label="Опенінги та ендінги"
-              description="Список треків у блоці музики тайтлу, плаваючий програвач і улюблена музика в профілі"
+              description="Кнопка «Читати» для манґи й ранобе"
             />
           </SettingsGroup>
         </motion.div>
 
         <motion.div variants={groupVariants}>
-          <SettingsGroup title="Оформлення">
-            <FeatureSwitch
-              feature="aniBackground"
-              icon={<MaterialSymbolsWallpaperRounded />}
-              label="Обкладинки"
-              description="Покращене оформлення на сторінках тайтлів, персонажів та правок"
+          <SettingsGroup title="Сайт">
+            <SectionRow
+              section="titlePages"
+              icon={<MaterialSymbolsArticleRounded />}
+              label="Сторінки тайтлів"
+              description="Оформлення, музика й блоки"
             />
-            <FeatureSwitch
-              feature="localizedPoster"
-              icon={<MaterialSymbolsTranslateRounded />}
-              label="Локалізовані постери"
-              description="Кнопка, що показує постер українською"
+            <CommunityRow
+              section="community"
+              icon={<MaterialSymbolsDiversity3Rounded />}
+              label="Спільнота"
+              description="Друзі й команди"
             />
-            <FeatureSwitch
-              feature="localizedPoster"
-              option="autoShow"
-              disabled={!posterEnabled}
-              icon={<MaterialSymbolsAutoAwesomeRounded />}
-              label="Автолокалізація постера"
-              description={
-                posterEnabled
-                  ? 'Одразу замінює постер локалізованою версією'
-                  : 'Спершу увімкніть локалізовані постери'
-              }
-            />
-          </SettingsGroup>
-        </motion.div>
-
-        <motion.div variants={groupVariants}>
-          <SettingsGroup title="Контент">
-            <FeatureSwitch
-              feature="aniButtons"
-              icon={<MaterialSymbolsLinkRounded />}
-              label="Інші джерела"
-              description="Додаткові посилання на сторінках тайтлів"
-            />
-            <FeatureSwitch
-              feature="fandubBlock"
-              icon={<MaterialSymbolsGroupsRounded />}
-              label="Блок фандаб команд"
-              description="Команди, що озвучили чи перекладали тайтл, з їхніми сторінками"
-            />
-            <FeatureSwitch
-              feature="teamLinks"
-              icon={<MaterialSymbolsGroups3Rounded />}
-              label="Команди в меню й пошуку"
-              description="Пункт «Команди» в розділі «Спільнота» і команди в пошуку hikka.io"
-            />
-            <FeatureSwitch
-              feature="recommendationBlock"
-              icon={<MaterialSymbolsRecommendRounded />}
-              label="Блок рекомендацій"
-              description="Блок і вкладка тайтлу з контентом, схожим на той, який ви дивитеся"
-            />
-          </SettingsGroup>
-        </motion.div>
-
-        <motion.div variants={groupVariants}>
-          <SettingsGroup title="Редагування">
-            <FeatureSwitch
-              feature="editorCharacters"
-              icon={<MaterialSymbolsPersonEditRounded />}
-              label="Пропозиції перекладу імен"
-              description="Показує переклад імені українською при редагуванні персонажа"
-              beta
-            />
-            <FeatureSwitch
-              feature="editorToolbar"
-              icon={<MaterialSymbolsFactCheckRounded />}
-              label="Панель редактора"
-              description="Перевірка правки за правилами, підпис джерела й перехід між правками на розгляді"
-              beta
+            <SectionRow
+              section="editing"
+              icon={<MaterialSymbolsEditNoteRounded />}
+              label="Редагування"
+              description="Інструменти для правок"
             />
           </SettingsGroup>
         </motion.div>
@@ -257,30 +240,42 @@ function HomePage() {
 const loadPlayerSettings = () => import('./options/player-settings');
 const loadTeamPrioritySettings = () =>
   import('./options/team-priority-settings');
+const loadTitlePageSettings = () => import('./options/title-page-settings');
+const loadCommunitySettings = () => import('./options/community-settings');
+const loadEditingSettings = () => import('./options/editing-settings');
 const loadExperimentalSettings = () =>
   import('./options/experimental-settings');
-const PlayerSettings = lazy(loadPlayerSettings);
-const TeamPrioritySettings = lazy(loadTeamPrioritySettings);
-const ExperimentalSettingsPage = lazy(loadExperimentalSettings);
+
+const LOADERS = [
+  loadPlayerSettings,
+  loadTeamPrioritySettings,
+  loadTitlePageSettings,
+  loadCommunitySettings,
+  loadEditingSettings,
+  loadExperimentalSettings,
+];
 
 const prefetchPages = () => {
-  for (const load of [
-    loadPlayerSettings,
-    loadTeamPrioritySettings,
-    loadExperimentalSettings,
-  ]) {
-    void load().catch(() => undefined);
-  }
+  for (const load of LOADERS) void load().catch(() => undefined);
 };
 
 const PAGES: Record<Page, { title: string; Content: FC }> = {
   home: { title: 'Hikka Features', Content: HomePage },
-  player: { title: 'Програвач', Content: PlayerSettings },
+  player: { title: 'Програвач', Content: lazy(loadPlayerSettings) },
+  teamPriority: {
+    title: 'Пріоритет команд',
+    Content: lazy(loadTeamPrioritySettings),
+  },
+  titlePages: {
+    title: 'Сторінки тайтлів',
+    Content: lazy(loadTitlePageSettings),
+  },
+  community: { title: 'Спільнота', Content: lazy(loadCommunitySettings) },
+  editing: { title: 'Редагування', Content: lazy(loadEditingSettings) },
   experimental: {
     title: 'Експериментальні функції',
-    Content: ExperimentalSettingsPage,
+    Content: lazy(loadExperimentalSettings),
   },
-  teamPriority: { title: 'Пріоритет команд', Content: TeamPrioritySettings },
 };
 
 const FADE: Variants = {
