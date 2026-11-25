@@ -52,7 +52,7 @@ const PlayerMobilePanel: FC<Props> = ({ className }) => {
         className="min-h-0 flex-1 *:data-[slot=scroll-area-viewport]:overscroll-contain"
         scrollFade
       >
-        <div className="pb-[env(safe-area-inset-bottom)]">
+        <div className="flex min-h-full flex-col pb-[env(safe-area-inset-bottom)]">
           <PanelContent tab={tab} />
         </div>
       </ScrollArea>

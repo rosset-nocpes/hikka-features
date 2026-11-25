@@ -108,7 +108,9 @@ export const PanelContent: FC<{ tab: PanelTab; nowPlaying?: boolean }> = ({
       ref={ref}
       // Not the default fit-content, which would stop titles truncating.
       style={{ minWidth: 0 }}
-      className="overflow-x-clip"
+      // At least the panel's height, so an empty queue centres in it and the
+      // queue's notice sits at the panel's bottom.
+      className="flex min-h-full flex-1 flex-col overflow-x-clip"
     >
       <motion.div
         key={tab}
@@ -116,6 +118,7 @@ export const PanelContent: FC<{ tab: PanelTab; nowPlaying?: boolean }> = ({
         initial={switched ? 'enter' : false}
         animate="center"
         transition={{ duration: 0.15, ease: 'easeOut' }}
+        className="flex flex-1 flex-col"
       >
         {tab === 'episodes' ? (
           <EpisodeList />

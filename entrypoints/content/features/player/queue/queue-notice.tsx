@@ -116,7 +116,7 @@ const QueueNotice = ({ shared }: { shared: boolean }) => {
   return (
     <div
       role="status"
-      className="pointer-events-none sticky bottom-2 z-10 px-2"
+      className="pointer-events-none sticky bottom-2 z-10 mt-auto px-2"
     >
       <AnimatePresence initial={false}>
         {shown && (
