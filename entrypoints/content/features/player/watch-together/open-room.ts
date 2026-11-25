@@ -11,13 +11,10 @@ export const roomInviteUrl = (animeSlug: string, code: string) => {
 /**
  * Joins a room the user picked from an invite or a friend's listing: right
  * here when the player is open, which follows the room to its anime,
- * otherwise on the anime's page.
+ * otherwise on the anime's page. Resolves once joined, or failed to, here.
  */
-export const openRoom = (animeSlug: string, code: string) => {
-  if (isPlayerOpen()) {
-    void useWatchTogether.getState().join(code);
-    return;
-  }
+export const openRoom = async (animeSlug: string, code: string) => {
+  if (isPlayerOpen()) return useWatchTogether.getState().join(code);
 
   const url = roomInviteUrl(animeSlug, code);
   url.searchParams.set('join', '');

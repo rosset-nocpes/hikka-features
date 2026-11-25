@@ -714,6 +714,7 @@ export const convexApi = {
           episode: number;
           memberCount: number;
           animeTitle?: string;
+          animeImage?: string;
           friend: {
             username?: string;
             avatar?: string;
@@ -727,6 +728,7 @@ export const convexApi = {
           episode: number;
           memberCount: number;
           animeTitle?: string;
+          animeImage?: string;
           friend: {
             username?: string;
             avatar?: string;

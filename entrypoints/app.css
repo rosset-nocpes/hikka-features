@@ -444,3 +444,13 @@
     scale: 1 1;
   }
 }
+
+/* A notification's time left; its end is what dismisses it. */
+@keyframes notification-timer {
+  from {
+    scale: 1 1;
+  }
+  to {
+    scale: 0 1;
+  }
+}
