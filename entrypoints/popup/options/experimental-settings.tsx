@@ -4,6 +4,7 @@ import MaterialSymbolsPetsRounded from '~icons/material-symbols/pets-rounded';
 
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { resetReaderPreferences } from '@/entrypoints/content/features/reader/reader.preferences';
 import { useCopy } from '@/hooks/use-copy';
 import { version } from '@/package.json';
 import {
@@ -157,7 +158,10 @@ const DevToolsGroup = () => {
       >
         <ConfirmButton
           label="Скинути всі налаштування"
-          onConfirm={resetSettings}
+          onConfirm={() => {
+            resetSettings();
+            void resetReaderPreferences();
+          }}
         >
           Скинути
         </ConfirmButton>

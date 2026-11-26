@@ -68,7 +68,7 @@ interface StoredPreferences {
 
 const stored = new StoredValue<StoredPreferences>(STORAGE_KEYS.readerSettings);
 
-/** The settings waiting to be saved, the timer that saves them, and the save under way. */
+/** Settings waiting to be saved, the timer saving them, the save under way. */
 let pending: ReaderSettings | undefined;
 let timer: ReturnType<typeof setTimeout> | undefined;
 let saving: Promise<void> = Promise.resolve();
@@ -112,18 +112,74 @@ const over = <T extends object>(defaults: T, saved: Partial<T> = {}): T =>
     }),
   ) as T;
 
-/** The saved settings of a `type` reader, defaults where none are. */
-export const loadPreferences = async (type: ReaderType) => {
+/** Both readers' saved settings, defaults where none are. */
+export interface Preferences {
+  manga: MangaPreferences;
+  novel: NovelPreferences;
+  sortBy: SortBy;
+  keepAwake: boolean;
+}
+
+const read = async () =>
+  (await stored.get().catch(() => undefined)) ?? ({} as StoredPreferences);
+
+/** Every saved setting, after any change still waiting to be saved. */
+export const readPreferences = async (): Promise<Preferences> => {
   // A change made just before the reader last closed is saved first.
   clearTimeout(timer);
   await flush();
-  const saved = (await stored.get().catch(() => undefined)) ?? {};
+  const saved = await read();
   return {
-    ...over(TYPE_DEFAULTS[type], saved[type]),
+    manga: over(MANGA_DEFAULTS, saved.manga),
+    novel: over(NOVEL_DEFAULTS, saved.novel),
     sortBy: over(SHARED_DEFAULTS.sortBy, saved.sortBy),
     keepAwake: over(SHARED_DEFAULTS, saved).keepAwake,
   };
 };
+
+/** The saved settings of a `type` reader, defaults where none are. */
+export const loadPreferences = async (type: ReaderType) => {
+  const { sortBy, keepAwake, ...types } = await readPreferences();
+  return { ...types[type], sortBy, keepAwake };
+};
+
+/** Some settings to save, as the extension's popup changes them. */
+export interface PreferencesChange {
+  manga?: Partial<MangaPreferences>;
+  novel?: Partial<NovelPreferences>;
+  keepAwake?: boolean;
+}
+
+/** Saves `change` over the saved settings, in turn with other saves. */
+export const changePreferences = (change: PreferencesChange) => {
+  saving = saving
+    .then(async () => {
+      const saved = await read();
+      await stored.set({
+        ...saved,
+        ...(change.manga && { manga: { ...saved.manga, ...change.manga } }),
+        ...(change.novel && { novel: { ...saved.novel, ...change.novel } }),
+        ...(change.keepAwake !== undefined && { keepAwake: change.keepAwake }),
+      });
+    })
+    .catch((error) => console.error('Failed to save reader settings:', error));
+  return saving;
+};
+
+/** Puts both readers' settings back as they first were, but not the sort. */
+export const resetReaderPreferences = () =>
+  changePreferences({
+    manga: MANGA_DEFAULTS,
+    novel: NOVEL_DEFAULTS,
+    keepAwake: SHARED_DEFAULTS.keepAwake,
+  });
+
+/** Calls `listener` whenever any context saves the settings. */
+export const followPreferences = (listener: () => void) =>
+  stored.watch(() => listener());
+
+/** Whether a change here is still waiting to be saved. */
+export const hasUnsavedPreferences = () => pending !== undefined;
 
 /** Writes what `settings` keep; a slider's drag writes once, at its end. */
 export const savePreferences = (settings: ReaderSettings) => {
@@ -155,7 +211,7 @@ const write = async (settings: ReaderSettings | undefined) => {
       settings[key as keyof ReaderSettings],
     ]),
   );
-  const saved = (await stored.get().catch(() => undefined)) ?? {};
+  const saved = await read();
   await stored.set({
     ...saved,
     [settings.type]: typeSettings,

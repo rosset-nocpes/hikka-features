@@ -3,6 +3,7 @@ import { create } from 'zustand';
 export type Page =
   | 'home'
   | 'player'
+  | 'reader'
   | 'teamPriority'
   | 'titlePages'
   | 'community'

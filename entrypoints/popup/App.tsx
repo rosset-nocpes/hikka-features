@@ -28,14 +28,16 @@ import ExtensionLogo from '@/assets/icon.png';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { GITHUB_REPO_URL, TELEGRAM_CHANNEL_URL } from '@/constants/links';
+import { resetReaderPreferences } from '@/entrypoints/content/features/reader/reader.preferences';
 import { useActivitySharing } from '@/hooks/use-activity-sharing';
 import { type Page, useNavigation } from '@/hooks/use-navigation';
 import { version } from '@/package.json';
 import { NEW_TAB } from '@/utils/hikka-router';
 
+import type { Features } from './_base/feature-switch';
+
 import ActionRow from './_base/action-row';
 import ConfirmButton from './_base/confirm-button';
-import FeatureSwitch, { type Features } from './_base/feature-switch';
 import NavigationRow from './_base/navigation-row';
 import { resetPreferences } from './_base/reset-settings';
 import SettingsGroup from './_base/settings-group';
@@ -144,10 +146,19 @@ function CommunityRow(props: SectionRowProps) {
   );
 }
 
+/** A section's value while its feature is off. */
+const Off = () => (
+  <>
+    <span aria-hidden="true">Вимк.</span>
+    <span className="sr-only">Вимкнено</span>
+  </>
+);
+
 function HomePage() {
   const { navigate } = useNavigation();
   const reduceMotion = useReducedMotion();
   const playerEnabled = useSettings((state) => state.features.player.enabled);
+  const readerEnabled = useSettings((state) => state.features.reader.enabled);
 
   return (
     <ScrollArea className="h-full" scrollFade>
@@ -168,23 +179,18 @@ function HomePage() {
             <NavigationRow
               icon={<MaterialSymbolsPlayCircleRounded />}
               active={playerEnabled}
-              value={
-                playerEnabled ? undefined : (
-                  <>
-                    <span aria-hidden="true">Вимк.</span>
-                    <span className="sr-only">Вимкнено</span>
-                  </>
-                )
-              }
+              value={playerEnabled ? undefined : <Off />}
               label="Програвач"
               description="Джерело, заставки й команди"
               onClick={() => navigate('player')}
             />
-            <FeatureSwitch
-              feature="reader"
+            <NavigationRow
               icon={<MaterialSymbolsMenuBookRounded />}
+              active={readerEnabled}
+              value={readerEnabled ? undefined : <Off />}
               label="Читалка"
-              description="Кнопка «Читати» для манґи й ранобе"
+              description="Режим читання, фон і тема ранобе"
+              onClick={() => navigate('reader')}
             />
           </SettingsGroup>
         </motion.div>
@@ -221,7 +227,10 @@ function HomePage() {
             >
               <ConfirmButton
                 label="Скинути налаштування"
-                onConfirm={resetPreferences}
+                onConfirm={() => {
+                  resetPreferences();
+                  void resetReaderPreferences();
+                }}
               >
                 Скинути
               </ConfirmButton>
@@ -238,6 +247,7 @@ function HomePage() {
  * and fetched while it idles so going to one never waits.
  */
 const loadPlayerSettings = () => import('./options/player-settings');
+const loadReaderSettings = () => import('./options/reader-settings');
 const loadTeamPrioritySettings = () =>
   import('./options/team-priority-settings');
 const loadTitlePageSettings = () => import('./options/title-page-settings');
@@ -248,6 +258,7 @@ const loadExperimentalSettings = () =>
 
 const LOADERS = [
   loadPlayerSettings,
+  loadReaderSettings,
   loadTeamPrioritySettings,
   loadTitlePageSettings,
   loadCommunitySettings,
@@ -262,6 +273,7 @@ const prefetchPages = () => {
 const PAGES: Record<Page, { title: string; Content: FC }> = {
   home: { title: 'Hikka Features', Content: HomePage },
   player: { title: 'Програвач', Content: lazy(loadPlayerSettings) },
+  reader: { title: 'Читалка', Content: lazy(loadReaderSettings) },
   teamPriority: {
     title: 'Пріоритет команд',
     Content: lazy(loadTeamPrioritySettings),
