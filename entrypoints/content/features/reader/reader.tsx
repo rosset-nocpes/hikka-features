@@ -16,7 +16,7 @@ import PageSwitcher from './components/ui/page-switcher';
 import { mangaMode, ReaderProvider, useReader } from './hooks/use-reader';
 import useWakeLock from './hooks/use-wake-lock';
 import { isOthersKey } from './keyboard';
-import { MANGA_BACKGROUNDS } from './reader.constants';
+import { MANGA_BACKGROUNDS, TAP_TURN_ZONE } from './reader.constants';
 import { MangaReadingMode, ReaderType } from './reader.enums';
 
 const readerUi = new ModalUi({
@@ -56,16 +56,14 @@ export const closeReader = () => readerUi.close();
 /** Taps on these keep their own meaning rather than toggling the bars. */
 const INTERACTIVE = 'button, a, input, img.cursor-zoom-in, .cursor-help';
 
-/** How much of the page's width at either side turns it on a tap. */
-const TURN_ZONE = 0.3;
-
 /**
  * Which way a tap at `x` of `width` turns manga pages: the left side goes
  * back and the right forward, the other way round when reading right to
  * left; 0 between them.
  */
 const tapOffset = (x: number, width: number, rtl: boolean) => {
-  const side = x < width * TURN_ZONE ? -1 : x > width * (1 - TURN_ZONE) ? 1 : 0;
+  const side =
+    x < width * TAP_TURN_ZONE ? -1 : x > width * (1 - TAP_TURN_ZONE) ? 1 : 0;
   return (rtl ? -side : side) as -1 | 0 | 1;
 };
 

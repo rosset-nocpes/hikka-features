@@ -11,6 +11,7 @@ import type { QueueItem } from '../queue/use-queue';
 import type { MergedTeam } from '../teams';
 import type { SharedPlayerParams } from './link-params';
 
+import { ASHDI_SPEED_OPTIONS } from '../player.constants';
 import { takeLinkParams } from './link-params';
 import {
   exactSource,
@@ -396,7 +397,7 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
 /** The speeds `provider`'s players offer. */
 export const speedOptionsOf = (provider: string) =>
   provider === 'ashdi'
-    ? [1, 1.25, 1.5, 2]
+    ? ASHDI_SPEED_OPTIONS
     : useIFramePlayer.getInitialState().speedOptions;
 
 const setSpeedOptions = (provider: string) =>

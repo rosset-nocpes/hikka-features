@@ -262,7 +262,7 @@ const TrackRow: FC<RowProps> = ({ ost, track, release, loading, queue }) => {
   return (
     <li
       data-current={isCurrent}
-      data-unavailable={!track && !loading}
+      data-unavailable={unavailable}
       className="group/row hover:bg-secondary/40 data-[current=true]:bg-secondary/40 flex min-w-0 items-center gap-1 rounded-md pr-1 transition-colors"
     >
       <button
@@ -275,9 +275,7 @@ const TrackRow: FC<RowProps> = ({ ost, track, release, loading, queue }) => {
               : `Слухати «${ost.title}»`
             : undefined
         }
-        title={
-          !track && !loading ? 'AnimeThemes не має цього треку' : undefined
-        }
+        title={unavailable ? 'AnimeThemes не має цього треку' : undefined}
         className="group/play focus-visible:ring-ring flex min-w-0 flex-1 items-center gap-3 rounded-md p-2 text-left outline-none focus-visible:ring-2 disabled:cursor-default"
         onClick={play}
       >

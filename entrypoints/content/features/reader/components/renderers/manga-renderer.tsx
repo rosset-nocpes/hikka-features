@@ -27,7 +27,11 @@ import { isOthersKey } from '../../keyboard';
 import {
   FADE_BLUR,
   IMAGE_RETRY_DELAY_MS,
+  LONG_PAGE_RATIO,
+  LONG_PAGE_SAMPLE,
   MAX_IMAGE_RETRIES,
+  STRIP_ARROW_SCROLL,
+  STRIP_PAGE_SCROLL,
 } from '../../reader.constants';
 import { MangaReadingMode } from '../../reader.enums';
 import MangaNextPage, { ChapterEnd } from '../ui/manga-next-page';
@@ -37,9 +41,6 @@ import MangaScaleIndicator, {
 } from '../ui/manga/manga-scale-indicator';
 
 const MotionCarousel = motion.create(Carousel);
-
-/** Pages this much taller than wide are a long strip's, as manhwa has. */
-const LONG_PAGE_RATIO = 3.5;
 
 type MangaPageImageProps = Omit<
   ComponentPropsWithoutRef<'img'>,
@@ -116,7 +117,7 @@ const MangaRenderer = () => {
     if (!pages?.length) return;
 
     let isLong = false;
-    const imagesToLoad = pages.slice(0, 3).map(
+    const imagesToLoad = pages.slice(0, LONG_PAGE_SAMPLE).map(
       (url) =>
         new Promise<void>((resolve) => {
           const img = new Image();
@@ -483,8 +484,8 @@ const StripView = ({ pages }: ViewProps) => {
       }
 
       // Arrows nudge the strip, a space or page key moves a screen.
-      const screen = strip.clientHeight * 0.85;
-      const step = strip.clientHeight * 0.2;
+      const screen = strip.clientHeight * STRIP_PAGE_SCROLL;
+      const step = strip.clientHeight * STRIP_ARROW_SCROLL;
       const distance = (
         {
           ArrowUp: -step,

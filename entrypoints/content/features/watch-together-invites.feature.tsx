@@ -5,6 +5,7 @@ import MaterialSymbolsLoginRounded from '~icons/material-symbols/login-rounded';
 import type { WatchRoomInbox } from '@/utils/convex-api';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { STORAGE_KEYS } from '@/constants/storage';
 import { useLiveQuery } from '@/hooks/use-live-query';
 import { convexApi } from '@/utils/convex-api';
 import { useHikkaViewer } from '@/utils/hikka-viewer';
@@ -26,7 +27,12 @@ type Invite = WatchRoomInbox['invites'][number];
  * Invites closed without an answer, in every tab: they stay in the inbox
  * (and the player's menu) but aren't shown again.
  */
-const closedInvites = new StoredValue<string[]>('watchTogetherClosedInvites');
+const closedInvites = new StoredValue<string[]>(
+  STORAGE_KEYS.watchTogetherClosedInvites,
+);
+
+/** Closes saved one after another, so two close together both stick. */
+let savingClosed: Promise<void> = Promise.resolve();
 
 const notificationId = (invite: Invite) => `watch-together-invite-${invite.id}`;
 
@@ -111,14 +117,19 @@ const InviteNotifications = () => {
           answered.current.add(invite.id);
           shown.current.delete(invite.id);
         },
-        onClosed: async () => {
+        onClosed: () => {
           shown.current.delete(invite.id);
-          // Only ids still in the inbox, so the list doesn't grow forever.
-          const ids = (await closedInvites.get()) ?? [];
-          await closedInvites.set([
-            ...ids.filter((id) => inboxIds.current.has(id)),
-            invite.id,
-          ]);
+          savingClosed = savingClosed
+            .catch(() => undefined)
+            .then(async () => {
+              // Only ids still in the inbox, so the list doesn't grow forever.
+              const ids = (await closedInvites.get()) ?? [];
+              await closedInvites.set([
+                ...ids.filter((id) => inboxIds.current.has(id)),
+                invite.id,
+              ]);
+            });
+          return savingClosed;
         },
       });
     }

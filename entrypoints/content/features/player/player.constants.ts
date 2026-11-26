@@ -32,6 +32,11 @@ export const SKIP_FADE_MS = 300;
  */
 export const AUTO_SKIP_HIDE_MS = 2_000;
 
+// Players
+
+/** The speeds Ashdi's player offers; the others offer the default list. */
+export const ASHDI_SPEED_OPTIONS = [1, 1.25, 1.5, 2];
+
 // Overlay
 
 /** How long a play, pause or seek popup stays up. */

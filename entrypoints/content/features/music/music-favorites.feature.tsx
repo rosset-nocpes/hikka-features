@@ -12,7 +12,7 @@ import { FadeImage } from '@/components/fade-image';
 import { Poster } from '@/components/hikka/poster';
 import EmptyState from '@/components/ui/empty-state';
 import { fetchHikka } from '@/hooks/use-hikka';
-import { navigateOnHikka, onHikkaLinkClick } from '@/utils/hikka-router';
+import { onHikkaLinkClick } from '@/utils/hikka-router';
 import { hikkaViewerQuery } from '@/utils/hikka-viewer';
 import { plural } from '@/utils/plural';
 
@@ -74,7 +74,13 @@ const useMusicTab = create<{ username?: string }>(() => ({}));
 
 const profileUsername = () => {
   const match = /^\/u\/([^/]+)/.exec(location.pathname);
-  return match ? decodeURIComponent(match[1]!) : undefined;
+  if (!match) return undefined;
+  try {
+    return decodeURIComponent(match[1]!);
+  } catch {
+    // A malformed address names no user.
+    return undefined;
+  }
 };
 
 const isFullList = () => location.pathname.endsWith('/favorites');
@@ -111,7 +117,10 @@ function useProfileMusic() {
   const username = profileUsername();
   const { data: user } = useQuery({
     queryKey: ['hikka-user', username],
-    queryFn: () => fetchHikka<{ reference: string }>(`user/${username}`),
+    queryFn: () =>
+      fetchHikka<{ reference: string }>(
+        `user/${encodeURIComponent(username!)}`,
+      ),
     enabled: !!username,
     staleTime: Infinity,
     retry: 1,
@@ -415,15 +424,7 @@ const MoreCard: FC<{
 }> = ({ count, image, username }) => {
   const href = `/u/${encodeURIComponent(username)}/favorites`;
   return (
-    <a
-      href={href}
-      onClick={(event) => {
-        if (event.ctrlKey || event.metaKey || event.shiftKey) return;
-        event.preventDefault();
-        navigateOnHikka(href);
-      }}
-      className="flex flex-col gap-2"
-    >
+    <a href={href} onClick={onHikkaLinkClick} className="flex flex-col gap-2">
       <Poster ratio={1}>
         <div className="@container absolute inset-0">
           <FadeImage src={image} />

@@ -53,10 +53,14 @@ const useReaderPreferences = () => {
 
   useEffect(() => {
     let mounted = true;
-    const load = () =>
+    // Loads can finish out of order; an older one mustn't undo a newer one.
+    let latest = 0;
+    const load = () => {
+      const current = ++latest;
       void readPreferences().then((loaded) => {
-        if (mounted) setPreferences(loaded);
+        if (mounted && current === latest) setPreferences(loaded);
       });
+    };
     load();
     const unfollow = followPreferences(load);
     return () => {

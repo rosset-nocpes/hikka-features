@@ -9,6 +9,7 @@ export const STORAGE_KEYS = {
   musicVolume: 'music-volume',
   musicModes: 'music-modes',
   accountLogin: 'account-login',
+  watchTogetherClosedInvites: 'watchTogetherClosedInvites',
   compatibility: 'extensionCompatibility',
 } as const;
 

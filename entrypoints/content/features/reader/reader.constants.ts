@@ -109,6 +109,21 @@ export const PREFERENCES_SAVE_DELAY_MS = 300;
 export const MAX_IMAGE_RETRIES = 3;
 export const IMAGE_RETRY_DELAY_MS = 1_000;
 
+/** Pages this much taller than wide are a long strip's, as manhwa has. */
+export const LONG_PAGE_RATIO = 3.5;
+
+/** The chapter's first pages, loaded to tell whether its pages are long. */
+export const LONG_PAGE_SAMPLE = 3;
+
+// Turning and scrolling
+
+/** How much of the page's width at either side turns it on a tap. */
+export const TAP_TURN_ZONE = 0.3;
+
+/** Shares of the strip's height an arrow key and a page key scroll by. */
+export const STRIP_ARROW_SCROLL = 0.2;
+export const STRIP_PAGE_SCROLL = 0.85;
+
 // Zooming into images
 
 /** How much a zoom button or key scales by, and what a double tap zooms to. */

@@ -75,12 +75,18 @@ export function useLikedSongs() {
     pending[songId(track)] ?? liked.has(songId(track));
 }
 
+/** The latest change of each song, by `songId`: only it clears the pending one. */
+const latestChange = new Map<string, number>();
+let lastChange = 0;
+
 /**
  * Likes `track` or stops liking it. Signed out, this signs in first: the
  * favourites belong to the extension account, as Hikka's do to its own.
  */
 export async function setSongLiked(track: MusicTrack, liked: boolean) {
   const id = songId(track);
+  const change = ++lastChange;
+  latestChange.set(id, change);
   setPending(id, liked);
   try {
     if (!account.signedIn) {
@@ -113,7 +119,11 @@ export async function setSongLiked(track: MusicTrack, liked: boolean) {
   } catch (error) {
     console.error(error);
   } finally {
-    // The live list has the change by now, or it failed and shows the old one.
-    setPending(id, undefined);
+    // The live list has the change by now, or it failed and shows the old
+    // one. A click made meanwhile keeps showing until its own lands.
+    if (latestChange.get(id) === change) {
+      latestChange.delete(id);
+      setPending(id, undefined);
+    }
   }
 }
