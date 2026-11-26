@@ -164,7 +164,8 @@ export const SliderRow: FC<SliderRowProps> = ({
           min={min}
           max={max}
           step={step}
-          value={value}
+          // An array: a single number would give the slider two thumbs.
+          value={[value]}
           onValueChange={(next) =>
             onValueChange(Array.isArray(next) ? next[0]! : next)
           }

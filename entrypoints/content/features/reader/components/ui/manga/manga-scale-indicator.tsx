@@ -28,6 +28,7 @@ const MangaScaleIndicator = () => {
 
   return (
     <div
+      inert={!isStrip}
       className={cn(
         'bg-sidebar text-sidebar-foreground absolute right-2 bottom-2 z-20 hidden h-8 cursor-default items-center gap-1 rounded-md px-1 font-medium tabular-nums transition-[bottom,opacity] duration-300 md:flex',
         !isStrip && 'pointer-events-none -bottom-8 opacity-0',

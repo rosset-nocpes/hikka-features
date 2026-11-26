@@ -23,6 +23,8 @@ export const ChapterEnd = ({ className }: { className?: string }) => {
 
   return (
     <div
+      // Reads left to right inside a carousel read right to left too.
+      dir="ltr"
       className={cn(
         'flex flex-col items-center justify-center gap-5 text-center',
         className,

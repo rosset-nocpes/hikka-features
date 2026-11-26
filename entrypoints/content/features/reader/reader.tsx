@@ -1,4 +1,4 @@
-import { type MouseEvent, useEffect } from 'react';
+import { type MouseEvent, useEffect, useRef } from 'react';
 
 import { useIsMobile } from '@/components/hooks/use-mobile';
 import { Card, CardContent } from '@/components/ui/card';
@@ -68,13 +68,19 @@ const tapOffset = (x: number, width: number, rtl: boolean) => {
   return (rtl ? -side : side) as -1 | 0 | 1;
 };
 
+/** Open menus and popovers, which a tap outside them only closes. */
+const OPEN_POPUP = '[role=menu][data-open], [role=dialog][data-open]';
+
 const Reader = () => {
   const { settings, toggleBars, turnPage } = useReader();
   const mode = useReader(mangaMode);
   const isMobile = useIsMobile();
+  // Whether a popup was open as the tap began, so the tap just closes it.
+  const closingPopupRef = useRef(false);
   useWakeLock(settings.keepAwake);
 
   const handlePageTap = (e: MouseEvent<HTMLElement>) => {
+    if (closingPopupRef.current) return;
     if ((e.target as Element).closest(INTERACTIVE)) return;
 
     if (
@@ -131,6 +137,10 @@ const Reader = () => {
           'bg-card relative flex min-h-0 min-w-0 flex-1 flex-col gap-2 p-0 transition-[background-color,color] duration-300',
           background?.className,
         )}
+        onPointerDownCapture={(e) => {
+          const root = e.currentTarget.getRootNode() as Document | ShadowRoot;
+          closingPopupRef.current = !!root.querySelector(OPEN_POPUP);
+        }}
         onClick={handlePageTap}
       >
         <PageSwitcher />

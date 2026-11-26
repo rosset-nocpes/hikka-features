@@ -9,17 +9,26 @@ const useWakeLock = (enabled: boolean) => {
     if (!enabled || !('wakeLock' in navigator)) return;
 
     let lock: WakeLockSentinel | undefined;
+    /** A request on its way, so a second one doesn't start beside it. */
+    let requesting = false;
     let stopped = false;
 
     const request = async () => {
-      if (document.visibilityState !== 'visible' || (lock && !lock.released))
+      if (
+        requesting ||
+        document.visibilityState !== 'visible' ||
+        (lock && !lock.released)
+      )
         return;
+      requesting = true;
       try {
         const sentinel = await navigator.wakeLock.request('screen');
         if (stopped) void sentinel.release();
         else lock = sentinel;
       } catch {
         // Refused, as on low battery: the screen just dims as usual.
+      } finally {
+        requesting = false;
       }
     };
 
