@@ -5,6 +5,7 @@
 export const STORAGE_KEYS = {
   settings: 'settings',
   playerQueue: 'player-queue',
+  readerSettings: 'reader-settings',
   musicVolume: 'music-volume',
   musicModes: 'music-modes',
   accountLogin: 'account-login',

@@ -12,8 +12,11 @@ import NovelRenderer from './components/renderers/novel-renderer';
 import ReaderSidebar from './components/sidebar/reader-sidebar';
 import ReaderMobileToolbar from './components/ui/mobile/reader-mobile-toolbar';
 import PageSwitcher from './components/ui/page-switcher';
-import { ReaderProvider, useReader } from './hooks/use-reader';
-import { ReaderType } from './reader.enums';
+import { mangaMode, ReaderProvider, useReader } from './hooks/use-reader';
+import useWakeLock from './hooks/use-wake-lock';
+import { isOthersKey } from './keyboard';
+import { MANGA_BACKGROUNDS } from './reader.constants';
+import { MangaReadingMode, ReaderType } from './reader.enums';
 
 const readerUi = new ModalUi({
   name: 'reader-ui',
@@ -52,19 +55,51 @@ export const closeReader = () => readerUi.close();
 /** Taps on these keep their own meaning rather than toggling the bars. */
 const INTERACTIVE = 'button, a, input, img.cursor-zoom-in, .cursor-help';
 
-const Reader = () => {
-  const { settings, toggleBars } = useReader();
-  const isMobile = useIsMobile();
+/** How much of the page's width at either side turns it on a tap. */
+const TURN_ZONE = 0.3;
 
-  const handlePageTap = (e: MouseEvent) => {
-    if (!isMobile) return;
+/**
+ * Which way a tap at `x` of `width` turns manga pages: the left side goes
+ * back and the right forward, the other way round when reading right to
+ * left; 0 between them.
+ */
+const tapOffset = (x: number, width: number, rtl: boolean) => {
+  const side = x < width * TURN_ZONE ? -1 : x > width * (1 - TURN_ZONE) ? 1 : 0;
+  return (rtl ? -side : side) as -1 | 0 | 1;
+};
+
+const Reader = () => {
+  const { settings, toggleBars, turnPage } = useReader();
+  const mode = useReader(mangaMode);
+  const isMobile = useIsMobile();
+  useWakeLock(settings.keepAwake);
+
+  const handlePageTap = (e: MouseEvent<HTMLElement>) => {
     if ((e.target as Element).closest(INTERACTIVE)) return;
-    toggleBars();
+
+    if (
+      settings.type === ReaderType.Manga &&
+      settings.tapToTurn &&
+      mode !== MangaReadingMode.Strip
+    ) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const offset = tapOffset(
+        e.clientX - rect.left,
+        rect.width,
+        mode === MangaReadingMode.RightToLeft,
+      );
+      if (offset !== 0) {
+        turnPage(offset);
+        return;
+      }
+    }
+    if (isMobile) toggleBars();
   };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
+      // Escape in a menu or popup closes just that.
+      if (e.key !== 'Escape' || isOthersKey(e)) return;
       e.preventDefault();
       closeReader();
     };
@@ -72,6 +107,11 @@ const Reader = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  const background =
+    settings.type === ReaderType.Manga
+      ? MANGA_BACKGROUNDS.find(({ value }) => value === settings.background)
+      : undefined;
 
   return (
     <Card
@@ -87,7 +127,10 @@ const Reader = () => {
       <ReaderNavbar />
 
       <CardContent
-        className="relative flex min-h-0 min-w-0 flex-1 flex-col gap-2 p-0"
+        className={cn(
+          'bg-card relative flex min-h-0 min-w-0 flex-1 flex-col gap-2 p-0 transition-[background-color,color] duration-300',
+          background?.className,
+        )}
         onClick={handlePageTap}
       >
         <PageSwitcher />

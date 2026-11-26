@@ -22,7 +22,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import useReadChapterData from '../../hooks/use-read-chapter-data';
 import { useReader } from '../../hooks/use-reader';
 import { parseNovelPage } from '../../parse-novel-page';
-import { FADE_BLUR } from '../../reader.constants';
+import { FADE_BLUR, NOVEL_TEXT_WIDTHS } from '../../reader.constants';
 import { ReaderType } from '../../reader.enums';
 import ZoomableImage from '../ui/novel/zoomable-image';
 
@@ -69,7 +69,7 @@ const NovelRenderer = () => {
 
       <div
         className={cn(
-          'bg-background text-foreground flex w-full flex-1 justify-center overflow-y-auto px-5 md:px-3',
+          'bg-background text-foreground flex w-full flex-1 justify-center overflow-y-auto',
           novel?.fontFamily,
           novel?.theme,
         )}
@@ -77,35 +77,47 @@ const NovelRenderer = () => {
       >
         <ScrollArea
           ref={scrollRef}
-          className="w-full max-w-4xl [&_[data-slot=scroll-area-scrollbar]]:z-20"
+          className="w-full [&_[data-slot=scroll-area-scrollbar]]:z-20"
         >
-          <div className="mt-24 mb-10 flex flex-col md:mt-48">
-            {currentChapter?.title && (
-              <p className="text-muted-foreground text-sm font-bold tracking-widest uppercase">
-                {label}
-              </p>
-            )}
-            <h1 className="scroll-m-20 text-3xl font-extrabold tracking-tight text-balance md:text-4xl md:whitespace-nowrap">
-              {currentChapter?.title || label}
-            </h1>
-          </div>
+          <div
+            lang="uk"
+            className="mx-auto w-full px-5 md:px-8"
+            style={{
+              maxWidth: NOVEL_TEXT_WIDTHS.find(
+                ({ value }) => value === novel?.textWidth,
+              )?.maxWidth,
+            }}
+          >
+            <div className="mt-24 mb-10 flex flex-col md:mt-48">
+              {currentChapter?.title && (
+                <p className="text-muted-foreground text-sm font-bold tracking-widest uppercase">
+                  {label}
+                </p>
+              )}
+              <h1 className="scroll-m-20 text-3xl font-extrabold tracking-tight text-balance md:text-4xl">
+                {currentChapter?.title || label}
+              </h1>
+            </div>
 
-          <AnimatePresence mode="wait">
-            {chapterPage && !isLoading && (
-              <PageParser
-                contentHtml={contentHtml}
-                onAnimationStart={() => setAnimationComplete(false)}
-                onAnimationComplete={() => setAnimationComplete(true)}
-              />
-            )}
-            {isLoading && (
-              <motion.div className="flex flex-col gap-4" {...FADE_BLUR}>
-                {Array.from({ length: 15 }).map((_, index) => (
-                  <Skeleton key={index} className="h-4 w-full" />
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
+            <AnimatePresence mode="wait">
+              {chapterPage && !isLoading && (
+                <PageParser
+                  contentHtml={contentHtml}
+                  className={cn(novel?.justify && 'text-justify hyphens-auto')}
+                  style={{ lineHeight: novel?.lineHeight }}
+                  onAnimationStart={() => setAnimationComplete(false)}
+                  onAnimationComplete={() => setAnimationComplete(true)}
+                />
+              )}
+              {isLoading && (
+                <motion.div className="flex flex-col gap-4" {...FADE_BLUR}>
+                  {Array.from({ length: 15 }).map((_, index) => (
+                    <Skeleton key={index} className="h-4 w-full" />
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </ScrollArea>
       </div>
     </>
@@ -117,7 +129,7 @@ interface PageParserProps extends HTMLMotionProps<'div'> {
 }
 
 /** The chapter's text, with zoomable images and footnotes on hover. */
-const PageParser = ({ contentHtml, ...props }: PageParserProps) => {
+const PageParser = ({ contentHtml, className, ...props }: PageParserProps) => {
   const { container } = useReader();
 
   const parsed = useMemo(() => {
@@ -166,7 +178,11 @@ const PageParser = ({ contentHtml, ...props }: PageParserProps) => {
 
   return (
     <motion.div
-      className="mb-48 [&_img]:rounded-md [&_img]:border [&_p]:leading-7 [&_p:not(:first-child)]:mt-6 [&_span]:inline"
+      // Spacing in ems, so it grows with the text.
+      className={cn(
+        'mb-48 [&_img]:rounded-md [&_img]:border [&_p:not(:first-child)]:mt-[1.1em] [&_span]:inline',
+        className,
+      )}
       {...FADE_BLUR}
       {...props}
     >

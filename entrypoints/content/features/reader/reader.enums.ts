@@ -18,9 +18,32 @@ export enum ReaderOrderBy {
   Descending = 'desc',
 }
 
-export enum MangaOrientation {
+/** How manga pages follow each other. */
+export enum MangaReadingMode {
+  /** One page at a time, turned to the right. */
+  LeftToRight = 'ltr',
+  /** One page at a time, turned to the left, as Japanese manga is read. */
+  RightToLeft = 'rtl',
+  /** One page at a time, turned downwards. */
   Vertical = 'vertical',
-  Horizontal = 'horizontal',
+  /** Every page in one scrolled column, as manhwa is read. */
+  Strip = 'strip',
+}
+
+/** What shows round manga pages. */
+export enum MangaBackground {
+  /** The reader's own card colour. */
+  Theme = 'theme',
+  Black = 'black',
+  Gray = 'gray',
+  White = 'white',
+}
+
+/** How wide a novel's text column is at most. */
+export enum NovelTextWidth {
+  Narrow = 'narrow',
+  Medium = 'medium',
+  Wide = 'wide',
 }
 
 export enum NovelTheme {
