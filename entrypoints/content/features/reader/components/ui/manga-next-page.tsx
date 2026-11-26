@@ -1,3 +1,4 @@
+import { useShallow } from 'zustand/react/shallow';
 import MaterialSymbolsArrowForwardRounded from '~icons/material-symbols/arrow-forward-rounded';
 
 import { Button } from '@/components/ui/button';
@@ -15,7 +16,13 @@ const chapterName = (chapter: Chapter) =>
 /** What was read and what comes next, with a button to open it. */
 export const ChapterEnd = ({ className }: { className?: string }) => {
   const { data } = useReadData();
-  const { currentChapter, settings, nextChapter } = useReader();
+  const { currentChapter, settings, nextChapter } = useReader(
+    useShallow((state) => ({
+      currentChapter: state.currentChapter,
+      settings: state.settings,
+      nextChapter: state.nextChapter,
+    })),
+  );
 
   if (!data || !currentChapter) return;
 
@@ -56,7 +63,12 @@ export const ChapterEnd = ({ className }: { className?: string }) => {
  */
 const MangaNextPage = () => {
   const { data } = useReadData();
-  const { currentChapter, settings } = useReader();
+  const { currentChapter, settings } = useReader(
+    useShallow((state) => ({
+      currentChapter: state.currentChapter,
+      settings: state.settings,
+    })),
+  );
 
   if (!data || !currentChapter) return;
 

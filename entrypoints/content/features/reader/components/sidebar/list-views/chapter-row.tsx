@@ -1,5 +1,7 @@
 import type { FC } from 'react';
 
+import { useShallow } from 'zustand/react/shallow';
+
 import { SidebarMenuButton } from '@/components/ui/sidebar';
 
 import type { Chapter } from '../../../reader.types';
@@ -15,7 +17,12 @@ interface Props {
 
 /** A chapter of the reader's list: its number, upload date and translators. */
 const ChapterRow: FC<Props> = ({ chapter, read, showVolume }) => {
-  const { currentChapter, setChapter } = useReader();
+  const { currentChapter, setChapter } = useReader(
+    useShallow((state) => ({
+      currentChapter: state.currentChapter,
+      setChapter: state.setChapter,
+    })),
+  );
 
   return (
     <SidebarMenuButton

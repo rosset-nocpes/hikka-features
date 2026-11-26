@@ -1,3 +1,4 @@
+import { useShallow } from 'zustand/react/shallow';
 import MaterialSymbolsArrowDownwardRounded from '~icons/material-symbols/arrow-downward-rounded';
 import MaterialSymbolsArrowUpwardRounded from '~icons/material-symbols/arrow-upward-rounded';
 
@@ -8,7 +9,14 @@ import { MangaReadingMode, ReaderType } from '../../reader.enums';
 
 /** Arrows to page through manga, or between a novel's chapters. */
 const PageSwitcher = () => {
-  const { settings, turnPage, nextChapter, prevChapter } = useReader();
+  const { settings, turnPage, nextChapter, prevChapter } = useReader(
+    useShallow((state) => ({
+      settings: state.settings,
+      turnPage: state.turnPage,
+      nextChapter: state.nextChapter,
+      prevChapter: state.prevChapter,
+    })),
+  );
   const mode = useReader(mangaMode);
 
   if (!settings.type) return;

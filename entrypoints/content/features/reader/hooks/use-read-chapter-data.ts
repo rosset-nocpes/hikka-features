@@ -1,11 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
+import { useShallow } from 'zustand/react/shallow';
 
 import { scraperFor } from '../services';
 import { useReader } from './use-reader';
 
 /** The open chapter: manga page images or a novel chapter's HTML. */
 const useReadChapterData = () => {
-  const { currentChapter, settings } = useReader();
+  const { currentChapter, settings } = useReader(
+    useShallow((state) => ({
+      currentChapter: state.currentChapter,
+      settings: state.settings,
+    })),
+  );
   const { slug } = usePageStore();
 
   return useQuery({

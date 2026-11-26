@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
 import MaterialSymbolsFullscreenExitRounded from '~icons/material-symbols/fullscreen-exit-rounded';
 import MaterialSymbolsFullscreenRounded from '~icons/material-symbols/fullscreen-rounded';
@@ -21,7 +22,15 @@ const ReaderNavbar = () => {
     toggleFullscreen,
     carouselApi,
     currentChapter,
-  } = useReader();
+  } = useReader(
+    useShallow((state) => ({
+      settings: state.settings,
+      syncFullscreen: state.syncFullscreen,
+      toggleFullscreen: state.toggleFullscreen,
+      carouselApi: state.carouselApi,
+      currentChapter: state.currentChapter,
+    })),
+  );
 
   useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>;

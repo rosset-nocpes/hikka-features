@@ -4,7 +4,7 @@ import { ReaderType } from '../../../reader.enums';
 
 /** The page in view out of the chapter's, at the bottom left on desktops. */
 const MangaPageIndicator = () => {
-  const { settings } = useReader();
+  const settings = useReader((state) => state.settings);
   const page = useMangaPage();
 
   if (settings.type !== ReaderType.Manga || page.pageCount === 0) return;

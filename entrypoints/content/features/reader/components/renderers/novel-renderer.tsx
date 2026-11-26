@@ -10,6 +10,7 @@ import {
   useScroll,
 } from 'motion/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
 import {
   HoverCard,
@@ -28,7 +29,12 @@ import ZoomableImage from '../ui/novel/zoomable-image';
 
 /** Only rendered for novels. */
 const NovelRenderer = () => {
-  const { currentChapter, settings } = useReader();
+  const { currentChapter, settings } = useReader(
+    useShallow((state) => ({
+      currentChapter: state.currentChapter,
+      settings: state.settings,
+    })),
+  );
   const novel = settings.type === ReaderType.Novel ? settings : undefined;
   const { data: chapterPage, isLoading } = useReadChapterData();
 
@@ -130,7 +136,7 @@ interface PageParserProps extends HTMLMotionProps<'div'> {
 
 /** The chapter's text, with zoomable images and footnotes on hover. */
 const PageParser = ({ contentHtml, className, ...props }: PageParserProps) => {
-  const { container } = useReader();
+  const container = useReader((state) => state.container);
 
   const parsed = useMemo(() => {
     const options: HTMLReactParserOptions = {
