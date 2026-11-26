@@ -221,20 +221,34 @@ const PagedView = ({
   }));
 
   const slidesRef = useRef(slides);
+  /** Slides are being regrouped: embla's moves aren't the reader's. */
+  const regroupingRef = useRef(false);
   useLayoutEffect(() => {
     const previous = slidesRef.current;
     slidesRef.current = slides;
     if (!carouselApi || previous === slides) return;
 
     // Regrouped round a spread: back to the page that was in view, once
-    // embla has taken in the new slides.
-    const page = previous[carouselApi.selectedScrollSnap()]?.[0] ?? 0;
-    const index = slides.findIndex((slide) => slide.includes(page));
-    if (index === -1) return;
-    const frame = requestAnimationFrame(() =>
-      carouselApi.scrollTo(index, true),
-    );
-    return () => cancelAnimationFrame(frame);
+    // embla has taken in the new slides. Past the pages, the chapter's end
+    // keeps its place after them.
+    const snap = carouselApi.selectedScrollSnap();
+    const page = previous[snap]?.[0];
+    const index =
+      page === undefined
+        ? slides.length + snap - previous.length
+        : slides.findIndex((slide) => slide.includes(page));
+    if (index < 0) return;
+    // Embla takes in the new slides at its old index, which can land on the
+    // slide that opens the next chapter.
+    regroupingRef.current = true;
+    const frame = requestAnimationFrame(() => {
+      carouselApi.scrollTo(index, true);
+      regroupingRef.current = false;
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      regroupingRef.current = false;
+    };
   }, [carouselApi, slides]);
 
   useEffect(() => {
@@ -281,7 +295,8 @@ const PagedView = ({
 
     // Scrolling past the "next chapter" page opens that chapter.
     const handleScroll = () => {
-      if (!carouselApi.canScrollNext() && !isLoading) nextChapter();
+      if (regroupingRef.current || isLoading) return;
+      if (!carouselApi.canScrollNext()) nextChapter();
     };
 
     carouselApi.on('scroll', handleScroll);
@@ -300,6 +315,8 @@ const PagedView = ({
       setApi={setCarouselApi}
       dir={isRtl ? 'rtl' : 'ltr'}
       className="flex h-full"
+      // The reader's own keys turn pages, the right way when right to left.
+      onKeyDownCapture={undefined}
       {...FADE_BLUR}
     >
       <CarouselContent className="m-0! h-full">
@@ -329,6 +346,17 @@ const PagedView = ({
   );
 };
 
+/** Keys that scroll the strip. */
+const SCROLL_KEYS = new Set([
+  'ArrowUp',
+  'ArrowDown',
+  'PageUp',
+  'PageDown',
+  'Home',
+  'End',
+  ' ',
+]);
+
 /** Every page in one scrolled column, with the chapter's end after them. */
 const StripView = ({ pages }: ViewProps) => {
   const {
@@ -340,14 +368,58 @@ const StripView = ({ pages }: ViewProps) => {
   const isMobile = useIsMobile();
   const scrollRef = useRef<HTMLDivElement>(null);
   const prevWidthRef = useRef(settings.stripWidth);
+  /** The chapter the strip shows, unset till it first lays out. */
+  const shownChapterRef = useRef<string>(undefined);
 
   // The carousel is gone; nothing should turn its pages.
   useEffect(() => setCarouselApi(undefined), [setCarouselApi]);
 
-  // A new chapter starts at its top.
+  // Opens on the page the pages were turned to, and a new chapter at its top.
   useLayoutEffect(() => {
-    scrollRef.current?.scrollTo({ top: 0 });
-    useReader.getState().setStripPage(0);
+    const strip = scrollRef.current;
+    const chapter = currentChapter?.id ?? '';
+    const opening = shownChapterRef.current === undefined;
+    shownChapterRef.current = chapter;
+
+    const page = opening ? pageToReopen(chapter) : 0;
+    useReader.getState().setStripPage(page);
+    if (!strip) return;
+    if (page === 0) {
+      strip.scrollTo({ top: 0 });
+      return;
+    }
+
+    const img = strip.querySelectorAll('img')[page];
+    if (!img) return;
+    img.loading = 'eager';
+
+    // Where the page number reads it: a short page centred, a tall one from
+    // its top.
+    const show = () => {
+      if (img.offsetHeight === 0) return;
+      strip.scrollTop =
+        img.offsetTop -
+        Math.max(0, (strip.clientHeight - img.offsetHeight) / 2);
+    };
+    // Pages above it grow as they load, so it's shown again after each,
+    // until the reader scrolls themselves.
+    const stop = () => {
+      strip.removeEventListener('load', show, true);
+      strip.removeEventListener('wheel', stop);
+      strip.removeEventListener('touchstart', stop);
+      strip.removeEventListener('pointerdown', stop);
+      window.removeEventListener('keydown', stopOnScrollKey);
+    };
+    const stopOnScrollKey = (e: KeyboardEvent) => {
+      if (SCROLL_KEYS.has(e.key)) stop();
+    };
+    show();
+    strip.addEventListener('load', show, true);
+    strip.addEventListener('wheel', stop, { passive: true });
+    strip.addEventListener('touchstart', stop, { passive: true });
+    strip.addEventListener('pointerdown', stop);
+    window.addEventListener('keydown', stopOnScrollKey);
+    return stop;
   }, [currentChapter?.id]);
 
   // Follows the page at the middle of the view, for the page number.
@@ -363,7 +435,8 @@ const StripView = ({ pages }: ViewProps) => {
         const middle = strip.scrollTop + strip.clientHeight / 2;
         let page = 0;
         strip.querySelectorAll('img').forEach((img, index) => {
-          if (img.offsetTop <= middle) page = index;
+          // Unloaded pages have no height and bunch up below loaded ones.
+          if (img.offsetHeight > 0 && img.offsetTop <= middle) page = index;
         });
         const { stripPage, setStripPage, currentChapter } =
           useReader.getState();

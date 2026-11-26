@@ -1,5 +1,6 @@
 import type { ReactElement, ReactNode } from 'react';
 
+import { ScrollArea as ScrollAreaPrimitive } from '@base-ui/react/scroll-area';
 import MaterialSymbolsRestartAltRounded from '~icons/material-symbols/restart-alt-rounded';
 import MaterialSymbolsTuneRounded from '~icons/material-symbols/tune-rounded';
 
@@ -313,7 +314,7 @@ const KeepAwakeRow = () => {
 
 /** The open type's settings, with a reset and the source's credit. */
 export const ReaderSettingsPanel = () => {
-  const { settings, resetSettings } = useReader();
+  const { settings, resetSettings, modePicked } = useReader();
   const poweredBy = settings.type
     ? READER_POWERED_BY[settings.type]
     : undefined;
@@ -332,7 +333,8 @@ export const ReaderSettingsPanel = () => {
           variant="ghost"
           size="sm"
           className="text-muted-foreground -ml-1 gap-1.5"
-          disabled={isDefault(settings)}
+          // A mode picked this time also stops long pages showing as a strip.
+          disabled={isDefault(settings) && !modePicked}
           onClick={resetSettings}
         >
           <MaterialSymbolsRestartAltRounded />
@@ -365,6 +367,7 @@ export const ReaderSettingsPopover = ({ trigger, side }: PopoverProps) => {
     <Popover>
       <PopoverTrigger render={trigger} />
       <PopoverContent
+        aria-label="Налаштування читалки"
         className="w-80 gap-0 overflow-hidden rounded-xl p-0"
         side={side}
         align="end"
@@ -376,9 +379,10 @@ export const ReaderSettingsPopover = ({ trigger, side }: PopoverProps) => {
           className="max-h-[min(var(--available-height),42rem)]"
           scrollFade
         >
-          <div className="p-3">
+          {/* Measured as rows come and go with the mode, not only on scroll. */}
+          <ScrollAreaPrimitive.Content className="p-3" style={{ minWidth: 0 }}>
             <ReaderSettingsPanel />
-          </div>
+          </ScrollAreaPrimitive.Content>
         </ScrollArea>
       </PopoverContent>
     </Popover>

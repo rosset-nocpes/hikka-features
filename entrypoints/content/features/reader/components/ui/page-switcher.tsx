@@ -39,6 +39,7 @@ const PageSwitcher = () => {
 
   return (
     <div
+      inert={isStrip}
       className={cn(
         'bg-sidebar text-sidebar-foreground absolute z-20 hidden w-8 cursor-default flex-col items-center justify-center gap-2 rounded-md py-1 font-medium transition-[bottom,left,opacity,rotate] duration-300 md:flex',
         positionClasses,
