@@ -11,6 +11,8 @@ import { queryClient } from '../../../core/query-client';
 import { adjacentChapter, allChapters } from '../chapters';
 import { MangaReadingMode, ReaderType } from '../reader.enums';
 import {
+  followPreferences,
+  hasUnsavedPreferences,
   loadPreferences,
   SHARED_DEFAULTS,
   savePreferences,
@@ -87,6 +89,36 @@ export const isSideways = (mode: MangaReadingMode | undefined) =>
 export const useReader = create<ReaderState & ReaderActions>((set, get) => {
   /** Counts the reader's openings, so a late load can't fill a closed one. */
   let opening = 0;
+  /** Stops following settings saved elsewhere, while the reader is open. */
+  let unfollow: (() => void) | undefined;
+
+  /**
+   * Takes in settings saved elsewhere, as by the extension's popup, so the
+   * reader shows them and its next save keeps them. Its own saves come back
+   * here too, changing nothing.
+   */
+  const takeSaved = async (current: number) => {
+    if (hasUnsavedPreferences()) return;
+    const { type } = get().settings;
+    if (!type) return;
+
+    const saved = await loadPreferences(type);
+    if (current !== opening) return;
+    const { settings } = get();
+    const changed = Object.entries(saved).filter(
+      ([key, value]) =>
+        JSON.stringify(settings[key as keyof ReaderSettings]) !==
+        JSON.stringify(value),
+    );
+    if (changed.length > 0) {
+      set({
+        settings: {
+          ...settings,
+          ...Object.fromEntries(changed),
+        } as ReaderSettings,
+      });
+    }
+  };
 
   /** Opens `chapter` on its first page. */
   const showChapter = (chapter: Chapter) => {
@@ -143,6 +175,8 @@ export const useReader = create<ReaderState & ReaderActions>((set, get) => {
         currentChapter: chapters[hikkaTracker.progress] ?? chapters[0],
         container,
       }));
+      unfollow?.();
+      unfollow = followPreferences(() => void takeSaved(current));
     },
     setChapter: showChapter,
     nextChapter: () => step(1),
@@ -192,6 +226,8 @@ export const useReader = create<ReaderState & ReaderActions>((set, get) => {
     toggleBars: () => set({ barsHidden: !get().barsHidden }),
     reset: () => {
       opening++;
+      unfollow?.();
+      unfollow = undefined;
       set({
         container: undefined,
         currentChapter: undefined,
