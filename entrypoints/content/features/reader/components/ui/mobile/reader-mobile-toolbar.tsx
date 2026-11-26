@@ -1,4 +1,5 @@
 import { type ReactElement, type ReactNode, useRef, useState } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import MaterialSymbolsChevronLeftRounded from '~icons/material-symbols/chevron-left-rounded';
 import MaterialSymbolsChevronRightRounded from '~icons/material-symbols/chevron-right-rounded';
 import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
@@ -70,7 +71,7 @@ const ReaderDrawer = ({
   onOpenChange,
   children,
 }: ReaderDrawerProps) => {
-  const { container } = useReader();
+  const container = useReader((state) => state.container);
   const listRef = useRef<HTMLDivElement>(null);
 
   return (
@@ -106,7 +107,12 @@ const ReaderDrawer = ({
 
 /** What the top bar names under the chapter: its page, title or volume. */
 const useSubtitle = () => {
-  const { settings, currentChapter } = useReader();
+  const { settings, currentChapter } = useReader(
+    useShallow((state) => ({
+      settings: state.settings,
+      currentChapter: state.currentChapter,
+    })),
+  );
   const page = useMangaPage();
 
   if (settings.type === ReaderType.Manga && page.pageCount > 0) {
@@ -121,7 +127,15 @@ const useSubtitle = () => {
  */
 const ReaderMobileToolbar = () => {
   const { settings, currentChapter, barsHidden, nextChapter, prevChapter } =
-    useReader();
+    useReader(
+      useShallow((state) => ({
+        settings: state.settings,
+        currentChapter: state.currentChapter,
+        barsHidden: state.barsHidden,
+        nextChapter: state.nextChapter,
+        prevChapter: state.prevChapter,
+      })),
+    );
   // The chapter the list was opened on: picking another one closes it.
   const [listOpenedOn, setListOpenedOn] = useState<string>();
   const { data } = useReadData();

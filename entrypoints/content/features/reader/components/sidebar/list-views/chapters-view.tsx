@@ -1,5 +1,6 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useLayoutEffect, useMemo } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
 import MissingDivider from '@/components/missing-divider';
 import {
@@ -22,7 +23,12 @@ type Row = { id: string; chapter: Chapter } | { id: string; missing: number };
 
 const ChaptersView = () => {
   const { data } = useReadData();
-  const { settings, currentChapter } = useReader();
+  const { settings, currentChapter } = useReader(
+    useShallow((state) => ({
+      settings: state.settings,
+      currentChapter: state.currentChapter,
+    })),
+  );
   const { sortBy, translator } = settings;
   const chapters =
     data?.displayMode === ReaderContentMode.Chapters

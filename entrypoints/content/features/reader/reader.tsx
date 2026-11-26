@@ -1,4 +1,5 @@
 import { type MouseEvent, useEffect, useRef } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
 import { useIsMobile } from '@/components/hooks/use-mobile';
 import { Card, CardContent } from '@/components/ui/card';
@@ -72,7 +73,13 @@ const tapOffset = (x: number, width: number, rtl: boolean) => {
 const OPEN_POPUP = '[role=menu][data-open], [role=dialog][data-open]';
 
 const Reader = () => {
-  const { settings, toggleBars, turnPage } = useReader();
+  const { settings, toggleBars, turnPage } = useReader(
+    useShallow((state) => ({
+      settings: state.settings,
+      toggleBars: state.toggleBars,
+      turnPage: state.turnPage,
+    })),
+  );
   const mode = useReader(mangaMode);
   const isMobile = useIsMobile();
   // Whether a popup was open as the tap began, so the tap just closes it.
@@ -81,9 +88,12 @@ const Reader = () => {
 
   const handlePageTap = (e: MouseEvent<HTMLElement>) => {
     if (closingPopupRef.current) return;
-    if ((e.target as Element).closest(INTERACTIVE)) return;
+    const target = e.target as Element;
+    if (target.closest(INTERACTIVE)) return;
 
+    // While a chapter loads, a tap only shows or hides the bars.
     if (
+      !target.closest('[data-reader-loading]') &&
       settings.type === ReaderType.Manga &&
       settings.tapToTurn &&
       mode !== MangaReadingMode.Strip

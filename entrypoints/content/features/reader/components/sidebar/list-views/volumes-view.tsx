@@ -1,4 +1,5 @@
 import { Fragment, useMemo, useState } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import MaterialSymbolsChevronRightRounded from '~icons/material-symbols/chevron-right-rounded';
 
 import MissingDivider from '@/components/missing-divider';
@@ -24,7 +25,12 @@ import { ReaderContentMode, ReaderOrderBy } from '../../../reader.enums';
 import ChapterRow from './chapter-row';
 
 const VolumesView = () => {
-  const { currentChapter, settings } = useReader();
+  const { currentChapter, settings } = useReader(
+    useShallow((state) => ({
+      currentChapter: state.currentChapter,
+      settings: state.settings,
+    })),
+  );
   const { sortBy, translator } = settings;
   const { data } = useReadData();
   const volumes =

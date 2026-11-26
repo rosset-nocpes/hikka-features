@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
 import { useIsMobile } from '@/components/hooks/use-mobile';
 import {
@@ -156,6 +157,7 @@ const MangaRenderer = () => {
         {isLoading && (
           <motion.div
             key="loading"
+            data-reader-loading
             className="absolute z-10 flex size-full items-center justify-center bg-inherit"
             {...FADE_BLUR}
           >
@@ -204,7 +206,15 @@ const PagedView = ({
   mode,
 }: ViewProps & { mode: MangaReadingMode }) => {
   const { carouselApi, setCarouselApi, currentChapter, nextChapter, turnPage } =
-    useReader();
+    useReader(
+      useShallow((state) => ({
+        carouselApi: state.carouselApi,
+        setCarouselApi: state.setCarouselApi,
+        currentChapter: state.currentChapter,
+        nextChapter: state.nextChapter,
+        turnPage: state.turnPage,
+      })),
+    );
   const { slides, double } = useMangaSlides();
   const isRtl = mode === MangaReadingMode.RightToLeft;
 
@@ -219,6 +229,9 @@ const PagedView = ({
       ),
     ),
   }));
+
+  // Gone, its carousel can't turn pages: taps and keys then do nothing.
+  useEffect(() => () => setCarouselApi(undefined), [setCarouselApi]);
 
   const slidesRef = useRef(slides);
   /** Slides are being regrouped: embla's moves aren't the reader's. */
@@ -363,7 +376,13 @@ const StripView = ({ pages }: ViewProps) => {
     settings: readerSettings,
     currentChapter,
     setCarouselApi,
-  } = useReader();
+  } = useReader(
+    useShallow((state) => ({
+      settings: state.settings,
+      currentChapter: state.currentChapter,
+      setCarouselApi: state.setCarouselApi,
+    })),
+  );
   const settings = readerSettings as MangaSettings;
   const isMobile = useIsMobile();
   const scrollRef = useRef<HTMLDivElement>(null);

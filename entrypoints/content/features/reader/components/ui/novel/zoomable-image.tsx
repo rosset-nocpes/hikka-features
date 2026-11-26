@@ -86,7 +86,7 @@ interface ZoomableImageProps {
 }
 
 const ZoomableImage = ({ src, alt }: ZoomableImageProps) => {
-  const { container } = useReader();
+  const container = useReader((state) => state.container);
   const thumbRef = useRef<HTMLImageElement>(null);
 
   const [viewer, setViewer] = useState<{
@@ -153,7 +153,7 @@ const ImageViewer = ({
   thumbRef,
   onClose,
 }: ImageViewerProps) => {
-  const { settings } = useReader();
+  const settings = useReader((state) => state.settings);
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const [closing, setClosing] = useState(false);

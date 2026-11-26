@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import MaterialSymbolsArrowDownwardRounded from '~icons/material-symbols/arrow-downward-rounded';
 import MaterialSymbolsMoreHoriz from '~icons/material-symbols/more-horiz';
 
@@ -25,7 +26,13 @@ import { ReaderOrderBy, ReaderSortBy } from '../../reader.enums';
 
 const SortOptions = () => {
   const { data } = useReadData();
-  const { container, settings, setSettings } = useReader();
+  const { container, settings, setSettings } = useReader(
+    useShallow((state) => ({
+      container: state.container,
+      settings: state.settings,
+      setSettings: state.setSettings,
+    })),
+  );
 
   const translators = useMemo(() => translatorsOf(data), [data]);
 

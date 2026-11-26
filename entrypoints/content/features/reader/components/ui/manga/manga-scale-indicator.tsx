@@ -21,7 +21,7 @@ export const zoomStrip = (steps: number) => {
 
 /** The strip's width, with buttons to change it, on desktops. */
 const MangaScaleIndicator = () => {
-  const { settings } = useReader();
+  const settings = useReader((state) => state.settings);
   const isStrip = useReader(mangaMode) === MangaReadingMode.Strip;
 
   if (settings.type !== ReaderType.Manga) return;

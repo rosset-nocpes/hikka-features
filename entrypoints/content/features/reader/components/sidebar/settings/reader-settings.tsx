@@ -1,6 +1,7 @@
 import type { ReactElement, ReactNode } from 'react';
 
 import { ScrollArea as ScrollAreaPrimitive } from '@base-ui/react/scroll-area';
+import { useShallow } from 'zustand/react/shallow';
 import MaterialSymbolsRestartAltRounded from '~icons/material-symbols/restart-alt-rounded';
 import MaterialSymbolsTuneRounded from '~icons/material-symbols/tune-rounded';
 
@@ -77,7 +78,14 @@ const isDefault = (settings: Settings) => {
 };
 
 const MangaPanel = ({ settings }: { settings: MangaSettings }) => {
-  const { setSettings, pickReadingMode, longPages, modePicked } = useReader();
+  const { setSettings, pickReadingMode, longPages, modePicked } = useReader(
+    useShallow((state) => ({
+      setSettings: state.setSettings,
+      pickReadingMode: state.pickReadingMode,
+      longPages: state.longPages,
+      modePicked: state.modePicked,
+    })),
+  );
   const mode = useReader(mangaMode)!;
   const isMobile = useIsMobile();
   const isStrip = mode === MangaReadingMode.Strip;
@@ -211,7 +219,7 @@ const MangaPanel = ({ settings }: { settings: MangaSettings }) => {
 };
 
 const NovelPanel = ({ settings }: { settings: NovelSettings }) => {
-  const { setSettings } = useReader();
+  const setSettings = useReader((state) => state.setSettings);
   const isMobile = useIsMobile();
 
   return (
@@ -300,7 +308,12 @@ const NovelPanel = ({ settings }: { settings: NovelSettings }) => {
 };
 
 const KeepAwakeRow = () => {
-  const { settings, setSettings } = useReader();
+  const { settings, setSettings } = useReader(
+    useShallow((state) => ({
+      settings: state.settings,
+      setSettings: state.setSettings,
+    })),
+  );
 
   return (
     <SwitchRow
@@ -314,7 +327,13 @@ const KeepAwakeRow = () => {
 
 /** The open type's settings, with a reset and the source's credit. */
 export const ReaderSettingsPanel = () => {
-  const { settings, resetSettings, modePicked } = useReader();
+  const { settings, resetSettings, modePicked } = useReader(
+    useShallow((state) => ({
+      settings: state.settings,
+      resetSettings: state.resetSettings,
+      modePicked: state.modePicked,
+    })),
+  );
   const poweredBy = settings.type
     ? READER_POWERED_BY[settings.type]
     : undefined;
@@ -361,7 +380,7 @@ interface PopoverProps {
 
 /** The settings in a popover beside `trigger`, on desktops. */
 export const ReaderSettingsPopover = ({ trigger, side }: PopoverProps) => {
-  const { container } = useReader();
+  const container = useReader((state) => state.container);
 
   return (
     <Popover>
@@ -391,7 +410,7 @@ export const ReaderSettingsPopover = ({ trigger, side }: PopoverProps) => {
 
 /** The settings button at the foot of the sidebar. */
 const ReaderSettings = () => {
-  const { settings } = useReader();
+  const settings = useReader((state) => state.settings);
   const mode = useReader(mangaMode);
   const detail: ReactNode = summary(settings, mode);
 
