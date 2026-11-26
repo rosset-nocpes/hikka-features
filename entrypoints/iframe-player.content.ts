@@ -16,9 +16,7 @@ export default defineContentScript({
   async main(ctx) {
     if (window.parent === window) return;
 
-    const fromHikka = isHikkaUrl(document.referrer);
-
-    if (!fromHikka && !(await isHikkaContentLoaded())) return;
+    if (!embeddedByHikka() && !(await isHikkaContentLoaded())) return;
     if (!(await isPlayerIFrame(ctx))) return;
 
     const player = await findPlayer(ctx);
@@ -106,6 +104,10 @@ const isPlayerIFrame = (ctx: {
       channel.port2,
     ]);
   });
+
+const embeddedByHikka = () =>
+  isHikkaUrl(location.ancestorOrigins?.[0] ?? '') ||
+  isHikkaUrl(document.referrer);
 
 const isHikkaContentLoaded = async () =>
   (await sendToBackground('hikka-content-status').catch(() => false)) === true;

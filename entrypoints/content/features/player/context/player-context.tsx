@@ -235,7 +235,6 @@ export const usePlayer = create<PlayerState & PlayerActions>((set, get) => {
           set({
             ...loaded,
             ...show(kept),
-            // The same video keeps its player, which a new entry reloads.
             ...(kept.entry.video_url === currentEpisode.video_url && {
               currentEpisode,
             }),

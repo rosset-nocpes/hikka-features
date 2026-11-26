@@ -89,15 +89,16 @@ const PlayerIFrameEffects = () => {
     if (isShared) setOpen(false);
   }, [isShared, setOpen]);
 
+  const episodeKey = currentEpisode && getEpisodeKey(currentEpisode);
   useEffect(() => {
-    if (!currentEpisode) return;
+    if (!episodeKey) return;
 
-    skipWatchedCheckEpisodeKeyRef.current = getEpisodeKey(currentEpisode);
+    skipWatchedCheckEpisodeKeyRef.current = episodeKey;
     watchedRef.current = false;
     preloadedRef.current = false;
     upNext.cancel();
     resetIFramePlayer();
-  }, [currentEpisode, resetIFramePlayer]);
+  }, [episodeKey, resetIFramePlayer]);
 
   useEffect(() => {
     if (!isReady || !isShared) return;
