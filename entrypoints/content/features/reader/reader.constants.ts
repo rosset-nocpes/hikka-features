@@ -98,6 +98,11 @@ export const FADE_BLUR = {
   transition: { duration: 0.2 },
 };
 
+// Saving settings
+
+/** How long settings wait after a change to be saved, so a drag saves once. */
+export const PREFERENCES_SAVE_DELAY_MS = 300;
+
 // Loading pages
 
 /** Retries a page image gets, the first wait between them doubling each time. */

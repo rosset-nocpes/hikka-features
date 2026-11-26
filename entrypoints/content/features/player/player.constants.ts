@@ -70,6 +70,12 @@ export const QUEUE_NOTICE_MS = 8_000;
 /** Episodes a room's queue holds, as on the backend. */
 export const MAX_ROOM_QUEUE = 100;
 
+/** How long a member's coming or going is shown. */
+export const ROOM_MEMBER_NOTICE_MS = 4_000;
+
+/** How long a vote's outcome is shown. */
+export const ROOM_VOTE_OUTCOME_MS = 4_000;
+
 /** How often a member tells the room it is still there, and checks it is in step. */
 export const ROOM_HEARTBEAT_MS = 30_000;
 export const ROOM_RECONCILE_MS = 1_000;

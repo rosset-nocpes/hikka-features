@@ -11,6 +11,7 @@ import type {
 import {
   NOVEL_FONT_SIZE,
   NOVEL_LINE_HEIGHT,
+  PREFERENCES_SAVE_DELAY_MS,
   STRIP_WIDTH,
 } from './reader.constants';
 import {
@@ -120,8 +121,13 @@ export interface Preferences {
   keepAwake: boolean;
 }
 
-const read = async () =>
-  (await stored.get().catch(() => undefined)) ?? ({} as StoredPreferences);
+/** The saved settings; none for anything else stored under their key. */
+const read = async (): Promise<StoredPreferences> => {
+  const saved: unknown = await stored.get().catch(() => undefined);
+  return saved && typeof saved === 'object' && !Array.isArray(saved)
+    ? saved
+    : {};
+};
 
 /** Every saved setting, after any change still waiting to be saved. */
 export const readPreferences = async (): Promise<Preferences> => {
@@ -185,7 +191,7 @@ export const hasUnsavedPreferences = () => pending !== undefined;
 export const savePreferences = (settings: ReaderSettings) => {
   pending = settings;
   clearTimeout(timer);
-  timer = setTimeout(() => void flush(), 300);
+  timer = setTimeout(() => void flush(), PREFERENCES_SAVE_DELAY_MS);
 };
 
 /**

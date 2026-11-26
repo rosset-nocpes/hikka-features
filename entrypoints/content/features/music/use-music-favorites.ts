@@ -2,6 +2,7 @@ import type { FunctionReturnType } from 'convex/server';
 
 import { create } from 'zustand';
 
+import { HIKKA_CDN_URL } from '@/constants/hikka';
 import { useLiveQuery } from '@/hooks/use-live-query';
 import { useSettings } from '@/hooks/use-settings';
 import { account } from '@/utils/account';
@@ -9,8 +10,6 @@ import { convexApi } from '@/utils/convex-api';
 import { liveConvex } from '@/utils/live-convex';
 
 import type { MusicTrack } from './animethemes';
-
-const HIKKA_CDN_URL = 'https://cdn.hikka.io/';
 
 /** A favourite song, as the backend lists a user's. */
 export type FavoriteSong = FunctionReturnType<

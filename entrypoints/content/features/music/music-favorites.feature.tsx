@@ -22,6 +22,7 @@ import { OST_LABEL } from './animethemes';
 import Equalizer from './equalizer';
 import LikeButton from './like-button';
 import { playMusic } from './music-player';
+import { TRACK_FORMS } from './music.constants';
 import { currentTrack, useMusic } from './use-music';
 import {
   type FavoriteSong,
@@ -37,8 +38,6 @@ const TAG = 'music-favorites';
 
 /** Cards the profile shows; past that the last one opens the full list. */
 const PREVIEW = 6;
-
-const TRACKS = { one: 'трек', few: 'треки', many: 'треків' };
 
 /*
  * hikka.io's chip tabs, as its own classes, so the chip looks like its
@@ -438,7 +437,7 @@ const MoreCard: FC<{
               <MaterialSymbolsArrowRightAltRounded className="size-5" />
             </div>
             <span className="truncate text-xs leading-4 text-white/70">
-              {plural(count, TRACKS)}
+              {plural(count, TRACK_FORMS)}
             </span>
           </div>
         </div>

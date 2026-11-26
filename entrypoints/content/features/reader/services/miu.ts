@@ -94,9 +94,11 @@ class MIUScraper extends BaseScraper {
 
     // One translation per chapter, as the site shows it: the main one, or
     // whichever there is.
-    const main = new Set(list?.filter((c) => !c.alt).map((c) => c.num));
+    // Numbering may start over in each volume.
+    const key = (c: MiuChapter) => `${c.tom}:${c.num}`;
+    const main = new Set(list?.filter((c) => !c.alt).map(key));
     const chapters: Chapter[] = (list ?? [])
-      .filter((c) => !c.alt || !main.has(c.num))
+      .filter((c) => !c.alt || !main.has(key(c)))
       .map((c) => ({
         id: String(c.id),
         translator: c.team || '',

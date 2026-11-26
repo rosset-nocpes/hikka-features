@@ -13,6 +13,9 @@ export const HIKKA_MATCHES = HIKKA_ORIGINS.map((origin) => `${origin}/*`);
 
 export const HIKKA_API_URL = 'https://api.hikka.io';
 
+/** Where the site's images are; the backend keeps posters only from here. */
+export const HIKKA_CDN_URL = 'https://cdn.hikka.io/';
+
 /** Whether `url` (an absolute URL or an origin) is on one of the site's hosts. */
 export const isHikkaUrl = (url: string) => {
   try {

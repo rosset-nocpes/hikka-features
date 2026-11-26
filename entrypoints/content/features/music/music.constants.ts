@@ -1,4 +1,7 @@
-/** Timings of the music player (see `use-music.ts`). */
+/** Timings of the music player (see `use-music.ts`) and its track lists' words. */
+
+/** "трек" as `plural` counts it, for the track lists. */
+export const TRACK_FORMS = { one: 'трек', few: 'треки', many: 'треків' };
 
 /** Past this, "previous" restarts the track instead. */
 export const RESTART_AFTER_S = 3;

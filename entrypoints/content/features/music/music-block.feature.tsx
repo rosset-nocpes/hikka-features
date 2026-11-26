@@ -21,6 +21,7 @@ import { type MusicTrack, OST_LABEL, useAnimeMusic } from './animethemes';
 import Equalizer from './equalizer';
 import LikeButton from './like-button';
 import { playMusic } from './music-player';
+import { TRACK_FORMS } from './music.constants';
 import SongLink from './song-link';
 import { currentTrack, useMusic } from './use-music';
 import {
@@ -34,8 +35,6 @@ const REPLACED = 'data-hikka-features-music-replaced';
 
 /** Tracks the anime's page shows; its media page shows them all. */
 const SHOWN = 6;
-
-const TRACKS = { one: 'трек', few: 'треки', many: 'треків' };
 
 /**
  * The "Музика" tab's cards, on an anime's page and its media page. Unlike
@@ -165,7 +164,7 @@ const MusicBlock = () => {
           onClick={onHikkaLinkClick}
           className="text-muted-foreground hover:text-foreground w-fit text-sm font-medium underline-offset-4 hover:underline"
         >
-          Ще {hidden} {plural(hidden, TRACKS)}
+          Ще {hidden} {plural(hidden, TRACK_FORMS)}
         </a>
       )}
     </motion.div>
@@ -226,7 +225,7 @@ const Toolbar: FC<{ tracks?: MusicTrack[]; total: number }> = ({
         ) : playable < total ? (
           `${playable} з ${total} можна послухати`
         ) : (
-          `${total} ${plural(total, TRACKS)}`
+          `${total} ${plural(total, TRACK_FORMS)}`
         )}
       </span>
     </div>

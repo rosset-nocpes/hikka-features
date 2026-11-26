@@ -5,10 +5,8 @@ import type { WatchRoom, WatchRoomProfile } from '@/utils/convex-api';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { notify } from '@/utils/notify';
 
+import { ROOM_MEMBER_NOTICE_MS } from '../player.constants';
 import { memberName } from './menu';
-
-/** How long a member's coming or going is shown. */
-const MEMBER_NOTICE_MS = 4_000;
 
 export const MemberMedia = ({ member }: { member: WatchRoomProfile }) => (
   <Avatar className="size-9">
@@ -37,7 +35,7 @@ export function notifyMemberChanges(previous: WatchRoom, room: WatchRoom) {
       title: memberName(member),
       description: joined ? 'Тепер дивиться з вами' : 'Більше не в кімнаті',
       media: <MemberMedia member={member} />,
-      duration: MEMBER_NOTICE_MS,
+      duration: ROOM_MEMBER_NOTICE_MS,
     });
 
   for (const [id, member] of now) {

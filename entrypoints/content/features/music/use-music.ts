@@ -20,6 +20,9 @@ import {
 /** After the last track: stop, start over, or the same track again and again. */
 export type RepeatMode = 'off' | 'all' | 'one';
 
+/** The repeat modes in the order the button goes through them. */
+const REPEAT_MODES: readonly RepeatMode[] = ['off', 'all', 'one'];
+
 interface MusicState {
   /** What plays, in order; empty while the player is closed. */
   queue: MusicTrack[];
@@ -498,8 +501,8 @@ export const useMusic = create<MusicState & MusicActions>((set, get) => ({
     if (element) element.muted = muted;
   },
   cycleRepeat: () => {
-    const order: RepeatMode[] = ['off', 'all', 'one'];
-    set({ repeat: order[(order.indexOf(get().repeat) + 1) % order.length] });
+    const next = (REPEAT_MODES.indexOf(get().repeat) + 1) % REPEAT_MODES.length;
+    set({ repeat: REPEAT_MODES[next]! });
     applyLoop(element);
     saveModes();
   },
@@ -537,7 +540,11 @@ void storedVolume.get().then((volume) => {
 
 void storedModes.get().then((modes) => {
   if (!modes) return;
-  useMusic.setState({ repeat: modes.repeat, shuffle: modes.shuffle });
+  // Anything another version stored otherwise stays as it is.
+  useMusic.setState({
+    ...(REPEAT_MODES.includes(modes.repeat) && { repeat: modes.repeat }),
+    ...(typeof modes.shuffle === 'boolean' && { shuffle: modes.shuffle }),
+  });
   applyLoop(element);
 });
 

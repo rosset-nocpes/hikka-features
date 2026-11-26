@@ -12,13 +12,11 @@ import { useHikkaContent } from '@/hooks/use-hikka';
 import { notify, type NotificationAction } from '@/utils/notify';
 
 import { usePlayer } from '../context/player-context';
+import { ROOM_VOTE_OUTCOME_MS } from '../player.constants';
 import { memberName } from './menu';
 import { MemberMedia } from './room-notifications';
 
 const VOTE_ID = 'watch-together-vote';
-
-/** How long a vote's outcome is shown. */
-const OUTCOME_MS = 4_000;
 
 const SEGMENTS: Record<
   Extract<WatchRoomProposal, { type: 'skip' }>['segment'],
@@ -200,7 +198,7 @@ export function notifyVote(
     eyebrow,
     title: describe(vote.proposal, previous!, true),
     description: OUTCOMES[vote.result],
-    duration: OUTCOME_MS,
+    duration: ROOM_VOTE_OUTCOME_MS,
   });
 }
 
