@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
 import MaterialSymbolsFullscreenExitRounded from '~icons/material-symbols/fullscreen-exit-rounded';
 import MaterialSymbolsFullscreenRounded from '~icons/material-symbols/fullscreen-rounded';
+import MaterialSymbolsTuneRounded from '~icons/material-symbols/tune-rounded';
 
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
@@ -9,6 +10,7 @@ import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { useReader } from '../hooks/use-reader';
 import { closeReader } from '../reader';
 import { ReaderType } from '../reader.enums';
+import { ReaderSettingsPopover } from './sidebar/settings/reader-settings';
 
 /** The reader's buttons over the page on desktops. */
 const ReaderNavbar = () => {
@@ -53,6 +55,7 @@ const ReaderNavbar = () => {
           variant="ghost"
           size="icon-sm"
           className="bg-sidebar"
+          aria-label="Закрити читалку"
           onClick={closeReader}
         >
           <MaterialSymbolsCloseRounded />
@@ -70,10 +73,33 @@ const ReaderNavbar = () => {
           open && 'gap-0',
         )}
       >
+        {/* The sidebar's foot has the settings while it's open. */}
+        {!open && (
+          <ReaderSettingsPopover
+            side="bottom"
+            trigger={
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="bg-sidebar data-popup-open:bg-accent"
+                aria-label="Налаштування"
+                title="Налаштування"
+              >
+                <MaterialSymbolsTuneRounded />
+              </Button>
+            }
+          />
+        )}
         <Button
           variant="ghost"
           size="icon-sm"
           className="bg-sidebar"
+          aria-label={
+            settings.fullscreen ? 'Вийти з повного екрана' : 'Повний екран'
+          }
+          title={
+            settings.fullscreen ? 'Вийти з повного екрана' : 'Повний екран'
+          }
           onClick={toggleFullscreen}
         >
           {settings.fullscreen ? (

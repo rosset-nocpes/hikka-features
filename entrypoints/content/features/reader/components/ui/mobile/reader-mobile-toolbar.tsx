@@ -3,7 +3,7 @@ import MaterialSymbolsChevronLeftRounded from '~icons/material-symbols/chevron-l
 import MaterialSymbolsChevronRightRounded from '~icons/material-symbols/chevron-right-rounded';
 import MaterialSymbolsCloseRounded from '~icons/material-symbols/close-rounded';
 import MaterialSymbolsExpandLessRounded from '~icons/material-symbols/expand-less-rounded';
-import MaterialSymbolsSettingsOutlineRounded from '~icons/material-symbols/settings-outline-rounded';
+import MaterialSymbolsTuneRounded from '~icons/material-symbols/tune-rounded';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -17,14 +17,14 @@ import {
 import type { Chapter } from '../../../reader.types';
 
 import { adjacentChapter } from '../../../chapters';
+import { pageRange, useMangaPage } from '../../../hooks/use-manga-page';
 import useReadData from '../../../hooks/use-read-data';
 import { useReader } from '../../../hooks/use-reader';
 import { closeReader } from '../../../reader';
 import { ReaderType } from '../../../reader.enums';
 import ChapterList from '../../sidebar/chapter-list';
-import { SettingsItems } from '../../sidebar/settings/reader-settings';
+import { ReaderSettingsPanel } from '../../sidebar/settings/reader-settings';
 import SortOptions from '../../sidebar/sort-options';
-import { useMangaPage } from '../manga/manga-page-indicator';
 
 /** The frosted bars at the top and bottom. */
 const BAR =
@@ -48,6 +48,11 @@ const centerActiveRow = (list: HTMLElement) => {
 
 interface ReaderDrawerProps {
   title: string;
+  /**
+   * As tall as its contents, over an unblurred page, so changes show behind
+   * it; otherwise most of the screen tall.
+   */
+  fit?: boolean;
   trigger: ReactElement;
   header?: ReactNode;
   open?: boolean;
@@ -58,6 +63,7 @@ interface ReaderDrawerProps {
 /** A bottom drawer of the reader, like the player's on phones. */
 const ReaderDrawer = ({
   title,
+  fit = false,
   trigger,
   header,
   open,
@@ -76,7 +82,13 @@ const ReaderDrawer = ({
       }}
     >
       <DrawerTrigger render={trigger} />
-      <DrawerContent className="h-[80%]" container={container}>
+      <DrawerContent
+        className={fit ? undefined : 'h-[80%]'}
+        overlayClassName={
+          fit ? 'supports-backdrop-filter:backdrop-blur-none' : undefined
+        }
+        container={container}
+      >
         <DrawerHeader className="gap-3 text-left!">
           <DrawerTitle className="text-lg font-bold">{title}</DrawerTitle>
           {header}
@@ -95,10 +107,10 @@ const ReaderDrawer = ({
 /** What the top bar names under the chapter: its page, title or volume. */
 const useSubtitle = () => {
   const { settings, currentChapter } = useReader();
-  const { currentPage, pageCount } = useMangaPage();
+  const page = useMangaPage();
 
-  if (settings.type === ReaderType.Manga && pageCount > 0) {
-    return `Сторінка ${currentPage + 1} з ${pageCount}`;
+  if (settings.type === ReaderType.Manga && page.pageCount > 0) {
+    return `Сторінка ${pageRange(page)} з ${page.pageCount}`;
   }
   return currentChapter?.title || currentChapter?.translator;
 };
@@ -152,13 +164,14 @@ const ReaderMobileToolbar = () => {
           </div>
           <ReaderDrawer
             title="Налаштування"
+            fit
             trigger={
               <Button variant="ghost" size="icon-md" aria-label="Налаштування">
-                <MaterialSymbolsSettingsOutlineRounded className="size-5" />
+                <MaterialSymbolsTuneRounded className="size-5" />
               </Button>
             }
           >
-            <SettingsItems />
+            <ReaderSettingsPanel />
           </ReaderDrawer>
         </div>
       </div>

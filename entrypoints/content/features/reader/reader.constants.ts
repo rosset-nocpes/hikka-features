@@ -1,68 +1,89 @@
-import MaterialSymbolsViewAgendaOutline from '~icons/material-symbols/view-agenda-outline';
-import MaterialSymbolsViewColumn2Outline from '~icons/material-symbols/view-column-2-outline';
-
 import { BAKA_IN_UA_URL, MANGA_IN_UA_URL } from '@/constants/links';
 
-import type { SettingKey, UISettingMetadata } from './reader.types';
+import type { SettingOption } from './reader.types';
 
-import { MangaOrientation, NovelTheme } from './reader.enums';
+import {
+  MangaBackground,
+  MangaReadingMode,
+  NovelTextWidth,
+  NovelTheme,
+} from './reader.enums';
 
-export const SETTINGS_CONFIG: Partial<Record<SettingKey, UISettingMetadata>> = {
-  // Manga
-  orientation: {
-    label: 'Орієнтація',
-    description: 'Напрямок гортання сторінок',
-    type: 'tabs',
-    options: [
-      {
-        value: MangaOrientation.Horizontal,
-        label: 'Горизонтально',
-        icon: MaterialSymbolsViewColumn2Outline,
-      },
-      {
-        value: MangaOrientation.Vertical,
-        label: 'Вертикально',
-        icon: MaterialSymbolsViewAgendaOutline,
-      },
-    ],
+export const READING_MODES: SettingOption<MangaReadingMode>[] = [
+  {
+    value: MangaReadingMode.LeftToRight,
+    label: 'Зліва направо',
+    description: 'Сторінки гортаються праворуч, як у коміксах',
   },
-  scrollMode: {
-    label: 'Режим скролу',
-    description: 'Безперервна стрічка сторінок, як у манхві',
-    type: 'boolean',
+  {
+    value: MangaReadingMode.RightToLeft,
+    label: 'Справа наліво',
+    description: 'Сторінки гортаються ліворуч, як у японській манзі',
   },
-  // Novel
-  fontFamily: {
-    label: 'Шрифт',
-    description: 'Гарнітура тексту розділу',
-    type: 'select',
-    options: [
-      { value: 'font-sans', label: 'Geist' },
-      { value: 'font-nunitosans', label: 'Nunito Sans' },
-      { value: 'font-roboto', label: 'Roboto' },
-      { value: 'font-literata', label: 'Literata' },
-      { value: 'font-ebgaramond', label: 'EB Garamond' },
-    ],
+  {
+    value: MangaReadingMode.Vertical,
+    label: 'Вертикально',
+    description: 'Сторінки гортаються донизу, по одній',
   },
-  fontSize: {
-    label: 'Розмір шрифту',
-    type: 'slider',
-    min: 12,
-    max: 24,
+  {
+    value: MangaReadingMode.Strip,
+    label: 'Стрічка',
+    description: 'Усі сторінки однією безперервною стрічкою',
   },
-  theme: {
-    label: 'Тема',
-    description: 'Кольори сторінки читалки',
-    type: 'select',
-    options: [
-      { value: NovelTheme.Light, label: 'Світла' },
-      { value: NovelTheme.Sepia, label: 'Сепія' },
-      { value: NovelTheme.Slate, label: 'Сліт' },
-      { value: NovelTheme.Dark, label: 'Темна' },
-      { value: NovelTheme.Black, label: 'Чорна' },
-    ],
+];
+
+/** Each background with the text colour that reads on it. */
+export const MANGA_BACKGROUNDS: (SettingOption<MangaBackground> & {
+  className: string;
+})[] = [
+  { value: MangaBackground.Theme, label: 'Як у теми', className: 'bg-card' },
+  {
+    value: MangaBackground.Black,
+    label: 'Чорний',
+    className: 'bg-black text-white',
   },
-};
+  {
+    value: MangaBackground.Gray,
+    label: 'Сірий',
+    className: 'bg-neutral-600 text-white',
+  },
+  {
+    value: MangaBackground.White,
+    label: 'Білий',
+    className: 'bg-white text-neutral-950',
+  },
+];
+
+/** The strip's width bounds and how much a zoom button changes it, in %. */
+export const STRIP_WIDTH = { min: 25, max: 100, step: 5 };
+
+export const NOVEL_FONTS: SettingOption[] = [
+  { value: 'font-sans', label: 'Geist' },
+  { value: 'font-nunitosans', label: 'Nunito Sans' },
+  { value: 'font-roboto', label: 'Roboto' },
+  { value: 'font-literata', label: 'Literata' },
+  { value: 'font-ebgaramond', label: 'EB Garamond' },
+];
+
+export const NOVEL_FONT_SIZE = { min: 12, max: 28, step: 1 };
+export const NOVEL_LINE_HEIGHT = { min: 1.3, max: 2.2, step: 0.05 };
+
+export const NOVEL_THEMES: SettingOption<NovelTheme>[] = [
+  { value: NovelTheme.Light, label: 'Світла' },
+  { value: NovelTheme.Sepia, label: 'Сепія' },
+  { value: NovelTheme.Slate, label: 'Сліт' },
+  { value: NovelTheme.Dark, label: 'Темна' },
+  { value: NovelTheme.Black, label: 'Чорна' },
+];
+
+/** Each width with the column's widest, in ems so it grows with the text. */
+export const NOVEL_TEXT_WIDTHS: (SettingOption<NovelTextWidth> & {
+  maxWidth: string;
+})[] = [
+  { value: NovelTextWidth.Narrow, label: 'Вузька', maxWidth: '34em' },
+  { value: NovelTextWidth.Medium, label: 'Середня', maxWidth: '42em' },
+  { value: NovelTextWidth.Wide, label: 'Широка', maxWidth: '56em' },
+];
 
 export const READER_POWERED_BY = {
   manga: { label: 'Powered by Manga.in.ua', url: MANGA_IN_UA_URL },
