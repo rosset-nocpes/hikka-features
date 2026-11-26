@@ -3,12 +3,30 @@ import { MANGA_IN_UA_URL } from '@/constants/links';
 import type { Chapter, ReaderContent, TitleInfo } from '../reader.types';
 
 import { ReaderContentMode } from '../reader.enums';
-import BaseScraper, { parseHtml } from './_scraper';
+import BaseScraper from './_scraper';
 
-const ENDPOINTS = {
-  search: 'index.php?do=search',
-  loadChapters: 'engine/ajax/controller.php?mod=load_chapters',
-  loadImages: 'engine/ajax/controller.php?mod=load_chapters_image',
+const CHAPTERS_ENDPOINT = 'engine/ajax/controller.php?mod=mgchapters';
+
+/** A chapter as the site's `mgchapters` endpoint lists it. */
+interface MiuChapter {
+  id: number;
+  tom: string;
+  num: string;
+  name: string;
+  link: string;
+  /** Unix seconds. */
+  date: number;
+  team: string;
+  /** Another team's translation of a chapter that already has one. */
+  alt: boolean;
+}
+
+/** `dd.mm.yyyy`, the form the reader sorts dates by. */
+const formatDate = (seconds: number) => {
+  const date = new Date(seconds * 1000);
+  return [date.getDate(), date.getMonth() + 1, date.getFullYear()]
+    .map((part) => String(part).padStart(2, '0'))
+    .join('.');
 };
 
 class MIUScraper extends BaseScraper {
@@ -16,124 +34,90 @@ class MIUScraper extends BaseScraper {
     super('MIUScraper', MANGA_IN_UA_URL);
   }
 
-  /** The session hash the site's AJAX endpoints want. */
-  private extractUserHash(html: string): string {
-    const match = html.match(/site_login_hash\s*=\s*'([^']+)'/);
-    if (!match?.[1]) throw new Error('Could not find site_login_hash.');
-    return match[1];
-  }
-
-  /** The name the page's script sends that hash under to `endpoint`. */
-  private extractQueryKey(html: string, endpoint: string): string {
-    const escaped = endpoint.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const regex = new RegExp(`${escaped}.*?{(.*?)}`, 's');
-    const match = html.match(regex);
-
-    if (match?.[1]) {
-      const keyMatch = match[1].match(
-        /["']?([a-zA-Z0-9_]+)["']?\s*:\s*["']?(site_login_hash|dle_user_hash)["']?/,
-      );
-      if (
-        keyMatch?.[1] &&
-        !['site_login_hash', 'dle_user_hash'].includes(keyMatch[1])
-      ) {
-        return keyMatch[1];
-      }
-    }
-    return html.includes('dle_user_hash') ? 'dle_user_hash' : 'user_hash';
-  }
-
   async search(data: TitleInfo) {
-    const title = data.title_ua || data.title_en || data.title_original;
-    if (!title) throw new Error('The title has no name to search by.');
-
-    let mangaUrl = data.external?.find(
+    const linked = data.external?.find(
       (link) => link.text === 'Manga.in.ua',
     )?.url;
+    if (linked) return linked;
 
-    if (!mangaUrl) {
-      const searchData = new URLSearchParams({
-        do: 'search',
-        subaction: 'search',
-        story: `${title} ${data.year}`,
-        search_start: '1',
-      });
+    const titles = [
+      ...new Set(
+        [data.title_ua, data.title_en, data.title_original]
+          .map((title) => title?.trim())
+          .filter((title): title is string => Boolean(title)),
+      ),
+    ];
+    if (!titles.length) throw new Error('The title has no name to search by.');
 
-      let results = await this.load(ENDPOINTS.search, 'POST', searchData);
+    let fallback: string | undefined;
 
-      // Nothing found with the year; try the title alone.
-      if (results.querySelector('.berrors')) {
-        searchData.set('story', title);
-        results = await this.load(ENDPOINTS.search, 'POST', searchData);
-      }
+    for (const title of titles) {
+      const page = await this.load(
+        `index.php?do=search&story=${encodeURIComponent(title)}`,
+      );
+      const cards = [...page.querySelectorAll('.sp-grid article.card')].map(
+        (card) => ({
+          href: card.querySelector('.card__title a')?.getAttribute('href'),
+          year: Number(
+            card.querySelector('.sp-meta')?.textContent?.match(/\d{4}/)?.[0],
+          ),
+        }),
+      );
+      const match = cards.find((card) => card.href && card.year === data.year);
+      if (match?.href) return this.resolveUrl(match.href);
 
-      mangaUrl =
-        results
-          .querySelector('main.main article.item h3.card__title a')
-          ?.getAttribute('href') ?? undefined;
+      fallback ??= cards.find((card) => card.href)?.href ?? undefined;
     }
-    if (!mangaUrl) throw new Error(`Manga "${title}" not found.`);
 
-    return mangaUrl;
+    if (!fallback) throw new Error(`Manga "${titles[0]}" not found.`);
+    return this.resolveUrl(fallback);
+  }
+
+  /** The title's id, from its address or, failing that, its page. */
+  private async newsId(url: string) {
+    const fromUrl = url.match(/\/(\d+)-[^/]*\.html/)?.[1];
+    if (fromUrl) return fromUrl;
+
+    const html = await this.request(url);
+    const fromPage = html.match(/dle_news_id\s*=\s*'(\d+)'/)?.[1];
+    if (!fromPage) throw new Error(`Could not find the title id on ${url}.`);
+    return fromPage;
   }
 
   async getChapterList(url: string): Promise<ReaderContent> {
-    const pageHtml = await this.request(url);
-    const container = parseHtml(pageHtml).querySelector('div#linkstocomics');
+    const response = await this.request(
+      CHAPTERS_ENDPOINT,
+      'POST',
+      new URLSearchParams({ news_id: await this.newsId(url) }),
+    );
+    const list = (JSON.parse(response) as { chapters?: MiuChapter[] }).chapters;
 
-    const params = new URLSearchParams({
-      action: 'show',
-      news_id: container?.getAttribute('data-news_id') || '',
-      news_category: container?.getAttribute('data-news_category') || '',
-      this_link: container?.getAttribute('data-this_link') || '',
-      [this.extractQueryKey(pageHtml, ENDPOINTS.loadChapters)]:
-        this.extractUserHash(pageHtml),
-    });
-
-    const list = await this.load(ENDPOINTS.loadChapters, 'POST', params);
-    const chapters: Chapter[] = [];
-
-    for (const item of list.querySelectorAll('div.ltcitems')) {
-      const link = item.querySelector('a');
-      const href = link?.getAttribute('href') || '';
-      const text = link?.textContent?.trim() ?? '';
-
-      if (text.includes('Альтернативний')) continue;
-
-      chapters.push({
-        id:
-          href.split('/').pop()?.split('-')[0] ||
-          item.getAttribute('manga-chappter') ||
-          '0',
-        translator: item.getAttribute('translate') || '',
-        date_upload: item.firstElementChild?.textContent?.trim() ?? '',
-        volume: Number(item.getAttribute('manga-tom') || 0),
-        chapter: Number(item.getAttribute('manga-chappter') || 0),
-        title: text.split('-')[1]?.trim() ?? '',
-        url: href,
-      });
-    }
+    // One translation per chapter, as the site shows it: the main one, or
+    // whichever there is.
+    const main = new Set(list?.filter((c) => !c.alt).map((c) => c.num));
+    const chapters: Chapter[] = (list ?? [])
+      .filter((c) => !c.alt || !main.has(c.num))
+      .map((c) => ({
+        id: String(c.id),
+        translator: c.team || '',
+        date_upload: formatDate(c.date),
+        volume: Number(c.tom) || 0,
+        chapter: Number(c.num) || 0,
+        title: c.name || '',
+        url: this.resolveUrl(c.link),
+      }));
 
     return { displayMode: ReaderContentMode.Chapters, chapters };
   }
 
   /** The chapter's page images. */
   async getChapter(url: string) {
-    const html = await this.request(url);
-
-    const params = new URLSearchParams({
-      news_id:
-        parseHtml(html)
-          .querySelector('div#comics')
-          ?.getAttribute('data-news_id') || '',
-      action: 'show',
-      [this.extractQueryKey(html, ENDPOINTS.loadImages)]:
-        this.extractUserHash(html),
-    });
-
-    const images = await this.load(`${ENDPOINTS.loadImages}&${params}`);
-    return [...images.querySelectorAll('img')].flatMap(
-      (img) => img.getAttribute('data-src') || [],
+    const page = await this.load(url);
+    return [...page.querySelectorAll('[data-reader] figure.rp img')].flatMap(
+      (img) => {
+        const src = img.getAttribute('src');
+        return src ? this.resolveUrl(src) : [];
+      },
     );
   }
 }
