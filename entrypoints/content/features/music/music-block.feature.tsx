@@ -1,7 +1,6 @@
 import type { FC } from 'react';
 
-import { motion } from 'motion/react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import MaterialSymbolsMusicNoteRounded from '~icons/material-symbols/music-note-rounded';
 import MaterialSymbolsMusicOffRounded from '~icons/material-symbols/music-off-rounded';
 import MaterialSymbolsPauseRounded from '~icons/material-symbols/pause-rounded';
@@ -40,31 +39,28 @@ import {
   useSongReleases,
 } from './use-song-releases';
 
-/** Set on hikka.io's own cards while the block stands in for them. */
-const REPLACED = 'data-hikka-features-music-replaced';
-
 /** Tracks the anime's page shows; its media page shows them all. */
 const SHOWN = 6;
 
-/**
- * The "Музика" tab's cards, on an anime's page and its media page. Unlike
- * the videos', their covers hold an icon, not an image.
- */
-const findSiteCards = () => {
-  const cover = Array.from(
-    document.querySelectorAll<HTMLElement>(
-      '#content-media [data-slot="aspect-ratio"]',
-    ),
-  ).find(
-    (element) =>
-      !element.querySelector('img') &&
-      !!element.nextElementSibling?.querySelector('span'),
-  );
-  // Cover → card → hikka.io's grid of cards.
-  return cover?.parentElement?.parentElement ?? undefined;
-};
+const findMedia = () =>
+  document.querySelector<HTMLElement>('#content-media') ?? undefined;
 
 const isMediaPage = () => location.pathname.endsWith('/media');
+
+/** The cover of one of hikka.io's music cards: an icon, where videos have a thumbnail. */
+const OST_COVER = '> div > [data-slot="aspect-ratio"] > * > svg';
+
+/**
+ * The block sits in hikka.io's media block from the start, hidden, and these
+ * rules swap it for the site's music cards in the same frame the "Музика"
+ * tab renders them: mounting it only then showed the site's cards first.
+ */
+const SWAP_STYLE = `
+#content-media:has(> music-block) > div:has(${OST_COVER}):not(:has(img)),
+#content-media:not(:has(> div ${OST_COVER})) > music-block,
+#content-media:has(> div > div > [data-slot="aspect-ratio"] img) > music-block {
+  display: none !important;
+}`;
 
 const keyOf = (slug: string, ost: HikkaOst) =>
   `${slug}:${ost.ost_type}:${ost.index}:${ost.title}`;
@@ -76,19 +72,21 @@ const keyOf = (slug: string, ost: HikkaOst) =>
 export default class MusicBlockFeature extends BaseFeature {
   readonly id = 'music-block';
   readonly pages = [HikkaPages.AnimeContent];
+  /** The page it was rendered for: the media page shows every track. */
+  private path?: string;
 
   async init() {
     const { ctx } = usePageStore.getState();
     const style = document.createElement('style');
-    style.textContent = `[${REPLACED}] { display: none !important; }`;
+    style.textContent = SWAP_STYLE;
     document.head.append(style);
     ctx.onInvalidated(() => style.remove());
 
     this.ui = await this.createUi({
       position: 'inline',
-      anchor: findSiteCards,
-      append: 'before',
-      render: () => <MusicBlock />,
+      anchor: findMedia,
+      append: 'last',
+      render: (container) => <MusicBlock container={container} />,
     });
   }
 
@@ -96,43 +94,56 @@ export default class MusicBlockFeature extends BaseFeature {
     return (
       super.shouldMount &&
       useSettings.getState().features.musicPlayer.enabled &&
-      !!findSiteCards()
+      !!findMedia()
     );
   }
 
   override get isMounted(): boolean {
     const host = this.ui?.shadowHost;
     if (!this.ui?.mounted || !host?.isConnected) return false;
-    const cards = findSiteCards();
     return (
       !this.shouldMount ||
-      (host.nextElementSibling === cards && !!cards?.hasAttribute(REPLACED))
+      (host.parentElement === findMedia() && this.path === location.pathname)
     );
   }
 
   override mount() {
     if (!this.ui) return;
-    if (this.ui.mounted) this.unmount();
-    const cards = findSiteCards();
-    if (!cards) return;
+    // Its host may be left in the page's previous media block.
+    this.unmount();
+    this.path = location.pathname;
     this.ui.mount();
-    cards.setAttribute(REPLACED, '');
   }
 
   override unmount() {
     if (this.ui?.mounted) this.ui.remove();
-    for (const cards of document.querySelectorAll(`[${REPLACED}]`)) {
-      cards.removeAttribute(REPLACED);
-    }
   }
 }
 
-const MusicBlock = () => {
+/** Whether `element` has been on screen: until then, nothing is fetched. */
+const useShown = (element: HTMLElement) => {
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    if (shown) return;
+    const observer = new ResizeObserver(() => {
+      if (element.checkVisibility()) setShown(true);
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [element, shown]);
+  return shown;
+};
+
+const MusicBlock: FC<{ container: HTMLElement }> = ({ container }) => {
   const { slug } = usePageStore();
   const { data: anime } = useHikka();
-  const songs = useAnimeMusic(anime, slug);
+  // Hidden behind the "Відео" tab, it doesn't look anything up yet.
+  const visible = useShown(container);
+  const songs = useAnimeMusic(visible ? anime : undefined, slug);
   const tracks = songs?.filter(isPlayable);
-  const releases = useSongReleases(anime?.ost?.length ? slug : undefined);
+  const releases = useSongReleases(
+    visible && anime?.ost?.length ? slug : undefined,
+  );
   const favorites = useFavoriteSongs()?.data;
   const extended = isMediaPage();
 
@@ -152,12 +163,7 @@ const MusicBlock = () => {
   const hidden = rows.length - shown.length;
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.2 }}
-      className="flex flex-col gap-3"
-    >
+    <div className="flex flex-col gap-3">
       <Toolbar tracks={tracks} total={ost.length} />
       <ol className="-mx-2 grid gap-x-4 md:grid-cols-2">
         {shown.map(({ ost: item, song }, index) => (
@@ -182,7 +188,7 @@ const MusicBlock = () => {
           Ще {hidden} {plural(hidden, TRACK_FORMS)}
         </a>
       )}
-    </motion.div>
+    </div>
   );
 };
 
