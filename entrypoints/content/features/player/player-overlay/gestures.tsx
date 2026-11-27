@@ -9,6 +9,9 @@ import { playNext } from '../player-iframe-effects';
 import { upNext, useUpNext } from '../queue/up-next';
 import { dispatchPlayerOverlayAction } from './action-popup';
 
+/** Keys the page keeps while the mini player is up (see `handleKeyDown`). */
+const PAGE_KEYS = /^(?:\d| |Arrow\w+|Home|End|Escape)$/;
+
 /** Clicks, taps, holds and keyboard shortcuts on the video. */
 const Gestures = () => {
   const speedupRef = useRef(false);
@@ -116,6 +119,9 @@ const Gestures = () => {
       }
 
       if (e.ctrlKey || e.metaKey || e.altKey) return;
+      // The mini player shares the page with browsing: the keys that scroll
+      // or dismiss things there stay the page's, as do the digits.
+      if (miniPlayer && PAGE_KEYS.test(e.key)) return;
 
       const { duration } = useIFramePlayer.getState();
 

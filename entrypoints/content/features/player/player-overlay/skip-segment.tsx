@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { useIFramePlayer } from '@/hooks/use-iframe-player';
 
 import { compactMode, usePlayer } from '../context/player-context';
+import { useStackedLayout } from '../mobile/use-stacked-layout';
 import {
   AUTO_SKIP_HIDE_MS,
   SKIP_SHOWN_ALONE_S,
@@ -192,6 +193,9 @@ const SkipSegmentButton = ({ auto }: { auto: boolean }) => {
     (autoSkip?.key !== segmentKey || !!autoSkip?.vote);
   const uiShown = useIFramePlayer((state) => state.uiShown);
   const isCompact = usePlayer(compactMode);
+  const stacked = useStackedLayout();
+  // A phone held upright has a small video too.
+  const small = isCompact || stacked;
   const reduceMotion = useReducedMotion();
 
   // What it offers: the segment playing while it shows; fading out, it
@@ -336,7 +340,7 @@ const SkipSegmentButton = ({ auto }: { auto: boolean }) => {
         {offered && (
           <Button
             variant="secondary"
-            size={isCompact ? 'sm' : 'md'}
+            size={small ? 'sm' : 'md'}
             // Fading out or gone, taps go through to the controls under it.
             className={cn(
               'player-glass gap-1.5 border shadow-lg',

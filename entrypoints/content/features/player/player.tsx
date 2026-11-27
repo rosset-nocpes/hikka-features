@@ -55,9 +55,11 @@ const playerUi = new ModalUi({
     useWatchTogether.getState().leave();
     activityReporter.stop();
 
-    const { fullscreen, toggleFullscreen, setVideoPiPActive } =
+    const { fullscreen, toggleFullscreen, setVideoPiPActive, setMiniPlayer } =
       usePlayer.getState();
     if (fullscreen) toggleFullscreen();
+    // The next open starts full size, wherever this one was left.
+    setMiniPlayer(false);
     setVideoPiPActive(false);
     document.body.classList.remove('h-full', 'overflow-hidden');
 
