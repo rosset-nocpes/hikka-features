@@ -288,6 +288,8 @@ const PLAYER_EVENTS: Record<string, (event: IFramePlayerEvent) => void> = {
   buffering: () => set({ isBuffering: true }),
   buffered: ({ answer }) =>
     set({ isBuffering: false, bufferedTime: Number(answer) }),
+  // Loaded more, still waiting for enough to play.
+  'buffer-progress': ({ answer }) => set({ bufferedTime: Number(answer) }),
   subtitle: subtitles,
   subtitles,
   pip: ({ data }) => {

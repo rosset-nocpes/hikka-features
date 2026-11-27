@@ -56,6 +56,8 @@ export abstract class IFramePlayerBridge {
 
   destroy() {
     if (!this.started) return;
+    // E.g. the extension updated mid-nudge: the video plays at its speed again.
+    this.setNudge(1);
 
     this.cleanups.toReversed().forEach((cleanup) => cleanup());
     this.cleanups = [];
@@ -68,6 +70,16 @@ export abstract class IFramePlayerBridge {
 
   protected postEvent(event: string, data?: unknown, answer?: unknown) {
     window.parent.postMessage({ event, data, answer }, '*');
+  }
+
+  /**
+   * Tells the page when the browser refused to play, as it does with sound
+   * until the page is used, e.g. after joining a room from an invite.
+   */
+  protected reportBlockedPlay(error: unknown) {
+    if (error instanceof DOMException && error.name === 'NotAllowedError') {
+      this.postEvent('play-blocked');
+    }
   }
 
   protected listen(
@@ -110,20 +122,27 @@ export abstract class IFramePlayerBridge {
       this.setNudge(message.value);
       return;
     }
+    // A speed or quality picked replaces the nudge: the player sets it from
+    // the speed it knows, and may not touch the video if that is unchanged.
+    if (message.action === 'set-speed' || message.action === 'set-quality') {
+      this.setNudge(1);
+    }
 
     this.handleCommand(message);
   };
 
   private setNudge(factor: number) {
+    // A speed set since, whose event hasn't come yet, replaces the nudge.
+    const nudged =
+      this.nudge && Math.abs(this.video.playbackRate - this.nudge.rate) < 1e-3;
     if (factor === 1) {
-      if (!this.nudge) return;
-      const { base } = this.nudge;
+      const base = nudged ? this.nudge!.base : undefined;
       this.nudge = undefined;
       // Seen by the player: the speed it knows, back.
-      this.video.playbackRate = base;
+      if (base !== undefined) this.video.playbackRate = base;
       return;
     }
-    const base = this.nudge?.base ?? this.video.playbackRate;
+    const base = nudged ? this.nudge!.base : this.video.playbackRate;
     const rate = Math.round(base * factor * 1000) / 1000;
     this.nudge = { base, rate };
     this.video.playbackRate = rate;

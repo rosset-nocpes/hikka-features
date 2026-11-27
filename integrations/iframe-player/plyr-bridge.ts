@@ -102,6 +102,13 @@ export class PlyrBridge extends IFramePlayerBridge {
   }
 
   private readonly qualityController = new PlyrQualityController(this.video);
+  /**
+   * Waiting for data holds until the video can play again: `progress`
+   * keeps coming while it loads, and only says how much has.
+   */
+  private waiting =
+    !this.video.paused &&
+    this.video.readyState < HTMLMediaElement.HAVE_FUTURE_DATA;
 
   protected override onStart() {
     this.listen(this.video, 'play', () => this.postEvent('play'));
@@ -120,14 +127,21 @@ export class PlyrBridge extends IFramePlayerBridge {
     this.listen(this.video, 'ratechange', () => {
       this.postEvent('speed', this.video.playbackRate);
     });
-    this.listen(this.video, 'waiting', () => this.postEvent('buffering'));
+    this.listen(this.video, 'waiting', () => {
+      this.waiting = true;
+      this.postEvent('buffering');
+    });
     this.listen(this.video, 'stalled', () => this.postEvent('buffering'));
 
-    const postBufferedTime = () => {
-      this.postEvent('buffered', undefined, this.getBufferedTime());
+    const postBufferedTime = () => this.postBufferedTime();
+    const ready = () => {
+      this.waiting = false;
+      postBufferedTime();
     };
-    this.listen(this.video, 'playing', postBufferedTime);
-    this.listen(this.video, 'canplay', postBufferedTime);
+    this.listen(this.video, 'playing', ready);
+    this.listen(this.video, 'canplay', ready);
+    // Paused, it no longer waits to play.
+    this.listen(this.video, 'pause', ready);
     this.listen(this.video, 'progress', postBufferedTime);
 
     if (this.video.readyState >= HTMLMediaElement.HAVE_METADATA) {
@@ -142,16 +156,7 @@ export class PlyrBridge extends IFramePlayerBridge {
   protected handleCommand(command: IFramePlayerBridgeCommand) {
     switch (command.action) {
       case 'play':
-        this.video.play().catch((error: unknown) => {
-          // Browsers block playing with sound until the page is used, e.g.
-          // after joining a room from an invite, which opened a new page.
-          if (
-            error instanceof DOMException &&
-            error.name === 'NotAllowedError'
-          ) {
-            this.postEvent('play-blocked');
-          }
-        });
+        this.video.play().catch((error) => this.reportBlockedPlay(error));
         break;
       case 'pause':
         this.video.pause();
@@ -198,9 +203,18 @@ export class PlyrBridge extends IFramePlayerBridge {
         );
         break;
       case 'get-buffered':
-        this.postEvent('buffered', undefined, this.getBufferedTime());
+        this.postBufferedTime();
         break;
     }
+  }
+
+  /** How much has loaded, and, unless it waits for more, that it can play. */
+  private postBufferedTime() {
+    this.postEvent(
+      this.waiting ? 'buffer-progress' : 'buffered',
+      undefined,
+      this.getBufferedTime(),
+    );
   }
 
   private postInitialState() {
@@ -208,6 +222,7 @@ export class PlyrBridge extends IFramePlayerBridge {
     this.postEvent('duration', this.video.duration);
     this.postEvent('time', this.video.currentTime);
     this.postEvent(this.video.paused ? 'pause' : 'play');
+    if (this.waiting) this.postEvent('buffering');
     this.postEvent(this.video.muted ? 'mute' : 'unmute');
     this.postEvent('speed', this.video.playbackRate);
     this.postEvent('start');

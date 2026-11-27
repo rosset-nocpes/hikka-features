@@ -21,6 +21,19 @@ export class PlayerJsBridge extends IFramePlayerBridge {
 
   protected handleCommand(command: IFramePlayerBridgeCommand) {
     window.postMessage(this.toPlayerJsCommand(command), '*');
+    if (command.action === 'play') this.checkAutoplay();
+  }
+
+  /**
+   * PlayerJS keeps a refused play to itself, so the browser is asked with a
+   * video of the bridge's own: one without a source is refused at once
+   * where the page's would be, and plays nothing otherwise. Muted like the
+   * page's, as browsers let muted videos play.
+   */
+  private checkAutoplay() {
+    const probe = document.createElement('video');
+    probe.muted = this.video.muted || this.video.volume === 0;
+    probe.play().catch((error) => this.reportBlockedPlay(error));
   }
 
   private toPlayerJsCommand(

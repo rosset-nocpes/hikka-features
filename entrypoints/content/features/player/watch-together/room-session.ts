@@ -40,6 +40,7 @@ import {
   NUDGE_RESEND_MS,
   MAX_TIME_EXTRAPOLATION,
   SEEK_SETTLE_MS,
+  FRESH_REPORT_MS,
   MAX_SEEK_LEAD,
   SEEK_COOLDOWN_MS,
   MAX_SEEK_COOLDOWN_MS,
@@ -48,7 +49,6 @@ import {
   ROOM_LEAVE_TIMEOUT_MS,
   REPORT_SETTLE_MS,
   REPORT_END_MARGIN,
-  PLAY_ATTEMPTS,
 } from '../player.constants';
 import {
   applyQueueEdit,
@@ -159,8 +159,6 @@ export class RoomSession {
   /** A new episode's first play is the room's command or autoplay. */
   private playedSinceReady = false;
   private reportTimer?: ReturnType<typeof setTimeout>;
-  /** Plays sent since the player last played, to tell a blocked one. */
-  private playAttempts = 0;
   /** A blocked player was tried again once the page counted as used. */
   private retriedActivated = false;
   /** The speed the player is nudged to, times the room's (1: none). */
@@ -364,7 +362,6 @@ export class RoomSession {
   /** Lets a player the browser blocked be steered again, at once. */
   private unblock() {
     useIFramePlayer.setState({ playBlocked: false });
-    this.playAttempts = 0;
     this.lastToggleAt = this.lastSeekAt = 0;
     this.seekCooldown = SEEK_COOLDOWN_MS;
   }
@@ -821,7 +818,6 @@ export class RoomSession {
 
     const iframe = useIFramePlayer.getState();
     if (!iframe.isReady || iframe.adInProgress) return;
-    if (iframe.isPlaying || !room.playing) this.playAttempts = 0;
     if (iframe.isPlaying) this.retriedActivated = false;
     if (room.playing && iframe.playBlocked) {
       if (this.retriedActivated || !navigator.userActivation?.hasBeenActive) {
@@ -845,7 +841,9 @@ export class RoomSession {
       !iframe.isBuffering &&
       !atEnd &&
       now - this.lastSeekAt >= SEEK_SETTLE_MS;
-    if (running && this.measureLead) {
+    // Its last report is recent enough to tell where it is.
+    const fresh = now - iframe.timeAt < FRESH_REPORT_MS;
+    if (running && fresh && this.measureLead) {
       // Where the last seek landed says how far ahead the next should aim.
       this.measureLead = false;
       this.seekLead = clamp(this.seekLead - drift / 2, 0, MAX_SEEK_LEAD);
@@ -857,8 +855,9 @@ export class RoomSession {
       Math.abs(drift) <= (room.playing ? PLAYING_TOLERANCE : PAUSED_TOLERANCE)
     ) {
       this.seekCooldown = SEEK_COOLDOWN_MS;
-      if (running) this.steer(drift, now);
-      else this.setNudge(1, now);
+      // A stale report keeps the nudge as it is until the next one.
+      if (running && fresh) this.steer(drift, now);
+      else if (!running) this.setNudge(1, now);
     } else if (now - this.lastSeekAt >= this.seekCooldown) {
       this.lastSeekAt = now;
       this.quietUntil = now + COMMAND_RETRY_MS;
@@ -902,12 +901,6 @@ export class RoomSession {
       !this.reportTimer &&
       now - this.lastToggleAt >= COMMAND_RETRY_MS
     ) {
-      // Players that can't say the browser blocked them just don't play.
-      if (play && this.playAttempts >= PLAY_ATTEMPTS) {
-        useIFramePlayer.setState({ playBlocked: true });
-        return;
-      }
-      if (play) this.playAttempts += 1;
       this.lastToggleAt = now;
       this.quietUntil = now + COMMAND_RETRY_MS;
       sendIFramePlayerCommand({ action: play ? 'play' : 'pause' });
