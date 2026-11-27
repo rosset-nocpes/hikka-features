@@ -113,13 +113,13 @@ const MangaPanel = ({ settings }: { settings: MangaSettings }) => {
             aria-live="polite"
           >
             {stripForced
-              ? 'Сторінки цього розділу довгі, тож він показаний стрічкою. Оберіть інший режим, щоб читати по сторінці.'
+              ? 'Сторінки довгі, тому розділ показано стрічкою'
               : READING_MODES.find(({ value }) => value === mode)?.description}
           </p>
         </div>
         <SwitchRow
           label="Стрічка для манхви"
-          description="Розділи з довгими сторінками відкриваються стрічкою"
+          description="Довгі сторінки відкриваються стрічкою"
           checked={settings.autoStrip}
           onCheckedChange={(autoStrip) => setSettings({ autoStrip })}
         />
@@ -195,8 +195,8 @@ const MangaPanel = ({ settings }: { settings: MangaSettings }) => {
             label={isMobile ? 'Гортання дотиком' : 'Гортання кліком'}
             description={
               isMobile
-                ? 'Дотик до краю сторінки гортає її, посередині — ховає панелі'
-                : 'Клік по лівому чи правому краю сторінки гортає її'
+                ? 'Край гортає сторінку, середина ховає панелі'
+                : 'Клік по краю сторінки гортає її'
             }
             checked={settings.tapToTurn}
             onCheckedChange={(tapToTurn) => setSettings({ tapToTurn })}

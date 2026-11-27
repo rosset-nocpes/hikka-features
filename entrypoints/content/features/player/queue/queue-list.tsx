@@ -335,7 +335,7 @@ const QueueList: FC<{ nowPlaying?: boolean }> = ({ nowPlaying }) => {
         size="sm"
         icon={<MaterialSymbolsGroupOutlineRounded />}
         title="Спільна черга порожня"
-        description="Епізоди, які тут додасть будь-хто з кімнати, гратимуть для всіх після поточного."
+        description="Додане сюди гратиме для всіх після поточного"
         action={
           own.length > 0 && (
             <Button
@@ -363,8 +363,7 @@ const QueueList: FC<{ nowPlaying?: boolean }> = ({ nowPlaying }) => {
           <>
             Додавайте епізоди будь-яких аніме кнопкою{' '}
             <MaterialSymbolsPlaylistAddRounded className="inline size-4 align-text-bottom" />{' '}
-            у списку епізодів або на сторінці аніме. Вони гратимуть після
-            поточного.
+            у списку епізодів чи на сторінці аніме
           </>
         }
         className="py-8"

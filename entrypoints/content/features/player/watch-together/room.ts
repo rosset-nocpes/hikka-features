@@ -19,8 +19,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   UNAUTHENTICATED: 'Потрібен вхід через hikka.io',
   USER_NOT_FOUND: 'Потрібен вхід через hikka.io',
   EXTENSION_UPDATE_REQUIRED: 'Оновіть розширення, щоб дивитися разом',
-  MEMBERS_OUTDATED:
-    'Хтось у кімнаті має стару версію розширення, тож інше аніме не ввімкнеться',
+  MEMBERS_OUTDATED: 'У когось у кімнаті застаріле розширення',
   VOTE_OPEN: 'Уже триває інше голосування',
   cancelled: 'Вхід скасовано',
   login_expired: 'Час на вхід минув',

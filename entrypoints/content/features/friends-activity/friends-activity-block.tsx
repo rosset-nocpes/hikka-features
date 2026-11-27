@@ -297,7 +297,7 @@ const FriendsList = () => {
         size="sm"
         icon={<MaterialSymbolsGroupOutlineRounded />}
         title="Зараз ніхто не дивиться й не читає"
-        description="Тут з’являться друзі з розширенням, з якими ви взаємно підписані, коли вмикатимуть аніме чи відкриватимуть читалку"
+        description="Тут з’являться взаємні друзі з розширенням"
       />
     );
   }
@@ -332,7 +332,7 @@ const SignIn = () => {
       size="sm"
       icon={<MaterialSymbolsGroupOutlineRounded />}
       title="Увійдіть у розширення"
-      description="Щоб бачити, що зараз дивляться й читають друзі, з якими ви взаємно підписані"
+      description="Щоб бачити, що дивляться й читають друзі"
       action={
         <Button
           size="sm"

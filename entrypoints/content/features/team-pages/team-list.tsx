@@ -291,8 +291,7 @@ const TeamList = () => {
             )}
           </h1>
           <p className="text-muted-foreground text-sm leading-6">
-            Українські команди озвучення та субтитрів. Релізи зібрано з їхніх
-            Telegram-каналів, каталогу CPR і плеєрів.
+            Українські команди озвучення та субтитрів
           </p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row">

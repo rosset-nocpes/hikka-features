@@ -201,7 +201,7 @@ const StartMenu = () => {
     <>
       <MenuLabel>Дивитися разом</MenuLabel>
       <p className="text-muted-foreground px-2 pb-1.5 text-xs text-pretty">
-        Пауза, перемотка й вибір серії спільні для всіх у кімнаті
+        Пауза, перемотка й серія — спільні для всіх
       </p>
       <MenuSeparator />
       <MenuItem disabled={status === 'connecting'} onClick={create}>
@@ -305,8 +305,7 @@ const FriendsPage = ({
           </div>
         ) : friends.length === 0 ? (
           <p className="text-muted-foreground px-2 py-1.5 text-xs text-pretty">
-            Тут будуть друзі з розширенням: ті, з ким ви взаємно підписані на
-            hikka.io
+            Тут будуть взаємні друзі з розширенням
           </p>
         ) : (
           friends.map((friend) => <FriendRow key={friend.id} friend={friend} />)

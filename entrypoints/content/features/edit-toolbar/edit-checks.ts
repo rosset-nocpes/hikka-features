@@ -417,8 +417,7 @@ const emptyComment = ({ group, editable, text }: CheckedField): FieldIssue[] =>
         {
           rule: 'empty-comment',
           severity: 'hint',
-          message:
-            'Напишіть, що змінили і звідки взяли, щоб правку перевірили швидше',
+          message: 'Напишіть, що змінили і звідки взяли',
         },
       ]
     : [];
