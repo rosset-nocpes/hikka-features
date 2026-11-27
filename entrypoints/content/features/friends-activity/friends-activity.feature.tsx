@@ -14,7 +14,12 @@ import { LayoutDialog } from './layout-dialog';
 class Layout {
   private readonly home: HomePlacement;
   private readonly dialog = new LayoutDialog();
-  private readonly observer = new MutationObserver(() => this.schedule());
+  private readonly observer = new MutationObserver(() => {
+    // The site's drag measures its rows before the next frame, so its
+    // reorders are answered at once, while the old layout is still there.
+    if (this.dialog.siteDragging()) this.dialog.update();
+    this.schedule();
+  });
   private readonly unsubscribers: (() => void)[];
   private frame = 0;
 
