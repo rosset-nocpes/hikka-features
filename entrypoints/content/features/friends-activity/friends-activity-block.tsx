@@ -1,8 +1,6 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useState } from 'react';
 import MaterialSymbolsGroupOutlineRounded from '~icons/material-symbols/group-outline-rounded';
 import MaterialSymbolsLoginRounded from '~icons/material-symbols/login-rounded';
-import MaterialSymbolsVisibilityOffOutlineRounded from '~icons/material-symbols/visibility-off-outline-rounded';
-import MaterialSymbolsVisibilityOutlineRounded from '~icons/material-symbols/visibility-outline-rounded';
 
 import type { FriendActivity } from '@/utils/convex-api';
 
@@ -13,9 +11,7 @@ import { Button } from '@/components/ui/button';
 import EmptyState from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
-import { Switch } from '@/components/ui/switch';
 import { Hint } from '@/components/ui/tooltip';
-import { useActivitySharing } from '@/hooks/use-activity-sharing';
 import { useHikkaContent } from '@/hooks/use-hikka';
 import { useLiveQuery } from '@/hooks/use-live-query';
 import { useSettings } from '@/hooks/use-settings';
@@ -272,47 +268,6 @@ const SkeletonRow = () => (
   </li>
 );
 
-/** The user's own sharing, in the card's footer as the site's tracker has. */
-const SharingFooter = () => {
-  const id = useId();
-  const { shared, pending, error, setShared } = useActivitySharing();
-  const Icon =
-    shared === false
-      ? MaterialSymbolsVisibilityOffOutlineRounded
-      : MaterialSymbolsVisibilityOutlineRounded;
-
-  return (
-    <div className="flex items-center gap-3 border-t px-4 py-3">
-      <Icon aria-hidden className="text-muted-foreground size-5 shrink-0" />
-      <label
-        htmlFor={id}
-        className="flex min-w-0 flex-1 cursor-pointer flex-col gap-0.5"
-      >
-        <span className="text-sm leading-5 font-medium">
-          Ділитися моєю активністю
-        </span>
-        {error && shared === undefined ? (
-          <span role="alert" className="text-destructive text-xs leading-4">
-            Не вдалося завантажити налаштування
-          </span>
-        ) : (
-          <span className="text-muted-foreground text-xs leading-4">
-            {shared === false
-              ? 'Друзі не бачать, що ви дивитесь і читаєте'
-              : 'Друзі бачать, що ви дивитесь і читаєте'}
-          </span>
-        )}
-      </label>
-      <Switch
-        id={id}
-        checked={shared ?? false}
-        disabled={shared === undefined || pending}
-        onCheckedChange={setShared}
-      />
-    </div>
-  );
-};
-
 const FriendsList = () => {
   const { data: activities, error } =
     useLiveQuery(convexApi.activity.friends, {}) ?? {};
@@ -416,14 +371,7 @@ const FriendsActivityBlock = () => {
     <section className="flex min-w-0 flex-col gap-3">
       <BlockHeader title={BLOCK_TITLE} icon={<HFLogo />} />
       <div className="surface border-border relative isolate flex min-w-0 flex-col overflow-clip rounded-lg border [:host([data-bleed])_&]:max-md:-mx-4 [:host([data-bleed])_&]:max-md:rounded-none [:host([data-bleed])_&]:max-md:border-x-0">
-        {mode === 'friends' ? (
-          <>
-            <FriendsList />
-            <SharingFooter />
-          </>
-        ) : (
-          <SignIn />
-        )}
+        {mode === 'friends' ? <FriendsList /> : <SignIn />}
       </div>
     </section>
   );
