@@ -1,4 +1,4 @@
-import type { ComponentProps } from 'react';
+import type { ComponentProps, CSSProperties } from 'react';
 
 import type { WatchRoomProfile } from '@/utils/convex-api';
 
@@ -58,10 +58,30 @@ export const RoomSubtitle = ({
 export const memberName = (member: WatchRoomProfile) =>
   member.username ?? 'Глядач';
 
+/** A hue of their own, so members without a picture still tell apart. */
+const memberHue = (member: WatchRoomProfile) => {
+  let hash = 0;
+  for (const char of member.id) hash = (hash * 31 + char.charCodeAt(0)) | 0;
+  // Steps of the golden angle keep ids that differ by a letter far apart.
+  return Math.round(Math.abs(hash) * 137.508) % 360;
+};
+
+/** A member's picture, or their initial on their own colour. */
+export const MemberFace = ({ member }: { member: WatchRoomProfile }) => (
+  <>
+    {member.avatar && <AvatarImage src={member.avatar} alt="" />}
+    <AvatarFallback
+      style={{ '--hue': memberHue(member) } as CSSProperties}
+      className="bg-[oklch(0.86_0.07_var(--hue))] font-semibold text-[oklch(0.38_0.09_var(--hue))] dark:bg-[oklch(0.5_0.1_var(--hue))] dark:text-[oklch(0.95_0.03_var(--hue))]"
+    >
+      {memberName(member)[0]?.toUpperCase()}
+    </AvatarFallback>
+  </>
+);
+
 /** Centred on a row's 16px icon column, so names line up with labels. */
 export const MemberAvatar = ({ member }: { member: WatchRoomProfile }) => (
   <Avatar size="sm" className="-mx-0.5 data-[size=sm]:size-5">
-    {member.avatar && <AvatarImage src={member.avatar} alt="" />}
-    <AvatarFallback>{memberName(member)[0]?.toUpperCase()}</AvatarFallback>
+    <MemberFace member={member} />
   </Avatar>
 );

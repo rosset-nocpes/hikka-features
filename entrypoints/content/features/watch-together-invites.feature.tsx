@@ -4,7 +4,7 @@ import MaterialSymbolsLoginRounded from '~icons/material-symbols/login-rounded';
 
 import type { WatchRoomInbox } from '@/utils/convex-api';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar } from '@/components/ui/avatar';
 import { STORAGE_KEYS } from '@/constants/storage';
 import { useLiveQuery } from '@/hooks/use-live-query';
 import { convexApi } from '@/utils/convex-api';
@@ -17,7 +17,11 @@ import { StoredValue } from '@/utils/stored-value';
 import { BaseFeature } from '../core/base-feature';
 import { HikkaPages } from '../core/core.enums';
 import { isPlayerOpen } from './player/player';
-import { memberName, RoomSubtitle } from './player/watch-together/menu';
+import {
+  MemberFace,
+  memberName,
+  RoomSubtitle,
+} from './player/watch-together/menu';
 import { openRoom } from './player/watch-together/open-room';
 import { useWatchTogether } from './player/watch-together/use-watch-together';
 
@@ -242,12 +246,7 @@ const InviteMedia = ({ invite }: { invite: Invite }) => {
           : 'size-10',
       )}
     >
-      {invite.friend.avatar && (
-        <AvatarImage src={invite.friend.avatar} alt="" />
-      )}
-      <AvatarFallback>
-        {memberName(invite.friend)[0]?.toUpperCase()}
-      </AvatarFallback>
+      <MemberFace member={invite.friend} />
     </Avatar>
   );
 

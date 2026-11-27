@@ -18,13 +18,7 @@ import type {
 
 import { MediaTooltip } from '@/components/media/controls';
 import SwapIcon from '@/components/swap-icon';
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarGroup,
-  AvatarGroupCount,
-  AvatarImage,
-} from '@/components/ui/avatar';
+import { Avatar, AvatarGroup, AvatarGroupCount } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -47,6 +41,7 @@ import {
 } from '../../player.constants';
 import {
   MemberAvatar,
+  MemberFace,
   MenuError,
   MenuItem,
   MenuLabel,
@@ -69,9 +64,14 @@ const pop = {
   exit: { scale: 0.4, opacity: 0 },
 };
 
+/** The see-through gap that parts each avatar from the one it tucks under. */
+const AVATAR_GAP = 1.5;
+
 /**
  * The newest members, so whoever just joined pops in on the right while the
- * group widens to fit; earlier ones fold into the count on the left.
+ * group widens to fit; earlier ones fold into the count on the left. Each
+ * avatar sits over the next one, which has a bite cut out around it instead
+ * of a ring, so the glass shows through the gap in either theme.
  */
 const RoomAvatars = ({
   room,
@@ -86,10 +86,19 @@ const RoomAvatars = ({
   const hidden = members.length - shown.length;
   const size = compact ? 20 : 24;
   const slots = shown.length + (hidden > 0 ? 1 : 0);
+  // The bite is the avatar to the left, whose centre sits half an avatar
+  // minus the overlap beyond this one's left edge, grown by the gap.
+  const cut = (slot: number) => ({
+    '--cut': slot > 0 ? `${size / 2 + AVATAR_GAP}px` : '0px',
+  });
+  const slotStyle = (slot: number) => ({
+    zIndex: slots - slot,
+    maskImage: `radial-gradient(circle at ${AVATAR_OVERLAP - size / 2}px 50%, transparent var(--cut), #000 calc(var(--cut) + 0.5px))`,
+  });
 
   return (
     <MotionAvatarGroup
-      className="relative -space-x-1.5 *:data-[slot=avatar]:ring-[1.5px] *:data-[slot=avatar-group-count]:ring-[1.5px]"
+      className="relative -space-x-1.5 *:data-[slot=avatar]:ring-0"
       initial={false}
       animate={{ width: size + (slots - 1) * (size - AVATAR_OVERLAP) }}
       transition={spring}
@@ -101,10 +110,11 @@ const RoomAvatars = ({
             layout
             {...pop}
             transition={spring}
+            style={slotStyle(0)}
             className={cn(
-              'overflow-hidden text-xs font-medium tabular-nums',
+              'bg-muted text-foreground/85 overflow-hidden text-[10px] font-semibold tracking-tight tabular-nums ring-0',
               compact &&
-                'text-[10px] group-has-data-[size=sm]/avatar-group:size-5',
+                'text-[9px] group-has-data-[size=sm]/avatar-group:size-5',
             )}
           >
             <AnimatePresence initial={false} mode="popLayout">
@@ -120,21 +130,24 @@ const RoomAvatars = ({
             </AnimatePresence>
           </MotionAvatarGroupCount>
         )}
-        {shown.map((member) => (
-          <MotionAvatar
-            key={member.id}
-            layout
-            {...pop}
-            transition={spring}
-            size="sm"
-            className={cn(compact && 'data-[size=sm]:size-5')}
-          >
-            {member.avatar && <AvatarImage src={member.avatar} alt="" />}
-            <AvatarFallback>
-              {memberName(member)[0]?.toUpperCase()}
-            </AvatarFallback>
-          </MotionAvatar>
-        ))}
+        {shown.map((member, index) => {
+          const slot = index + (hidden > 0 ? 1 : 0);
+          return (
+            <MotionAvatar
+              key={member.id}
+              layout
+              initial={{ ...pop.initial, ...cut(slot) }}
+              animate={{ ...pop.animate, ...cut(slot) }}
+              exit={pop.exit}
+              transition={spring}
+              style={slotStyle(slot)}
+              size="sm"
+              className={cn(compact && 'data-[size=sm]:size-5')}
+            >
+              <MemberFace member={member} />
+            </MotionAvatar>
+          );
+        })}
       </AnimatePresence>
     </MotionAvatarGroup>
   );
