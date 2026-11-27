@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { RotatingText } from '@/components/animate-ui/text/rotating';
 import SwapIcon from '@/components/swap-icon';
 import { Button } from '@/components/ui/button';
+import { ButtonGroup } from '@/components/ui/button-group';
 import { Spinner } from '@/components/ui/spinner';
 import { reveal } from '@/utils/motion';
 
@@ -15,8 +16,11 @@ interface Props {
   label: string;
   icon: ReactNode;
   onClick: () => void;
-  /** More actions, after the button once something is found. */
-  children?: ReactNode;
+  /**
+   * A menu trigger joined to the button as a split button once something is
+   * found, e.g. the queue's.
+   */
+  menu?: ReactNode;
 }
 
 const statusText = ({ isLoading, found }: Props['status'], label: string) =>
@@ -29,39 +33,59 @@ const NavbarAction: FC<Props> = ({
   label,
   icon,
   onClick,
-  children,
-}) => (
-  <AnimatePresence>
-    {enabled && (
-      <motion.div
-        {...reveal('width', { marginRight: '0.5rem' })}
-        className="flex gap-2 overflow-hidden"
-      >
-        <Button
-          variant="ghost"
-          size="md"
-          // Phones' navbar only fits the icon; the label still names it.
-          aria-label={statusText(status, label) || undefined}
-          className="gap-2 max-sm:px-2.5"
-          disabled={!status.found}
-          onClick={onClick}
+  menu,
+}) => {
+  const split = status.found && !!menu;
+  return (
+    <AnimatePresence>
+      {enabled && (
+        <motion.div
+          {...reveal('width', { marginRight: '0.5rem' })}
+          // Clipped for the reveal, with room for a badge over the corner.
+          className="flex gap-2 overflow-clip [overflow-clip-margin:0.5rem]"
         >
-          <SwapIcon
-            active={status.isLoading}
-            on={<Spinner className="size-full" />}
-            off={icon}
-            className="size-5"
-          />
-          <div className="max-sm:hidden">
-            <RotatingText text={statusText(status, label)} />
-          </div>
-        </Button>
-        {status.found && children}
-        <div className="bg-secondary w-px" />
-      </motion.div>
-    )}
-  </AnimatePresence>
-);
+          <ButtonGroup
+            className={cn(
+              'rounded-md',
+              split &&
+                // A hovered segment needs more contrast than `muted` has over the fill.
+                'bg-muted/50 dark:bg-muted/40 *:data-slot:hover:bg-foreground/6 *:data-slot:aria-expanded:bg-foreground/6',
+            )}
+          >
+            <Button
+              variant="ghost"
+              size="md"
+              // Phones' navbar only fits the icon; the label still names it.
+              aria-label={statusText(status, label) || undefined}
+              className={cn('gap-2 max-sm:px-2.5', split && 'sm:pr-2.5')}
+              disabled={!status.found}
+              onClick={onClick}
+            >
+              <SwapIcon
+                active={status.isLoading}
+                on={<Spinner className="size-full" />}
+                off={icon}
+                className="size-5"
+              />
+              <div className="max-sm:hidden">
+                <RotatingText text={statusText(status, label)} />
+              </div>
+            </Button>
+            {split && (
+              <>
+                <div aria-hidden className="bg-border my-2.5 w-px" />
+                {menu}
+              </>
+            )}
+          </ButtonGroup>
+          {/* The joined menu sets the actions apart well enough on phones,
+              whose navbar has no room to spare. */}
+          <div className={cn('bg-secondary w-px', split && 'max-sm:hidden')} />
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
 
 export default NavbarAction;
 

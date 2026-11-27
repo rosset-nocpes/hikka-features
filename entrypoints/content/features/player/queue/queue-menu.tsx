@@ -2,6 +2,7 @@ import { ScrollArea as ScrollAreaPrimitive } from '@base-ui/react/scroll-area';
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { type FC, useEffect, useMemo, useRef, useState } from 'react';
 import MaterialSymbolsGroupOutlineRounded from '~icons/material-symbols/group-outline-rounded';
+import MaterialSymbolsKeyboardArrowUpRounded from '~icons/material-symbols/keyboard-arrow-up-rounded';
 import MaterialSymbolsPlayArrowRounded from '~icons/material-symbols/play-arrow-rounded';
 import MaterialSymbolsPlaylistAddRounded from '~icons/material-symbols/playlist-add-rounded';
 import MaterialSymbolsPlaylistPlayRounded from '~icons/material-symbols/playlist-play-rounded';
@@ -77,7 +78,7 @@ const CountBadge: FC<{ count: number }> = ({ count }) => (
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0, opacity: 0 }}
           transition={{ type: 'spring', duration: 0.3, bounce: 0.3 }}
-          className="bg-primary text-primary-foreground pointer-events-none absolute top-0.5 right-0.5 grid h-4 min-w-4 place-items-center overflow-hidden rounded-full px-1 text-[10px] leading-none font-semibold tabular-nums"
+          className="bg-primary text-primary-foreground pointer-events-none absolute -top-1.5 -right-1.5 grid h-4 min-w-4 place-items-center overflow-hidden rounded-full px-1 text-[10px] leading-none font-semibold tabular-nums"
         >
           <motion.span
             key={count}
@@ -243,14 +244,14 @@ const QueueMenu: FC<Props> = ({ data, slug, container }) => {
         render={
           <Button
             variant="ghost"
-            size="icon-md"
-            className="relative"
+            size="md"
+            className="relative w-8 px-0"
             aria-label={label}
             title={label}
           />
         }
       >
-        <MaterialSymbolsPlaylistAddRounded className="size-5" />
+        <MaterialSymbolsKeyboardArrowUpRounded className="text-muted-foreground size-5 transition-transform duration-200 group-aria-expanded/button:rotate-180" />
         <CountBadge count={queuedHere.length} />
       </DropdownMenuTrigger>
       <DropdownMenuContent

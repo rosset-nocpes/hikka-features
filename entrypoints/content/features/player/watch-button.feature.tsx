@@ -49,10 +49,10 @@ const WatchButton = ({ container }: { container: HTMLElement }) => {
         <MaterialSymbolsSubscriptionsOutlineRounded className="size-full" />
       }
       onClick={() => data && slug && openPlayer(data, slug)}
-    >
-      {data && slug && (
-        <QueueMenu data={data} slug={slug} container={container} />
-      )}
-    </NavbarAction>
+      menu={
+        data &&
+        slug && <QueueMenu data={data} slug={slug} container={container} />
+      }
+    />
   );
 };
