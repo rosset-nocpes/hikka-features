@@ -1,17 +1,16 @@
 import { useEffect, useId, useState } from 'react';
 import MaterialSymbolsGroupOutlineRounded from '~icons/material-symbols/group-outline-rounded';
 import MaterialSymbolsLoginRounded from '~icons/material-symbols/login-rounded';
+import MaterialSymbolsVisibilityOffOutlineRounded from '~icons/material-symbols/visibility-off-outline-rounded';
 import MaterialSymbolsVisibilityOutlineRounded from '~icons/material-symbols/visibility-outline-rounded';
 
 import type { FriendActivity } from '@/utils/convex-api';
 
 import { HFLogo } from '@/components/feature-card';
 import BlockHeader from '@/components/hikka/block-header';
-import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import EmptyState from '@/components/ui/empty-state';
-import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
@@ -44,15 +43,11 @@ function useMode(): Mode {
   return viewer === 'account' ? 'friends' : 'hidden';
 }
 
-const Dot = () => <span aria-hidden>·</span>;
-
-/** "12 епізодів", as hikka.io words a total; "?" when it isn't known. */
 const UNITS = {
   episode: { one: 'епізод', few: 'епізоди', many: 'епізодів' },
   chapter: { one: 'розділ', few: 'розділи', many: 'розділів' },
+  viewer: { one: 'глядач', few: 'глядачі', many: 'глядачів' },
 };
-const unitOf = (unit: keyof typeof UNITS, total?: number | null) =>
-  total ? plural(total, UNITS[unit]) : UNITS[unit].many;
 
 /** Re-renders now and then, so "5 хв тому" keeps up. */
 function useNow() {
@@ -64,7 +59,23 @@ function useNow() {
   return now;
 }
 
-/** "5/12 епізодів", the episode or chapter out of the title's total. */
+const isPlaying = (activity: FriendActivity) =>
+  activity.contentType === 'anime' && activity.playing;
+
+/** Who is watching right now first, then whoever was here last. */
+const byRecency = (a: FriendActivity, b: FriendActivity) =>
+  Number(isPlaying(b)) - Number(isPlaying(a)) || b.updatedAt - a.updatedAt;
+
+const Dot = () => (
+  <span aria-hidden className="opacity-60">
+    ·
+  </span>
+);
+
+/**
+ * "7 / 28 епізодів", as hikka.io words progress. A number past the title's
+ * total (sources number chapters their own way) stands alone: "Розділ 140".
+ */
 const Progress = ({
   current,
   total,
@@ -72,55 +83,99 @@ const Progress = ({
 }: {
   current: number;
   total?: number | null;
-  unit: keyof typeof UNITS;
-}) => (
-  <span className="shrink-0">
-    <span className="text-foreground font-bold">{current}</span>/{total || '?'}{' '}
-    {unitOf(unit, total)}
-  </span>
-);
+  unit: 'episode' | 'chapter';
+}) => {
+  if (total && current > total) {
+    return (
+      <span className="shrink-0">
+        {unit === 'episode' ? 'Епізод' : 'Розділ'}{' '}
+        <span className="text-foreground font-medium tabular-nums">
+          {current}
+        </span>
+      </span>
+    );
+  }
+  return (
+    <span className="shrink-0 tabular-nums">
+      <span className="text-foreground font-medium">{current}</span> /{' '}
+      {total || '?'} {total ? plural(total, UNITS[unit]) : UNITS[unit].many}
+    </span>
+  );
+};
+
+const viewers = (count: number) => `${count} ${plural(count, UNITS.viewer)}`;
+
+/** A friend's watch together room they let friends into, to join. */
+const RoomInvite = ({
+  slug,
+  code,
+  memberCount,
+}: {
+  slug: string;
+  code: string;
+  memberCount: number;
+}) => {
+  const [pending, setPending] = useState(false);
+  return (
+    <div className="bg-secondary/60 relative z-10 mt-1.5 flex min-w-0 items-center gap-2 rounded-md py-1 pr-1 pl-2 text-xs">
+      <MaterialSymbolsGroupOutlineRounded
+        aria-hidden
+        className="text-muted-foreground size-4 shrink-0"
+      />
+      <span className="min-w-0 flex-1 truncate">{memberCount} у кімнаті</span>
+      <Button
+        size="sm"
+        className="h-6 shrink-0 gap-1 rounded-sm px-2 text-xs"
+        disabled={pending}
+        onClick={() => {
+          setPending(true);
+          openRoom(slug, code)
+            .catch(console.error)
+            .finally(() => setPending(false));
+        }}
+      >
+        {pending && <Spinner className="size-3" />}
+        Приєднатися
+      </Button>
+    </div>
+  );
+};
 
 /**
  * One friend and what they have open: who, doing what and since when on top,
- * then the title and how far in, beside its poster.
- * The whole row opens the title; a room they share can be joined from it.
+ * then the title and how far in, beside its poster; below, the room they
+ * watch in, when the user may join it. The whole row opens the title.
  */
 const Row = ({ activity, now }: { activity: FriendActivity; now: number }) => {
   const { friend, contentType, slug } = activity;
   const { data: content, isLoading } = useHikkaContent(contentType, slug);
   const title: string = hikkaTitle(content) || slug;
   const name = memberName(friend);
-  const href = `/${contentType}/${slug}`;
   const watching = activity.contentType === 'anime' ? activity : undefined;
   const live = isPlaying(activity);
   const time = formatTimestamp(activity.updatedAt, now);
   const room = watching?.room;
 
   return (
-    <div className="hover:bg-accent relative flex items-center gap-4 px-4 py-2 transition-colors">
-      <div className="w-12 shrink-0">
-        <AspectRatio
-          ratio={0.7}
-          className="bg-muted overflow-hidden rounded-md"
-        >
-          {content?.image && (
-            <img
-              src={content.image}
-              alt=""
-              loading="lazy"
-              className="size-full object-cover"
-            />
-          )}
-        </AspectRatio>
+    <li className="hover:bg-accent/60 relative flex gap-3 px-4 py-2.5 transition-colors">
+      <div className="bg-muted aspect-[0.7] w-12 shrink-0 self-start overflow-hidden rounded-md">
+        {content?.image && (
+          <img
+            src={content.image}
+            alt=""
+            loading="lazy"
+            className="size-full object-cover"
+          />
+        )}
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <p className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-xs">
+      <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
+        <p className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-xs leading-4">
           <a
             href={friend.username ? `/u/${friend.username}` : undefined}
             className="text-foreground relative z-10 flex min-w-0 items-center gap-1.5 font-medium hover:underline"
           >
-            <Avatar className="size-4">
+            <Avatar className="size-4 shrink-0">
               {friend.avatar && <AvatarImage src={friend.avatar} alt="" />}
               <AvatarFallback className="text-[9px]">
                 {name[0]?.toUpperCase()}
@@ -134,21 +189,26 @@ const Row = ({ activity, now }: { activity: FriendActivity; now: number }) => {
           <Hint label={time.full}>
             <time
               dateTime={time.iso}
-              className="ml-auto shrink-0 pl-2 tabular-nums opacity-60"
+              className={cn(
+                'ml-auto shrink-0 pl-1 tabular-nums',
+                live ? 'text-foreground' : 'opacity-70',
+              )}
             >
               {live ? 'зараз' : time.label}
             </time>
           </Hint>
         </p>
+
         <Hint label={title}>
           <a
-            href={href}
-            className="line-clamp-1 text-sm leading-snug font-medium after:absolute after:inset-0"
+            href={`/${contentType}/${slug}`}
+            className="line-clamp-1 text-sm leading-5 font-medium after:absolute after:inset-0"
           >
-            {isLoading ? <Skeleton className="my-0.5 h-3.5 w-3/4" /> : title}
+            {isLoading ? <Skeleton className="my-0.5 h-4 w-3/4" /> : title}
           </a>
         </Hint>
-        <p className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-xs whitespace-nowrap">
+
+        <p className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-xs leading-4 whitespace-nowrap">
           {activity.contentType === 'anime' ? (
             <Progress
               current={activity.episode}
@@ -170,64 +230,79 @@ const Row = ({ activity, now }: { activity: FriendActivity; now: number }) => {
               />
             </>
           )}
-          {room && (
+          {room && !room.code && (
             <>
               <Dot />
-              <Hint label="Дивляться разом">
-                <span className="flex shrink-0 items-center gap-0.5">
-                  <MaterialSymbolsGroupOutlineRounded className="size-3.5" />
+              <Hint label={`Дивляться разом: ${viewers(room.memberCount)}`}>
+                <span className="relative z-10 flex shrink-0 items-center gap-1">
+                  <MaterialSymbolsGroupOutlineRounded
+                    aria-hidden
+                    className="size-3.5"
+                  />
                   {room.memberCount}
                 </span>
               </Hint>
             </>
           )}
         </p>
-      </div>
 
-      {room?.code && (
-        <Button
-          size="sm"
-          variant="secondary"
-          className="relative z-10 shrink-0"
-          onClick={() => void openRoom(slug, room.code!)}
-        >
-          Приєднатися
-        </Button>
-      )}
-    </div>
+        {room?.code && (
+          <RoomInvite
+            slug={slug}
+            code={room.code}
+            memberCount={room.memberCount}
+          />
+        )}
+      </div>
+    </li>
   );
 };
 
 const SkeletonRow = () => (
-  <div className="flex items-center gap-4 px-4 py-2">
-    <Skeleton className="aspect-[0.7] w-12 shrink-0" />
-    <div className="flex flex-1 flex-col gap-2">
+  <li className="flex gap-3 px-4 py-2.5">
+    <Skeleton className="aspect-[0.7] w-12 shrink-0 rounded-md" />
+    <div className="flex flex-1 flex-col justify-center gap-2">
       <div className="flex items-center gap-1.5">
         <Skeleton className="size-4 rounded-full" />
         <Skeleton className="h-3 w-1/3" />
       </div>
-      <Skeleton className="h-3.5 w-3/4" />
+      <Skeleton className="h-4 w-3/4" />
       <Skeleton className="h-3 w-1/4" />
     </div>
-  </div>
+  </li>
 );
 
 /** The user's own sharing, in the card's footer as the site's tracker has. */
 const SharingFooter = () => {
   const id = useId();
   const { shared, pending, error, setShared } = useActivitySharing();
+  const Icon =
+    shared === false
+      ? MaterialSymbolsVisibilityOffOutlineRounded
+      : MaterialSymbolsVisibilityOutlineRounded;
 
   return (
-    <div className="text-muted-foreground -mx-4 -mb-4 flex items-center gap-2 rounded-b-lg border-t px-4 py-3">
-      <MaterialSymbolsVisibilityOutlineRounded className="size-4 shrink-0" />
-      <Label htmlFor={id} className="flex flex-1 flex-col items-start gap-0.5">
-        Ділитися моєю активністю
-        {error && shared === undefined && (
-          <span role="alert" className="text-destructive text-xs leading-snug">
+    <div className="flex items-center gap-3 border-t px-4 py-3">
+      <Icon aria-hidden className="text-muted-foreground size-5 shrink-0" />
+      <label
+        htmlFor={id}
+        className="flex min-w-0 flex-1 cursor-pointer flex-col gap-0.5"
+      >
+        <span className="text-sm leading-5 font-medium">
+          Ділитися моєю активністю
+        </span>
+        {error && shared === undefined ? (
+          <span role="alert" className="text-destructive text-xs leading-4">
             Не вдалося завантажити налаштування
           </span>
+        ) : (
+          <span className="text-muted-foreground text-xs leading-4">
+            {shared === false
+              ? 'Друзі не бачать, що ви дивитесь і читаєте'
+              : 'Друзі бачать, що ви дивитесь і читаєте'}
+          </span>
         )}
-      </Label>
+      </label>
       <Switch
         id={id}
         checked={shared ?? false}
@@ -237,13 +312,6 @@ const SharingFooter = () => {
     </div>
   );
 };
-
-/** Who is watching right now first, then whoever was here last. */
-const byRecency = (a: FriendActivity, b: FriendActivity) =>
-  Number(isPlaying(b)) - Number(isPlaying(a)) || b.updatedAt - a.updatedAt;
-
-const isPlaying = (activity: FriendActivity) =>
-  activity.contentType === 'anime' && activity.playing;
 
 const FriendsList = () => {
   const { data: activities, error } =
@@ -278,8 +346,9 @@ const FriendsList = () => {
       />
     );
   }
+
   return (
-    <div className="-mx-4 flex flex-col gap-1">
+    <ul className="flex flex-col py-1.5">
       {activities === undefined ? (
         <>
           <SkeletonRow />
@@ -297,7 +366,7 @@ const FriendsList = () => {
             />
           ))
       )}
-    </div>
+    </ul>
   );
 };
 
@@ -346,7 +415,7 @@ const FriendsActivityBlock = () => {
     // phones in the centre column.
     <section className="flex min-w-0 flex-col gap-3">
       <BlockHeader title={BLOCK_TITLE} icon={<HFLogo />} />
-      <div className="surface border-border relative isolate flex min-w-0 flex-col gap-4 overflow-clip rounded-lg border p-4 [:host([data-bleed])_&]:max-md:-mx-4 [:host([data-bleed])_&]:max-md:rounded-none [:host([data-bleed])_&]:max-md:border-x-0">
+      <div className="surface border-border relative isolate flex min-w-0 flex-col overflow-clip rounded-lg border [:host([data-bleed])_&]:max-md:-mx-4 [:host([data-bleed])_&]:max-md:rounded-none [:host([data-bleed])_&]:max-md:border-x-0">
         {mode === 'friends' ? (
           <>
             <FriendsList />
