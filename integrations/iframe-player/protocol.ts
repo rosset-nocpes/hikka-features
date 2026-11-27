@@ -24,6 +24,12 @@ type SimpleCommand = {
 export type IFramePlayerCommandPayload =
   | SimpleCommand
   | { action: 'seek'; value: number }
+  /**
+   * Plays at `value` times the chosen speed, without the player or its
+   * speed setting knowing, to catch up with others a little at a time; 1
+   * ends it.
+   */
+  | { action: 'nudge'; value: number }
   | { action: 'set-volume'; value: number }
   | { action: 'set-speed'; value: number; index: number }
   | { action: 'set-quality'; value: string; index: number }
@@ -36,7 +42,7 @@ type IFramePlayerCommand = IFramePlayerCommandPayload & {
 /** The commands a bridge forwards to its player; the base handles the rest. */
 export type IFramePlayerBridgeCommand = Exclude<
   IFramePlayerCommandPayload,
-  { action: 'toggle-picture-in-picture' }
+  { action: 'toggle-picture-in-picture' | 'nudge' }
 >;
 
 export interface IFramePlayerEvent {
@@ -70,6 +76,12 @@ export const isIFramePlayerCommand = (
     case 'seek':
     case 'set-volume':
       return isFiniteNumber(candidate.value);
+    case 'nudge':
+      return (
+        isFiniteNumber(candidate.value) &&
+        candidate.value >= MIN_NUDGE &&
+        candidate.value <= MAX_NUDGE
+      );
     case 'set-speed':
       return (
         isFiniteNumber(candidate.value) && Number.isInteger(candidate.index)
@@ -83,6 +95,10 @@ export const isIFramePlayerCommand = (
       return false;
   }
 };
+
+/** How far a nudge may move the speed: enough to catch up, not to be heard. */
+const MIN_NUDGE = 0.8;
+const MAX_NUDGE = 1.2;
 
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value);

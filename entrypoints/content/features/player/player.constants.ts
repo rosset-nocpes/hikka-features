@@ -86,13 +86,48 @@ export const ROOM_HEARTBEAT_MS = 30_000;
 export const ROOM_RECONCILE_MS = 1_000;
 
 /**
- * Seconds a playing player may drift before it is moved. Players report their
- * time a few times a second.
+ * Seconds a playing player may drift before it is moved by seeking, which
+ * stalls it while it loads; less is made up by playing a little faster or
+ * slower (see `NUDGE_DRIFT`).
  */
 export const PLAYING_TOLERANCE = 1.5;
 
 /** The same while paused, when nothing makes it drift. */
-export const PAUSED_TOLERANCE = 0.5;
+export const PAUSED_TOLERANCE = 0.25;
+
+/** Seconds of drift that count as in step: a nudge stops there. */
+export const SYNCED_DRIFT = 0.04;
+
+/** Seconds of drift past which a playing player is nudged. */
+export const NUDGE_DRIFT = 0.12;
+
+/**
+ * Seconds over which a nudge makes up the drift, so it slows as it closes
+ * in rather than overshooting.
+ */
+export const NUDGE_HORIZON = 5;
+
+/** The most a nudge changes the speed by: too little to be heard. */
+export const MAX_NUDGE = 0.08;
+
+/** How often a nudge is sent again, in case the player dropped it. */
+export const NUDGE_RESEND_MS = 5_000;
+
+/**
+ * Players report their time a few times a second, so between reports it is
+ * worked out from the last one; never further than this, in seconds, as a
+ * player that stopped reporting has likely stalled.
+ */
+export const MAX_TIME_EXTRAPOLATION = 0.6;
+
+/** After a seek, the player's reports take this long to show it. */
+export const SEEK_SETTLE_MS = 1_000;
+
+/**
+ * Seconds a seek aims ahead of the room, learnt from where the last ones
+ * landed: the player stalls while it loads the new spot.
+ */
+export const MAX_SEEK_LEAD = 3;
 
 /**
  * Pause after moving the player, doubled while it keeps falling behind, so a

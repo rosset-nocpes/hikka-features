@@ -12,6 +12,8 @@ export interface IFramePlayerBridgeClass {
 export abstract class IFramePlayerBridge {
   private cleanups: (() => void)[] = [];
   private started = false;
+  /** The speed chosen, and the one played at while nudged off it. */
+  private nudge?: { base: number; rate: number };
 
   constructor(protected readonly video: HTMLVideoElement) {}
 
@@ -31,6 +33,23 @@ export abstract class IFramePlayerBridge {
       this.postEvent('pip', false);
     });
     this.handleNextTrack();
+    // Nudged speeds stay between the bridge and the video: the player would
+    // show them, and may save them as the user's choice. At the window, in
+    // capture, this runs before any listener on the video.
+    this.listen(
+      window,
+      'ratechange',
+      (event) => {
+        if (!this.nudge || event.target !== this.video) return;
+        if (Math.abs(this.video.playbackRate - this.nudge.rate) < 1e-3) {
+          event.stopImmediatePropagation();
+        } else {
+          // Changed by someone else, e.g. the speed picked: no longer nudged.
+          this.nudge = undefined;
+        }
+      },
+      { capture: true },
+    );
 
     this.onStart();
   }
@@ -87,9 +106,28 @@ export abstract class IFramePlayerBridge {
       this.togglePictureInPicture();
       return;
     }
+    if (message.action === 'nudge') {
+      this.setNudge(message.value);
+      return;
+    }
 
     this.handleCommand(message);
   };
+
+  private setNudge(factor: number) {
+    if (factor === 1) {
+      if (!this.nudge) return;
+      const { base } = this.nudge;
+      this.nudge = undefined;
+      // Seen by the player: the speed it knows, back.
+      this.video.playbackRate = base;
+      return;
+    }
+    const base = this.nudge?.base ?? this.video.playbackRate;
+    const rate = Math.round(base * factor * 1000) / 1000;
+    this.nudge = { base, rate };
+    this.video.playbackRate = rate;
+  }
 
   private togglePictureInPicture() {
     if (document.pictureInPictureElement === this.video) {

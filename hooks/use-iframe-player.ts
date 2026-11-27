@@ -19,6 +19,8 @@ interface IFramePlayerState {
   qualities: string[];
   currentQuality: string;
   currentTime: number;
+  /** When the player reported `currentTime`, by `Date.now()`. */
+  timeAt: number;
   currentSpeed: number;
   currentSubtitle: string;
   subtitles: string[];
@@ -113,6 +115,7 @@ const initialPlayback: Omit<IFramePlayerState, 'speedOptions'> = {
   qualities: [],
   currentQuality: '',
   currentTime: 0,
+  timeAt: 0,
   currentSpeed: 1,
   currentSubtitle: '',
   subtitles: [],
@@ -262,7 +265,7 @@ const PLAYER_EVENTS: Record<string, (event: IFramePlayerEvent) => void> = {
     set((state) => ({ endedCount: state.endedCount + 1, isPlaying: false })),
   nexttrack: () => nextTrackListener?.(),
   duration: ({ data }) => set({ duration: Number(data) }),
-  time: ({ data }) => set({ currentTime: Number(data) }),
+  time: ({ data }) => set({ currentTime: Number(data), timeAt: Date.now() }),
   mute: () => set({ isMuted: true }),
   unmute: () => set({ isMuted: false }),
   volume: ({ data, answer }) => set({ volume: Number(data ?? answer) }),

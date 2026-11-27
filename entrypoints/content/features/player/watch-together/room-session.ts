@@ -33,6 +33,14 @@ import {
   ROOM_RECONCILE_MS,
   PLAYING_TOLERANCE,
   PAUSED_TOLERANCE,
+  SYNCED_DRIFT,
+  NUDGE_DRIFT,
+  NUDGE_HORIZON,
+  MAX_NUDGE,
+  NUDGE_RESEND_MS,
+  MAX_TIME_EXTRAPOLATION,
+  SEEK_SETTLE_MS,
+  MAX_SEEK_LEAD,
   SEEK_COOLDOWN_MS,
   MAX_SEEK_COOLDOWN_MS,
   COMMAND_RETRY_MS,
@@ -77,6 +85,9 @@ interface RoomStore {
  */
 const MEMBER_FLAGS = { followsAnime: true, votes: true } as const;
 
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(Math.max(value, min), max);
+
 const isAtEnd = (position: number, margin = END_MARGIN) => {
   const { duration } = useIFramePlayer.getState();
   return duration > 0 && position >= duration - margin;
@@ -97,12 +108,22 @@ class ServerClock {
     ];
   }
 
-  /** Server time minus local time. */
-  get offset() {
+  private get best() {
     return this.samples.reduce(
       (best, sample) => (sample.rtt < best.rtt ? sample : best),
       { rtt: Infinity, offset: 0 },
-    ).offset;
+    );
+  }
+
+  /** Server time minus local time. */
+  get offset() {
+    return this.best.offset;
+  }
+
+  /** How long a call takes there and back, at best, in milliseconds. */
+  get rtt() {
+    const { rtt } = this.best;
+    return Number.isFinite(rtt) ? rtt : 0;
   }
 }
 
@@ -142,6 +163,13 @@ export class RoomSession {
   private playAttempts = 0;
   /** A blocked player was tried again once the page counted as used. */
   private retriedActivated = false;
+  /** The speed the player is nudged to, times the room's (1: none). */
+  private nudge = 1;
+  private nudgedAt = 0;
+  /** Seconds seeks aim ahead of the room, for the player to load. */
+  private seekLead = 0;
+  /** A seek while the room plays, to learn the lead from once it plays. */
+  private measureLead = false;
   /** Proposals the user didn't ask for, which fail without a word. */
   private readonly quiet = new WeakSet<WatchRoomAction>();
 
@@ -209,6 +237,7 @@ export class RoomSession {
     if (this.closed) return;
     this.closed = true;
     this.cleanups.splice(0).forEach((cleanup) => cleanup());
+    this.setNudge(1);
 
     const { client, release } = this;
     if (!client || !release) return;
@@ -340,6 +369,45 @@ export class RoomSession {
     this.seekCooldown = SEEK_COOLDOWN_MS;
   }
 
+  /** Where the player is now: its last report, moved on by the time since. */
+  private localPosition(now = Date.now()) {
+    const { currentTime, timeAt, isPlaying, isBuffering, currentSpeed } =
+      useIFramePlayer.getState();
+    const reported = finite(currentTime);
+    if (!isPlaying || isBuffering || !timeAt) return reported;
+    const elapsed = clamp((now - timeAt) / 1_000, 0, MAX_TIME_EXTRAPOLATION);
+    return reported + elapsed * (finite(currentSpeed) || 1) * this.nudge;
+  }
+
+  /**
+   * Plays the player at `factor` times its speed, to catch up with the
+   * room; 1 plays it at its speed again.
+   */
+  private setNudge(factor: number, now = Date.now()) {
+    if (
+      factor === this.nudge &&
+      (factor === 1 || now - this.nudgedAt < NUDGE_RESEND_MS)
+    ) {
+      return;
+    }
+    this.nudge = factor;
+    this.nudgedAt = now;
+    sendIFramePlayerCommand({ action: 'nudge', value: factor });
+  }
+
+  /**
+   * Makes up a drift too small to seek over by playing a little slower or
+   * faster, which nobody notices, unlike the stall a seek makes.
+   */
+  private steer(drift: number, now: number) {
+    const size = Math.abs(drift);
+    if (size <= SYNCED_DRIFT || (this.nudge === 1 && size <= NUDGE_DRIFT)) {
+      return this.setNudge(1, now);
+    }
+    const factor = 1 - clamp(drift / NUDGE_HORIZON, -MAX_NUDGE, MAX_NUDGE);
+    this.setNudge(Math.round(factor * 100) / 100, now);
+  }
+
   /** Where the room is now, extrapolated from its last change. */
   private positionOf(room: WatchRoom) {
     if (!room.playing) return room.position;
@@ -374,6 +442,8 @@ export class RoomSession {
       // followed at once.
       this.lastToggleAt = this.lastRateAt = this.lastSeekAt = 0;
       this.seekCooldown = SEEK_COOLDOWN_MS;
+      // Where a seek lands then says nothing about the next.
+      this.measureLead = false;
       // Their play or pause flashes like the user's own would.
       if (previous.playing !== room.playing) {
         dispatchPlayerOverlayAction(usePlayer.getState().overlay, {
@@ -388,8 +458,12 @@ export class RoomSession {
     const { room } = this.store.getState();
     if (!room) return;
 
-    const position = finite(useIFramePlayer.getState().currentTime);
     const now = Date.now();
+    const position = this.localPosition(now);
+    // The room dates a change by when it arrives; a playing player is on
+    // by then.
+    const speed = finite(useIFramePlayer.getState().currentSpeed) || room.rate;
+    const arriving = position + (this.clock.rtt / 2 / 1_000) * speed;
     // The player is about to report this change too.
     this.quietUntil = now + COMMAND_RETRY_MS;
     switch (intent.type) {
@@ -404,7 +478,7 @@ export class RoomSession {
         // Players start over when played at the end.
         return this.send({
           type: 'play',
-          position: isAtEnd(position) ? 0 : position,
+          position: isAtEnd(position) ? 0 : arriving,
         });
       case 'pause':
         this.lastToggleAt = now;
@@ -414,7 +488,13 @@ export class RoomSession {
         return this.send({ type: 'seek', position: finite(intent.position) });
       case 'rate':
         this.lastRateAt = now;
-        return this.send({ type: 'rate', position, rate: intent.rate });
+        // Picking a speed ends the nudge on the player.
+        this.nudge = 1;
+        return this.send({
+          type: 'rate',
+          position: useIFramePlayer.getState().isPlaying ? arriving : position,
+          rate: intent.rate,
+        });
     }
   };
 
@@ -434,7 +514,12 @@ export class RoomSession {
       state.adInProgress !== previous.adInProgress
     ) {
       this.quietUntil = now + COMMAND_RETRY_MS;
-      if (!state.isReady) this.playedSinceReady = false;
+      if (!state.isReady) {
+        this.playedSinceReady = false;
+        // A new episode's player isn't nudged.
+        this.nudge = 1;
+        this.measureLead = false;
+      }
     }
     if (state.isPlaying === previous.isPlaying) return;
 
@@ -747,19 +832,48 @@ export class RoomSession {
     }
 
     const now = Date.now();
-    const position = finite(iframe.currentTime);
+    const position = this.localPosition(now);
     const target = this.positionOf(room);
-    const expected = isAtEnd(target)
-      ? Math.max(0, iframe.duration - END_MARGIN)
-      : target;
-    const drift = Math.abs(position - expected);
-    if (drift <= (room.playing ? PLAYING_TOLERANCE : PAUSED_TOLERANCE)) {
+    const atEnd = isAtEnd(target);
+    const expected = atEnd ? Math.max(0, iframe.duration - END_MARGIN) : target;
+    // Ahead of the room when positive.
+    const drift = position - expected;
+    // Playing along with the room, its reports up to date.
+    const running =
+      room.playing &&
+      iframe.isPlaying &&
+      !iframe.isBuffering &&
+      !atEnd &&
+      now - this.lastSeekAt >= SEEK_SETTLE_MS;
+    if (running && this.measureLead) {
+      // Where the last seek landed says how far ahead the next should aim.
+      this.measureLead = false;
+      this.seekLead = clamp(this.seekLead - drift / 2, 0, MAX_SEEK_LEAD);
+    }
+
+    if (room.playing && iframe.isPlaying && iframe.isBuffering) {
+      // Loading: moving it now would only make it load again.
+    } else if (
+      Math.abs(drift) <= (room.playing ? PLAYING_TOLERANCE : PAUSED_TOLERANCE)
+    ) {
       this.seekCooldown = SEEK_COOLDOWN_MS;
+      if (running) this.steer(drift, now);
+      else this.setNudge(1, now);
     } else if (now - this.lastSeekAt >= this.seekCooldown) {
       this.lastSeekAt = now;
       this.quietUntil = now + COMMAND_RETRY_MS;
       this.seekCooldown = Math.min(this.seekCooldown * 2, MAX_SEEK_COOLDOWN_MS);
-      sendIFramePlayerCommand({ action: 'seek', value: expected });
+      this.setNudge(1, now);
+      // A player that plays stalls while it loads the new spot.
+      const lead = room.playing && !atEnd ? this.seekLead * room.rate : 0;
+      this.measureLead = room.playing && !atEnd;
+      sendIFramePlayerCommand({
+        action: 'seek',
+        value:
+          iframe.duration > 0
+            ? Math.min(expected + lead, iframe.duration - END_MARGIN)
+            : expected + lead,
+      });
     }
 
     const rateIndex = iframe.speedOptions.indexOf(room.rate);
@@ -769,6 +883,8 @@ export class RoomSession {
       now - this.lastRateAt >= COMMAND_RETRY_MS
     ) {
       this.lastRateAt = now;
+      // A new speed ends the nudge on the player.
+      this.nudge = 1;
       sendIFramePlayerCommand({
         action: 'set-speed',
         value: room.rate,
