@@ -1,4 +1,11 @@
 import { Tooltip as TooltipPrimitive } from '@base-ui/react/tooltip';
+import {
+  type ReactElement,
+  type ReactNode,
+  type Ref,
+  useRef,
+  useState,
+} from 'react';
 
 import { resolvePositionMethod } from '@/utils/position-method';
 
@@ -81,4 +88,85 @@ function TooltipContent({
   );
 }
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };
+/**
+ * The element a shadow root UI renders into, which carries its styles and
+ * theme, for an element inside it; none on a page of its own (the popup).
+ */
+function shadowContainer(element: Element | null) {
+  let top = element;
+  while (top?.parentElement) top = top.parentElement;
+  return top?.parentNode instanceof ShadowRoot
+    ? (top as HTMLElement)
+    : undefined;
+}
+
+type HintProps = Omit<
+  TooltipPrimitive.Trigger.Props,
+  'render' | 'children' | 'ref'
+> &
+  Pick<
+    TooltipPrimitive.Positioner.Props,
+    'side' | 'sideOffset' | 'align' | 'collisionPadding'
+  > & {
+    /** Nothing shows without one. */
+    label?: ReactNode;
+    /** Where the hint goes; by default the shadow root its trigger is in. */
+    container?: HTMLElement | null;
+    /** E.g. hikka.io's own look, for a trigger in its page. */
+    popupClassName?: string;
+    ref?: Ref<HTMLElement>;
+    children: ReactElement;
+  };
+
+/**
+ * A hover hint for `children`, in place of a native `title`. It names
+ * nothing for screen readers, so icon-only triggers keep an `aria-label`.
+ * Other props go to the trigger, so it can be another popup's `render`.
+ */
+function Hint({
+  label,
+  container,
+  side,
+  sideOffset,
+  align,
+  collisionPadding = 8,
+  popupClassName,
+  ref,
+  children,
+  ...props
+}: HintProps) {
+  const trigger = useRef<HTMLElement | null>(null);
+  const [found, setFound] = useState<HTMLElement>();
+  return (
+    <Tooltip
+      disabled={!label}
+      onOpenChange={(open) => {
+        if (open && !container) setFound(shadowContainer(trigger.current));
+      }}
+    >
+      <TooltipTrigger
+        {...props}
+        ref={(element: HTMLElement | null) => {
+          trigger.current = element;
+          if (typeof ref === 'function') ref(element);
+          else if (ref) ref.current = element;
+        }}
+        render={children}
+      />
+      {label && (
+        <TooltipContent
+          container={container ?? found}
+          side={side}
+          sideOffset={sideOffset}
+          align={align}
+          collisionPadding={collisionPadding}
+          className={popupClassName}
+        >
+          {label}
+        </TooltipContent>
+      )}
+    </Tooltip>
+  );
+}
+
+export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider, Hint };

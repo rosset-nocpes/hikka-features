@@ -6,6 +6,7 @@ import type { HikkaContent } from '@/hooks/use-hikka';
 import FeatureCard from '@/components/feature-card';
 import { buttonVariants } from '@/components/ui/button';
 import { ButtonGroup } from '@/components/ui/button-group';
+import { Hint } from '@/components/ui/tooltip';
 import {
   ANIDB_URL,
   ANILIST_URL,
@@ -258,23 +259,23 @@ const PageSources = () => {
           {/* Rows fill up like hikka.io's profile links, each one flush. */}
           <div className="flex flex-wrap gap-2">
             {links.map((link) => (
-              <a
-                key={link.source}
-                href={link.href}
-                {...NEW_TAB}
-                title={linkTitle(link)}
-                className={cn(
-                  buttonVariants({ variant: 'outline', size: 'md' }),
-                  'focus-visible:ring-ring/50 min-w-0 flex-auto gap-2 focus-visible:ring-[3px]',
-                )}
-              >
-                <img
-                  alt=""
-                  src={iconOf(link.source)}
-                  className="size-5 rounded-sm object-contain"
-                />
-                <span className="truncate">{SOURCES[link.source].title}</span>
-              </a>
+              <Hint key={link.source} label={linkTitle(link)}>
+                <a
+                  href={link.href}
+                  {...NEW_TAB}
+                  className={cn(
+                    buttonVariants({ variant: 'outline', size: 'md' }),
+                    'focus-visible:ring-ring/50 min-w-0 flex-auto gap-2 focus-visible:ring-[3px]',
+                  )}
+                >
+                  <img
+                    alt=""
+                    src={iconOf(link.source)}
+                    className="size-5 rounded-sm object-contain"
+                  />
+                  <span className="truncate">{SOURCES[link.source].title}</span>
+                </a>
+              </Hint>
             ))}
           </div>
         </FeatureCard>
@@ -301,24 +302,24 @@ const ModalSources = ({
         <motion.div {...reveal()}>
           <ButtonGroup>
             {links.map((link) => (
-              <a
-                key={link.source}
-                data-slot="button"
-                href={link.href}
-                {...NEW_TAB}
-                aria-label={SOURCES[link.source].title}
-                title={linkTitle(link)}
-                className={buttonVariants({
-                  variant: 'outline',
-                  size: 'icon-md',
-                })}
-              >
-                <img
-                  alt=""
-                  src={iconOf(link.source)}
-                  className="size-5 object-contain"
-                />
-              </a>
+              <Hint key={link.source} label={linkTitle(link)}>
+                <a
+                  data-slot="button"
+                  href={link.href}
+                  {...NEW_TAB}
+                  aria-label={SOURCES[link.source].title}
+                  className={buttonVariants({
+                    variant: 'outline',
+                    size: 'icon-md',
+                  })}
+                >
+                  <img
+                    alt=""
+                    src={iconOf(link.source)}
+                    className="size-5 object-contain"
+                  />
+                </a>
+              </Hint>
             ))}
           </ButtonGroup>
         </motion.div>

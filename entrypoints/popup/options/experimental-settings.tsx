@@ -4,6 +4,7 @@ import MaterialSymbolsPetsRounded from '~icons/material-symbols/pets-rounded';
 
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { Hint } from '@/components/ui/tooltip';
 import { resetReaderPreferences } from '@/entrypoints/content/features/reader/reader.preferences';
 import { useCopy } from '@/hooks/use-copy';
 import { version } from '@/package.json';
@@ -77,9 +78,9 @@ const dumpStorage = async () => {
 /** A long value on one line, cut short. */
 const Value = ({ children }: { children: string }) => (
   <RowDescription>
-    <span className="block truncate" title={children}>
-      {children}
-    </span>
+    <Hint label={children}>
+      <span className="block truncate">{children}</span>
+    </Hint>
   </RowDescription>
 );
 

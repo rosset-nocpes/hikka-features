@@ -27,6 +27,7 @@ import MdiTelegram from '~icons/mdi/telegram';
 import ExtensionLogo from '@/assets/icon.png';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Hint } from '@/components/ui/tooltip';
 import { GITHUB_REPO_URL, TELEGRAM_CHANNEL_URL } from '@/constants/links';
 import { resetReaderPreferences } from '@/entrypoints/content/features/reader/reader.preferences';
 import { useActivitySharing } from '@/hooks/use-activity-sharing';
@@ -369,39 +370,42 @@ function HomeHeader() {
       <span className="flex items-center gap-0.5">
         <AnimatePresence initial={false}>
           {enabled && (
-            <motion.button
-              type="button"
-              aria-label="Експериментальні функції"
-              title="Експериментальні функції"
-              onClick={() => navigate('experimental')}
-              initial={{ opacity: 0, scale: 0.25, filter: 'blur(4px)' }}
-              animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-              exit={{ opacity: 0, scale: 0.25, filter: 'blur(4px)' }}
-              transition={{ type: 'spring', duration: 0.3, bounce: 0 }}
-              className={LINK_CLASS}
-            >
-              <MaterialSymbolsExperiment />
-            </motion.button>
+            <Hint label="Експериментальні функції">
+              <motion.button
+                type="button"
+                aria-label="Експериментальні функції"
+                onClick={() => navigate('experimental')}
+                initial={{ opacity: 0, scale: 0.25, filter: 'blur(4px)' }}
+                animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+                exit={{ opacity: 0, scale: 0.25, filter: 'blur(4px)' }}
+                transition={{ type: 'spring', duration: 0.3, bounce: 0 }}
+                className={LINK_CLASS}
+              >
+                <MaterialSymbolsExperiment />
+              </motion.button>
+            </Hint>
           )}
         </AnimatePresence>
-        <a
-          href={GITHUB_REPO_URL}
-          {...NEW_TAB}
-          aria-label="GitHub"
-          title="GitHub"
-          className={LINK_CLASS}
-        >
-          <MdiGithub />
-        </a>
-        <a
-          href={TELEGRAM_CHANNEL_URL}
-          {...NEW_TAB}
-          aria-label="Telegram-канал"
-          title="Telegram-канал"
-          className={LINK_CLASS}
-        >
-          <MdiTelegram />
-        </a>
+        <Hint label="GitHub">
+          <a
+            href={GITHUB_REPO_URL}
+            {...NEW_TAB}
+            aria-label="GitHub"
+            className={LINK_CLASS}
+          >
+            <MdiGithub />
+          </a>
+        </Hint>
+        <Hint label="Telegram-канал">
+          <a
+            href={TELEGRAM_CHANNEL_URL}
+            {...NEW_TAB}
+            aria-label="Telegram-канал"
+            className={LINK_CLASS}
+          >
+            <MdiTelegram />
+          </a>
+        </Hint>
       </span>
     </>
   );

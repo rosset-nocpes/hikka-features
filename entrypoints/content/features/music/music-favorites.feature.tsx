@@ -12,6 +12,7 @@ import MaterialSymbolsPlayArrowRounded from '~icons/material-symbols/play-arrow-
 import { FadeImage } from '@/components/fade-image';
 import { Poster } from '@/components/hikka/poster';
 import EmptyState from '@/components/ui/empty-state';
+import { Hint } from '@/components/ui/tooltip';
 import { fetchHikka } from '@/hooks/use-hikka';
 import { onHikkaLinkClick } from '@/utils/hikka-router';
 import { hikkaViewerQuery } from '@/utils/hikka-viewer';
@@ -411,26 +412,23 @@ const SongCard: FC<CardProps> = ({ song, track, onPlay }) => {
           className="absolute top-1.5 right-1.5 bg-black/40 text-white opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100 hover:bg-black/60 hover:text-white focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
         />
       </Poster>
-      <a
-        href={href}
-        onClick={onHikkaLinkClick}
-        title={song.animeTitle}
-        className="grid min-w-0"
-      >
-        <span
-          className={cn(
-            'truncate text-sm leading-5 font-medium',
-            isCurrent && 'text-primary',
-          )}
-        >
-          {song.title}
-        </span>
-        <span className="text-muted-foreground mt-1 truncate text-xs leading-tight font-medium">
-          {[`${OST_LABEL[song.ostType]} ${song.index}`, song.animeTitle]
-            .filter(Boolean)
-            .join(' • ')}
-        </span>
-      </a>
+      <Hint label={song.animeTitle}>
+        <a href={href} onClick={onHikkaLinkClick} className="grid min-w-0">
+          <span
+            className={cn(
+              'truncate text-sm leading-5 font-medium',
+              isCurrent && 'text-primary',
+            )}
+          >
+            {song.title}
+          </span>
+          <span className="text-muted-foreground mt-1 truncate text-xs leading-tight font-medium">
+            {[`${OST_LABEL[song.ostType]} ${song.index}`, song.animeTitle]
+              .filter(Boolean)
+              .join(' • ')}
+          </span>
+        </a>
+      </Hint>
     </div>
   );
 };
@@ -449,14 +447,15 @@ const Unplayable: FC<{ song: FavoriteSong }> = ({ song }) => {
           className="size-10 rounded-full bg-black/40 text-white backdrop-blur-sm hover:bg-black/60 hover:text-white"
         />
       ) : (
-        <span
-          role="img"
-          aria-label={hint}
-          title={hint}
-          className="flex size-10 items-center justify-center rounded-full bg-black/40 text-white/80 backdrop-blur-sm"
-        >
-          <MaterialSymbolsMusicOffRounded className="size-5" />
-        </span>
+        <Hint label={hint}>
+          <span
+            role="img"
+            aria-label={hint}
+            className="flex size-10 items-center justify-center rounded-full bg-black/40 text-white/80 backdrop-blur-sm"
+          >
+            <MaterialSymbolsMusicOffRounded className="size-5" />
+          </span>
+        </Hint>
       )}
     </div>
   );

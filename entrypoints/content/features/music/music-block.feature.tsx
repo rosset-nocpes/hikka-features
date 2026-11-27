@@ -13,6 +13,7 @@ import type { HikkaOst } from '@/hooks/use-hikka';
 import { FadeImage } from '@/components/fade-image';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { Hint } from '@/components/ui/tooltip';
 import { onHikkaLinkClick } from '@/utils/hikka-router';
 import { plural } from '@/utils/plural';
 
@@ -279,111 +280,112 @@ const TrackRow: FC<RowProps> = ({ ost, song, release, queue }) => {
       data-unavailable={unavailable}
       className="group/row hover:bg-secondary/40 data-[current=true]:bg-secondary/40 flex min-w-0 items-center gap-1 rounded-md pr-1 transition-colors"
     >
-      <button
-        type="button"
-        disabled={!track}
-        aria-label={
-          track
-            ? playing
-              ? `Призупинити «${ost.title}»`
-              : `Слухати «${ost.title}»`
-            : undefined
-        }
-        title={unavailable ? 'AnimeThemes не має цього треку' : undefined}
-        className="group/play focus-visible:ring-ring flex min-w-0 flex-1 items-center gap-3 rounded-md p-2 text-left outline-none focus-visible:ring-2 disabled:cursor-default"
-        onClick={play}
-      >
-        <span
-          className={cn(
-            'relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-md',
-            cover
-              ? 'bg-muted text-white'
-              : cn(
-                  'bg-secondary/60 text-muted-foreground',
-                  isCurrent && 'bg-primary/15 text-primary',
-                ),
-          )}
+      <Hint label={unavailable ? 'AnimeThemes не має цього треку' : undefined}>
+        <button
+          type="button"
+          disabled={!track}
+          aria-label={
+            track
+              ? playing
+                ? `Призупинити «${ost.title}»`
+                : `Слухати «${ost.title}»`
+              : undefined
+          }
+          className="group/play focus-visible:ring-ring flex min-w-0 flex-1 items-center gap-3 rounded-md p-2 text-left outline-none focus-visible:ring-2 disabled:cursor-default"
+          onClick={play}
         >
-          {cover && (
-            <>
-              {/* Dimmed around it: its own opacity is the fade's. */}
-              <span
-                className={cn(
-                  'absolute inset-0',
-                  unavailable && 'opacity-50 grayscale',
-                )}
-              >
-                <FadeImage src={cover} />
-              </span>
-              {/* Under the icons, which a cover alone would swallow. */}
-              <span
-                className={cn(
-                  'absolute inset-0 bg-black/45 opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-visible/play:opacity-100',
-                  (loading || isCurrent) && 'opacity-100',
-                  unavailable &&
-                    'group-hover/row:opacity-0 group-focus-visible/play:opacity-0',
-                )}
-              />
-            </>
-          )}
-          <span className="relative flex">
-            {loading ? (
-              <Spinner className="size-4" />
-            ) : !track ? (
-              !cover && (
-                <MaterialSymbolsMusicOffRounded className="size-5 opacity-60" />
-              )
-            ) : playing ? (
+          <span
+            className={cn(
+              'relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-md',
+              cover
+                ? 'bg-muted text-white'
+                : cn(
+                    'bg-secondary/60 text-muted-foreground',
+                    isCurrent && 'bg-primary/15 text-primary',
+                  ),
+            )}
+          >
+            {cover && (
               <>
-                <Equalizer
-                  playing
-                  className="group-hover/row:hidden group-focus-visible/play:hidden"
-                />
-                <MaterialSymbolsPauseRounded className="hidden size-6 group-hover/row:block group-focus-visible/play:block" />
-              </>
-            ) : (
-              <>
-                {isCurrent ? (
-                  <Equalizer
-                    playing={false}
-                    className="group-hover/row:hidden group-focus-visible/play:hidden"
-                  />
-                ) : (
-                  !cover && (
-                    <MaterialSymbolsMusicNoteRounded className="size-5 group-hover/row:hidden group-focus-visible/play:hidden" />
-                  )
-                )}
-                <MaterialSymbolsPlayArrowRounded
+                {/* Dimmed around it: its own opacity is the fade's. */}
+                <span
                   className={cn(
-                    'hidden size-6 group-hover/row:block group-focus-visible/play:block',
-                    !cover && 'text-foreground',
+                    'absolute inset-0',
+                    unavailable && 'opacity-50 grayscale',
+                  )}
+                >
+                  <FadeImage src={cover} />
+                </span>
+                {/* Under the icons, which a cover alone would swallow. */}
+                <span
+                  className={cn(
+                    'absolute inset-0 bg-black/45 opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-visible/play:opacity-100',
+                    (loading || isCurrent) && 'opacity-100',
+                    unavailable &&
+                      'group-hover/row:opacity-0 group-focus-visible/play:opacity-0',
                   )}
                 />
               </>
             )}
+            <span className="relative flex">
+              {loading ? (
+                <Spinner className="size-4" />
+              ) : !track ? (
+                !cover && (
+                  <MaterialSymbolsMusicOffRounded className="size-5 opacity-60" />
+                )
+              ) : playing ? (
+                <>
+                  <Equalizer
+                    playing
+                    className="group-hover/row:hidden group-focus-visible/play:hidden"
+                  />
+                  <MaterialSymbolsPauseRounded className="hidden size-6 group-hover/row:block group-focus-visible/play:block" />
+                </>
+              ) : (
+                <>
+                  {isCurrent ? (
+                    <Equalizer
+                      playing={false}
+                      className="group-hover/row:hidden group-focus-visible/play:hidden"
+                    />
+                  ) : (
+                    !cover && (
+                      <MaterialSymbolsMusicNoteRounded className="size-5 group-hover/row:hidden group-focus-visible/play:hidden" />
+                    )
+                  )}
+                  <MaterialSymbolsPlayArrowRounded
+                    className={cn(
+                      'hidden size-6 group-hover/row:block group-focus-visible/play:block',
+                      !cover && 'text-foreground',
+                    )}
+                  />
+                </>
+              )}
+            </span>
           </span>
-        </span>
-        <span className="grid min-w-0 flex-1 gap-0.5">
-          <span
-            className={cn(
-              'truncate text-sm leading-5 font-medium',
-              isCurrent && 'text-primary',
-              unavailable && 'text-muted-foreground',
-            )}
-          >
-            {ost.title}
+          <span className="grid min-w-0 flex-1 gap-0.5">
+            <span
+              className={cn(
+                'truncate text-sm leading-5 font-medium',
+                isCurrent && 'text-primary',
+                unavailable && 'text-muted-foreground',
+              )}
+            >
+              {ost.title}
+            </span>
+            <span className="text-muted-foreground truncate text-xs leading-4">
+              {[
+                label,
+                performerOf(song ?? ost, release),
+                release?.released?.slice(0, 4),
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            </span>
           </span>
-          <span className="text-muted-foreground truncate text-xs leading-4">
-            {[
-              label,
-              performerOf(song ?? ost, release),
-              release?.released?.slice(0, 4),
-            ]
-              .filter(Boolean)
-              .join(' · ')}
-          </span>
-        </span>
-      </button>
+        </button>
+      </Hint>
       <SongLink
         spotify={ost.spotify}
         release={release}

@@ -26,6 +26,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Spinner } from '@/components/ui/spinner';
+import { Hint } from '@/components/ui/tooltip';
 import {
   FLOATING_DURATION_MS,
   FLOATING_EASE,
@@ -195,15 +196,16 @@ const MusicCard = () => {
           <FadeImage src={art} loading="eager" />
         </a>
         <div className="grid min-w-0 flex-1 leading-tight">
-          <a
-            href={href}
-            onClick={onHikkaLinkClick}
-            title={track?.animeTitle}
-            draggable={false}
-            className="truncate text-sm font-medium hover:underline"
-          >
-            {track?.title}
-          </a>
+          <Hint label={track?.animeTitle}>
+            <a
+              href={href}
+              onClick={onHikkaLinkClick}
+              draggable={false}
+              className="truncate text-sm font-medium hover:underline"
+            >
+              {track?.title}
+            </a>
+          </Hint>
           <span
             className={cn(
               'text-muted-foreground truncate text-xs',

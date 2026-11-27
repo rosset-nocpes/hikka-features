@@ -14,6 +14,7 @@ import MaterialSymbolsSubtitlesRounded from '~icons/material-symbols/subtitles-r
 import type { ReleaseNotification } from '@/utils/convex-api';
 
 import { onDrawerLinkClick } from '@/components/hikka/nav-links';
+import { Hint } from '@/components/ui/tooltip';
 import { formatTimestamp } from '@/utils/time';
 
 import { putBefore, putLast } from '../../core/placement';
@@ -25,6 +26,13 @@ import {
   sameFeed,
 } from './feed-layout';
 import { useReleaseNotifications } from './use-release-notifications';
+
+/**
+ * hikka.io's own tooltip motion: the feed is in its page, out of reach of the
+ * extension's stylesheet, so only classes hikka.io uses itself take effect.
+ */
+const SITE_TOOLTIP =
+  'transition-[opacity,scale,translate] duration-150 data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0 data-[side=top]:data-starting-style:translate-y-1 data-[side=top]:data-ending-style:translate-y-1 data-[side=bottom]:data-starting-style:-translate-y-1 data-[side=bottom]:data-ending-style:-translate-y-1';
 
 /** Class names copied from hikka.io's notification menu, so its CSS has them. */
 const SECTION_LABEL =
@@ -199,13 +207,14 @@ function ReleaseItem({
             </div>
           </blockquote>
         )}
-        <time
-          dateTime={time.iso}
-          title={time.full}
-          className="text-muted-foreground shrink-0 text-xs opacity-60 group-hover/item:opacity-100"
-        >
-          {time.label}
-        </time>
+        <Hint label={time.full} popupClassName={SITE_TOOLTIP}>
+          <time
+            dateTime={time.iso}
+            className="text-muted-foreground shrink-0 text-xs opacity-60 group-hover/item:opacity-100"
+          >
+            {time.label}
+          </time>
+        </Hint>
       </div>
     </div>
   );

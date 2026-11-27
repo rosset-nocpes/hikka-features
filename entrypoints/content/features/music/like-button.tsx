@@ -6,6 +6,7 @@ import MaterialSymbolsFavoriteRounded from '~icons/material-symbols/favorite-rou
 import { MediaTooltip } from '@/components/media/controls';
 import SwapIcon from '@/components/swap-icon';
 import { Button } from '@/components/ui/button';
+import { Hint } from '@/components/ui/tooltip';
 
 import type { Song } from './animethemes';
 
@@ -29,7 +30,7 @@ interface Props {
   /** Its release, once known, for its performer's full name. */
   release?: Song['release'];
   className?: string;
-  /** A player's tooltip; elsewhere the browser's own. */
+  /** A player's tooltip, rather than the plain one. */
   tooltip?: boolean;
 }
 
@@ -43,7 +44,7 @@ const LikeButton: FC<Props> = ({ song, release, className, tooltip }) => {
       size="icon-sm"
       aria-pressed={liked}
       // A tooltip names it itself; an undefined label would override that.
-      {...(tooltip ? {} : { 'aria-label': label, title: label })}
+      {...(tooltip ? {} : { 'aria-label': label })}
       className={cn('shrink-0', className)}
       onClick={(event) => {
         // Rows and cards under it play on click.
@@ -55,7 +56,11 @@ const LikeButton: FC<Props> = ({ song, release, className, tooltip }) => {
       <LikeIcon liked={liked} />
     </Button>
   );
-  return tooltip ? <MediaTooltip label={label}>{button}</MediaTooltip> : button;
+  return tooltip ? (
+    <MediaTooltip label={label}>{button}</MediaTooltip>
+  ) : (
+    <Hint label={label}>{button}</Hint>
+  );
 };
 
 export default LikeButton;

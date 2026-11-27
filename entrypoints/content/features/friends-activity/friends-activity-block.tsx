@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
+import { Hint } from '@/components/ui/tooltip';
 import { useActivitySharing } from '@/hooks/use-activity-sharing';
 import { useHikkaContent } from '@/hooks/use-hikka';
 import { useLiveQuery } from '@/hooks/use-live-query';
@@ -130,21 +131,23 @@ const Row = ({ activity, now }: { activity: FriendActivity; now: number }) => {
           <span className="shrink-0">
             {!watching ? 'читає' : live ? 'дивиться' : 'на паузі'}
           </span>
-          <time
-            dateTime={time.iso}
-            title={time.full}
-            className="ml-auto shrink-0 pl-2 tabular-nums opacity-60"
-          >
-            {live ? 'зараз' : time.label}
-          </time>
+          <Hint label={time.full}>
+            <time
+              dateTime={time.iso}
+              className="ml-auto shrink-0 pl-2 tabular-nums opacity-60"
+            >
+              {live ? 'зараз' : time.label}
+            </time>
+          </Hint>
         </p>
-        <a
-          href={href}
-          title={title}
-          className="line-clamp-1 text-sm leading-snug font-medium after:absolute after:inset-0"
-        >
-          {isLoading ? <Skeleton className="my-0.5 h-3.5 w-3/4" /> : title}
-        </a>
+        <Hint label={title}>
+          <a
+            href={href}
+            className="line-clamp-1 text-sm leading-snug font-medium after:absolute after:inset-0"
+          >
+            {isLoading ? <Skeleton className="my-0.5 h-3.5 w-3/4" /> : title}
+          </a>
+        </Hint>
         <p className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-xs whitespace-nowrap">
           {activity.contentType === 'anime' ? (
             <Progress
@@ -170,13 +173,12 @@ const Row = ({ activity, now }: { activity: FriendActivity; now: number }) => {
           {room && (
             <>
               <Dot />
-              <span
-                className="flex shrink-0 items-center gap-0.5"
-                title="Дивляться разом"
-              >
-                <MaterialSymbolsGroupOutlineRounded className="size-3.5" />
-                {room.memberCount}
-              </span>
+              <Hint label="Дивляться разом">
+                <span className="flex shrink-0 items-center gap-0.5">
+                  <MaterialSymbolsGroupOutlineRounded className="size-3.5" />
+                  {room.memberCount}
+                </span>
+              </Hint>
             </>
           )}
         </p>

@@ -23,6 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import EmptyState from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Hint } from '@/components/ui/tooltip';
 import VirtualGrid from '@/components/virtual-grid';
 import { NEW_TAB, onHikkaLinkClick, teamPagePath } from '@/utils/hikka-router';
 import { releaseProgress, TRANSLATION_LABELS } from '@/utils/team-releases';
@@ -170,16 +171,17 @@ const ReleaseCard: FC<{ entry: AnimeReleases }> = ({ entry }) => {
             const label = TRANSLATION_LABELS[release.translationType];
             const progress = releaseProgress(release, anime.episodesTotal);
             return (
-              <span
+              <Hint
                 key={release.translationType}
-                title={[label, progress].filter(Boolean).join(' ')}
-                className="inline-flex max-w-full items-center gap-1 rounded-sm bg-black/60 px-1.5 py-0.5 text-xs font-medium text-white backdrop-blur-sm"
+                label={[label, progress].filter(Boolean).join(' ')}
               >
-                <Icon className="size-3.5 shrink-0" />
-                <span className="truncate tabular-nums">
-                  {progress ?? label}
+                <span className="inline-flex max-w-full items-center gap-1 rounded-sm bg-black/60 px-1.5 py-0.5 text-xs font-medium text-white backdrop-blur-sm">
+                  <Icon className="size-3.5 shrink-0" />
+                  <span className="truncate tabular-nums">
+                    {progress ?? label}
+                  </span>
                 </span>
-              </span>
+              </Hint>
             );
           })}
         </div>

@@ -6,6 +6,7 @@ import MdiYoutube from '~icons/mdi/youtube';
 
 import { MediaTooltip } from '@/components/media/controls';
 import { Button } from '@/components/ui/button';
+import { Hint } from '@/components/ui/tooltip';
 import { NEW_TAB } from '@/utils/hikka-router';
 
 import type { SongRelease } from './use-song-releases';
@@ -32,7 +33,7 @@ interface Props {
   spotify?: string | null;
   release?: Pick<SongRelease, 'link' | 'album' | 'released'>;
   className?: string;
-  /** A player's tooltip; elsewhere the browser's own. */
+  /** A player's tooltip, rather than the plain one. */
   tooltip?: boolean;
 }
 
@@ -47,18 +48,15 @@ const SongLink: FC<Props> = ({ spotify, release, className, tooltip }) => {
     !spotify && release?.album
       ? `альбом «${release.album}»${release.released ? `, ${release.released.slice(0, 4)}` : ''}`
       : undefined;
+  const hint = album ? `${label} · ${album}` : label;
   const button = (
     <Button
       variant="ghost"
       size="icon-sm"
       nativeButton={false}
       className={cn('shrink-0', className)}
-      {...(tooltip
-        ? {}
-        : {
-            'aria-label': label,
-            title: album ? `${label} · ${album}` : label,
-          })}
+      // A tooltip names it itself; an undefined label would override that.
+      {...(tooltip ? {} : { 'aria-label': label })}
       render={
         <a
           href={link}
@@ -71,11 +69,9 @@ const SongLink: FC<Props> = ({ spotify, release, className, tooltip }) => {
     </Button>
   );
   return tooltip ? (
-    <MediaTooltip label={album ? `${label} · ${album}` : label}>
-      {button}
-    </MediaTooltip>
+    <MediaTooltip label={hint}>{button}</MediaTooltip>
   ) : (
-    button
+    <Hint label={hint}>{button}</Hint>
   );
 };
 

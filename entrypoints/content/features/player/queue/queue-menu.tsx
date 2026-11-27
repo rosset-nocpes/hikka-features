@@ -29,6 +29,7 @@ import {
 import { Kbd } from '@/components/ui/kbd';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Spinner } from '@/components/ui/spinner';
+import { Hint } from '@/components/ui/tooltip';
 import { plural } from '@/utils/plural';
 
 import { usePlayer } from '../context/player-context';
@@ -240,20 +241,21 @@ const QueueMenu: FC<Props> = ({ data, slug, container }) => {
         setStarting(undefined);
       }}
     >
-      <DropdownMenuTrigger
-        render={
-          <Button
-            variant="ghost"
-            size="md"
-            className="relative w-8 px-0"
-            aria-label={label}
-            title={label}
-          />
-        }
-      >
-        <MaterialSymbolsKeyboardArrowUpRounded className="text-muted-foreground size-5 transition-transform duration-200 group-aria-expanded/button:rotate-180" />
-        <CountBadge count={queuedHere.length} />
-      </DropdownMenuTrigger>
+      <Hint label={label}>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="md"
+              className="relative w-8 px-0"
+              aria-label={label}
+            />
+          }
+        >
+          <MaterialSymbolsKeyboardArrowUpRounded className="text-muted-foreground size-5 transition-transform duration-200 group-aria-expanded/button:rotate-180" />
+          <CountBadge count={queuedHere.length} />
+        </DropdownMenuTrigger>
+      </Hint>
       <DropdownMenuContent
         container={container}
         align="end"
@@ -472,13 +474,14 @@ const QueueMenu: FC<Props> = ({ data, slug, container }) => {
                           </span>
                         )}
                         {position !== undefined && (
-                          <span
-                            aria-hidden
-                            title={`${position + 1}-й у черзі`}
-                            className="text-muted-foreground shrink-0 text-[11px] tabular-nums"
-                          >
-                            #{position + 1}
-                          </span>
+                          <Hint label={`${position + 1}-й у черзі`}>
+                            <span
+                              aria-hidden
+                              className="text-muted-foreground shrink-0 text-[11px] tabular-nums"
+                            >
+                              #{position + 1}
+                            </span>
+                          </Hint>
                         )}
                       </DropdownMenuCheckboxItem>
                     </div>

@@ -33,6 +33,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
+import { Hint } from '@/components/ui/tooltip';
 import { useHikkaContent } from '@/hooks/use-hikka';
 import {
   HANDLE_KEYS_HINT,
@@ -137,20 +138,23 @@ const QueueRow: FC<RowProps> = ({
       )}
     >
       <ContextMenu>
-        <ContextMenuTrigger
-          render={
-            <SidebarMenuButton
-              size="lg"
-              title={`${title}, епізод ${item.episode}${teamName ? ` · ${teamName}` : ''}`}
-              aria-busy={loading || undefined}
-              // The handle covers the left padding, and hovering it is the row's.
-              className="group-hover/menu-item:bg-sidebar-accent py-1 pl-7"
-              onClick={() => queue.play(item)}
-            />
-          }
+        <Hint
+          label={`${title}, епізод ${item.episode}${teamName ? ` · ${teamName}` : ''}`}
         >
-          <EpisodeSummary {...item} loading={loading} />
-        </ContextMenuTrigger>
+          <ContextMenuTrigger
+            render={
+              <SidebarMenuButton
+                size="lg"
+                aria-busy={loading || undefined}
+                // The handle covers the left padding, and hovering it is the row's.
+                className="group-hover/menu-item:bg-sidebar-accent py-1 pl-7"
+                onClick={() => queue.play(item)}
+              />
+            }
+          >
+            <EpisodeSummary {...item} loading={loading} />
+          </ContextMenuTrigger>
+        </Hint>
         <ContextMenuContent container={container}>
           <DropdownMenuItem onClick={() => queue.play(item)}>
             <MaterialSymbolsPlayArrowRounded />
@@ -182,15 +186,16 @@ const QueueRow: FC<RowProps> = ({
       >
         <MaterialSymbolsDragIndicator className="size-4" />
       </button>
-      <SidebarMenuAction
-        showOnHover
-        aria-label={`Прибрати з черги ${name}`}
-        title="Прибрати з черги"
-        className="peer-data-[size=lg]/menu-button:top-3.5"
-        onClick={remove}
-      >
-        <MaterialSymbolsCloseRounded />
-      </SidebarMenuAction>
+      <Hint label="Прибрати з черги">
+        <SidebarMenuAction
+          showOnHover
+          aria-label={`Прибрати з черги ${name}`}
+          className="peer-data-[size=lg]/menu-button:top-3.5"
+          onClick={remove}
+        >
+          <MaterialSymbolsCloseRounded />
+        </SidebarMenuAction>
+      </Hint>
     </Reorder.Item>
   );
 };

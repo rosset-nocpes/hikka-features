@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { Hint } from '@/components/ui/tooltip';
 import { hikkaViewerQuery } from '@/utils/hikka-viewer';
 
 import { BaseFeature } from '../core/base-feature';
@@ -133,9 +134,9 @@ const outline = (hosts: Element[]) => {
 const Row = ({ label, value }: { label: string; value: string }) => (
   <div className="flex justify-between gap-3">
     <span className="text-muted-foreground shrink-0">{label}</span>
-    <span className="truncate font-mono" title={value}>
-      {value}
-    </span>
+    <Hint label={value}>
+      <span className="truncate font-mono">{value}</span>
+    </Hint>
   </div>
 );
 
@@ -251,29 +252,31 @@ const DevInspector = () => {
         )}
       </AnimatePresence>
       <div className="surface-glass border-border flex items-center rounded-lg border p-1">
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label={open ? 'Закрити інспектор' : 'Інспектор розширення'}
-          title="Інспектор розширення"
-          aria-expanded={open}
-          onClick={() => {
-            setOpen(!open);
-            setHovered(undefined);
-          }}
-        >
-          {open ? <X /> : <Bug />}
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Оновити дані розширення"
-          title="Оновити дані розширення"
-          disabled={fetching}
-          onClick={() => void queryClient.invalidateQueries()}
-        >
-          <RefreshCw className={cn(fetching && 'animate-spin')} />
-        </Button>
+        <Hint label={open ? 'Закрити інспектор' : 'Інспектор розширення'}>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={open ? 'Закрити інспектор' : 'Інспектор розширення'}
+            aria-expanded={open}
+            onClick={() => {
+              setOpen(!open);
+              setHovered(undefined);
+            }}
+          >
+            {open ? <X /> : <Bug />}
+          </Button>
+        </Hint>
+        <Hint label="Оновити дані розширення">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Оновити дані розширення"
+            disabled={fetching}
+            onClick={() => void queryClient.invalidateQueries()}
+          >
+            <RefreshCw className={cn(fetching && 'animate-spin')} />
+          </Button>
+        </Hint>
       </div>
     </div>
   );

@@ -7,6 +7,7 @@ import MaterialSymbolsTuneRounded from '~icons/material-symbols/tune-rounded';
 
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
+import { Hint } from '@/components/ui/tooltip';
 
 import { useReader } from '../hooks/use-reader';
 import { closeReader } from '../reader';
@@ -52,6 +53,10 @@ const ReaderNavbar = () => {
     };
   }, [syncFullscreen, carouselApi, settings.type]);
 
+  const fullscreenLabel = settings.fullscreen
+    ? 'Вийти з повного екрана'
+    : 'Повний екран';
+
   return (
     <div className="hidden md:flex">
       <div
@@ -87,36 +92,34 @@ const ReaderNavbar = () => {
           <ReaderSettingsPopover
             side="bottom"
             trigger={
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="bg-sidebar data-popup-open:bg-accent"
-                aria-label="Налаштування"
-                title="Налаштування"
-              >
-                <MaterialSymbolsTuneRounded />
-              </Button>
+              <Hint label="Налаштування">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="bg-sidebar data-popup-open:bg-accent"
+                  aria-label="Налаштування"
+                >
+                  <MaterialSymbolsTuneRounded />
+                </Button>
+              </Hint>
             }
           />
         )}
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          className="bg-sidebar"
-          aria-label={
-            settings.fullscreen ? 'Вийти з повного екрана' : 'Повний екран'
-          }
-          title={
-            settings.fullscreen ? 'Вийти з повного екрана' : 'Повний екран'
-          }
-          onClick={toggleFullscreen}
-        >
-          {settings.fullscreen ? (
-            <MaterialSymbolsFullscreenExitRounded />
-          ) : (
-            <MaterialSymbolsFullscreenRounded />
-          )}
-        </Button>
+        <Hint label={fullscreenLabel}>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="bg-sidebar"
+            aria-label={fullscreenLabel}
+            onClick={toggleFullscreen}
+          >
+            {settings.fullscreen ? (
+              <MaterialSymbolsFullscreenExitRounded />
+            ) : (
+              <MaterialSymbolsFullscreenRounded />
+            )}
+          </Button>
+        </Hint>
         <SidebarTrigger variant="ghost" size="icon-sm" className="bg-sidebar" />
       </div>
     </div>

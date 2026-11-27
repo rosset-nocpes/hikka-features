@@ -25,6 +25,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { Hint } from '@/components/ui/tooltip';
 import { useScrollParent } from '@/hooks/use-scroll-parent';
 
 import { usePlayer } from '../context/player-context';
@@ -324,19 +325,22 @@ const EpisodeList = () => {
                 </ContextMenuContent>
               </ContextMenu>
               {queueable && (
-                <SidebarMenuAction
-                  showOnHover={!isQueued}
-                  aria-label={isQueued ? 'Прибрати з черги' : 'Додати до черги'}
-                  title={isQueued ? 'Прибрати з черги' : 'Додати до черги'}
-                  className="transition-opacity peer-data-[size=default]/menu-button:top-1/2 peer-data-[size=default]/menu-button:-translate-y-1/2"
-                  onClick={() => queue.toggle(queueItemOf(ep))}
-                >
-                  {isQueued ? (
-                    <MaterialSymbolsPlaylistAddCheckRounded />
-                  ) : (
-                    <MaterialSymbolsPlaylistAddRounded />
-                  )}
-                </SidebarMenuAction>
+                <Hint label={isQueued ? 'Прибрати з черги' : 'Додати до черги'}>
+                  <SidebarMenuAction
+                    showOnHover={!isQueued}
+                    aria-label={
+                      isQueued ? 'Прибрати з черги' : 'Додати до черги'
+                    }
+                    className="transition-opacity peer-data-[size=default]/menu-button:top-1/2 peer-data-[size=default]/menu-button:-translate-y-1/2"
+                    onClick={() => queue.toggle(queueItemOf(ep))}
+                  >
+                    {isQueued ? (
+                      <MaterialSymbolsPlaylistAddCheckRounded />
+                    ) : (
+                      <MaterialSymbolsPlaylistAddRounded />
+                    )}
+                  </SidebarMenuAction>
+                </Hint>
               )}
             </SidebarMenuItem>
           );

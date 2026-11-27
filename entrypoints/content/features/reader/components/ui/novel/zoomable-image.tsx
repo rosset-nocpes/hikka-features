@@ -19,6 +19,7 @@ import MaterialSymbolsOpenInNewRounded from '~icons/material-symbols/open-in-new
 import MaterialSymbolsRemoveRounded from '~icons/material-symbols/remove-rounded';
 
 import { Button } from '@/components/ui/button';
+import { Hint } from '@/components/ui/tooltip';
 import { NEW_TAB } from '@/utils/hikka-router';
 
 import { useReader } from '../../../hooks/use-reader';
@@ -326,43 +327,57 @@ const ViewerToolbar = ({
       exit={{ opacity: 0, y: 16 }}
       transition={{ duration: 0.2 }}
     >
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        title="Зменшити"
-        onClick={onZoomOut}
-      >
-        <MaterialSymbolsRemoveRounded className="size-4" />
-      </Button>
-      <motion.button
-        type="button"
-        title="Скинути масштаб"
-        className="hover:bg-muted min-w-14 rounded-md p-1 text-sm tabular-nums"
-        onClick={onReset}
-      >
-        {percentage}
-      </motion.button>
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        title="Збільшити"
-        onClick={onZoomIn}
-      >
-        <MaterialSymbolsAddRounded className="size-4" />
-      </Button>
+      <Hint label="Зменшити">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Зменшити"
+          onClick={onZoomOut}
+        >
+          <MaterialSymbolsRemoveRounded className="size-4" />
+        </Button>
+      </Hint>
+      <Hint label="Скинути масштаб">
+        <motion.button
+          type="button"
+          className="hover:bg-muted min-w-14 rounded-md p-1 text-sm tabular-nums"
+          onClick={onReset}
+        >
+          {percentage}
+        </motion.button>
+      </Hint>
+      <Hint label="Збільшити">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Збільшити"
+          onClick={onZoomIn}
+        >
+          <MaterialSymbolsAddRounded className="size-4" />
+        </Button>
+      </Hint>
       <div className="bg-border mx-1 h-5 w-px" />
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        title="Відкрити в новій вкладці"
-        nativeButton={false}
-        render={<a href={src} {...NEW_TAB} />}
-      >
-        <MaterialSymbolsOpenInNewRounded className="size-4" />
-      </Button>
-      <Button variant="ghost" size="icon-sm" title="Закрити" onClick={onClose}>
-        <MaterialSymbolsCloseRounded className="size-4" />
-      </Button>
+      <Hint label="Відкрити в новій вкладці">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Відкрити в новій вкладці"
+          nativeButton={false}
+          render={<a href={src} {...NEW_TAB} />}
+        >
+          <MaterialSymbolsOpenInNewRounded className="size-4" />
+        </Button>
+      </Hint>
+      <Hint label="Закрити">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Закрити"
+          onClick={onClose}
+        >
+          <MaterialSymbolsCloseRounded className="size-4" />
+        </Button>
+      </Hint>
     </motion.div>
   );
 };

@@ -13,6 +13,7 @@ import MaterialSymbolsCheckRounded from '~icons/material-symbols/check-rounded';
 
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
+import { Hint } from '@/components/ui/tooltip';
 
 import type { SettingOption } from '../../../reader.types';
 
@@ -264,30 +265,30 @@ export function Tiles<T extends string>({
       className={cn('grid auto-cols-fr grid-flow-col gap-1.5', className)}
     >
       {options.map((option) => (
-        <Radio.Root
-          key={option.value}
-          value={option.value}
-          aria-label={showLabels ? undefined : option.label}
-          title={showLabels ? undefined : option.label}
-          className={cn(
-            'group/tile text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 data-checked:text-foreground flex cursor-pointer flex-col items-center gap-1.5 rounded-lg p-1 text-center transition-colors outline-none focus-visible:ring-2',
-          )}
-        >
-          <span
+        <Hint key={option.value} label={showLabels ? undefined : option.label}>
+          <Radio.Root
+            value={option.value}
+            aria-label={showLabels ? undefined : option.label}
             className={cn(
-              'border-border/70 group-hover/tile:border-foreground/30 group-data-checked/tile:border-primary group-data-checked/tile:ring-primary/30 relative grid w-full place-items-center overflow-hidden rounded-lg border transition-[border-color,box-shadow] group-data-checked/tile:ring-2',
-              showLabels ? 'h-12' : 'h-10',
-              option.className ?? 'bg-background',
+              'group/tile text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 data-checked:text-foreground flex cursor-pointer flex-col items-center gap-1.5 rounded-lg p-1 text-center transition-colors outline-none focus-visible:ring-2',
             )}
           >
-            {option.preview}
-          </span>
-          {showLabels && (
-            <span className="text-[11px] leading-tight font-medium text-balance">
-              {option.label}
+            <span
+              className={cn(
+                'border-border/70 group-hover/tile:border-foreground/30 group-data-checked/tile:border-primary group-data-checked/tile:ring-primary/30 relative grid w-full place-items-center overflow-hidden rounded-lg border transition-[border-color,box-shadow] group-data-checked/tile:ring-2',
+                showLabels ? 'h-12' : 'h-10',
+                option.className ?? 'bg-background',
+              )}
+            >
+              {option.preview}
             </span>
-          )}
-        </Radio.Root>
+            {showLabels && (
+              <span className="text-[11px] leading-tight font-medium text-balance">
+                {option.label}
+              </span>
+            )}
+          </Radio.Root>
+        </Hint>
       ))}
     </RadioGroup>
   );
