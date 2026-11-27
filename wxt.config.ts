@@ -21,7 +21,11 @@ const isPersistent = env.WXT_PERSIST_BROWSER_DATA
   ? JSON.parse(env.WXT_PERSIST_BROWSER_DATA)
   : false;
 const isWindows = process.platform === 'win32';
-const convexUrls = [env.WXT_CONVEX_URL, env.WXT_CONVEX_SITE_URL];
+/** Production backend; a local one goes in .env (see .env.example). */
+const CONVEX_URL = env.WXT_CONVEX_URL || 'https://convex.hikka-features.pp.ua';
+const CONVEX_SITE_URL =
+  env.WXT_CONVEX_SITE_URL || 'https://convex-site.hikka-features.pp.ua';
+const convexUrls = [CONVEX_URL, CONVEX_SITE_URL];
 const convexUrlsValid = convexUrls.every(
   (value) => !!value && URL.canParse(value),
 );
@@ -52,6 +56,10 @@ export default defineConfig({
       tailwindcss(),
       Icons({ compiler: 'jsx', jsx: 'react' }),
     ],
+    define: {
+      'import.meta.env.WXT_CONVEX_URL': JSON.stringify(CONVEX_URL),
+      'import.meta.env.WXT_CONVEX_SITE_URL': JSON.stringify(CONVEX_SITE_URL),
+    },
     resolve: {
       dedupe: ['react', 'react-dom'],
     },
