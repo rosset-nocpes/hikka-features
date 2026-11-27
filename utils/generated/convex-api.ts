@@ -682,6 +682,8 @@ export const convexApi = {
               yes: boolean;
             };
         tab?: string;
+        followsAnime?: boolean;
+        votes?: boolean;
       },
       null
     >('watchRooms:control'),

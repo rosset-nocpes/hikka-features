@@ -40,6 +40,7 @@ import {
   ROOM_LEAVE_TIMEOUT_MS,
   REPORT_SETTLE_MS,
   REPORT_END_MARGIN,
+  PLAY_ATTEMPTS,
 } from '../player.constants';
 import {
   applyQueueEdit,
@@ -69,6 +70,12 @@ interface RoomStore {
   getState: () => { room?: WatchRoom };
   setState: (state: { room?: WatchRoom; error?: string }) => void;
 }
+
+/**
+ * What this extension can do in a room, sent with each call that may join
+ * the user again, e.g. after the room dropped a tab the browser kept asleep.
+ */
+const MEMBER_FLAGS = { followsAnime: true, votes: true } as const;
 
 const isAtEnd = (position: number, margin = END_MARGIN) => {
   const { duration } = useIFramePlayer.getState();
@@ -131,6 +138,10 @@ export class RoomSession {
   /** A new episode's first play is the room's command or autoplay. */
   private playedSinceReady = false;
   private reportTimer?: ReturnType<typeof setTimeout>;
+  /** Plays sent since the player last played, to tell a blocked one. */
+  private playAttempts = 0;
+  /** A blocked player was tried again once the page counted as used. */
+  private retriedActivated = false;
   /** Proposals the user didn't ask for, which fail without a word. */
   private readonly quiet = new WeakSet<WatchRoomAction>();
 
@@ -169,6 +180,11 @@ export class RoomSession {
     const reconcile = setInterval(this.reconcile, ROOM_RECONCILE_MS);
     const leave = () => this.onEnd(undefined);
     window.addEventListener('pagehide', leave);
+    document.addEventListener('visibilitychange', this.handleReturn);
+    window.addEventListener('online', this.handleReturn);
+    // Activating the page lets a blocked player start (see `reconcile`).
+    window.addEventListener('pointerup', this.handleActivation, true);
+    window.addEventListener('keydown', this.handleActivation, true);
     this.cleanups.push(
       () => onPlaybackIntent(undefined),
       () => onSelectIntent(undefined),
@@ -180,6 +196,11 @@ export class RoomSession {
       () => clearInterval(reconcile),
       () => clearTimeout(this.reportTimer),
       () => window.removeEventListener('pagehide', leave),
+      () => document.removeEventListener('visibilitychange', this.handleReturn),
+      () => window.removeEventListener('online', this.handleReturn),
+      () =>
+        window.removeEventListener('pointerup', this.handleActivation, true),
+      () => window.removeEventListener('keydown', this.handleActivation, true),
     );
     this.reconcile();
   }
@@ -264,8 +285,7 @@ export class RoomSession {
         {
           code: this.code,
           tab: this.tab,
-          followsAnime: true,
-          votes: true,
+          ...MEMBER_FLAGS,
           ...(join && { join }),
         },
       );
@@ -289,6 +309,36 @@ export class RoomSession {
       }
     });
   };
+
+  /**
+   * Back in the tab or online: beats at once, rather than up to a heartbeat
+   * later, as browsers throttle hidden tabs and the room may have dropped
+   * this one meanwhile; then catches up with the room.
+   */
+  private handleReturn = () => {
+    if (document.visibilityState === 'hidden') return;
+    this.keepAlive();
+    this.reconcile();
+  };
+
+  /**
+   * The user used the page, which lets a player the browser blocked play:
+   * it is steered again.
+   */
+  private handleActivation = (event: Event) => {
+    if (!event.isTrusted || !useIFramePlayer.getState().playBlocked) return;
+    this.unblock();
+    // After the event, once the browser counts it.
+    setTimeout(this.reconcile);
+  };
+
+  /** Lets a player the browser blocked be steered again, at once. */
+  private unblock() {
+    useIFramePlayer.setState({ playBlocked: false });
+    this.playAttempts = 0;
+    this.lastToggleAt = this.lastSeekAt = 0;
+    this.seekCooldown = SEEK_COOLDOWN_MS;
+  }
 
   /** Where the room is now, extrapolated from its last change. */
   private positionOf(room: WatchRoom) {
@@ -344,10 +394,13 @@ export class RoomSession {
     this.quietUntil = now + COMMAND_RETRY_MS;
     switch (intent.type) {
       case 'play':
-        // Already playing for everyone: a player left behind, e.g. by
-        // blocked autoplay, only needs to catch up.
-        if (room.playing && !isAtEnd(this.positionOf(room))) return;
         this.lastToggleAt = now;
+        if (room.playing && !isAtEnd(this.positionOf(room))) {
+          this.unblock();
+          // The play was sent already.
+          this.lastToggleAt = now;
+          return this.reconcile();
+        }
         // Players start over when played at the end.
         return this.send({
           type: 'play',
@@ -525,7 +578,7 @@ export class RoomSession {
     this.client
       .mutation(
         convexApi.watchRooms.control,
-        { ...args, action: edit },
+        { ...args, ...MEMBER_FLAGS, action: edit },
         {
           optimisticUpdate: (store) => {
             const room = store.getQuery(convexApi.watchRooms.get, args);
@@ -601,6 +654,7 @@ export class RoomSession {
           code: this.code,
           action,
           tab: this.tab,
+          ...MEMBER_FLAGS,
         });
         if (this.actionFailed) {
           this.actionFailed = false;
@@ -682,6 +736,15 @@ export class RoomSession {
 
     const iframe = useIFramePlayer.getState();
     if (!iframe.isReady || iframe.adInProgress) return;
+    if (iframe.isPlaying || !room.playing) this.playAttempts = 0;
+    if (iframe.isPlaying) this.retriedActivated = false;
+    if (room.playing && iframe.playBlocked) {
+      if (this.retriedActivated || !navigator.userActivation?.hasBeenActive) {
+        return;
+      }
+      this.retriedActivated = true;
+      this.unblock();
+    }
 
     const now = Date.now();
     const position = finite(iframe.currentTime);
@@ -723,6 +786,12 @@ export class RoomSession {
       !this.reportTimer &&
       now - this.lastToggleAt >= COMMAND_RETRY_MS
     ) {
+      // Players that can't say the browser blocked them just don't play.
+      if (play && this.playAttempts >= PLAY_ATTEMPTS) {
+        useIFramePlayer.setState({ playBlocked: true });
+        return;
+      }
+      if (play) this.playAttempts += 1;
       this.lastToggleAt = now;
       this.quietUntil = now + COMMAND_RETRY_MS;
       sendIFramePlayerCommand({ action: play ? 'play' : 'pause' });

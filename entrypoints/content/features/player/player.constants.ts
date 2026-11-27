@@ -106,6 +106,12 @@ export const MAX_SEEK_COOLDOWN_MS = 24_000;
 /** Players take a moment to report a play, pause or speed change. */
 export const COMMAND_RETRY_MS = 2_000;
 
+/**
+ * Plays a room sends a player that stays paused before it counts as blocked
+ * by the browser, which wants the user's click.
+ */
+export const PLAY_ATTEMPTS = 3;
+
 /** Seconds before the end where players stop on their own. */
 export const END_MARGIN = 0.5;
 

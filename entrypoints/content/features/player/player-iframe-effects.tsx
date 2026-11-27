@@ -137,6 +137,10 @@ const PlayerIFrameEffects = () => {
   // previous source's.
   useEffect(() => {
     if (!resumeAt || !useIFramePlayer.getState().isReady) return;
+    if (useWatchTogether.getState().room) {
+      usePlayer.setState({ resumeAt: undefined });
+      return;
+    }
 
     seek(resumeAt.time);
     if (resumeAt.playing) play();

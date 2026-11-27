@@ -142,7 +142,16 @@ export class PlyrBridge extends IFramePlayerBridge {
   protected handleCommand(command: IFramePlayerBridgeCommand) {
     switch (command.action) {
       case 'play':
-        this.video.play().catch(() => {});
+        this.video.play().catch((error: unknown) => {
+          // Browsers block playing with sound until the page is used, e.g.
+          // after joining a room from an invite, which opened a new page.
+          if (
+            error instanceof DOMException &&
+            error.name === 'NotAllowedError'
+          ) {
+            this.postEvent('play-blocked');
+          }
+        });
         break;
       case 'pause':
         this.video.pause();

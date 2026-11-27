@@ -8,6 +8,7 @@ import { compactMode, usePlayer } from '../context/player-context';
 import { useStackedLayout } from '../mobile/use-stacked-layout';
 import UpNext from '../queue/up-next';
 import PlayerSidebar from '../sidebar/player-sidebar';
+import RoomCatchUp from '../watch-together/room-catch-up';
 import ActionPopup from './action-popup';
 import BufferingIndicator from './buffering-indicator';
 import Gestures from './gestures';
@@ -62,6 +63,7 @@ const PlayerOverlay = () => {
         <Gestures />
         <ActionPopup />
         <BufferingIndicator />
+        <RoomCatchUp />
         <UpNext corner={!isCompactMode && !stacked} />
         {/* The skip button sits over the controls' box (see SkipSegment). */}
         <div className="relative">

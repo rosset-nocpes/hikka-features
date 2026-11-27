@@ -32,6 +32,11 @@ interface IFramePlayerState {
   /** Prevents auto-hiding the overlay UI (e.g. while a menu is open) */
   uiLocked: boolean;
   endedCount: number;
+  /**
+   * The browser refused to play without the user's click, as it does with
+   * sound until the page is used. Playing clears it.
+   */
+  playBlocked: boolean;
   /** The recaps the player marks, if it does (Moon's). */
   recaps: Recap[];
 }
@@ -119,6 +124,7 @@ const initialPlayback: Omit<IFramePlayerState, 'speedOptions'> = {
   uiShown: true,
   uiLocked: false,
   endedCount: 0,
+  playBlocked: false,
   recaps: [],
 };
 
@@ -247,7 +253,10 @@ const PLAYER_EVENTS: Record<string, (event: IFramePlayerEvent) => void> = {
     sendIFramePlayerCommand({ action: 'get-subtitles' });
     sendIFramePlayerCommand({ action: 'get-volume' });
   },
-  play: () => set({ isPlaying: true }),
+  play: () => set({ isPlaying: true, playBlocked: false }),
+  'play-blocked': () => {
+    if (!useIFramePlayer.getState().isPlaying) set({ playBlocked: true });
+  },
   pause: () => set({ isPlaying: false }),
   end: () =>
     set((state) => ({ endedCount: state.endedCount + 1, isPlaying: false })),
