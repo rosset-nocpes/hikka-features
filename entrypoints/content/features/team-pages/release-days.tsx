@@ -83,7 +83,7 @@ const ReleaseDays: FC<{ times: number[] }> = ({ times }) => {
   const period = `${times.length >= RELEASE_DAYS_MAX_RELEASES ? 'останні' : 'усі'} ${times.length} ${releasesWord(times.length)} з ${since.format(oldest)}`;
 
   return (
-    <div className="surface border-border flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-center sm:gap-6">
+    <div className="surface border-border flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-center sm:gap-8">
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <span className="text-muted-foreground text-xs">Дні релізів</span>
         <p className="text-sm leading-5 font-medium text-balance">
@@ -98,7 +98,7 @@ const ReleaseDays: FC<{ times: number[] }> = ({ times }) => {
         aria-label={DAYS.map(({ name }, day) => `${name}: ${days[day]}`).join(
           ', ',
         )}
-        className="grid shrink-0 grid-cols-7 gap-1.5 sm:w-64"
+        className="grid shrink-0 grid-cols-7 gap-1.5 sm:w-72"
       >
         {DAYS.map(({ short, name }, day) => {
           const count = days[day]!;
@@ -115,7 +115,9 @@ const ReleaseDays: FC<{ times: number[] }> = ({ times }) => {
                 <span className={cn('text-xs leading-4 tabular-nums', label)}>
                   {count}
                 </span>
-                <div className="flex h-14 w-full items-end sm:h-10">
+                {/* A full-height track, so bars of near counts still read
+                    as shares of the busiest day. */}
+                <div className="bg-secondary/40 flex h-16 w-full items-end overflow-hidden rounded-sm">
                   <div
                     style={{ height: `${(count / max) * 100}%` }}
                     className={cn(

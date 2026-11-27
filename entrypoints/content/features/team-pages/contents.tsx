@@ -126,6 +126,63 @@ function useActiveSection(entries: ContentsEntry[]) {
   return { active, jump };
 }
 
+/** How far a cut-off list fades into its edge. */
+const FADE_PX = 24;
+
+/**
+ * A scrolled list that fades out at the edges it is cut at, and scrolls
+ * itself to keep the `active` entry (`aria-current`) in view as the page
+ * moves on.
+ */
+function useScrollList(active: string | undefined, entries: ContentsEntry[]) {
+  const ref = useRef<HTMLUListElement>(null);
+  const [edges, setEdges] = useState({ top: false, bottom: false });
+
+  useEffect(() => {
+    const list = ref.current;
+    if (!list) return;
+    const update = () => {
+      const top = list.scrollTop > 1;
+      const bottom = list.scrollTop + list.clientHeight < list.scrollHeight - 1;
+      setEdges((current) =>
+        current.top === top && current.bottom === bottom
+          ? current
+          : { top, bottom },
+      );
+    };
+    update();
+    list.addEventListener('scroll', update, { passive: true });
+    const observer = new ResizeObserver(update);
+    observer.observe(list);
+    return () => {
+      list.removeEventListener('scroll', update);
+      observer.disconnect();
+    };
+  }, [entries]);
+
+  useEffect(() => {
+    const list = ref.current;
+    const item = list?.querySelector<HTMLElement>('[aria-current]');
+    if (!list || !item) return;
+    const top =
+      item.getBoundingClientRect().top -
+      list.getBoundingClientRect().top +
+      list.scrollTop;
+    const bottom = top + item.offsetHeight;
+    if (top - FADE_PX < list.scrollTop) {
+      list.scrollTo({ top: top - FADE_PX });
+    } else if (bottom + FADE_PX > list.scrollTop + list.clientHeight) {
+      list.scrollTo({ top: bottom + FADE_PX - list.clientHeight });
+    }
+  }, [active]);
+
+  const edge = (cut: boolean) => (cut ? 'transparent' : 'black');
+  const style = {
+    maskImage: `linear-gradient(to bottom, ${edge(edges.top)}, black ${FADE_PX}px, black calc(100% - ${FADE_PX}px), ${edge(edges.bottom)})`,
+  };
+  return { ref, style };
+}
+
 /** "Зміст": the page's sections, as on hikka.io's collections. */
 const Contents: FC<{
   entries: ContentsEntry[];
@@ -133,6 +190,7 @@ const Contents: FC<{
   className?: string;
 }> = ({ entries, onJump, className }) => {
   const { active, jump } = useActiveSection(entries);
+  const list = useScrollList(active, entries);
   return (
     <nav
       aria-label="Зміст"
@@ -142,7 +200,11 @@ const Contents: FC<{
       )}
     >
       <h2 className="text-base font-bold">Зміст</h2>
-      <ul className="no-scrollbar -m-4 flex flex-col gap-2.5 overflow-y-auto p-4 text-sm">
+      <ul
+        ref={list.ref}
+        style={list.style}
+        className="no-scrollbar -m-4 flex flex-col gap-2.5 overflow-y-auto p-4 text-sm"
+      >
         {entries.map(({ id, title, count }) => (
           <li key={id}>
             <button

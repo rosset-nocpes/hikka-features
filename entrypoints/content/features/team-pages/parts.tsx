@@ -12,6 +12,7 @@ import MaterialSymbolsGridViewRounded from '~icons/material-symbols/grid-view-ro
 import MaterialSymbolsMicOutlineRounded from '~icons/material-symbols/mic-outline-rounded';
 import MaterialSymbolsSubtitlesOutlineRounded from '~icons/material-symbols/subtitles-outline-rounded';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -131,6 +132,41 @@ export function SortSelect<T extends string>({
     </Select>
   );
 }
+
+const relativeDays = new Intl.RelativeTimeFormat('uk', { numeric: 'auto' });
+const DAY_MS = 24 * 60 * 60_000;
+
+/**
+ * How long ago a day was, coarsely: "сьогодні", "учора", "3 дні тому",
+ * then weeks, months and years.
+ */
+export function daysAgo(time: number, now: number) {
+  const day = (value: number) => new Date(value).setHours(0, 0, 0, 0);
+  const days = Math.max(0, Math.round((day(now) - day(time)) / DAY_MS));
+  if (days < 7) return relativeDays.format(-days, 'day');
+  if (days < 30) return relativeDays.format(-Math.floor(days / 7), 'week');
+  if (days < 365) return relativeDays.format(-Math.floor(days / 30), 'month');
+  return relativeDays.format(-Math.floor(days / 365), 'year');
+}
+
+/** The catalog's word for how active a team is, with a coloured dot. */
+const ACTIVITY_DOTS: Record<string, string> = {
+  Активна: 'bg-success',
+  Малоактивна: 'bg-warning',
+};
+
+export const ActivityBadge: FC<{ activity: string }> = ({ activity }) => (
+  <Badge variant="outline" className="gap-1.5">
+    <span
+      aria-hidden
+      className={cn(
+        'size-1.5 rounded-full',
+        ACTIVITY_DOTS[activity] ?? 'bg-muted-foreground',
+      )}
+    />
+    {activity}
+  </Badge>
+);
 
 /** hikka.io's "Показати ще" under a list. */
 export const LoadMoreButton: FC<{ onClick: () => void }> = ({ onClick }) => (

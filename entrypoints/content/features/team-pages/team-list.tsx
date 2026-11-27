@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import EmptyState from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Hint } from '@/components/ui/tooltip';
 import {
   onHikkaLinkClick,
   onHikkaNavigation,
@@ -32,6 +33,7 @@ import {
   ContentsSection,
 } from './contents';
 import {
+  daysAgo,
   LoadMoreButton,
   SortSelect,
   type TypeFilter,
@@ -40,15 +42,18 @@ import {
 import { teamListQuery } from './team-page-query';
 import { TEAM_LIST_PAGE_SIZE, TEAM_LIST_POSTERS } from './team-pages.constants';
 
-type Sort = 'releases' | 'title';
+type Sort = 'releases' | 'recent' | 'title';
 
 const SORTS: { value: Sort; label: string }[] = [
   { value: 'releases', label: 'За кількістю робіт' },
+  { value: 'recent', label: 'За останнім релізом' },
   { value: 'title', label: 'За назвою' },
 ];
 
 const sorters: Record<Sort, (a: TeamListing, b: TeamListing) => number> = {
   releases: (a, b) => (b.stats?.anime ?? 0) - (a.stats?.anime ?? 0),
+  recent: (a, b) =>
+    (b.stats?.lastReleaseAt ?? 0) - (a.stats?.lastReleaseAt ?? 0),
   title: (a, b) => a.title.localeCompare(b.title, 'uk'),
 };
 
@@ -97,11 +102,16 @@ const MoreTile: FC<{ href: string; image?: string; count: number }> = ({
   </a>
 );
 
-/** A team as hikka.io lists a collection: who, then a strip of posters. */
-const TeamRow: FC<{ team: TeamListing }> = ({ team }) => {
+/**
+ * A team as hikka.io lists a collection: who, when they last released,
+ * then a strip of posters.
+ */
+const TeamRow: FC<{ team: TeamListing; now: number }> = ({ team, now }) => {
   const href = teamPagePath(team.slug);
   const count = team.stats?.anime ?? 0;
+  const lastRelease = team.stats?.lastReleaseAt;
   const posters = team.covers.slice(0, TEAM_LIST_POSTERS);
+  const more = count > posters.length;
   return (
     <article className="flex flex-col gap-4 py-6 first:pt-0">
       <div className="flex items-center gap-3">
@@ -120,6 +130,16 @@ const TeamRow: FC<{ team: TeamListing }> = ({ team }) => {
             {[...team.kinds, `${count} аніме`].join(' · ')}
           </span>
         </div>
+        {lastRelease !== undefined && (
+          <Hint label="Останній реліз">
+            <time
+              dateTime={new Date(lastRelease).toISOString()}
+              className="text-muted-foreground shrink-0 self-start pt-1 text-xs leading-5"
+            >
+              {daysAgo(lastRelease, now)}
+            </time>
+          </Hint>
+        )}
       </div>
       {team.description && (
         <p className="text-muted-foreground line-clamp-2 text-sm leading-5">
@@ -133,12 +153,15 @@ const TeamRow: FC<{ team: TeamListing }> = ({ team }) => {
             href={href}
             onClick={onHikkaLinkClick}
             tabIndex={-1}
-            className={cn(index === TEAM_LIST_POSTERS - 1 && 'max-sm:hidden')}
+            // Phones fit four tiles: the last poster makes way for "more".
+            className={cn(
+              more && index === TEAM_LIST_POSTERS - 1 && 'max-sm:hidden',
+            )}
           >
             <Poster image={cover} />
           </a>
         ))}
-        {count > posters.length && (
+        {more && (
           <MoreTile
             href={href}
             image={team.covers[TEAM_LIST_POSTERS]}
@@ -174,8 +197,9 @@ const TeamRowSkeleton = () => (
 );
 
 /** One part of the list, a few teams at first. */
-const TeamGroup: FC<ContentsEntry & { teams: TeamListing[] }> = ({
+const TeamGroup: FC<ContentsEntry & { teams: TeamListing[]; now: number }> = ({
   teams,
+  now,
   ...entry
 }) => {
   const [shown, setShown] = useState(TEAM_LIST_PAGE_SIZE);
@@ -183,7 +207,7 @@ const TeamGroup: FC<ContentsEntry & { teams: TeamListing[] }> = ({
     <ContentsSection {...entry}>
       <div className="divide-border flex flex-col divide-y">
         {teams.slice(0, shown).map((team) => (
-          <TeamRow key={team.id} team={team} />
+          <TeamRow key={team.id} team={team} now={now} />
         ))}
       </div>
       {teams.length > shown && (
@@ -213,6 +237,7 @@ const TeamList = () => {
   }
   const [filter, setFilter] = useState<TypeFilter>('all');
   const [sort, setSort] = useState<Sort>('releases');
+  const [now] = useState(Date.now);
   const query = useDeferredValue(search.trim());
   useDocumentTitle('Команди');
 
@@ -311,7 +336,11 @@ const TeamList = () => {
         <div className="flex flex-col gap-12">
           {groups.map((group) => (
             // A new search or filter starts each part short again.
-            <TeamGroup key={`${group.id}:${query}:${filter}`} {...group} />
+            <TeamGroup
+              key={`${group.id}:${query}:${filter}`}
+              {...group}
+              now={now}
+            />
           ))}
         </div>
       ) : (

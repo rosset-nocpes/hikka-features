@@ -33,7 +33,13 @@ import {
   ContentsLayout,
   ContentsSection,
 } from './contents';
-import { TextExpand, type TypeFilter, TypeFilterButtons } from './parts';
+import {
+  ActivityBadge,
+  daysAgo,
+  TextExpand,
+  type TypeFilter,
+  TypeFilterButtons,
+} from './parts';
 import ReleaseDays from './release-days';
 import { teamPageQuery } from './team-page-query';
 import { ONGOING_MS } from './team-pages.constants';
@@ -60,8 +66,38 @@ const LINK_ICONS: Record<TeamLinkKind, FC<{ className?: string }>> = {
   anitube: MaterialSymbolsPlayCircleOutlineRounded,
 };
 
-const linkLabel = (kind: TeamLinkKind, url: string) => {
+/** Sites teams link to, by hostname (without "www."). */
+const SITE_NAMES: Record<string, string> = {
+  'send.monobank.ua': 'Monobank',
+  'base.monobank.ua': 'Monobank',
+  'patreon.com': 'Patreon',
+  'buymeacoffee.com': 'Buy Me a Coffee',
+  'donatello.to': 'Donatello',
+  'privat24.ua': 'Приват24',
+  'facebook.com': 'Facebook',
+  'x.com': 'X',
+  'twitter.com': 'X',
+  'discord.com': 'Discord',
+  'discord.gg': 'Discord',
+  'twitch.tv': 'Twitch',
+};
+
+const hostname = (url: string) => {
+  try {
+    return new URL(url).hostname.replace(/^www\./u, '');
+  } catch {
+    return undefined;
+  }
+};
+
+/**
+ * A link's pill text. Donations say "Підтримати", or which service each is
+ * when a team has several.
+ */
+const linkLabel = (kind: TeamLinkKind, url: string, donations: number) => {
   const handle = url.match(/t\.me\/([\w]+)/u)?.[1];
+  const host = hostname(url);
+  const site = host && SITE_NAMES[host];
   switch (kind) {
     case 'telegram':
       return handle ? `@${handle}` : 'Telegram';
@@ -72,21 +108,19 @@ const linkLabel = (kind: TeamLinkKind, url: string) => {
     case 'tiktok':
       return 'TikTok';
     case 'donate':
-      return 'Підтримати';
+      return (donations > 1 && site) || 'Підтримати';
     case 'anitube':
       return 'AniTube';
     case 'website':
-      try {
-        return new URL(url).hostname.replace(/^www\./u, '');
-      } catch {
-        return 'Сайт';
-      }
+      return site || host || 'Сайт';
   }
 };
 
 /** Outline pills like a hikka.io profile's links. */
-const TeamLinks: FC<{ links: Team['links'] }> = ({ links }) =>
-  links.length > 0 && (
+const TeamLinks: FC<{ links: Team['links'] }> = ({ links }) => {
+  if (links.length === 0) return null;
+  const donations = links.filter(({ kind }) => kind === 'donate').length;
+  return (
     <div className="flex flex-wrap gap-2">
       {links.map(({ kind, url }) => {
         const Icon = LINK_ICONS[kind];
@@ -95,58 +129,72 @@ const TeamLinks: FC<{ links: Team['links'] }> = ({ links }) =>
             key={url}
             variant="outline"
             size="sm"
-            className="px-2.5"
+            className="gap-1.5 px-2.5"
             render={<a href={url} {...NEW_TAB} />}
           >
             <Icon />
-            <span className="max-w-40 truncate">{linkLabel(kind, url)}</span>
+            <span className="max-w-40 truncate">
+              {linkLabel(kind, url, donations)}
+            </span>
           </Button>
         );
       })}
     </div>
   );
+};
 
 /**
- * The page's title block, as a collection's: name, badges, description,
- * links, and the days its releases come out on.
+ * The page's title block, as a collection's: name, badges, how much and
+ * how lately the team released, description, links, and the days its
+ * releases come out on.
  */
-const TeamHeader: FC<{ team: Team; releaseTimes: number[] }> = ({
+const TeamHeader: FC<{ team: Team; releaseTimes: number[]; now: number }> = ({
   team,
   releaseTimes,
-}) => (
-  <div className="flex flex-col gap-6">
-    <div className="flex items-center gap-4">
-      <TeamLogo
-        title={team.title}
-        logo={team.logo}
-        className="size-20 text-2xl md:size-24 md:text-3xl"
-      />
-      <div className="flex min-w-0 flex-1 flex-col gap-2">
-        <h1 className="text-2xl leading-8 font-bold break-words">
-          {team.title}
-        </h1>
-        <div className="flex flex-wrap items-center gap-2">
-          {team.kinds.map((kind) => (
-            <Badge key={kind} variant="secondary">
-              {kind}
-            </Badge>
-          ))}
-          {team.activity && <Badge variant="outline">{team.activity}</Badge>}
+  now,
+}) => {
+  const lastRelease = team.stats?.lastReleaseAt;
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center gap-4 md:gap-5">
+        <TeamLogo
+          title={team.title}
+          logo={team.logo}
+          className="size-20 text-2xl md:size-28 md:text-4xl"
+        />
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
+          <h1 className="text-2xl leading-8 font-bold text-balance break-words md:text-3xl md:leading-9">
+            {team.title}
+          </h1>
+          {(team.kinds.length > 0 || team.activity) && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              {team.kinds.map((kind) => (
+                <Badge key={kind} variant="secondary">
+                  {kind}
+                </Badge>
+              ))}
+              {team.activity && <ActivityBadge activity={team.activity} />}
+            </div>
+          )}
           {team.stats && (
-            <span className="text-muted-foreground text-sm tabular-nums">
+            <p className="text-muted-foreground text-sm leading-5 tabular-nums">
               {team.stats.anime} аніме
-            </span>
+              {lastRelease !== undefined &&
+                ` · останній реліз ${daysAgo(lastRelease, now)}`}
+            </p>
           )}
         </div>
       </div>
+      {team.description && (
+        <TextExpand className="text-sm leading-6">
+          {team.description}
+        </TextExpand>
+      )}
+      <TeamLinks links={team.links} />
+      <ReleaseDays times={releaseTimes} />
     </div>
-    {team.description && (
-      <TextExpand className="text-sm leading-6">{team.description}</TextExpand>
-    )}
-    <TeamLinks links={team.links} />
-    <ReleaseDays times={releaseTimes} />
-  </div>
-);
+  );
+};
 
 const TRANSLATION_ICONS: Record<TranslationType, FC<{ className?: string }>> = {
   dub: MaterialSymbolsMicOutlineRounded,
@@ -251,11 +299,12 @@ function groupReleases(entries: AnimeReleases[], now: number) {
 
 const TeamPageSkeleton = () => (
   <ContentsLayout entries={[]}>
-    <div className="flex items-center gap-4">
-      <Skeleton className="size-20 rounded-lg md:size-24" />
-      <div className="flex flex-1 flex-col gap-3">
-        <Skeleton className="h-8 w-1/2" />
+    <div className="flex items-center gap-4 md:gap-5">
+      <Skeleton className="size-20 rounded-lg md:size-28" />
+      <div className="flex flex-1 flex-col gap-2">
+        <Skeleton className="h-8 w-1/2 md:h-9" />
         <Skeleton className="h-5 w-1/3" />
+        <Skeleton className="h-5 w-2/5" />
       </div>
     </div>
     <div className={POSTER_GRID}>
@@ -343,7 +392,7 @@ const TeamPage: FC<{ slug: string }> = ({ slug }) => {
         )
       }
     >
-      <TeamHeader team={data.team} releaseTimes={data.releaseTimes} />
+      <TeamHeader team={data.team} releaseTimes={data.releaseTimes} now={now} />
       {groups.length > 0 ? (
         <div className="flex flex-col gap-12">
           {groups.map(({ id, title, count, entries }) => (
