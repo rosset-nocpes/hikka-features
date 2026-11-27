@@ -103,7 +103,7 @@ const PlayerSettings = () => {
           active={skipSegments !== 'off'}
           stacked
           label="Пропуск заставок"
-          description="Опенінги, ендінги й рекапи"
+          description="Опенінґи, ендінґи й рекапи"
           value={skipSegments}
           options={SKIP_OPTIONS}
           onChange={(value) =>

@@ -31,8 +31,8 @@ const SLIDE = { duration: 0.3, ease: 'easeOut' } as const;
 type Segment = Found | (Recap & { type: 'recap' });
 
 const LABELS: Record<Segment['type'], string> = {
-  opening: 'Пропустити опенінг',
-  ending: 'Пропустити ендінг',
+  opening: 'Пропустити опенінґ',
+  ending: 'Пропустити ендінґ',
   recap: 'Пропустити рекап',
 };
 

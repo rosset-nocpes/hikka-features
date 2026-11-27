@@ -60,7 +60,7 @@ const TitlePageSettings = () => {
         <FeatureSwitch
           feature="musicPlayer"
           icon={<MaterialSymbolsLibraryMusicRounded />}
-          label="Опенінги та ендінги"
+          label="Опенінґи та ендінґи"
           description="Програвач треків і улюблені в профілі"
         />
         <FeatureSwitch

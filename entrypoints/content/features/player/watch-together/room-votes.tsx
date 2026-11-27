@@ -22,8 +22,8 @@ const SEGMENTS: Record<
   Extract<WatchRoomProposal, { type: 'skip' }>['segment'],
   string
 > = {
-  opening: 'опенінг',
-  ending: 'ендінг',
+  opening: 'опенінґ',
+  ending: 'ендінґ',
   recap: 'рекап',
 };
 
