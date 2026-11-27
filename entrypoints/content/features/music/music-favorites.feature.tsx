@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { create } from 'zustand';
 import MaterialSymbolsArrowRightAltRounded from '~icons/material-symbols/arrow-right-alt-rounded';
 import MaterialSymbolsLibraryMusicRounded from '~icons/material-symbols/library-music-rounded';
+import MaterialSymbolsMusicOffRounded from '~icons/material-symbols/music-off-rounded';
 import MaterialSymbolsPauseRounded from '~icons/material-symbols/pause-rounded';
 import MaterialSymbolsPlayArrowRounded from '~icons/material-symbols/play-arrow-rounded';
 
@@ -18,15 +19,16 @@ import { plural } from '@/utils/plural';
 
 import { AnchoredUisFeature } from '../../core/base-feature';
 import { HikkaPages } from '../../core/core.enums';
-import { OST_LABEL } from './animethemes';
+import { isPlayable, OST_LABEL, type Song } from './animethemes';
 import Equalizer from './equalizer';
 import LikeButton from './like-button';
 import { playMusic } from './music-player';
 import { TRACK_FORMS } from './music.constants';
+import SongLink from './song-link';
 import { currentTrack, useMusic } from './use-music';
 import {
   type FavoriteSong,
-  favoriteTrack,
+  favoriteSong,
   useFavoriteSongs,
 } from './use-music-favorites';
 
@@ -321,7 +323,9 @@ const SongGrid: FC<GridProps> = ({
     );
   }
 
-  const tracks = songs.map(favoriteTrack);
+  const favoriteSongs = songs.map(favoriteSong);
+  // Songs AnimeThemes can't play stay out of the queue.
+  const queue = favoriteSongs.filter(isPlayable);
   const overflow = !extended && !all && songs.length > PREVIEW;
   const shown = overflow ? songs.slice(0, PREVIEW - 1) : songs;
 
@@ -333,13 +337,21 @@ const SongGrid: FC<GridProps> = ({
           : 'no-scrollbar auto-cols-scroll -mx-4 -my-4 grid grid-flow-col gap-4 overflow-x-scroll px-4 py-4 [--grid-min:7rem] md:grid-cols-6 lg:gap-6'
       }
     >
-      {shown.map((song, index) => (
-        <SongCard
-          key={`${song.animeSlug}:${song.ostType}:${song.index}`}
-          song={song}
-          onPlay={() => playMusic(tracks, index)}
-        />
-      ))}
+      {shown.map((song, index) => {
+        const track = favoriteSongs[index]!;
+        return (
+          <SongCard
+            key={`${song.animeSlug}:${song.ostType}:${song.index}`}
+            song={song}
+            track={track}
+            onPlay={
+              isPlayable(track)
+                ? () => playMusic(queue, queue.indexOf(track))
+                : undefined
+            }
+          />
+        );
+      })}
       {overflow && (
         <MoreCard
           count={songs.length}
@@ -351,11 +363,14 @@ const SongGrid: FC<GridProps> = ({
   );
 };
 
-const SongCard: FC<{ song: FavoriteSong; onPlay: () => void }> = ({
-  song,
-  onPlay,
-}) => {
-  const track = favoriteTrack(song);
+interface CardProps {
+  song: FavoriteSong;
+  track: Song;
+  /** Unset for a song AnimeThemes can't play. */
+  onPlay?: () => void;
+}
+
+const SongCard: FC<CardProps> = ({ song, track, onPlay }) => {
   const isCurrent = useMusic((state) => currentTrack(state)?.key === track.key);
   const playing = useMusic((state) => state.playing) && isCurrent;
   const href = `/anime/${song.animeSlug}`;
@@ -363,28 +378,36 @@ const SongCard: FC<{ song: FavoriteSong; onPlay: () => void }> = ({
   return (
     <div className="group relative flex w-full min-w-0 flex-col gap-2">
       <Poster image={coverOf(song)} ratio={1} fade>
-        <button
-          type="button"
-          aria-label={
-            playing ? `Призупинити «${song.title}»` : `Слухати «${song.title}»`
-          }
-          className="focus-visible:ring-ring absolute inset-0 flex items-end justify-end bg-linear-to-t from-black/60 via-transparent to-transparent p-2 opacity-0 transition-opacity outline-none group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 data-[current=true]:opacity-100 [@media(hover:none)]:opacity-100"
-          data-current={isCurrent}
-          onClick={() => (isCurrent ? useMusic.getState().toggle() : onPlay())}
-        >
-          <span className="bg-primary text-primary-foreground flex size-10 items-center justify-center rounded-full shadow-md transition-transform group-hover:scale-105 active:scale-95">
-            {playing ? (
-              <>
-                <Equalizer playing className="group-hover:hidden" />
-                <MaterialSymbolsPauseRounded className="hidden size-6 group-hover:block" />
-              </>
-            ) : (
-              <MaterialSymbolsPlayArrowRounded className="size-6" />
-            )}
-          </span>
-        </button>
+        {onPlay ? (
+          <button
+            type="button"
+            aria-label={
+              playing
+                ? `Призупинити «${song.title}»`
+                : `Слухати «${song.title}»`
+            }
+            className="focus-visible:ring-ring absolute inset-0 flex items-end justify-end bg-linear-to-t from-black/60 via-transparent to-transparent p-2 opacity-0 transition-opacity outline-none group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 data-[current=true]:opacity-100 [@media(hover:none)]:opacity-100"
+            data-current={isCurrent}
+            onClick={() =>
+              isCurrent ? useMusic.getState().toggle() : onPlay()
+            }
+          >
+            <span className="bg-primary text-primary-foreground flex size-10 items-center justify-center rounded-full shadow-md transition-transform group-hover:scale-105 active:scale-95">
+              {playing ? (
+                <>
+                  <Equalizer playing className="group-hover:hidden" />
+                  <MaterialSymbolsPauseRounded className="hidden size-6 group-hover:block" />
+                </>
+              ) : (
+                <MaterialSymbolsPlayArrowRounded className="size-6" />
+              )}
+            </span>
+          </button>
+        ) : (
+          <Unplayable song={song} />
+        )}
         <LikeButton
-          track={track}
+          song={track}
           className="absolute top-1.5 right-1.5 bg-black/40 text-white opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100 hover:bg-black/60 hover:text-white focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
         />
       </Poster>
@@ -408,6 +431,33 @@ const SongCard: FC<{ song: FavoriteSong; onPlay: () => void }> = ({
             .join(' • ')}
         </span>
       </a>
+    </div>
+  );
+};
+
+/**
+ * In place of the play button, for a song AnimeThemes can't play: the full
+ * song on a store, when one has it.
+ */
+const Unplayable: FC<{ song: FavoriteSong }> = ({ song }) => {
+  const hint = 'AnimeThemes не має цього треку';
+  return (
+    <div className="absolute inset-0 flex items-end justify-end bg-linear-to-t from-black/60 via-transparent to-transparent p-2 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100">
+      {song.release?.link ? (
+        <SongLink
+          release={song.release}
+          className="size-10 rounded-full bg-black/40 text-white backdrop-blur-sm hover:bg-black/60 hover:text-white"
+        />
+      ) : (
+        <span
+          role="img"
+          aria-label={hint}
+          title={hint}
+          className="flex size-10 items-center justify-center rounded-full bg-black/40 text-white/80 backdrop-blur-sm"
+        >
+          <MaterialSymbolsMusicOffRounded className="size-5" />
+        </span>
+      )}
     </div>
   );
 };

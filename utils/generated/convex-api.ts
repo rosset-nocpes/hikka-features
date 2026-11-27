@@ -301,7 +301,7 @@ export const convexApi = {
           author?: string;
           animeTitle?: string;
           poster?: string;
-          audio: string;
+          audio?: string;
         };
       },
       null
@@ -319,13 +319,14 @@ export const convexApi = {
         author?: string;
         animeTitle?: string;
         poster?: string;
-        audio: string;
+        audio?: string;
         addedAt: number;
         release?: {
           cover: string;
           album?: string;
           released?: string;
           link?: string;
+          artist?: string;
         };
       }[]
     >('musicFavorites:list'),
@@ -338,6 +339,16 @@ export const convexApi = {
       },
       null
     >('musicFavorites:remove'),
+    setAudio: makeFunctionReference<
+      'mutation',
+      {
+        animeSlug: string;
+        ostType: 'opening' | 'ending';
+        index: number;
+        audio: string;
+      },
+      null
+    >('musicFavorites:setAudio'),
   },
   notifications: {
     markAllSeen: makeFunctionReference<'mutation', Record<string, never>, null>(
@@ -440,6 +451,7 @@ export const convexApi = {
           album?: string;
           released?: string;
           link?: string;
+          artist?: string;
         }[];
         state: 'unknown' | 'queued' | 'done';
         refreshAt?: number;

@@ -42,8 +42,11 @@ interface ThemesResponse {
   } | null;
 }
 
-/** An opening or ending the music player can play. */
-export interface MusicTrack {
+/**
+ * An opening or ending, as a track list shows it and a favourite keeps it,
+ * whether or not AnimeThemes has it to play.
+ */
+export interface Song {
   /** Unique across anime. */
   key: string;
   /** The anime's hikka.io slug. */
@@ -54,16 +57,39 @@ export interface MusicTrack {
   index: number;
   title: string;
   author?: string | null;
-  /** The theme's audio (Ogg, TV size), from AnimeThemes. */
-  audio: string;
+  /** The theme's audio (Ogg, TV size), from AnimeThemes; unset when it has none. */
+  audio?: string;
   /** Its cover and album, when it came with them (a favourite does). */
   release?: {
     cover: string;
     album?: string;
     released?: string;
     link?: string;
+    artist?: string;
   };
 }
+
+/** A song the music player can play: AnimeThemes has its audio. */
+export type MusicTrack = Song & { audio: string };
+
+export const isPlayable = (song: Song): song is MusicTrack => !!song.audio;
+
+/**
+ * Who performs the song. Hikka keeps only the first word of a name ("THE"
+ * for THE DU), so a store's credit that starts with it stands in; so does
+ * any, for a song that names no one.
+ */
+export const performerOf = (
+  song: Pick<Song, 'author'>,
+  release?: { artist?: string },
+) => {
+  const author = song.author?.trim();
+  const artist = release?.artist;
+  if (!author) return artist;
+  return artist?.toLowerCase().startsWith(`${author.toLowerCase()} `)
+    ? artist
+    : author;
+};
 
 export const OST_LABEL: Record<HikkaOst['ost_type'], string> = {
   opening: 'Опенінґ',
@@ -172,7 +198,10 @@ const fetchThemes = async (malId: number) => {
   );
 };
 
-/** The anime's openings and endings Hikka lists that AnimeThemes can play. */
+/**
+ * The anime's openings and endings Hikka lists, with the audio of those
+ * AnimeThemes can play. Undefined while AnimeThemes is asked.
+ */
 export const useAnimeMusic = (anime?: HikkaContent, slug?: string) => {
   const malId = anime?.mal_id;
   const { data, isError } = useQuery({
@@ -186,22 +215,18 @@ export const useAnimeMusic = (anime?: HikkaContent, slug?: string) => {
   const themes = data ?? (isError || (anime && !malId) ? [] : undefined);
 
   if (!anime || !slug || !themes) return undefined;
-  return (anime.ost ?? []).flatMap((ost): MusicTrack[] => {
+  return (anime.ost ?? []).map((ost): Song => {
     const theme = findTheme(ost, themes);
-    const audio = theme && audioOf(theme);
-    if (!audio) return [];
-    return [
-      {
-        key: `${slug}:${ost.ost_type}:${ost.index}:${ost.title}`,
-        slug,
-        animeTitle: hikkaTitle(anime) ?? undefined,
-        poster: anime.image,
-        type: ost.ost_type,
-        index: ost.index,
-        title: ost.title,
-        author: performersOf(theme) ?? ost.author,
-        audio,
-      },
-    ];
+    return {
+      key: `${slug}:${ost.ost_type}:${ost.index}:${ost.title}`,
+      slug,
+      animeTitle: hikkaTitle(anime) ?? undefined,
+      poster: anime.image,
+      type: ost.ost_type,
+      index: ost.index,
+      title: ost.title,
+      author: performersOf(theme) ?? ost.author,
+      audio: theme && audioOf(theme),
+    };
   });
 };

@@ -7,7 +7,7 @@ import { MediaTooltip } from '@/components/media/controls';
 import SwapIcon from '@/components/swap-icon';
 import { Button } from '@/components/ui/button';
 
-import type { MusicTrack } from './animethemes';
+import type { Song } from './animethemes';
 
 import { setSongLiked, useLikedSongs } from './use-music-favorites';
 
@@ -24,15 +24,18 @@ export const LikeIcon: FC<{ liked: boolean }> = ({ liked }) => (
 );
 
 interface Props {
-  track: MusicTrack;
+  /** Playable or not: a favourite needn't be on AnimeThemes. */
+  song: Song;
+  /** Its release, once known, for its performer's full name. */
+  release?: Song['release'];
   className?: string;
   /** A player's tooltip; elsewhere the browser's own. */
   tooltip?: boolean;
 }
 
 /** Adds the song to the account's favourites, or takes it out. */
-const LikeButton: FC<Props> = ({ track, className, tooltip }) => {
-  const liked = useLikedSongs()(track);
+const LikeButton: FC<Props> = ({ song, release, className, tooltip }) => {
+  const liked = useLikedSongs()(song);
   const label = likeLabel(liked);
   const button = (
     <Button
@@ -46,7 +49,7 @@ const LikeButton: FC<Props> = ({ track, className, tooltip }) => {
         // Rows and cards under it play on click.
         event.stopPropagation();
         event.preventDefault();
-        void setSongLiked(track, !liked);
+        void setSongLiked(song, !liked, release);
       }}
     >
       <LikeIcon liked={liked} />

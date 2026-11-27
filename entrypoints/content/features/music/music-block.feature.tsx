@@ -1,6 +1,7 @@
 import type { FC } from 'react';
 
 import { motion } from 'motion/react';
+import { useEffect } from 'react';
 import MaterialSymbolsMusicNoteRounded from '~icons/material-symbols/music-note-rounded';
 import MaterialSymbolsMusicOffRounded from '~icons/material-symbols/music-off-rounded';
 import MaterialSymbolsPauseRounded from '~icons/material-symbols/pause-rounded';
@@ -17,13 +18,21 @@ import { plural } from '@/utils/plural';
 
 import { BaseFeature } from '../../core/base-feature';
 import { HikkaPages } from '../../core/core.enums';
-import { type MusicTrack, OST_LABEL, useAnimeMusic } from './animethemes';
+import {
+  isPlayable,
+  type MusicTrack,
+  OST_LABEL,
+  performerOf,
+  type Song,
+  useAnimeMusic,
+} from './animethemes';
 import Equalizer from './equalizer';
 import LikeButton from './like-button';
 import { playMusic } from './music-player';
 import { TRACK_FORMS } from './music.constants';
 import SongLink from './song-link';
 import { currentTrack, useMusic } from './use-music';
+import { fillFavoriteAudio, useFavoriteSongs } from './use-music-favorites';
 import {
   findRelease,
   type SongRelease,
@@ -60,8 +69,8 @@ const keyOf = (slug: string, ost: HikkaOst) =>
   `${slug}:${ost.ost_type}:${ost.index}:${ost.title}`;
 
 /**
- * hikka.io's music tab as a track list: every opening and ending, with
- * what AnimeThemes can play ready to play, like and queue.
+ * hikka.io's music tab as a track list: every opening and ending to like,
+ * with what AnimeThemes can play ready to play and queue.
  */
 export default class MusicBlockFeature extends BaseFeature {
   readonly id = 'music-block';
@@ -120,17 +129,23 @@ export default class MusicBlockFeature extends BaseFeature {
 const MusicBlock = () => {
   const { slug } = usePageStore();
   const { data: anime } = useHikka();
-  const tracks = useAnimeMusic(anime, slug);
+  const songs = useAnimeMusic(anime, slug);
+  const tracks = songs?.filter(isPlayable);
   const releases = useSongReleases(anime?.ost?.length ? slug : undefined);
+  const favorites = useFavoriteSongs()?.data;
   const extended = isMediaPage();
+
+  useEffect(() => {
+    if (favorites && tracks?.length) fillFavoriteAudio(favorites, tracks);
+  }, [favorites, tracks]);
 
   const ost = anime?.ost ?? [];
   if (!slug || ost.length === 0) return null;
 
-  const byKey = new Map(tracks?.map((track) => [track.key, track]));
+  const byKey = new Map(songs?.map((song) => [song.key, song]));
   const rows = ost.map((item) => ({
     ost: item,
-    track: byKey.get(keyOf(slug, item)),
+    song: byKey.get(keyOf(slug, item)),
   }));
   const shown = extended ? rows : rows.slice(0, SHOWN);
   const hidden = rows.length - shown.length;
@@ -144,16 +159,15 @@ const MusicBlock = () => {
     >
       <Toolbar tracks={tracks} total={ost.length} />
       <ol className="-mx-2 grid gap-x-4 md:grid-cols-2">
-        {shown.map(({ ost: item, track }, index) => (
+        {shown.map(({ ost: item, song }, index) => (
           <TrackRow
             key={keyOf(slug, item) + index}
             ost={item}
-            track={track}
+            song={song}
             release={findRelease(releases, {
               type: item.ost_type,
               index: item.index,
             })}
-            loading={!tracks}
             queue={tracks}
           />
         ))}
@@ -234,17 +248,17 @@ const Toolbar: FC<{ tracks?: MusicTrack[]; total: number }> = ({
 
 interface RowProps {
   ost: HikkaOst;
-  /** What plays it; none when AnimeThemes has no audio for it. */
-  track?: MusicTrack;
+  /** The song, once AnimeThemes has answered; it plays if it has audio. */
+  song?: Song;
   /** Its cover and album, once the backend has found them. */
   release?: SongRelease;
-  /** AnimeThemes hasn't answered yet. */
-  loading: boolean;
   /** The anime's playable tracks, queued when one is played. */
   queue?: MusicTrack[];
 }
 
-const TrackRow: FC<RowProps> = ({ ost, track, release, loading, queue }) => {
+const TrackRow: FC<RowProps> = ({ ost, song, release, queue }) => {
+  const loading = !song;
+  const track = song && isPlayable(song) ? song : undefined;
   const isCurrent = useMusic(
     (state) => !!track && currentTrack(state)?.key === track.key,
   );
@@ -362,7 +376,7 @@ const TrackRow: FC<RowProps> = ({ ost, track, release, loading, queue }) => {
           <span className="text-muted-foreground truncate text-xs leading-4">
             {[
               label,
-              track?.author ?? ost.author,
+              performerOf(song ?? ost, release),
               release?.released?.slice(0, 4),
             ]
               .filter(Boolean)
@@ -375,7 +389,14 @@ const TrackRow: FC<RowProps> = ({ ost, track, release, loading, queue }) => {
         release={release}
         className="text-muted-foreground"
       />
-      {track && <LikeButton track={track} className="text-muted-foreground" />}
+      {/* The backend keeps only songs Hikka numbers and names. */}
+      {song && ost.index >= 1 && !!ost.title?.trim() && (
+        <LikeButton
+          song={song}
+          release={release}
+          className="text-muted-foreground"
+        />
+      )}
     </li>
   );
 };

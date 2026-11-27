@@ -9,7 +9,7 @@ import { account } from '@/utils/account';
 import { convexApi } from '@/utils/convex-api';
 import { liveConvex } from '@/utils/live-convex';
 
-import type { MusicTrack } from './animethemes';
+import { type MusicTrack, performerOf, type Song } from './animethemes';
 
 /** A favourite song, as the backend lists a user's. */
 export type FavoriteSong = FunctionReturnType<
@@ -26,8 +26,8 @@ export const songId = (song: {
 }) =>
   `${song.slug ?? song.animeSlug}:${song.type ?? song.ostType}:${song.index}`;
 
-/** A favourite as the music player plays it. */
-export const favoriteTrack = (song: FavoriteSong): MusicTrack => ({
+/** A favourite as a song: the music player plays it if it has audio. */
+export const favoriteSong = (song: FavoriteSong): Song => ({
   // The same key as the anime page's track, so either shows as playing.
   key: `${song.animeSlug}:${song.ostType}:${song.index}:${song.title}`,
   slug: song.animeSlug,
@@ -71,20 +71,37 @@ export function useLikedSongs() {
   const songs = useFavoriteSongs()?.data;
   const pending = usePending();
   const liked = new Set(songs?.map(songId));
-  return (track: MusicTrack) =>
-    pending[songId(track)] ?? liked.has(songId(track));
+  return (song: Song) => pending[songId(song)] ?? liked.has(songId(song));
 }
 
 /** The latest change of each song, by `songId`: only it clears the pending one. */
 const latestChange = new Map<string, number>();
 let lastChange = 0;
 
+/** What the backend keeps of `song`. */
+const favoriteInput = (song: Song, release?: Song['release']) => ({
+  animeSlug: song.slug,
+  ostType: song.type,
+  index: song.index,
+  title: song.title,
+  author: performerOf(song, release ?? song.release) ?? undefined,
+  animeTitle: song.animeTitle,
+  // The backend keeps only Hikka's own posters.
+  poster: song.poster?.startsWith(HIKKA_CDN_URL) ? song.poster : undefined,
+  audio: song.audio,
+});
+
 /**
- * Likes `track` or stops liking it. Signed out, this signs in first: the
- * favourites belong to the extension account, as Hikka's do to its own.
+ * Likes `song` or stops liking it, with its `release` for its performer's
+ * full name. Signed out, this signs in first: the favourites belong to the
+ * extension account, as Hikka's do to its own.
  */
-export async function setSongLiked(track: MusicTrack, liked: boolean) {
-  const id = songId(track);
+export async function setSongLiked(
+  song: Song,
+  liked: boolean,
+  release?: Song['release'],
+) {
+  const id = songId(song);
   const change = ++lastChange;
   latestChange.set(id, change);
   setPending(id, liked);
@@ -95,25 +112,13 @@ export async function setSongLiked(track: MusicTrack, liked: boolean) {
     }
     if (liked) {
       await liveConvex.mutation(convexApi.musicFavorites.add, {
-        song: {
-          animeSlug: track.slug,
-          ostType: track.type,
-          index: track.index,
-          title: track.title,
-          author: track.author ?? undefined,
-          animeTitle: track.animeTitle,
-          // The backend keeps only Hikka's own posters.
-          poster: track.poster?.startsWith(HIKKA_CDN_URL)
-            ? track.poster
-            : undefined,
-          audio: track.audio,
-        },
+        song: favoriteInput(song, release),
       });
     } else {
       await liveConvex.mutation(convexApi.musicFavorites.remove, {
-        animeSlug: track.slug,
-        ostType: track.type,
-        index: track.index,
+        animeSlug: song.slug,
+        ostType: song.type,
+        index: song.index,
       });
     }
   } catch (error) {
@@ -125,5 +130,36 @@ export async function setSongLiked(track: MusicTrack, liked: boolean) {
       latestChange.delete(id);
       setPending(id, undefined);
     }
+  }
+}
+
+/** Favourites this tab has given audio already, by `songId`. */
+const filled = new Set<string>();
+
+/**
+ * Gives the account's favourites saved without audio the audio `tracks`
+ * have for them: AnimeThemes may add a theme after it was liked.
+ */
+export function fillFavoriteAudio(
+  favorites: FavoriteSong[],
+  tracks: MusicTrack[],
+) {
+  if (!account.signedIn) return;
+  const playable = new Map(tracks.map((track) => [songId(track), track]));
+  for (const favorite of favorites) {
+    const id = songId(favorite);
+    const track = playable.get(id);
+    // A heart clicked meanwhile decides on its own.
+    if (favorite.audio || !track || filled.has(id)) continue;
+    if (usePending.getState()[id] !== undefined) continue;
+    filled.add(id);
+    liveConvex
+      .mutation(convexApi.musicFavorites.setAudio, {
+        animeSlug: favorite.animeSlug,
+        ostType: favorite.ostType,
+        index: favorite.index,
+        audio: track.audio,
+      })
+      .catch((error: unknown) => console.error(error));
   }
 }

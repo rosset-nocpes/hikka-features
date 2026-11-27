@@ -5,7 +5,7 @@ import type { CornerStore, FloatingCorner } from '@/hooks/use-floating-card';
 import { STORAGE_KEYS } from '@/constants/storage';
 import { StoredValue } from '@/utils/stored-value';
 
-import { type MusicTrack, OST_LABEL } from './animethemes';
+import { type MusicTrack, OST_LABEL, performerOf } from './animethemes';
 import {
   RESTART_AFTER_S,
   SETTLE_S,
@@ -573,12 +573,17 @@ export const trackLabel = (track: MusicTrack) =>
 
 const artwork = (src: string | null | undefined) => (src ? [{ src }] : []);
 
-/** The playing track's cover, once the player has found it. */
-export const setMediaArtwork = (src: string | undefined) => {
+/** The playing track's cover and performer, once the player has found them. */
+export const setMediaRelease = (
+  src: string | undefined,
+  performer: string | null | undefined,
+) => {
   try {
     const { metadata } = navigator.mediaSession;
-    if (metadata && metadata.artwork[0]?.src !== src) {
-      metadata.artwork = artwork(src);
+    if (!metadata) return;
+    if (metadata.artwork[0]?.src !== src) metadata.artwork = artwork(src);
+    if (performer && metadata.artist !== performer) {
+      metadata.artist = performer;
     }
   } catch {
     // As for the rest of the session's metadata.
@@ -595,7 +600,7 @@ const updateMediaSession = (track: MusicTrack | undefined) => {
     }
     session.metadata = new MediaMetadata({
       title: track.title,
-      artist: track.author ?? trackLabel(track),
+      artist: performerOf(track, track.release) ?? trackLabel(track),
       album: track.animeTitle ?? '',
       artwork: artwork(track.release?.cover ?? track.poster),
     });

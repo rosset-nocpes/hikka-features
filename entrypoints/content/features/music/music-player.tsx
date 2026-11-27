@@ -35,9 +35,8 @@ import {
 import { useIFramePlayer } from '@/hooks/use-iframe-player';
 import { onHikkaLinkClick } from '@/utils/hikka-router';
 
-import type { MusicTrack } from './animethemes';
-
 import { ModalUi } from '../../core/base-feature';
+import { type MusicTrack, performerOf } from './animethemes';
 import Equalizer from './equalizer';
 import LikeButton from './like-button';
 import SongLink from './song-link';
@@ -45,13 +44,14 @@ import {
   currentTrack,
   musicCorner,
   type RepeatMode,
-  setMediaArtwork,
+  setMediaRelease,
   trackLabel,
   useMusic,
 } from './use-music';
 import {
   artOf,
   findRelease,
+  type SongRelease,
   useSongReleases,
   useTrackRelease,
 } from './use-song-releases';
@@ -121,9 +121,13 @@ const MusicCard = () => {
   const cardRef = useRef<HTMLElement>(null);
   const release = useTrackRelease(track);
   const art = artOf(track, release);
+  const performer = track && performerOf(track, release);
 
-  // The OS's controls show the cover too, once it's known.
-  useEffect(() => setMediaArtwork(art), [art, track?.key]);
+  // The OS's controls show the cover and performer too, once they're known.
+  useEffect(
+    () => setMediaRelease(art, performer),
+    [art, performer, track?.key],
+  );
 
   // Stacks above the video's mini player when they share a corner.
   const startDrag = useFloatingCard(cardRef, {
@@ -209,11 +213,11 @@ const MusicCard = () => {
             {failed
               ? 'Не вдалося завантажити'
               : track &&
-                [trackLabel(track), track.author].filter(Boolean).join(' · ')}
+                [trackLabel(track), performer].filter(Boolean).join(' · ')}
           </span>
         </div>
         <SongLink release={release} tooltip />
-        {track && <LikeButton track={track} tooltip />}
+        {track && <LikeButton song={track} release={release} tooltip />}
         <Button
           variant="ghost"
           size="icon-sm"
@@ -406,11 +410,10 @@ const TrackList = () => {
               current={position === index}
               playing={playing}
               mixed={mixed}
-              art={artOf(
-                item,
+              release={
                 item.release ??
-                  findRelease(songs, { type: item.type, index: item.index }),
-              )}
+                findRelease(songs, { type: item.type, index: item.index })
+              }
               onPlay={() => (position === index ? toggle() : playAt(position))}
             />
           ))}
@@ -427,8 +430,8 @@ interface QueueRowProps {
   playing: boolean;
   /** The queue spans several anime: the row says which. */
   mixed: boolean;
-  /** Its cover, else its anime's poster. */
-  art?: string;
+  /** Its cover, album and performer, once known. */
+  release?: SongRelease | MusicTrack['release'];
   onPlay: () => void;
 }
 
@@ -439,42 +442,46 @@ const QueueRow = ({
   current,
   playing,
   mixed,
-  art,
+  release,
   onPlay,
-}: QueueRowProps) => (
-  <li
-    data-active={current}
-    className="group/track hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground flex items-center rounded-md pr-1 transition-colors"
-  >
-    <button
-      type="button"
-      aria-current={current}
-      className="focus-visible:ring-sidebar-ring flex min-w-0 flex-1 items-center gap-2.5 rounded-md p-1.5 text-left text-sm outline-hidden group-data-[active=true]/track:font-medium focus-visible:ring-2"
-      onClick={onPlay}
+}: QueueRowProps) => {
+  const art = artOf(track, release);
+  const performer = performerOf(track, release);
+  return (
+    <li
+      data-active={current}
+      className="group/track hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground flex items-center rounded-md pr-1 transition-colors"
     >
-      <span className="bg-muted text-muted-foreground relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded text-xs tabular-nums">
-        {!art && position + 1}
-        <FadeImage src={art} />
-        {current && (
-          <span className="absolute inset-0 flex items-center justify-center bg-black/50 text-white">
-            <Equalizer playing={playing} />
-          </span>
-        )}
-      </span>
-      <span className="grid min-w-0 flex-1 gap-0.5 leading-tight">
-        <span className="truncate">{track.title}</span>
-        {(track.author || mixed) && (
-          <span className="text-muted-foreground truncate text-xs font-normal">
-            {[mixed && track.animeTitle, track.author]
-              .filter(Boolean)
-              .join(' · ')}
-          </span>
-        )}
-      </span>
-      <Badge className="bg-muted text-muted-foreground h-4 shrink-0 rounded-sm px-1.5 text-[10px] font-semibold">
-        {trackLabel(track)}
-      </Badge>
-    </button>
-    <LikeButton track={track} className="size-7" />
-  </li>
-);
+      <button
+        type="button"
+        aria-current={current}
+        className="focus-visible:ring-sidebar-ring flex min-w-0 flex-1 items-center gap-2.5 rounded-md p-1.5 text-left text-sm outline-hidden group-data-[active=true]/track:font-medium focus-visible:ring-2"
+        onClick={onPlay}
+      >
+        <span className="bg-muted text-muted-foreground relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded text-xs tabular-nums">
+          {!art && position + 1}
+          <FadeImage src={art} />
+          {current && (
+            <span className="absolute inset-0 flex items-center justify-center bg-black/50 text-white">
+              <Equalizer playing={playing} />
+            </span>
+          )}
+        </span>
+        <span className="grid min-w-0 flex-1 gap-0.5 leading-tight">
+          <span className="truncate">{track.title}</span>
+          {(performer || mixed) && (
+            <span className="text-muted-foreground truncate text-xs font-normal">
+              {[mixed && track.animeTitle, performer]
+                .filter(Boolean)
+                .join(' · ')}
+            </span>
+          )}
+        </span>
+        <Badge className="bg-muted text-muted-foreground h-4 shrink-0 rounded-sm px-1.5 text-[10px] font-semibold">
+          {trackLabel(track)}
+        </Badge>
+      </button>
+      <LikeButton song={track} release={release} className="size-7" />
+    </li>
+  );
+};
