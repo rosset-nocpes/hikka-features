@@ -8,10 +8,30 @@ const useSeeking = (duration: number, seek: (t: number) => void) => {
   /** Where the last seek went, in the episode (told by its duration) it was made on. */
   const seekTargetRef = useRef<{ time: number; duration: number } | null>(null);
 
+  /** Where this drag or click last sought to, as a slider value. */
+  const draggedToRef = useRef<number | null>(null);
+
   const seekToSliderValue = (sliderValue: number) => {
     const time = (sliderValue / 100) * duration;
     seekTargetRef.current = { time, duration };
     seek(time);
+  };
+
+  const seekWhileDragging = (sliderValue: number) => {
+    draggedToRef.current = sliderValue;
+    seekToSliderValue(sliderValue);
+  };
+
+  /**
+   * Letting go seeks only if the bar moved since its last seek: the video has
+   * played on from there, and seeking again would replay it.
+   */
+  const commitSeek = (sliderValue: number) => {
+    const draggedTo = draggedToRef.current;
+    draggedToRef.current = null;
+    if (draggedTo !== null && draggedTo !== sliderValue) {
+      seekToSliderValue(sliderValue);
+    }
   };
 
   /** The player hasn't reached the last seek yet, so the bar stays put. */
@@ -32,7 +52,13 @@ const useSeeking = (duration: number, seek: (t: number) => void) => {
     [],
   );
 
-  return { isSeeking, setIsSeeking, seekToSliderValue, shouldSkipSync };
+  return {
+    isSeeking,
+    setIsSeeking,
+    seekWhileDragging,
+    commitSeek,
+    shouldSkipSync,
+  };
 };
 
 const useSliderTooltip = ({
@@ -167,8 +193,13 @@ export const SeekBar = ({
   // Kept with the duration it was set for: a new episode starts at 0.
   const [value, setValue] = useState({ percent: 0, duration });
 
-  const { isSeeking, setIsSeeking, seekToSliderValue, shouldSkipSync } =
-    useSeeking(duration, seek);
+  const {
+    isSeeking,
+    setIsSeeking,
+    seekWhileDragging,
+    commitSeek,
+    shouldSkipSync,
+  } = useSeeking(duration, seek);
 
   const {
     trackRef,
@@ -191,12 +222,12 @@ export const SeekBar = ({
   const handleValueChange = (newValue: number) => {
     setIsSeeking(true);
     setValue({ percent: newValue, duration });
-    seekToSliderValue(newValue);
+    seekWhileDragging(newValue);
   };
 
   const handleValueCommitted = (newValue: number) => {
     setIsSeeking(false);
-    seekToSliderValue(newValue);
+    commitSeek(newValue);
   };
 
   const bufferedPercent = duration > 0 ? (bufferedTime / duration) * 100 : 0;
