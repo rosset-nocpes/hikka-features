@@ -177,11 +177,10 @@ const TeamPrioritySettings = () => {
         title={order.length ? `Порядок · ${order.length}` : 'Порядок'}
         footer={
           <>
-            Програвач відкриється з першою командою, яка вже має наступний
-            епізод у вибраному перекладі. Улюблена команда тайтлу має перевагу.{' '}
+            Відкривається перша команда з наступною серією.{' '}
             {convexSession
-              ? 'Список синхронізується з акаунтом, а про нові серії тайтлів зі списку «Дивлюсь» від цих команд з’являться сповіщення на Hikka.'
-              : 'Увійдіть, щоб синхронізувати список між пристроями й отримувати сповіщення про нові серії.'}
+              ? 'Синхронізується з акаунтом.'
+              : 'Увійдіть, щоб синхронізувати.'}
           </>
         }
       >
@@ -216,9 +215,7 @@ const TeamPrioritySettings = () => {
           <div className="flex flex-col items-center gap-1 px-6 py-5 text-center">
             <MaterialSymbolsFormatListNumberedRounded className="text-muted-foreground mb-1 size-6" />
             <span className="text-sm font-medium">Список порожній</span>
-            <RowDescription>
-              Додайте команди нижче, починаючи з найулюбленішої
-            </RowDescription>
+            <RowDescription>Найулюбленішу додайте першою</RowDescription>
           </div>
         )}
       </SettingsGroup>

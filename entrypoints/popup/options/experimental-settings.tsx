@@ -24,7 +24,7 @@ import SettingsPage from '../_base/settings-page';
 
 const ExperimentalSettingsPage = () => (
   <SettingsPage>
-    <SettingsGroup footer="Щоб сховати цю сторінку, ще раз натисніть п’ять разів на версію.">
+    <SettingsGroup footer="Щоб сховати, натисніть 5 разів на версію.">
       <FeatureSwitch
         feature="devOptions"
         option="burunyaaMode"
@@ -36,7 +36,7 @@ const ExperimentalSettingsPage = () => (
         option="devTools"
         icon={<MaterialSymbolsCodeRounded />}
         label="Режим розробника"
-        description="Додає функції, які полегшують роботу з розширенням"
+        description="Інструменти для налагодження"
       />
     </SettingsGroup>
     <DevToolsGroup />
@@ -155,7 +155,7 @@ const DevToolsGroup = () => {
       </ActionRow>
       <ActionRow
         label="Усі налаштування"
-        description="Усе, крім режиму розробника, разом з улюбленими командами"
+        description="І команди, крім режиму розробника"
       >
         <ConfirmButton
           label="Скинути всі налаштування"

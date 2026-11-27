@@ -105,11 +105,7 @@ const ReaderSettings = () => {
   return (
     <SettingsPage>
       <SettingsGroup
-        footer={
-          enabled
-            ? undefined
-            : 'Налаштування нижче почнуть діяти, щойно кнопку буде увімкнено.'
-        }
+        footer={enabled ? undefined : 'Діють, коли кнопку увімкнено.'}
       >
         <FeatureSwitch
           feature="reader"
@@ -135,7 +131,7 @@ const ReaderSettings = () => {
         <SwitchOption
           icon={<MaterialSymbolsViewDayOutlineRounded />}
           label="Стрічка для манхви"
-          description="Розділи з довгими сторінками відкриваються стрічкою"
+          description="Довгі сторінки відкриваються стрічкою"
           checked={manga.autoStrip}
           disabled={isStrip}
           onClick={() => change({ manga: { autoStrip: !manga.autoStrip } })}
@@ -158,7 +154,7 @@ const ReaderSettings = () => {
           description={
             isStrip
               ? 'Стрічку гортають прокручуванням'
-              : 'Клік чи дотик до лівого або правого краю сторінки гортає її'
+              : 'Клік по краю сторінки гортає її'
           }
           checked={manga.tapToTurn}
           disabled={isStrip}
@@ -194,7 +190,7 @@ const ReaderSettings = () => {
         />
       </SettingsGroup>
 
-      <SettingsGroup footer="Шрифт, розмір тексту, ширину стрічки й решту змінюйте в самій читалці: там одразу видно, як виглядає сторінка.">
+      <SettingsGroup footer="Шрифт, розмір і ширину змінюйте в самій читалці.">
         <SwitchOption
           icon={<MaterialSymbolsMobileLockPortraitOutlineRounded />}
           label="Не вимикати екран"

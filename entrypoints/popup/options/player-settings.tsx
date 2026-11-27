@@ -47,11 +47,7 @@ const PlayerSettings = () => {
   return (
     <SettingsPage>
       <SettingsGroup
-        footer={
-          enabled
-            ? undefined
-            : 'Налаштування нижче почнуть діяти, щойно кнопку буде увімкнено.'
-        }
+        footer={enabled ? undefined : 'Діють, коли кнопку увімкнено.'}
       >
         <FeatureSwitch
           feature="player"
@@ -87,7 +83,7 @@ const PlayerSettings = () => {
                 </span>
               </RowDescription>
             ) : (
-              'Яку команду обирати під час відкриття програвача'
+              'Яку команду відкривати першою'
             )
           }
           onClick={() => navigate('teamPriority')}
@@ -100,14 +96,14 @@ const PlayerSettings = () => {
           option="autoplayNext"
           icon={<MaterialSymbolsAutoplayRounded />}
           label="Автопрогравання"
-          description="Наступний епізод із черги вмикається сам, коли поточний закінчиться"
+          description="Наступна серія вмикається сама"
         />
         <SegmentedOption
           icon={<MaterialSymbolsFastForwardRounded />}
           active={skipSegments !== 'off'}
           stacked
           label="Пропуск заставок"
-          description="Опенінги, ендінги й рекапи; у спільному перегляді — лише кнопкою"
+          description="Опенінги, ендінги й рекапи"
           value={skipSegments}
           options={SKIP_OPTIONS}
           onChange={(value) =>
@@ -134,7 +130,7 @@ const PlayerSettings = () => {
           inverted
           icon={<MaterialSymbolsBlurOnRounded />}
           label="Розмиття фону"
-          description="Напівпрозорі панелі відео- й музичного програвача. Вимкніть, якщо гальмує"
+          description="Вимкніть, якщо програвач гальмує"
         />
       </SettingsGroup>
     </SettingsPage>

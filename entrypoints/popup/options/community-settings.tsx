@@ -15,7 +15,7 @@ const CommunitySettings = () => {
   return (
     <SettingsPage>
       {!signedIn && (
-        <SettingsGroup footer="Увійдіть, щоб ділитися активністю, дивитися разом із друзями й отримувати сповіщення про нові серії.">
+        <SettingsGroup footer="Для друзів, спільного перегляду й сповіщень.">
           <UserOptions />
         </SettingsGroup>
       )}
@@ -28,14 +28,14 @@ const CommunitySettings = () => {
           inverted
           icon={<MaterialSymbolsDiversity3Rounded />}
           label="Активність друзів"
-          description="Блок на головній hikka.io з тим, що друзі дивляться й читають"
+          description="Що друзі дивляться й читають"
         />
         {signedIn && (
           <FeatureSwitch
             feature="watchTogetherInvites"
             icon={<MaterialSymbolsCoPresentRounded />}
             label="Запрошення до перегляду"
-            description="Спливають, коли друзі запрошують дивитися разом"
+            description="Коли друзі кличуть дивитися разом"
           />
         )}
       </SettingsGroup>
@@ -46,14 +46,14 @@ const CommunitySettings = () => {
             feature="releaseNotifications"
             icon={<MaterialSymbolsNotificationsActiveRounded />}
             label="Нові серії"
-            description="У сповіщеннях hikka.io: тайтли з «Дивлюсь» від команд із пріоритету"
+            description="Від команд із пріоритету"
           />
         )}
         <FeatureSwitch
           feature="teamLinks"
           icon={<MaterialSymbolsGroups3Rounded />}
           label="Команди в меню й пошуку"
-          description="Пункт «Команди» в меню «Спільнота» і команди в пошуку hikka.io"
+          description="У меню «Спільнота» й пошуку"
         />
       </SettingsGroup>
     </SettingsPage>

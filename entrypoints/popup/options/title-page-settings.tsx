@@ -22,7 +22,7 @@ const TitlePageSettings = () => {
           feature="aniBackground"
           icon={<MaterialSymbolsWallpaperRounded />}
           label="Обкладинки"
-          description="Фонові обкладинки на сторінках тайтлів, персонажів і правок"
+          description="Фон тайтлів, персонажів і правок"
         />
         <FeatureSwitch
           feature="localizedPoster"
@@ -49,7 +49,7 @@ const TitlePageSettings = () => {
           feature="fandubBlock"
           icon={<MaterialSymbolsGroupsRounded />}
           label="Фандаб-команди"
-          description="Хто озвучив чи переклав тайтл, з посиланнями на команди"
+          description="Хто озвучив чи переклав тайтл"
         />
         <FeatureSwitch
           feature="recommendationBlock"
@@ -61,7 +61,7 @@ const TitlePageSettings = () => {
           feature="musicPlayer"
           icon={<MaterialSymbolsLibraryMusicRounded />}
           label="Опенінги та ендінги"
-          description="Треки в блоці музики, плаваючий програвач і улюблена музика в профілі"
+          description="Програвач треків і улюблені в профілі"
         />
         <FeatureSwitch
           feature="aniButtons"

@@ -13,7 +13,7 @@ const EditingSettings = () => (
     <SettingsGroup
       footer={
         <>
-          Бета-функції ще допрацьовуються. Щось не так?{' '}
+          Щось не так?{' '}
           <a
             href={`${GITHUB_REPO_URL}/issues`}
             {...NEW_TAB}
@@ -28,14 +28,14 @@ const EditingSettings = () => (
         feature="editorToolbar"
         icon={<MaterialSymbolsFactCheckRounded />}
         label="Панель редактора"
-        description="Перевірка правки за правилами, підпис джерела й перехід між правками на розгляді"
+        description="Перевірка правил, джерело й перехід між правками"
         beta
       />
       <FeatureSwitch
         feature="editorCharacters"
         icon={<MaterialSymbolsPersonEditRounded />}
         label="Переклад імен"
-        description="Пропонує ім’я українською, коли ви редагуєте персонажа"
+        description="Пропонує ім’я персонажа українською"
         beta
       />
     </SettingsGroup>
